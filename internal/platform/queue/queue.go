@@ -5,7 +5,7 @@ package queue
 import (
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Batches is a queue the engine pushes to and the main thread drains.

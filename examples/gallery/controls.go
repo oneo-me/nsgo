@@ -1,6 +1,6 @@
 package main
 
-import "github.com/oneo-me/nsgo/examples/gallery/locales"
+import "github.com/nsgo-dev/nsgo/examples/gallery/locales"
 
 // mark is what a menu item's checkbox shows.
 type mark uint8

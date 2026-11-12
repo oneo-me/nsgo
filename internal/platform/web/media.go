@@ -10,8 +10,8 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // The animation graph runs in Go on the page's main thread, stepped by

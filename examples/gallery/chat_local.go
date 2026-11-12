@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
 )
 
 // localReply runs one turn of a local CLI, Claude or Codex, on a goroutine:

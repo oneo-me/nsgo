@@ -1,8 +1,8 @@
 package richeditor
 
 import (
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // RichPluginSpec is a plugin whose behavior is the app's: a keymap and hooks

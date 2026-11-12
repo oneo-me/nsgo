@@ -3,7 +3,7 @@ package base
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // ScrollbarMode is when a Scrollbar shows. A drag of its thumb keeps it

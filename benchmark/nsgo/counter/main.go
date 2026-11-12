@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 func root(cx *core.Scope) core.Node {

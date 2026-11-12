@@ -4,7 +4,7 @@
 // components take no room, and IsAvailable says whether they show.
 package mobile
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 type (
 	// TabBar is the system's tab bar for an app's top-level sections:

@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Access says what code under a scope may reach (NSH's nsh_core::access):

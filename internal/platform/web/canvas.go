@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/canvas2d"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/canvas2d"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // setDrawing keeps a canvas view's drawing, binds its animated arguments

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The ref's methods for language features and the app's own popups:

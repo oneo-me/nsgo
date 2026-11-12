@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestAvatarGroup shows the first members and counts the rest, and

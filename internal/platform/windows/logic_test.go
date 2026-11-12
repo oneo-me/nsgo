@@ -8,9 +8,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imagedecode"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imagedecode"
 )
 
 func closeTo(a, b float64) bool { return math.Abs(a-b) < 1e-6 }

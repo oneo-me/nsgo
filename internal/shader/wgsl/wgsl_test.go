@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/shader/wgsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/glsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/hlsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/shader/wgsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/glsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/hlsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 // testdata holds shaders that use what WGSL has, which compile into

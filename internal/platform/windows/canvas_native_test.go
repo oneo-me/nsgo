@@ -10,8 +10,8 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/canvastest"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/canvastest"
 )
 
 const (

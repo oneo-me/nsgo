@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/internal/window"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/window"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 const (

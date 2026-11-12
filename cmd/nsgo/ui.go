@@ -97,7 +97,7 @@ func toolVersion() string {
 	if !ok {
 		return ""
 	}
-	const module = "github.com/oneo-me/nsgo"
+	const module = "github.com/nsgo-dev/nsgo"
 	if info.Main.Path == module {
 		return builtVersion(info.Main.Version)
 	}

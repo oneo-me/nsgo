@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // recorder is a storage backend that loads kept and records changes.

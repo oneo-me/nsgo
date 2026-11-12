@@ -3,8 +3,8 @@
 package nsgo
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/platform/linux"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/platform/linux"
 )
 
 func run(root App, app func(*core.Scope), o options) {

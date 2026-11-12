@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // TestScrollView fades the content at an edge only while more of it

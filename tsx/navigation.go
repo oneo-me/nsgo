@@ -1,10 +1,10 @@
 package tsx
 
 import (
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Navigation (NSH's navigation.rs): createNavStack is a base.Nav of JS

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // minVisiblePages is the fewest pages a Pagination shows.

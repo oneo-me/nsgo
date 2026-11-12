@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // linkRows bounds how many rows a link is looked for above and below the

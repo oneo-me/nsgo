@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // ringSize is a ProgressRing's and a Spinner's diameter by default.

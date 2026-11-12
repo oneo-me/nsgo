@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // List is a long run of the app's rows over core.List, built only near

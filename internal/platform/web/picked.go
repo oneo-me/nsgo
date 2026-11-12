@@ -5,7 +5,7 @@ package web
 import (
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The page prepares picked images and the images it copies with the

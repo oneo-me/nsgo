@@ -5,7 +5,7 @@ package linux
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 const (

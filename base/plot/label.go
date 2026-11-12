@@ -1,6 +1,6 @@
 package plot
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // TextAlign is where a PlotText sits along the x axis from its point.
 type TextAlign uint8

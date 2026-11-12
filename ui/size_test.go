@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // TestSize holds each size's measures, the zero value the standard one.

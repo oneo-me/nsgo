@@ -11,8 +11,8 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/base/editor"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/editor"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // A language server for the Editor demo, simulated in the app, as NSH's

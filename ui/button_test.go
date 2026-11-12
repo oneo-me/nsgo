@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // TestButton presses each variant, 28 points tall on every device, and an

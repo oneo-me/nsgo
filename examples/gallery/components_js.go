@@ -5,7 +5,7 @@ package main
 import (
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // rangeSlider is an <input type=range>, as a native component.

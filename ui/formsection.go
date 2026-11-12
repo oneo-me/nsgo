@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // FormSection is related rows on a rounded card, divided by hairlines
 // from the start of the titles above them, as an inset grouped list of iOS

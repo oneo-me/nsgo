@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // pickerField is the look of what opens a list or a calendar: a field 28

@@ -43,9 +43,9 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/desktop/locales"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/field"
+	"github.com/nsgo-dev/nsgo/desktop/locales"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/field"
 )
 
 var (

@@ -6,8 +6,8 @@ import (
 	"math"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // Sticky list cells stick with the browser's position: sticky, as NSH's

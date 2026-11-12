@@ -4,9 +4,9 @@
 package diff
 
 import (
-	"github.com/oneo-me/nsgo/base/diff"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/diff"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // Options are DiffView's props, for a package that registers a form of it.

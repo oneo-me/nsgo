@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/plot"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/base/plot"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // canvases are the canvases inside what selector names, in tree order.

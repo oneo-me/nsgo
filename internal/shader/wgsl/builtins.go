@@ -3,7 +3,7 @@ package wgsl
 import (
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 type builtinFunc func(c *checker, args []value, pos int, out *[]shaderir.Stmt) value

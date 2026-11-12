@@ -26,10 +26,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 var (

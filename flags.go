@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // launchFlags are the engine's command-line flags, which any build of an

@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestToggleButton turns on and off with presses, filled with the accent

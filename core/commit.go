@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/layout"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/layout"
 )
 
 // maxRounds bounds the commits OnLayout handlers may cause in one batch.

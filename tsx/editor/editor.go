@@ -4,9 +4,9 @@
 package editor
 
 import (
-	"github.com/oneo-me/nsgo/base/editor"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/editor"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 func init() {

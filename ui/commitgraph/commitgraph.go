@@ -7,10 +7,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/commitgraph"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/base/commitgraph"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // RefKind is what a ref names.

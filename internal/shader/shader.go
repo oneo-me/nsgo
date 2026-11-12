@@ -27,7 +27,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 type variable struct {

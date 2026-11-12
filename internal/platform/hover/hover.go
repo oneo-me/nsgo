@@ -7,7 +7,7 @@ package hover
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Tracker holds the views the pointer is over that follow hovers.

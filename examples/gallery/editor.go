@@ -2,21 +2,21 @@ package main
 
 import (
 	"fmt"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"reflect"
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/dock"
-	"github.com/oneo-me/nsgo/base/editor"
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/base/textview/highlight"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/dock"
+	"github.com/nsgo-dev/nsgo/base/editor"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/base/textview/highlight"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // base/editor's Editor draws its text, gutter, carets and matches itself

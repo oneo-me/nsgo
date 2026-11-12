@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	baseflow "github.com/oneo-me/nsgo/base/flow"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	baseflow "github.com/nsgo-dev/nsgo/base/flow"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
-	uiflow "github.com/oneo-me/nsgo/ui/flow"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
+	uiflow "github.com/nsgo-dev/nsgo/ui/flow"
 )
 
 type flowKind uint8

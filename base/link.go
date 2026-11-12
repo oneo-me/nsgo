@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // LinkOpenWith is how a Link opens its Href.
 type LinkOpenWith uint8

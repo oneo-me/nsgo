@@ -3,7 +3,7 @@ package widget
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // View is an element of what a widget shows, which the widget extension

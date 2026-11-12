@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/field"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/field"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // Text fields follow NSH's web backend: an <input>, or a <textarea> when

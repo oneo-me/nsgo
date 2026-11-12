@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // hostsAccess allows network and web view requests to hosts, the host

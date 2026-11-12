@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // colorNotation is a way the picker's channels spell the color, one of
 // colorNotations.

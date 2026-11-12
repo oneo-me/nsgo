@@ -4,8 +4,8 @@ import (
 	"io/fs"
 	"path"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // App returns the app whose TSX entry is entry in fsys, for nsgo.Run and

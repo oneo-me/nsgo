@@ -21,8 +21,8 @@ order: 10
 ```sh
 mkdir hello && cd hello
 go mod init example.com/hello
-go get github.com/oneo-me/nsgo
-go get -tool github.com/oneo-me/nsgo/cmd/nsgo
+go get github.com/nsgo-dev/nsgo
+go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo
 go tool nsgo init
 ```
 

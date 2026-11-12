@@ -28,9 +28,9 @@ NSGo 是一个 Go module。应用从上层导入它的包；各平台的后端�
 
 ## 设计文档
 
-[ARCHITECTURE.md](https://github.com/oneo-me/nsgo/blob/main/ARCHITECTURE.md) 描绘了各个包、线程，以及从一次提交到屏幕的流程，并列出 `docs/architecture/` 中的专题：每个部分一篇，比如布局、文本、滚动、主题和工具。修改某个部分前先读它的专题；专题记录了它如何工作，以及它在哪些地方不同于 NSGo 所移植的 [Native Shell](https://github.com/longbridge/nsh)。
+[ARCHITECTURE.md](https://github.com/nsgo-dev/nsgo/blob/main/ARCHITECTURE.md) 描绘了各个包、线程，以及从一次提交到屏幕的流程，并列出 `docs/architecture/` 中的专题：每个部分一篇，比如布局、文本、滚动、主题和工具。修改某个部分前先读它的专题；专题记录了它如何工作，以及它在哪些地方不同于 NSGo 所移植的 [Native Shell](https://github.com/longbridge/nsh)。
 
-[AGENTS.md](https://github.com/oneo-me/nsgo/blob/main/AGENTS.md) 是每个改动都要遵守的规则，对人和编码 agent 都适用。其中几条影响大多数改动：
+[AGENTS.md](https://github.com/nsgo-dev/nsgo/blob/main/AGENTS.md) 是每个改动都要遵守的规则，对人和编码 agent 都适用。其中几条影响大多数改动：
 
 - 每个 API 只有一个归属：元素和环境在 `core`，控件在 `base`，控件的外观在 `ui`，某类设备专有的在 `mobile` 和 `desktop`。
 - `base` 没有外观；`ui` 组件就是加上外观的 `base` 形式。
@@ -38,4 +38,4 @@ NSGo 是一个 Go module。应用从上层导入它的包；各平台的后端�
 - 处处使用原生视图，各平台表现一致：某个平台原生具备的东西，其他平台用同样的方式模仿。
 - 不手写 C；除 x86_64 Android 模拟器外，构建所有目标只需要 macOS、Xcode 和 Go。
 
-各平台还缺什么，记录在[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)中。
+各平台还缺什么，记录在[路线图](https://github.com/nsgo-dev/nsgo/blob/main/docs/roadmap.md)中。

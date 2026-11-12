@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Overlays and modals stay where they are built in the shadow tree, for

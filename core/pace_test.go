@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // pacedList is a list of 30-point rows in a 300-point viewport.

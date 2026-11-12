@@ -7,7 +7,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // gtkSlider is GTK's GtkScale, as a native component: it reports its

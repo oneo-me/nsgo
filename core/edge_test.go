@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 func scrollConfig(b *driver.MountBatch, id driver.NodeID) *driver.ScrollConfig {

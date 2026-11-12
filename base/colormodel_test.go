@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 func TestColorsRoundTripThroughEverySpace(t *testing.T) {

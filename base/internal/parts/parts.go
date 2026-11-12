@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // FirstFrame is how long a popup or a toast waits for its first display

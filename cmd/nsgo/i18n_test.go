@@ -184,7 +184,7 @@ func TestCatalogApp(t *testing.T) {
 	}
 	dir := t.TempDir()
 	writeFiles(t, dir, map[string]string{
-		"go.mod": "module example.com/app\n\ngo 1.26.0\n\nrequire github.com/oneo-me/nsgo v0.0.0\n\nreplace github.com/oneo-me/nsgo => " + root + "\n",
+		"go.mod": "module example.com/app\n\ngo 1.26.0\n\nrequire github.com/nsgo-dev/nsgo v0.0.0\n\nreplace github.com/nsgo-dev/nsgo => " + root + "\n",
 		"go.sum": string(sum),
 		"app.go": "package app\n\nimport _ \"example.com/app/locales\"\n",
 		"locales/en.yaml": `
@@ -221,7 +221,7 @@ fixed:
 		"locales/de.yaml": `
 filesSelected: "{count, plural, =0 {Keine Dateien ausgewählt} one {# Datei ausgewählt} other {# Dateien ausgewählt}}"
 greeting: "Hallo, {name}!"
-github.com/oneo-me/nsgo/base/locales:
+github.com/nsgo-dev/nsgo/base/locales:
   sortBy: "Nach {column} sortieren"
   diffExpandAll: "Alle aufklappen"
 `,
@@ -235,7 +235,7 @@ import (
 	"time"
 
 	"example.com/app/locales"
-	baselocales "github.com/oneo-me/nsgo/base/locales"
+	baselocales "github.com/nsgo-dev/nsgo/base/locales"
 )
 
 func TestMessages(t *testing.T) {
@@ -327,7 +327,7 @@ func TestLacksModule(t *testing.T) {
 		err  string
 		want bool
 	}{
-		{"missing go.sum entry for module providing package github.com/yuin/goldmark (imported by github.com/oneo-me/nsgo/base/textview); to add:", true},
+		{"missing go.sum entry for module providing package github.com/yuin/goldmark (imported by github.com/nsgo-dev/nsgo/base/textview); to add:", true},
 		{"no required module provides package example.com/x; to add it:", true},
 		{"go: updates to go.mod needed; to update it:\n\tgo mod tidy", true},
 		{"cannot find package \"fmtx\" in GOROOT", false},

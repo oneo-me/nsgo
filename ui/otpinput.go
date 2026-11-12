@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // OtpInput is a one-time code in bordered cells, the one that takes the

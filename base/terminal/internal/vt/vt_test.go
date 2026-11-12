@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/library"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/library"
 )
 
 // loadLib loads the terminal's libghostty-vt, or the one $NSGO_GHOSTTY_VT

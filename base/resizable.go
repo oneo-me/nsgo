@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Resizable panels follow gpui-base's resizable module, as NSH's do: a

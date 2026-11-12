@@ -3,12 +3,12 @@ package main
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // The viewer's deepest zoom and where a double tap zooms to, how close

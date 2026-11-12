@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestProgress fills a determinate bar to its value and sweeps an

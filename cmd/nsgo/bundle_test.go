@@ -20,8 +20,8 @@ func TestTSXAppsAreCompiledAhead(t *testing.T) {
 import (
 	"embed"
 
-	"github.com/oneo-me/nsgo"
-	tsxc "github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/nsgo-dev/nsgo"
+	tsxc "github.com/nsgo-dev/nsgo/tsx/compiler"
 )
 
 //go:embed *.tsx

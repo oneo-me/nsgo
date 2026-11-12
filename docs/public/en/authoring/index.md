@@ -14,7 +14,7 @@ A component is a type with a `Render` method, as in an app. Its fields are what 
 ```go
 package chips
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Chip is a short label in a pill.
 type Chip struct {

@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestTextView draws Markdown in the theme, under the app's own styles.

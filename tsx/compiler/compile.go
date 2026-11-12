@@ -5,7 +5,7 @@ package compiler
 import (
 	"io/fs"
 
-	"github.com/oneo-me/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
 )
 
 // compileAtStart compiles an app's TSX as it starts, without a bundle

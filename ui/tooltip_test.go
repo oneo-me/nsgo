@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestTooltip shows a tooltip as the pointer rests on its trigger.

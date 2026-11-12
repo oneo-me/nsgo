@@ -8,7 +8,7 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 const carbonPath = "/System/Library/Frameworks/Carbon.framework/Carbon"

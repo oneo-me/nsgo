@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/platform/fontfile"
+	"github.com/nsgo-dev/nsgo/internal/platform/fontfile"
 )
 
 // registerFonts loads the app's font files, paths under its resources,

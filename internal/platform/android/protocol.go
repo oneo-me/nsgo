@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // This file holds what builds on every system: the protocol's encoding and

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // AreaState is gpui-base's persisted dock layout, its field names and

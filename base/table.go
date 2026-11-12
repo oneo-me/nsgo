@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Table is a static table of the app's own rows and cells, with a table's
 // roles for screen readers and no look of its own, as gpui-base's Table

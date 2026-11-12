@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // cssColors are CSS's basic named colors, what HTML in documents uses.

@@ -3,7 +3,7 @@ package base
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Roving focus, as NSH's roving.rs: a group whose items are one stop of

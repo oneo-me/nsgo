@@ -3,7 +3,7 @@ package imagedecode
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // miterLimit is SVG's and the web canvas's default: longer miters are

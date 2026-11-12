@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // tally is NSH's examples/rust-exports class, in Go.

@@ -4,8 +4,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 // TestPin is the environment a test pins over the platform's, which it

@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 )
 
 // PlainShell is a window of the app's content under a header: the app's

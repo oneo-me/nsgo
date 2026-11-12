@@ -3,10 +3,10 @@ package main
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // specimenStage is the stage every specimen stands on: the card's light,

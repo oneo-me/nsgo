@@ -1,8 +1,8 @@
 package terminal
 
 import (
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Theme is the colors of a terminal, which programs may change (OSC 4,

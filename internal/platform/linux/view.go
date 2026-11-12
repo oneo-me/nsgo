@@ -6,11 +6,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/field"
-	"github.com/oneo-me/nsgo/internal/platform/finger"
-	"github.com/oneo-me/nsgo/internal/platform/hover"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/field"
+	"github.com/nsgo-dev/nsgo/internal/platform/finger"
+	"github.com/nsgo-dev/nsgo/internal/platform/hover"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
 )
 
 // view is the main thread's copy of one mounted view, drawn by its

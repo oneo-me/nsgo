@@ -8,8 +8,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 func typeError(format string, args ...any) error {

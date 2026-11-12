@@ -28,7 +28,7 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // matrix is an affine transform: x' = a x + c y + e, y' = b x + d y + f,

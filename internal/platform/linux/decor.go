@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // GSK draws what a style needs past a rounded box: corners of their own

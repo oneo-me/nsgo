@@ -5,7 +5,7 @@ package windows
 import (
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A scroll view's edge effects draw over its children, each side's band

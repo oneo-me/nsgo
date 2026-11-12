@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Checkbox is checked, unchecked or indeterminate: an option, an item of a
 // selection, a "select all". Its parts are the indicator, the box holding

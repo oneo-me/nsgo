@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Style is a node's layout, look and text. Every field's zero value means

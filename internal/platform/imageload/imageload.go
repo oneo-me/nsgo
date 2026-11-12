@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // ResourceRoot is the directory "asset:" paths resolve against: the

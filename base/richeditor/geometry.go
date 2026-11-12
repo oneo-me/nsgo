@@ -5,7 +5,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // boxOf is a block's box in the content box.

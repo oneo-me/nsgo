@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestSkeleton pulses its bars in a wave, reads as one element, and

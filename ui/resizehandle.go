@@ -3,8 +3,8 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // HandleThumb is the thumb of a resize handle on phones, as

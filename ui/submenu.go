@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // Submenu is an item that opens more: beside it on desktops, in place of

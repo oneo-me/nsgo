@@ -2,16 +2,16 @@ package main
 
 import (
 	_ "embed"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"math"
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // The gallery's shell: its layouts, demo pages and headers, and helpers

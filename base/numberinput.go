@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"math"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // pageSteps is how many steps Page Up and Page Down go.

@@ -7,8 +7,8 @@ import (
 	"os"
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/updates"
 )
 
 // updateConfig is how the app Run runs updates. A check of an APK the

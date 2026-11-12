@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // Entry is the name of a shader's entry point, which returns the color

@@ -5,7 +5,7 @@ package windows
 import (
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Backdrop filters and blend modes read what lies behind a view out of

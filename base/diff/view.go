@@ -19,9 +19,9 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 
-	"github.com/oneo-me/nsgo/base/internal/syntax"
-	"github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/syntax"
+	"github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Indicators is how changed lines are marked beside their numbers.

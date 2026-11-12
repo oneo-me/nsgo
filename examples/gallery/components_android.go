@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // seekBar is Android's SeekBar, as a native component. The Go process

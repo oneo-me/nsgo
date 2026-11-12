@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/widget"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/widget"
 )
 
 // TestWidgets writes the widgets from the demo, which a test, no app built

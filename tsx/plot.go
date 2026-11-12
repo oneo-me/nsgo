@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/base/plot"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/plot"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // nsgo/base/plot: base/plot's marks with NSH's names and props. Rows are

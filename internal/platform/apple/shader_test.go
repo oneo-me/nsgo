@@ -13,9 +13,9 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 // TestShadersReadImages draws a shader that reads an image into a texture

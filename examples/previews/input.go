@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 func init() {

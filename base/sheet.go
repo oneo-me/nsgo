@@ -1,9 +1,9 @@
 package base
 
 import (
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/base/internal/sheet"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/base/internal/sheet"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Sheet is a panel at an edge of the app (Side) over a backdrop that

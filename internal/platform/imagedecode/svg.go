@@ -8,7 +8,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // sniffInflated is how much of an .svgz Sniff inflates to find the root

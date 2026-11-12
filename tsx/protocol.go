@@ -3,9 +3,9 @@ package tsx
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Props and style objects decoded into core's values (NSH's protocol.rs):

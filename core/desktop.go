@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // Desktop windows with the platform's native chrome and their menus: the
 // core's part of package desktop, which apps use. Platforms without

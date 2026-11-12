@@ -8,7 +8,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // TestMultilineEditorWrapsInItsViewport checks a multiline input's text

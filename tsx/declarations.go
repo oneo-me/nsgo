@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TypeScript declarations (NSH's declarations.rs): nsgo's own modules are
@@ -190,14 +190,14 @@ type declarer struct {
 // typePrefixes name the types of the packages of a component as NSH
 // does, after it: editor.Position is EditorPosition.
 var typePrefixes = map[string]string{
-	"github.com/oneo-me/nsgo/base/datatable": "DataTable",
-	"github.com/oneo-me/nsgo/base/diff":      "Diff",
-	"github.com/oneo-me/nsgo/base/dock":      "Dock",
-	"github.com/oneo-me/nsgo/base/editor":    "Editor",
-	"github.com/oneo-me/nsgo/base/plot":      "Plot",
-	"github.com/oneo-me/nsgo/base/textview":  "TextView",
-	"github.com/oneo-me/nsgo/base/toast":     "Toast",
-	"github.com/oneo-me/nsgo/core":           "Core",
+	"github.com/nsgo-dev/nsgo/base/datatable": "DataTable",
+	"github.com/nsgo-dev/nsgo/base/diff":      "Diff",
+	"github.com/nsgo-dev/nsgo/base/dock":      "Dock",
+	"github.com/nsgo-dev/nsgo/base/editor":    "Editor",
+	"github.com/nsgo-dev/nsgo/base/plot":      "Plot",
+	"github.com/nsgo-dev/nsgo/base/textview":  "TextView",
+	"github.com/nsgo-dev/nsgo/base/toast":     "Toast",
+	"github.com/nsgo-dev/nsgo/core":           "Core",
 }
 
 // typeRenames are the types NSH names otherwise, by the name they would

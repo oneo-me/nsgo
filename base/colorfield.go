@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // colorNumberDigits are the decimals a channel keeps as a number, so what

@@ -15,12 +15,12 @@ import (
 
 	"golang.org/x/image/font/gofont/gomedium"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/bundler"
-	"github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/tsx/compiler"
 )
 
 func TestOverlayFloatsAboveAndReportsOutsidePresses(t *testing.T) {

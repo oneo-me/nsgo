@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // GhosttyTheme returns a theme of Ghostty's by its name, as Ghostty's

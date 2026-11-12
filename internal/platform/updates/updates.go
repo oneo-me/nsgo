@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // Config is how the app updates, as the nsgo tool sets it from

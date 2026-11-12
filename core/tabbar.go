@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // TabBar is the core's part of mobile.TabBar, which apps use: the
 // system's tab bar, a native component iOS and Android register. The

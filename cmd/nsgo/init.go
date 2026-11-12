@@ -71,7 +71,7 @@ func initApp(dir, name, module, kind string) error {
 		done("create %s", rel(filepath.Join(dir, file)))
 	}
 	if module != "" {
-		detail("next: cd %s && go get github.com/oneo-me/nsgo && go get -tool github.com/oneo-me/nsgo/cmd/nsgo && go tool nsgo dev", rel(dir))
+		detail("next: cd %s && go get github.com/nsgo-dev/nsgo && go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo && go tool nsgo dev", rel(dir))
 	} else {
 		detail("next: go tool nsgo dev %s", rel(dir))
 	}
@@ -137,9 +137,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Root is the app's first screen.
@@ -163,7 +163,7 @@ var initTest = template.Must(template.New("test").Parse(`package main
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestMain gives the platform the main thread under nsgo test -target.
@@ -184,8 +184,8 @@ package main
 import (
 	"embed"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/tsx/compiler"
 )
 
 //go:embed *.tsx nsgo.yaml
@@ -249,8 +249,8 @@ mount(App);
 var initNative = template.Must(template.New("native").Parse(`package main
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // Badge is a Go component App.tsx renders: its fields are its props, in

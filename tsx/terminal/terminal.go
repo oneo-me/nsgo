@@ -6,9 +6,9 @@ package terminal
 import (
 	"io"
 
-	"github.com/oneo-me/nsgo/base/terminal"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/terminal"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // Terminal is a terminal running a program, the user's shell by default,

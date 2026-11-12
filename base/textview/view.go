@@ -11,8 +11,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/base/textview/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/textview/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TextView shows a document: Markdown or HTML, parsed once per change,

@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // devServer is nsgo dev's server, set with -ldflags -X for targets that

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Document is what a TextView shows: its blocks, then its footnotes.

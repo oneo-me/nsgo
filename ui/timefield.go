@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TimeField is a time of day in a field 28 pt tall, edited a segment at a

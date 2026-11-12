@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Native shows a view of a component the app registered with its

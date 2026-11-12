@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/toast"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/base/toast"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // ToastType picks a toast's colored status icon; ToastPlain shows none.

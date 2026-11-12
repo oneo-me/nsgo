@@ -3,7 +3,7 @@ package richeditor
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Block drags are Tiptap's drag handle over ProseMirror's view.dragging:

@@ -7,7 +7,7 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
 )
 
 // RichEditorOptions are createRichEditor's: the extensions, StarterKit and

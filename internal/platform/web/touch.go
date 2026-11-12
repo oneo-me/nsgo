@@ -7,7 +7,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Touches for the views that listen to them: each pointer down on the

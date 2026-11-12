@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/updater/locales"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/updater/locales"
 )
 
 // Check checks for a newer version now, as a Check for Updates… item

@@ -18,9 +18,9 @@ import (
 
 	"golang.org/x/image/bmp"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imagedecode"
-	"github.com/oneo-me/nsgo/internal/platform/picked"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imagedecode"
+	"github.com/nsgo-dev/nsgo/internal/platform/picked"
 )
 
 // The services Win32 performs: the clipboard's images and files, opening

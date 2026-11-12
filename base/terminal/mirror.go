@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
 )
 
 // Mirror frames what a terminal shows for another terminal to show, as a

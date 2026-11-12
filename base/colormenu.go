@@ -1,8 +1,8 @@
 package base
 
 import (
-	"github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // ColorChoice is a row of a color's menu.

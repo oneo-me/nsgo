@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 var (

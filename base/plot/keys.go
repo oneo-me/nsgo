@@ -1,6 +1,6 @@
 package plot
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // keyStep is where a key moves a plot's hover. gpui-base's plot has no
 // keyboard of its own and WAI-ARIA has no pattern for charts, so the keys

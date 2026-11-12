@@ -3,7 +3,7 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // skeletonStagger is how long after the block above each block starts

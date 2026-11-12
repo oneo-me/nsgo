@@ -1,10 +1,10 @@
 package tsx
 
 import (
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The host elements' props (NSH's HostProps and each element's own):

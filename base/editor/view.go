@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/base/internal/syntax"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/syntax"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The view: a vertical Scroll of a row of the gutter and the text area (a

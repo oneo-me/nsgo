@@ -24,7 +24,7 @@ import (
 	"github.com/go-sourcemap/sourcemap"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // gojaLacks are the features goja does not run, which esbuild lowers.

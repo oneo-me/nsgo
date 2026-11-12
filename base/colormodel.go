@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // ColorSpace is a way of writing a color by channels.

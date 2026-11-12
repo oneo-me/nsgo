@@ -39,7 +39,7 @@ Every target builds on a Mac with Go; iOS also needs Xcode. The `nsgo` tool crea
 
 ## Status
 
-NSGo is early: it has no stable API or release yet, and what is missing is in the [roadmap](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md). It ports the design of [Native Shell](https://github.com/longbridge/nsh) to Go.
+NSGo is early: it has no stable API or release yet, and what is missing is in the [roadmap](https://github.com/nsgo-dev/nsgo/blob/main/docs/roadmap.md). It ports the design of [Native Shell](https://github.com/longbridge/nsh) to Go.
 
 ## How to read the docs
 

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	androidruntime "github.com/oneo-me/nsgo/internal/platform/android/runtime"
+	androidruntime "github.com/nsgo-dev/nsgo/internal/platform/android/runtime"
 )
 
 // A bundle holds the base module and its config, signed as a JAR whose

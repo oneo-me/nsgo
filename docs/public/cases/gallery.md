@@ -4,7 +4,7 @@ Every component of `base` and `ui` in one app, with every part of each to try an
 
 - platforms: iOS, macOS, Web
 - site: https://nsgo.dev/gallery/
-- source: https://github.com/oneo-me/nsgo/tree/main/examples/gallery
+- source: https://github.com/nsgo-dev/nsgo/tree/main/examples/gallery
 - author: ONEO
 
 ![The gallery's Stocks app in its desktop layout](gallery.jpg)

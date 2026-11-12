@@ -4,7 +4,7 @@ import (
 	"hash/maphash"
 	"math"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // measureCache is what texts measured, per engine, as NSH's MeasureCache:

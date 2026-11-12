@@ -16,8 +16,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/internal/syntax"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/syntax"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Position is a place in the text: a line from 0 and a column in UTF-16

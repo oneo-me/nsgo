@@ -1,9 +1,9 @@
 package nsgo
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/platform/updates"
-	"github.com/oneo-me/nsgo/updater"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/updater"
 )
 
 // updateConfig is how the app updates, as the nsgo tool set it from

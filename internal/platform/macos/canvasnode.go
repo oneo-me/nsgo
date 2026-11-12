@@ -5,8 +5,8 @@ package macos
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // A canvas's named parts are NSAccessibilityElements, its accessibility

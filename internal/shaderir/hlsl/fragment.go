@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // Fragment returns p's fragment entry point as an HLSL (shader model 5)

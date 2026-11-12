@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // scaleKind is what a Scale places.

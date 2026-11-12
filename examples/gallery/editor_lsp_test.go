@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/editor"
+	"github.com/nsgo-dev/nsgo/base/editor"
 )
 
 // TestLanguageServerReadsTheSample checks the simulated server finds in

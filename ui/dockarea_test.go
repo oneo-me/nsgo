@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/dock"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/dock"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestDockArea selects a tab, which takes the surface, and closes a

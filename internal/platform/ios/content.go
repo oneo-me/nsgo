@@ -5,8 +5,8 @@ package ios
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // Text and canvas views draw into a content layer of their own, as on

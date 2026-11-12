@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // fruits is a list's rows in the tests.

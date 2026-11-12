@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
-	uirich "github.com/oneo-me/nsgo/ui/richeditor"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	uirich "github.com/nsgo-dev/nsgo/ui/richeditor"
 )
 
 // TestViewTakesTyping lays a document out in ui's look and types into it.

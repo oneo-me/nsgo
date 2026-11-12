@@ -116,7 +116,7 @@ var layerTargets = [][2]string{
 	{"js", "wasm"},
 }
 
-const modulePath = "github.com/oneo-me/nsgo"
+const modulePath = "github.com/nsgo-dev/nsgo"
 
 func TestLayering(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {

@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/diff"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/diff"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
-	uidiff "github.com/oneo-me/nsgo/ui/diff"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
+	uidiff "github.com/nsgo-dev/nsgo/ui/diff"
 )
 
 const diffOld = `package store

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The commit's benchmarks, NSH's bench_view_tick, bench_high_frequency

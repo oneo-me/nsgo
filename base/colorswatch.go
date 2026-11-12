@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // ColorSwatch shows a color: Color, or the picker's around it without one.
 type ColorSwatch struct {

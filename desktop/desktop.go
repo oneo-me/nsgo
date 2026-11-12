@@ -10,7 +10,7 @@
 // should show it while ShowsMaterial.
 package desktop
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 type (
 	// TitleBarStyle is whether the system draws the window's title bar.

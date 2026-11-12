@@ -99,7 +99,7 @@ func (p *project) appPackages(ctx context.Context, pattern string) ([]goPackage,
 }
 
 // nsgoModule is NSGo's module path.
-const nsgoModule = "github.com/oneo-me/nsgo"
+const nsgoModule = "github.com/nsgo-dev/nsgo"
 
 // tidy runs go mod tidy in the app's module, then requires what tsx needs,
 // which the types nsgo check and dev write import through an overlay that

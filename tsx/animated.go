@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Animation (NSH's animated.rs): AnimatedNode and AnimatedValue are

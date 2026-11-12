@@ -5,7 +5,7 @@ package core
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/shader/wgsl"
+	"github.com/nsgo-dev/nsgo/internal/shader/wgsl"
 )
 
 // TestUncompiledBuiltinLanes keeps shader_nocompile.go's count of the

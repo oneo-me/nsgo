@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // FocusLog keeps the focus sessions in Go; TSX makes one with new.

@@ -3,7 +3,7 @@ package wgsl
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // kind is a WGSL type's kind; a vector's or a matrix's scalar is a kind

@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 const (

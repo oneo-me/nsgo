@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/dock"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/dock"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // DockArea is dock.Area in ui's look: tab bars on the inset

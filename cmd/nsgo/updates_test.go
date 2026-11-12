@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/platform/updates"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // updatingProject loads an app whose nsgo.yaml adds yaml to updates with

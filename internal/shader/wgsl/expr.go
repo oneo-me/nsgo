@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // value is an expression checked: its type, and a constant (c, a scalar;

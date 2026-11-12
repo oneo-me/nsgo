@@ -3,7 +3,7 @@ package core
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The windows, panels and tray icons an app opens itself, its global

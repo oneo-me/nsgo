@@ -3,7 +3,7 @@ package base
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Toolbar is a bar of controls: assistive technology hears one toolbar,

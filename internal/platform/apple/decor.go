@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // What a CALayer's own properties cannot draw goes into sublayers made on

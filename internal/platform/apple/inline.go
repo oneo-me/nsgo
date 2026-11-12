@@ -8,7 +8,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // What CoreText draws besides glyphs: attachments' placeholders sized by

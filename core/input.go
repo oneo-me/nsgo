@@ -3,8 +3,8 @@ package core
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/layout"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/layout"
 )
 
 // Composition is an input method's composition in a text field.

@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Presses as they happen: the left button going down on a view that

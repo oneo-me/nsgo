@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // fakeHost records what the mounter hands the mini program.

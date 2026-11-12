@@ -8,7 +8,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Effects, transitions and navigation shaders (driver.Shader.Role) draw

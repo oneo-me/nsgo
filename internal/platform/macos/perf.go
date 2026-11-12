@@ -8,9 +8,9 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/perfhud"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/perfhud"
 )
 
 // The performance monitor's HUD (`nsgo dev`): a panel at the top right

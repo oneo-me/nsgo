@@ -12,8 +12,8 @@ order: 13
 ```sh
 mkdir repos && cd repos
 go mod init example.com/repos
-go get github.com/oneo-me/nsgo
-go get -tool github.com/oneo-me/nsgo/cmd/nsgo
+go get github.com/nsgo-dev/nsgo
+go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo
 go tool nsgo init
 go tool nsgo dev
 ```
@@ -30,9 +30,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // api lists the most-starred Go repositories on GitHub.
@@ -151,7 +151,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 func TestMain(m *testing.M) { nsgotest.Main(m) }

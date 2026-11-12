@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The cases are NSH's (crates/nsh-base/src/text_view/html/tests.rs).

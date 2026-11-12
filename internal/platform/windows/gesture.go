@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Gestures. A drag with the mouse (or a finger, which Windows turns into

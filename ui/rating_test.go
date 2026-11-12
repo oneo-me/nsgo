@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestRating scores by a press, clears with a press on the score, and

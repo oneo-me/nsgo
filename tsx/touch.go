@@ -1,9 +1,9 @@
 package tsx
 
 import (
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Touches and the responder (NSH's touch.rs): a view's touch handlers

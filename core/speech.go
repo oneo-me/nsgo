@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // SpeechError is why a speech session ended without its transcript,

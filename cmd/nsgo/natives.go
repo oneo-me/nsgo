@@ -15,7 +15,7 @@ import (
 // tool puts into the apps that link it, signed with them.
 
 // ghosttyPackage is the package holding libghostty-vt's builds.
-const ghosttyPackage = "github.com/oneo-me/nsgo/base/terminal/internal/library"
+const ghosttyPackage = "github.com/nsgo-dev/nsgo/base/terminal/internal/library"
 
 // ghosttyFramework is libghostty-vt as an iOS app's framework, where the
 // terminal looks for it.

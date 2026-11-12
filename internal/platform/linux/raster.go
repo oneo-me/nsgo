@@ -8,7 +8,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A canvas is rasterized with Cairo into an image surface at the

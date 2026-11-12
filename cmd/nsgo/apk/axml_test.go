@@ -5,7 +5,7 @@ import (
 	"testing"
 	"unicode/utf16"
 
-	androidruntime "github.com/oneo-me/nsgo/internal/platform/android/runtime"
+	androidruntime "github.com/nsgo-dev/nsgo/internal/platform/android/runtime"
 )
 
 // TestEncodeManifest reads back the binary XML the system parses, above

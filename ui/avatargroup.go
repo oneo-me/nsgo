@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // AvatarGroupMember is one person of an AvatarGroup.

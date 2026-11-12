@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Canvas draws what Draw records, at the canvas's size, again whenever a

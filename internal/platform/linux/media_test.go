@@ -17,8 +17,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The tests below open windows, as native_test.go's do, and keep what

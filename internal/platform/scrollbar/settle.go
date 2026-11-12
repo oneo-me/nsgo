@@ -3,7 +3,7 @@ package scrollbar
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // WheelIdle is how long after its last turn a mouse wheel has settled.

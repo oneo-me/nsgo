@@ -5,7 +5,7 @@ package apple
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A font request that names the same face must hand back the same font

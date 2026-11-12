@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestCommitGraph lists the fictional history, collapses a merge and

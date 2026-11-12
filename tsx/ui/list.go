@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // syncSelection keeps s and what JS holds alike: selected, when set, sets

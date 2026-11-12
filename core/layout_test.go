@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 func wantFrames(t *testing.T, h *host, cases map[string]Bounds) {

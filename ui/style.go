@@ -3,7 +3,7 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Text is a line in ui's type: size, weight and a color it

@@ -6,7 +6,7 @@ import (
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
 )
 
 type counter struct {

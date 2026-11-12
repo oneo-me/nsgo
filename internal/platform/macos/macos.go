@@ -19,14 +19,14 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/desktop/locales"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/finger"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
-	"github.com/oneo-me/nsgo/internal/platform/queue"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/desktop/locales"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/finger"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/queue"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 func init() {

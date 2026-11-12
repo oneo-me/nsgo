@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestStepper marks completed steps with the accent and reads each

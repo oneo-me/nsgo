@@ -21,7 +21,7 @@ import (
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/webp"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Prepare returns files as r asks for them: at most r.Limit, each with

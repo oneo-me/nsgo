@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // CSS values in style objects (NSH's css.rs): lengths, angles, times and

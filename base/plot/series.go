@@ -5,7 +5,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // strokeRoom is how far a mark's canvas reaches past the plot's edges for

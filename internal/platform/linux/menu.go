@@ -5,8 +5,8 @@ package linux
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/menutext"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/menutext"
 )
 
 // roleActionBase separates a role's action data from a menu item's ID.

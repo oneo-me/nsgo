@@ -97,7 +97,7 @@ export function DiffDemo() {
 
 const markdown = `# TextView
 
-Markdown and HTML as **native** text, with _emphasis_, \`code\` and [links](https://github.com/oneo-me/nsgo).
+Markdown and HTML as **native** text, with _emphasis_, \`code\` and [links](https://github.com/nsgo-dev/nsgo).
 
 ## Lists
 

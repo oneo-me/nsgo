@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Keyboard shortcuts: the surface's table of bindings goes to the

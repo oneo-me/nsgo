@@ -3,7 +3,7 @@ package base
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // colorMaxSegments is the most gradients a track takes.

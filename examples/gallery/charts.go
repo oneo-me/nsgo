@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/plot"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/plot"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // chartDayNames are the days of a week, short, in tr's language.

@@ -3,7 +3,7 @@ package terminal
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
 )
 
 // SearchStatus is how a search of the terminal goes (Terminal.Search,

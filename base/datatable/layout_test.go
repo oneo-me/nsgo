@@ -1,7 +1,7 @@
 package datatable
 
 import (
-	"github.com/oneo-me/nsgo/base/internal/window"
+	"github.com/nsgo-dev/nsgo/base/internal/window"
 	"math"
 	"slices"
 	"testing"

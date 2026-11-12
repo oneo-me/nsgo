@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/cldr"
+	"github.com/nsgo-dev/nsgo/internal/cldr"
 
 	"golang.org/x/text/feature/plural"
 	"golang.org/x/text/language"

@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
-	"github.com/oneo-me/nsgo/widget"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/widget"
 )
 
 func main() { nsgo.Run(Root, nsgo.WindowSize(420, 360)) }

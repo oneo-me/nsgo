@@ -6,7 +6,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // video is a video view's <video>, as NSH's web backend has it: the

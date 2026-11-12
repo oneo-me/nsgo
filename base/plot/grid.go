@@ -3,8 +3,8 @@ package plot
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Grid is lines across a Plot, as gpui-base's Grid: vertical at the

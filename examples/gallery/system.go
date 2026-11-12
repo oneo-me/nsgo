@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"log"
 	"net/http"
 	"os"
@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // safeAreaDiagram is the window drawn to scale, with the safe area and
@@ -662,7 +662,7 @@ func servicesCard(cx *core.Scope) core.Node {
 	names := map[core.Appearance]string{core.AppearanceSystem: tr.SystemTheSystemS(), core.AppearanceLight: "light", core.AppearanceDark: "dark"}
 	return Card{Title: tr.SystemLinksPhotosAndAppearance(), Description: tr.SystemOpenurlPickimagesSetappearance(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		Caption{Label: "OpenURL"},
-		ui.Wrap{Children: []core.Node{small(tr.SystemTheWebsite(), open("https://github.com/oneo-me/nsgo")), small(tr.SystemAnEmail(), open("mailto:hello@example.com?subject=Hello%20from%20NSGo")),
+		ui.Wrap{Children: []core.Node{small(tr.SystemTheWebsite(), open("https://github.com/nsgo-dev/nsgo")), small(tr.SystemAnEmail(), open("mailto:hello@example.com?subject=Hello%20from%20NSGo")),
 			small(tr.SystemRefusedUrl(), open("javascript:alert(1)"))}},
 		core.Text{ContentFunc: opened.Get, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
 		core.View{Style: core.Style{Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)},

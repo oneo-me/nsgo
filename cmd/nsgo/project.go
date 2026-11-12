@@ -396,12 +396,12 @@ func (p *project) cache(parts ...string) string {
 }
 
 // corePath is package core's, which holds the app's identity (core.App).
-const corePath = "github.com/oneo-me/nsgo/core"
+const corePath = "github.com/nsgo-dev/nsgo/core"
 
 // ldflags builds nsgo.yaml's name, ID, version and build number into
 // core.App, and passes the rest of what nsgo.Run takes from it.
 func (p *project) ldflags(extra ...string) string {
-	const pkg = "github.com/oneo-me/nsgo"
+	const pkg = "github.com/nsgo-dev/nsgo"
 	flags := fmt.Sprintf("-X '%s.appName=%s' -X '%s.appID=%s' -X '%s.appVersion=%s' -X '%s.appBuild=%s'",
 		corePath, p.Name, corePath, p.ID, corePath, p.Version, corePath, p.BundleVersion())
 	if p.Appearance != "" {

@@ -10,7 +10,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Sample is a drawing and the pixels it must make.

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The widget extension (cmd/nsgo/widgets/Widgets.swift) reads a kind's

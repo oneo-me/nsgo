@@ -1,6 +1,6 @@
 package plot
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // AppearScope remembers which plots inside it have finished appearing, as
 // gpui-base's PlotAppearScope, so a plot made again after a gap, a row a

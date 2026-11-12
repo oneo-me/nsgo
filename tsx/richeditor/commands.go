@@ -1,7 +1,7 @@
 package richeditor
 
 import (
-	"github.com/oneo-me/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
 )
 
 // Command is RichCommand: an edit as data, resolved against the editor it

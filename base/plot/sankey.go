@@ -5,7 +5,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // SankeyAlign is which column a Sankey's node goes in, as d3-sankey's

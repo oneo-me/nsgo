@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // CommandDialog hosts a Command in a modal surface, or a sheet on touch

@@ -124,7 +124,7 @@ func linksPlatform(ctx context.Context, p *project) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("go list: %w", err)
 	}
-	return slices.Contains(strings.Fields(string(out)), "github.com/oneo-me/nsgo"), nil
+	return slices.Contains(strings.Fields(string(out)), "github.com/nsgo-dev/nsgo"), nil
 }
 
 // listTests lists the package's tests that run matches, as go test -list

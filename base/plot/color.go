@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // colorKind is what a ColorScale colors.

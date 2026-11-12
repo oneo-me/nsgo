@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // MeterVariant is a Meter's look: the color it fills with.
 type MeterVariant uint8

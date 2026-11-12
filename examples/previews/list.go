@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // item is a list demo's row.

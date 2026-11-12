@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The rest of NSH's renderer (dom.rs): refs, spreads, the primitives as

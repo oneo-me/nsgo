@@ -3,8 +3,8 @@
 package nsgo
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/platform/macos"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/platform/macos"
 )
 
 // run runs the app on its own surface, which opens its windows.

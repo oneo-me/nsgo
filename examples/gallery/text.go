@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 const lorem = "Native text, typeset once on the engine with the platform's text engine and drawn on the main thread without any layout work."

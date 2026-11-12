@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 var tones = [4]core.Color{core.RGB(0x007aff), core.RGB(0x34c759), core.RGB(0xff9500), core.RGB(0xaf52de)}

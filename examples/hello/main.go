@@ -8,10 +8,10 @@ package main
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/examples/hello/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/examples/hello/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 func main() { nsgo.Run(Root, nsgo.WindowSize(420, 320)) }

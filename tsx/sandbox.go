@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The sandbox (NSH's sandbox.rs and access.rs): what a bundle may use and

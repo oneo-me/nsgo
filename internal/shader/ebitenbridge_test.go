@@ -24,8 +24,8 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // Go's whitespace is U+0020 (SP), U+0009 (\t), U+000d (\r), and U+000A (\n).

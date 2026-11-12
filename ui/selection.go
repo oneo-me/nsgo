@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // The selection controls style base's parts by the states the control
 // reports: its indicator through PartStates, its marks and label through

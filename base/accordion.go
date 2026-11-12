@@ -3,7 +3,7 @@ package base
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // accordionContext is what an AccordionItem finds of its Accordion.

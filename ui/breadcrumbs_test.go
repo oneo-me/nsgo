@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestBreadcrumbs presses an ancestor, and one collapsed into the menu.

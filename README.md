@@ -36,8 +36,8 @@ With Go 1.26 or later, and Xcode for iOS, tvOS and watchOS, create an app and ru
 
 ```sh
 go mod init example.com/hello
-go get github.com/oneo-me/nsgo
-go get -tool github.com/oneo-me/nsgo/cmd/nsgo
+go get github.com/nsgo-dev/nsgo
+go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo
 go tool nsgo init   # -template tsx for a TSX app
 go tool nsgo dev    # -target web, ios_simulator, tvos_simulator, watchos_simulator, android or miniprogram_wechat to run elsewhere
 ```

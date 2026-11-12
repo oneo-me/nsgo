@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/hlsl"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/hlsl"
 )
 
 // A shader view draws with Direct3D 11 on the device Direct2D draws

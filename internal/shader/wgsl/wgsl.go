@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // Limits on what a shader may be, as NSH's.

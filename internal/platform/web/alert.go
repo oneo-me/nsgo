@@ -7,7 +7,7 @@ import (
 	"slices"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // alert is an open alert: a dialog over the whole page, answered once.

@@ -15,9 +15,9 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 // ShaderLayer draws a shader view with Metal: a CAMetalLayer the view's

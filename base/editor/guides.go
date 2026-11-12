@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // What the rows' box draws besides the text: rulers, indent guides,

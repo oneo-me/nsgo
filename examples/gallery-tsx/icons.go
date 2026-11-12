@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
-	tsxui "github.com/oneo-me/nsgo/tsx/ui"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
+	tsxui "github.com/nsgo-dev/nsgo/tsx/ui"
 )
 
 // The Lucide icons the TSX names.

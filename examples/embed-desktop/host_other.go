@@ -2,7 +2,7 @@
 
 package main
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 func runHost() { panic("embed-desktop: a desktop host runs on macOS, Windows and Linux") }
 

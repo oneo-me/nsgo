@@ -7,9 +7,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/i18n"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/i18n"
 )
 
 // View shows a terminal and takes its keyboard. Its size sets the

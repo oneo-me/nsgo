@@ -4,8 +4,8 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Slider's geometry: a 4-point track under a white capsule knob 20 × 16,

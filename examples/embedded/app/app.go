@@ -11,8 +11,8 @@ package app
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Badge is the native component a host registers for the app: a view of

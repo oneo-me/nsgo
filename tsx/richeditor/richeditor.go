@@ -12,9 +12,9 @@ package richeditor
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // View is RichEditor in TSX: base/richeditor's View over a

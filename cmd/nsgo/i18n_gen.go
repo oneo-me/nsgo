@@ -19,8 +19,8 @@ import (
 // nor parses catalogs.
 func (c *catalog) generate() ([]byte, error) {
 	g := &goWriter{imports: map[string]string{
-		"github.com/oneo-me/nsgo/core": "core",
-		"github.com/oneo-me/nsgo/i18n": "i18n",
+		"github.com/nsgo-dev/nsgo/core": "core",
+		"github.com/nsgo-dev/nsgo/i18n": "i18n",
 	}}
 	langs := c.languages()
 	src := c.files[c.source]

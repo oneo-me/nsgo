@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // UpdateCheck is what the platform's updater answers CheckForUpdates

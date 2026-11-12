@@ -4,7 +4,7 @@
 // accessibility and take every visual choice from the app.
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Button is a pressable container with the button role. Its look is the
 // style and children the app gives it, its states included.

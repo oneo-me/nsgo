@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // setClipboard puts text on the clipboard.

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // newTerminal makes a terminal of opts, skipping where none runs.

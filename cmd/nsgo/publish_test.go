@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 func TestCapabilitiesAreReadStrictly(t *testing.T) {

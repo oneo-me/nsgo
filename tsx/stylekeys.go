@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Style objects decoded into core.Style (NSH's style.rs style_keys!):

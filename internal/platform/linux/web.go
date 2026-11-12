@@ -11,8 +11,8 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // WebKitGTK 6.0, the GTK 4 one, loads on the first web view, so apps

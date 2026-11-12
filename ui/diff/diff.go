@@ -6,12 +6,12 @@ package diff
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/diff"
-	"github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/diff"
+	"github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // View is diff.DiffView in ui's look: 12 point text on 18

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // What a reviewer does: selecting lines on the numbers, the app's

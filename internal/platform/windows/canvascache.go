@@ -5,7 +5,7 @@ package windows
 import (
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A canvas plays its drawing into Direct2D command lists, as NSH's do,

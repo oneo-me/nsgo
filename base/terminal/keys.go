@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
 )
 
 // keyInfo is Ghostty's key for a key core names, and the character it

@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // Pointer events: where a press, the mouse or a secondary click was and
 // which modifier keys were held, as NSH's PressEvent, MouseEvent and

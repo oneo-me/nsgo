@@ -1,8 +1,8 @@
 package base
 
 import (
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Dialog is a modal layer over the app: an optional backdrop and a

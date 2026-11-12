@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 )
 
 // The globals NSH's runtime gives every VM (timers.rs, console.rs):

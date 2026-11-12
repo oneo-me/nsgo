@@ -12,9 +12,9 @@ import (
 	"sync"
 	"weak"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Go classes and calls in TSX (NSH's classes.rs and call.rs, on

@@ -5,8 +5,8 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // RadiusScale is how a Dot's values of Sizes become radii, as d3's

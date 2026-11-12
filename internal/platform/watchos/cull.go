@@ -2,7 +2,7 @@
 
 package watchos
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // A watch has the memory for the views on its screen, not for a long
 // page's: SwiftUI keeps a view's state and its Canvas's pixels whether it

@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // Rating is a score from 0 to Max, 5 when 0, in stars filled in the

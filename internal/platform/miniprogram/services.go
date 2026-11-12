@@ -7,7 +7,7 @@ import (
 	"path"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Services are the mini program's own: alerts and action sheets are the

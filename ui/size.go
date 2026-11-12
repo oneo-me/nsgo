@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Size is a control's size, the same on every device. Its zero value is
 // the standard size.

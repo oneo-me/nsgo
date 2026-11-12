@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/cmd/nsgo/apk"
+	"github.com/nsgo-dev/nsgo/cmd/nsgo/apk"
 )
 
 // signing is nsgo.yaml's sign section: what release packages are signed

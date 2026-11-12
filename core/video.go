@@ -3,7 +3,7 @@ package core
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Video plays a video in the platform's player, filling the view: the

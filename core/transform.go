@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // TransformKind is a function of CSS's transform property.

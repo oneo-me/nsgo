@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // CommandItem is a command of a Command.

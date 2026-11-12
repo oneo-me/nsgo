@@ -3,13 +3,13 @@ package main
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
-	uirich "github.com/oneo-me/nsgo/ui/richeditor"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
+	uirich "github.com/nsgo-dev/nsgo/ui/richeditor"
 )
 
 const richDoc = "# Release notes\n\n" +

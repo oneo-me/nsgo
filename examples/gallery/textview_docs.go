@@ -6,7 +6,7 @@ import "regexp"
 
 const tvMarkdown = `# NSGo
 
-**NSGo** runs apps written in *Go* and renders them with each platform's ~~web views~~ own views. Press <kbd>⌘K</kbd> to search the docs, or read [the guide](https://github.com/oneo-me/nsgo).
+**NSGo** runs apps written in *Go* and renders them with each platform's ~~web views~~ own views. Press <kbd>⌘K</kbd> to search the docs, or read [the guide](https://github.com/nsgo-dev/nsgo).
 
 ## How it works
 
@@ -64,7 +64,7 @@ Numbers come from the gallery's benchmarks.[^1]
 const tvHTML = `<article>
   <header>
     <h1 id="nsgo">NSGo: native UI from Go</h1>
-    <p><small>Posted by the NSGo team &middot; 6 min read &middot; <a href="https://github.com/oneo-me/nsgo" title="Repository">GitHub</a></small></p>
+    <p><small>Posted by the NSGo team &middot; 6 min read &middot; <a href="https://github.com/nsgo-dev/nsgo" title="Repository">GitHub</a></small></p>
   </header>
 
   <section>

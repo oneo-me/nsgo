@@ -22,8 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 func compileToIR(src []byte) (*shaderir.Program, error) {

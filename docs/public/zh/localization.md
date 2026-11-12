@@ -32,4 +32,4 @@ go tool nsgo dev -lang en-XA
 
 ## NSGo 自己的文案
 
-NSGo 的组件以 NSGo 已翻译的语言显示自己的文案。对于其他语言，以包名为键（例如 `github.com/oneo-me/nsgo/base/locales`）即可用该文件的语言提供这个包的文案。
+NSGo 的组件以 NSGo 已翻译的语言显示自己的文案。对于其他语言，以包名为键（例如 `github.com/nsgo-dev/nsgo/base/locales`）即可用该文件的语言提供这个包的文案。

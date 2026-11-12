@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 var settingsCatalog = []SettingsCategory{

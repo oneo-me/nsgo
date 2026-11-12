@@ -6,7 +6,7 @@ import (
 	"math"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Gestures follow pointers on the host. A drag pans the nearest view

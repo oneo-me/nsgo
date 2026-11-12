@@ -7,11 +7,11 @@ order: 82
 
 ## Before you start
 
-Open an issue or a discussion for anything larger than a fix, so the design is agreed before the code. Questions the design leaves open are listed in [ARCHITECTURE.md](https://github.com/oneo-me/nsgo/blob/main/ARCHITECTURE.md#open-questions); their answers are decided there first.
+Open an issue or a discussion for anything larger than a fix, so the design is agreed before the code. Questions the design leaves open are listed in [ARCHITECTURE.md](https://github.com/nsgo-dev/nsgo/blob/main/ARCHITECTURE.md#open-questions); their answers are decided there first.
 
 ## Every backend
 
-A fix or a feature in one backend usually belongs in the others. Make the same change on every target that needs it, or record what is missing in the [roadmap](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md). Components look and behave the same on every platform.
+A fix or a feature in one backend usually belongs in the others. Make the same change on every target that needs it, or record what is missing in the [roadmap](https://github.com/nsgo-dev/nsgo/blob/main/docs/roadmap.md). Components look and behave the same on every platform.
 
 ## Checks
 

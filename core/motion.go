@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Keyframes and motions follow NSH's animation::motion: data the core

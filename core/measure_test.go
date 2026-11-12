@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // countingEngine counts what its prepared texts measure.

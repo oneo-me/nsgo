@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Touches and the touch responder, as NSH's core runs them for Rust

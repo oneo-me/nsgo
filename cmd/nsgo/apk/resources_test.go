@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	androidruntime "github.com/oneo-me/nsgo/internal/platform/android/runtime"
+	androidruntime "github.com/nsgo-dev/nsgo/internal/platform/android/runtime"
 )
 
 // TestNames writes an APK named in several languages and, when the

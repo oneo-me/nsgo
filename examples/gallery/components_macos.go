@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 func init() {

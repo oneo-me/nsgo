@@ -14,9 +14,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // App returns the app of a bundle, for nsgo.Run and nsgotest.Start: it

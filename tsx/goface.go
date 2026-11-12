@@ -10,9 +10,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Go components in TSX (NSH's components.rs): a component is a type

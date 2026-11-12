@@ -3,7 +3,7 @@
 // texts as the model reads them, hit-tested through their layouts.
 package textselect
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // Text is one text of an area: its node, its content as ItemText gave it,
 // its content box in the coordinates the selection is driven in, and its

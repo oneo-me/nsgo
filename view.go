@@ -1,8 +1,8 @@
 package nsgo
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // View is an app in a native view of a host app's own window, run by the

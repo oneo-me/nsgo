@@ -8,9 +8,9 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
 )
 
 // Wheel and trackpad events reach the surface through the responder

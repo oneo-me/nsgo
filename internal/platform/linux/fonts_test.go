@@ -11,8 +11,8 @@ import (
 	"golang.org/x/image/font/gofont/gomedium"
 	"golang.org/x/image/font/gofont/gosmallcaps"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // TestRegisteredFontsLayOut registers a font file from the resources and

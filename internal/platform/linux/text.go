@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Pango units per point. Pango sizes, widths and spacing use these.

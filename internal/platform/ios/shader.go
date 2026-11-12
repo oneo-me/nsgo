@@ -3,8 +3,8 @@
 package ios
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // A shader view draws with Metal into a layer of its own below its

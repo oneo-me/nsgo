@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // Images download through the runtime's HttpURLConnection, with

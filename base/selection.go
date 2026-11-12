@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Selection is the rows a Tree or a List has chosen, by key, and the row
 // its keyboard cursor is on. The app makes it with NewSelection and keeps

@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Wrap lays its children out in a row that wraps, 8 pt apart.
 type Wrap struct{ Children []core.Node }

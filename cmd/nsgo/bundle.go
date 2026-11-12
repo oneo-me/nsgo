@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
 )
 
 // A TSX app's bundles: the tool compiles each entry its main package
@@ -24,7 +24,7 @@ import (
 // the package with a file calling compiler.Bundled, built with the
 // nsgo_bundled tag, which leaves the compiler out.
 
-const compilerPath = "github.com/oneo-me/nsgo/tsx/compiler"
+const compilerPath = "github.com/nsgo-dev/nsgo/tsx/compiler"
 
 // tsxEntries are the entries the main package in dir passes to
 // compiler.App as string literals, relative to dir.
@@ -287,7 +287,7 @@ import (
 	%s
 	"testing"
 
-	"github.com/oneo-me/nsgo/tsx/tsxtest"
+	"github.com/nsgo-dev/nsgo/tsx/tsxtest"
 )
 
 // appFiles are the files the tests compile the app from.

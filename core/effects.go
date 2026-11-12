@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // The look beyond React Native's view styles: per-corner radii, dashed
 // borders, outlines, layered shadows, gradients, filters, blend modes and

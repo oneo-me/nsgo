@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Element is an element built one change at a time, as nsh-core's

@@ -11,7 +11,7 @@ export type FrameworkId = 'nsgo' | 'mygo' | 'nsh' | 'gpui' | 'gpui-fast';
  * NSGo in the mark's blue, the others in quiet tints that tell them apart.
  */
 export const frameworks: { id: FrameworkId; name: string; url: string; color: string }[] = [
-  { id: 'nsgo', name: 'NSGo', url: 'https://github.com/oneo-me/nsgo', color: '#007aff' },
+  { id: 'nsgo', name: 'NSGo', url: 'https://github.com/nsgo-dev/nsgo', color: '#007aff' },
   { id: 'mygo', name: 'MyGo', url: 'https://github.com/egoist/mygo', color: '#d4a5b4' },
   { id: 'nsh', name: 'NSH', url: 'https://github.com/longbridge/nsh', color: '#9fc4af' },
   { id: 'gpui', name: 'GPUI Kit', url: 'https://github.com/longbridge/gpui-kit', color: '#b5acd4' },

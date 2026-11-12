@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The host reports the one touch a watch has, on the whole surface;

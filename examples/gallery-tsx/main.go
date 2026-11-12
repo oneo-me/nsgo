@@ -7,15 +7,15 @@ package main
 import (
 	"embed"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
-	"github.com/oneo-me/nsgo/tsx/compiler"
-	_ "github.com/oneo-me/nsgo/tsx/editor"
-	_ "github.com/oneo-me/nsgo/tsx/terminal"
-	_ "github.com/oneo-me/nsgo/tsx/ui/chat"
-	_ "github.com/oneo-me/nsgo/tsx/ui/richeditor"
-	_ "github.com/oneo-me/nsgo/tsx/ui"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/tsx/compiler"
+	_ "github.com/nsgo-dev/nsgo/tsx/editor"
+	_ "github.com/nsgo-dev/nsgo/tsx/terminal"
+	_ "github.com/nsgo-dev/nsgo/tsx/ui/chat"
+	_ "github.com/nsgo-dev/nsgo/tsx/ui/richeditor"
+	_ "github.com/nsgo-dev/nsgo/tsx/ui"
 )
 
 //go:embed *.tsx *.ts demos/*.tsx demos/*.ts

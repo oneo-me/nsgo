@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 func TestAllIcons(t *testing.T) {

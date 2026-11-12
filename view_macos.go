@@ -3,8 +3,8 @@
 package nsgo
 
 import (
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/macos"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/macos"
 )
 
 func newView(app App, o options, h engine.HostOptions) platformView {

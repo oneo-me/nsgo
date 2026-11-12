@@ -3,7 +3,7 @@ package base
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // ColorArea picks the saturation and brightness of HSB under a draggable

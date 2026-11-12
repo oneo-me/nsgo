@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/cmd/nsgo/apk"
-	androidruntime "github.com/oneo-me/nsgo/internal/platform/android/runtime"
+	"github.com/nsgo-dev/nsgo/cmd/nsgo/apk"
+	androidruntime "github.com/nsgo-dev/nsgo/internal/platform/android/runtime"
 )
 
 // androidComponent is the activity the runtime starts for an app.

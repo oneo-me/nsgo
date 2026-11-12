@@ -1,17 +1,17 @@
 package main
 
 import (
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/base/textview/highlight"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/base/textview/highlight"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // readingStyles is the gallery's reading typography for every part of a

@@ -42,13 +42,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/fontfile"
-	"github.com/oneo-me/nsgo/internal/platform/imagedecode"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
-	"github.com/oneo-me/nsgo/internal/platform/updates"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/fontfile"
+	"github.com/nsgo-dev/nsgo/internal/platform/imagedecode"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 // Message types, kept in sync with Protocol.java.

@@ -23,7 +23,7 @@ due: "Due {d, date, medium} at {d, time, short}"
 # de.yaml
 filesSelected: "{count, plural, =0 {Keine Dateien ausgewählt} one {# Datei ausgewählt} other {# Dateien ausgewählt}}"
 greeting: "Hallo, {name}!"
-github.com/oneo-me/nsgo/base/locales:   # supplies base's messages in German
+github.com/nsgo-dev/nsgo/base/locales:   # supplies base's messages in German
   sortBy: "Nach {column} sortieren"
 ```
 

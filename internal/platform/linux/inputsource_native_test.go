@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestInputSources selects an input source of the session's framework

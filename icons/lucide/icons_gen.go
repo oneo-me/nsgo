@@ -2,7 +2,7 @@
 
 package lucide
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // AArrowDown returns the Lucide a-arrow-down icon.
 // It parses once on first use and returns the same shared SVG afterwards.

@@ -7,7 +7,7 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Partial frames, as NSH's: a frame draws only what changed since the

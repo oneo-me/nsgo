@@ -8,7 +8,7 @@ import (
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
 )
 
 var tones = [4]ui.Color{ui.Hex("#007aff"), ui.Hex("#34c759"), ui.Hex("#ff9500"), ui.Hex("#af52de")}

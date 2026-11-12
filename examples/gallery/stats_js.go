@@ -10,7 +10,7 @@ import (
 // statsHosts are the site's hosts, where the web gallery counts its use,
 // as the site's Umami script's data-domains: a local server reports
 // nothing.
-var statsHosts = []string{"nsgo.dev", "oneo-me.github.io", "nsgo.oneo.me"}
+var statsHosts = []string{"nsgo.dev", "nsgo-dev.github.io", "nsgo.oneo.me"}
 
 // statsPage returns the page's host and the referrer it was opened from,
 // and whether the host is the site's.

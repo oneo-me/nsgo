@@ -8,8 +8,8 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
 )
 
 // A touchscreen's finger drags scroll views (scrollbar.TouchDrag): the

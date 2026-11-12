@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 const (

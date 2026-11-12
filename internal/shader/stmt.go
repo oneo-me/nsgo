@@ -23,7 +23,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 func (cs *compileState) forceToInt(node ast.Node, expr *shaderir.Expr) bool {

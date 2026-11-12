@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The Linux host is GTK 4 through purego: a GtkWindow holding a status

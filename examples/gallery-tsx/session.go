@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // demoSession stands in for a remote shell, as an SSH session would be

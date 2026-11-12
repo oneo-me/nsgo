@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/diff"
-	"github.com/oneo-me/nsgo/base/editor"
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/base/toast"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/diff"
+	"github.com/nsgo-dev/nsgo/base/editor"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/base/toast"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestEveryPartStyleHasAClass checks that each style a component of base

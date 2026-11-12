@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A frame callback runs once, with the frame's time, and not again.

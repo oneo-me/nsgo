@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // View runs the app of a package a pkg.Trust verified where it is placed

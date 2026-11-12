@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // measured is panels at sizes in a container of their sum, gpui-base's

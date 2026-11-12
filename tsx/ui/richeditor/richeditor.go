@@ -4,10 +4,10 @@
 package richeditor
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
-	trich "github.com/oneo-me/nsgo/tsx/richeditor"
-	uirich "github.com/oneo-me/nsgo/ui/richeditor"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
+	trich "github.com/nsgo-dev/nsgo/tsx/richeditor"
+	uirich "github.com/nsgo-dev/nsgo/ui/richeditor"
 )
 
 // View is nsgo/base's RichEditor in ui's look.

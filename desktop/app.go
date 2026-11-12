@@ -1,6 +1,6 @@
 package desktop
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // An app run with nsgo.Run's app function opens what it shows itself, as
 // an Avalonia application does: windows, panels, tray icons and global

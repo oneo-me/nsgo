@@ -8,7 +8,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // An app's font files join DirectWrite's system fonts in a collection of

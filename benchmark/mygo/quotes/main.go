@@ -8,7 +8,7 @@ import (
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
 )
 
 var widths = [5]float32{80, 90, 80, 80, 100}

@@ -24,4 +24,4 @@ build:
 #   installer_icon: assets/Icon.png
 #   uninstaller_icon: assets/Icon.png
 # release:
-#   github: oneo-me/nsgo   # the Git remote origin's by default
+#   github: nsgo-dev/nsgo   # the Git remote origin's by default

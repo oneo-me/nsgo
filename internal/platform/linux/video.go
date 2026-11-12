@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // video is a video view's player, as NSH's Linux backend has it: a

@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The motion of scroll views that keep offsets of their own, as NSH's

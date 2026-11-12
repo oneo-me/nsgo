@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Switch is on or off and takes effect at once, as a setting. Its parts
 // are a track and a thumb inside it, then its children, the label.

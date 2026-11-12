@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestSwitchSlidesAcrossUnrelatedChanges finishes the knob's slide when

@@ -19,7 +19,7 @@ package glsl
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 func opString(op shaderir.Op) string {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // Nested scroll views: a drag scrolls the innermost scroll view that can

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/base/terminal/locales"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/locales"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Ref reaches a View's selection and clipboard, for the app's menus: a

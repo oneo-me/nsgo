@@ -33,7 +33,7 @@ NSGo 在 UI 框架中的位置来自三个选择：应用用 Go 编写（也可�
 
 ## 劣势
 
-- **还很早期。** 尚无发布版本和稳定 API；[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)列出了缺少的部分，例如 Windows 和 Linux 上的多窗口，以及运行时下发的 TSX 的堆限制。
+- **还很早期。** 尚无发布版本和稳定 API；[路线图](https://github.com/nsgo-dev/nsgo/blob/main/docs/roadmap.md)列出了缺少的部分，例如 Windows 和 Linux 上的多窗口，以及运行时下发的 TSX 的堆限制。
 - **生态很小。** 与 Flutter、React Native 或 Qt 相比，第三方组件、示例和网上的答案都很少。
 - **平台之间有差异。** 原生视图意味着各平台之间存在细微差别，应用需要在每个平台上检查。自绘框架在哪里看起来都一样。
 - **自己的桥接方式。** 在 Android 上，Go 程序运行在 Java 运行时旁边，通过管道与它通信；Linux 用户需要 GTK 4.14 或更新版本。

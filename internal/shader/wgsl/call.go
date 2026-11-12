@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // call checks a call: a user's function, a type's constructor, bitcast or

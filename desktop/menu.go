@@ -1,6 +1,6 @@
 package desktop
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 type (
 	// MenuItem is one item of a menu: an action, a submenu when it has

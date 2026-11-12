@@ -19,7 +19,7 @@ var unlinked = map[string][]string{
 		"net/http", "crypto/tls", "crypto/x509",
 		// Shaders compile when an app makes one: no package variable,
 		// init or element case of its own reaches the compilers.
-		"github.com/oneo-me/nsgo/internal/shader", "github.com/oneo-me/nsgo/internal/shader/wgsl", "go/parser",
+		"github.com/nsgo-dev/nsgo/internal/shader", "github.com/nsgo-dev/nsgo/internal/shader/wgsl", "go/parser",
 	},
 	// The page decodes and encodes images with the browser's codecs.
 	"js": {"image/png", "image/jpeg", "image/gif", "golang.org/x/image/webp", "golang.org/x/image/draw"},

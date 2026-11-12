@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // phone is an environment with a system header and a status bar 40

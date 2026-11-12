@@ -3,9 +3,9 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 )
 
 // Dialog is a modal surface over a dimmed app and a sheet from the bottom

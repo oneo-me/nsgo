@@ -1,6 +1,6 @@
 package main
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // components are the gallery's native components, registered in main:
 // each platform's file adds its own.

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Canvas (NSH's canvas.rs): CanvasRenderingContext2D records into the

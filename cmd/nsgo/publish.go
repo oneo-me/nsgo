@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/bundler"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // Signed TSX packages (tsx/pkg): keygen prints keys, certify has a root

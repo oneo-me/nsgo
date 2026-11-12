@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestCarousel centers the chosen slide, follows the user's scroll and

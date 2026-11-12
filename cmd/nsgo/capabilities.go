@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // capabilities reads nsgo.yaml's capabilities strictly, nil when it has

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // devBuild is whether nsgo dev built the app.

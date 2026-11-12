@@ -3,10 +3,10 @@
 package core
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shader/wgsl"
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/shader/wgsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // builtinLanes are the lanes a WGSL program's built-ins take first.

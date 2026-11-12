@@ -8,9 +8,9 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/perfhud"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/perfhud"
 )
 
 // The performance monitor's panel (`nsgo dev` with fps on), as macOS's:

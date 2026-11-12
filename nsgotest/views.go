@@ -1,6 +1,6 @@
 package nsgotest
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // The types of the view model, which mirrors what the platforms mount.
 

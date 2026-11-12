@@ -4,9 +4,9 @@
 package textview
 
 import (
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 // Options are TextView's props, for a package that registers a form of it

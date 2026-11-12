@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // NavPage is one page of a Nav's stack, filling it. On iOS and Android the
 // platform draws the system header, a navigation bar or a toolbar, from

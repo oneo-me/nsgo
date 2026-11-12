@@ -2,7 +2,7 @@
 
 package apple
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // audioPlaying does nothing on macOS, which plays a video's sound as it
 // plays any.

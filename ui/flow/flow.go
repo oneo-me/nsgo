@@ -4,9 +4,9 @@
 package flow
 
 import (
-	baseflow "github.com/oneo-me/nsgo/base/flow"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/ui"
+	baseflow "github.com/nsgo-dev/nsgo/base/flow"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // The diagram's data and camera are base/flow's.

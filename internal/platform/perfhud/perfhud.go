@@ -6,7 +6,7 @@ package perfhud
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // Sampler reads the process' resources. CPU use is a rate: each sample

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // rulerWidth is the overview ruler's width unless its part gives one, and

@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/i18n"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/i18n"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 const doc = "# Title\n\n[Docs](https://nsgo.dev) and **bold**.\n\n- one\n- [x] two\n\n```go\nx := 1\n```\n\n" +

@@ -6,7 +6,7 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Direct2D draws what a style needs past a rounded rectangle from path

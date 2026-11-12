@@ -3,9 +3,9 @@ package tsx
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Shaders (NSH's shader host elements): Shader fills its box with a WGSL

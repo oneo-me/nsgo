@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // SharedMounter is a Platform that applies each batch within Mount, on

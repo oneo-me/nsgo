@@ -16,10 +16,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 	"golang.org/x/net/idna"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The web APIs (NSH's web/): web.js defines the classes on the natives

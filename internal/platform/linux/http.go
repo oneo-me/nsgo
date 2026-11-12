@@ -14,7 +14,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // Image downloads go through libsoup 3, which WebKitGTK and GNOME's

@@ -1,6 +1,6 @@
 package plot
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // pose is what a mark's moves go between: its shape as the app gives it.
 type pose[P any] interface {

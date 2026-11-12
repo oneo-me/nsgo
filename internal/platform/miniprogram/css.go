@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // The render layer is a web view, so a view's style is its inline CSS,

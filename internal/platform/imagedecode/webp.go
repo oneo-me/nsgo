@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/image/webp"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 var errWebP = errors.New("imagedecode: invalid WebP")

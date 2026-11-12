@@ -10,10 +10,10 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shader/wgsl"
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/shader/wgsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 // TestWGSLCompilesForMetal compiles the WGSL compiler's test shaders with

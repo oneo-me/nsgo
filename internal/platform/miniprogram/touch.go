@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The render layer reports every touch on a view that follows them (op

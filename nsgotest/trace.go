@@ -3,7 +3,7 @@ package nsgotest
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // traceBatch prints batch b, which the step running produced in a commit

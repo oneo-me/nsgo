@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // nsgo.yaml's updates have the app update the way its platform and the
@@ -218,7 +218,7 @@ func (p *project) updateLdflags(env []string) []string {
 	if !p.updatesOn() {
 		return nil
 	}
-	const pkgPath = "github.com/oneo-me/nsgo"
+	const pkgPath = "github.com/nsgo-dev/nsgo"
 	var flags []string
 	if feed := p.appcastURL(envTarget(env)); feed != "" && p.updates() {
 		flags = append(flags, fmt.Sprintf("-X '%s.updateFeed=%s'", pkgPath, feed),

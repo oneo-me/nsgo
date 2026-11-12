@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The methods of a node (NSH's YNode, `_core.d.ts`): each a command to

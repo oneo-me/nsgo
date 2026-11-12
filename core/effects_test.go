@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // viewStyles returns the view styles a batch sends, by node.

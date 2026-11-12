@@ -3,8 +3,8 @@ package base
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Tooltip shows a hint beside its trigger while the pointer rests on it

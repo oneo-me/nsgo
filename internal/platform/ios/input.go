@@ -5,9 +5,9 @@ package ios
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/field"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/field"
 )
 
 // Text inputs follow NSH's: a UITextField for one line, or a UITextView

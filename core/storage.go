@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // StorageQuota is the most an app may keep, in UTF-8 bytes of its keys and

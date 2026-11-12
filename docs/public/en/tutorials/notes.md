@@ -12,8 +12,8 @@ This tutorial builds a notes app: a list of notes, a page that edits one, and no
 ```sh
 mkdir notes && cd notes
 go mod init example.com/notes
-go get github.com/oneo-me/nsgo
-go get -tool github.com/oneo-me/nsgo/cmd/nsgo
+go get github.com/nsgo-dev/nsgo
+go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo
 go tool nsgo init
 go tool nsgo dev
 ```
@@ -29,11 +29,11 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 type note struct {
@@ -185,7 +185,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 func TestMain(m *testing.M) { nsgotest.Main(m) }

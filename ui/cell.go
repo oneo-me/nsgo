@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Cell is an equal share of a row for its Child.
 type Cell struct{ Child core.Node }

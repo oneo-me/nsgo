@@ -53,7 +53,7 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 var webBridge = driver.WebBridge("function (d) { window.chrome.webview.postMessage(d); }")

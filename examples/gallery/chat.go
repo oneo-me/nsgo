@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
-	"github.com/oneo-me/nsgo/ui/chat"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/ui/chat"
 )
 
 var featured = []struct {
@@ -765,7 +765,7 @@ func chatDemo(cx *core.Scope) core.Node {
 				refreshing.Set(false)
 			})
 		},
-		OnOpen: func() { cx.OpenURL("https://github.com/oneo-me/nsgo", nil) }}
+		OnOpen: func() { cx.OpenURL("https://github.com/nsgo-dev/nsgo", nil) }}
 	footer := func(cx *core.Scope) core.Node {
 		var replay []chat.Option
 		for _, c := range chips {

@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	baselocales "github.com/oneo-me/nsgo/base/locales"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/i18n"
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx"
+	baselocales "github.com/nsgo-dev/nsgo/base/locales"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/i18n"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 func init() {

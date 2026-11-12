@@ -3,8 +3,8 @@ package miniprogram
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // The mounter turns each batch into the runtime's operations and the

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // CheckHTTP runs get's checks.

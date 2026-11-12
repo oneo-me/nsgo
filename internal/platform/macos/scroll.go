@@ -8,9 +8,9 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
 )
 
 // Scroll views keep offsets of their own, as NSH's macOS backend does. A

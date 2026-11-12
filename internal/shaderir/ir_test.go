@@ -18,9 +18,9 @@ import (
 	"go/constant"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/glsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/glsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 func block(localVars []shaderir.Type, offset int, stmts ...shaderir.Stmt) *shaderir.Block {

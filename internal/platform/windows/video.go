@@ -37,8 +37,8 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 var (

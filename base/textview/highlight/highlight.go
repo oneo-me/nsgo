@@ -13,9 +13,9 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 
-	"github.com/oneo-me/nsgo/base/internal/syntax"
-	"github.com/oneo-me/nsgo/base/textview"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/syntax"
+	"github.com/nsgo-dev/nsgo/base/textview"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // New returns a highlighter colored for the system's appearance, so an

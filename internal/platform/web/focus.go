@@ -6,7 +6,7 @@ import (
 	"slices"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Keyboard focus for pressable views, as NSH's web runtime keeps it:

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // The page's host: nsgo.js, the loader, gives the app a bridge object in

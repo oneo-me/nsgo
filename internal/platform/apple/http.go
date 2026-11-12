@@ -10,7 +10,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // Image downloads go through URLSession on macOS, iOS and watchOS.

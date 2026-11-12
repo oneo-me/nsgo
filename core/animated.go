@@ -3,7 +3,7 @@ package core
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Animated values follow NSH's native animation graph (React Native's

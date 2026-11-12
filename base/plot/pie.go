@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Angles are radians, 0 at 12 o'clock and growing clockwise, as gpui-base's

@@ -48,7 +48,7 @@ export function langOf(param: string | undefined): Lang {
   return param === 'zh' ? 'zh' : 'en';
 }
 
-const repo = 'https://github.com/oneo-me/nsgo';
+const repo = 'https://github.com/nsgo-dev/nsgo';
 
 export const links = {
   repo,
@@ -73,7 +73,7 @@ export const links = {
   nsh: 'https://github.com/longbridge/nsh',
 };
 
-export const install = 'go get -tool github.com/oneo-me/nsgo/cmd/nsgo';
+export const install = 'go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo';
 
 /**
  * The platforms NSGo runs on, each shown on its own, with its kind and what

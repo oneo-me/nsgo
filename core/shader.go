@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // ShaderProgram is a fragment shader written in Go's syntax: Ebitengine's

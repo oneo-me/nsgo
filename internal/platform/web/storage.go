@@ -7,7 +7,7 @@ import (
 	"log"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // localStorage keeps the app's entries in the browser's localStorage, each

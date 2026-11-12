@@ -10,7 +10,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Text inputs are GTK's own: a GtkEntry for one line, or a GtkTextView in

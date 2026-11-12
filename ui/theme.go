@@ -3,7 +3,7 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Colors are ui's colors where a scope is: each method reads its

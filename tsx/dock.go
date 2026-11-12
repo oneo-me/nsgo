@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/dock"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/dock"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // DockArea's values in NSH's shapes: a layout's nodes tagged by type, a

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // Options are how Fragment writes a program for a renderer.

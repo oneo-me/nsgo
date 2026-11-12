@@ -9,7 +9,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // Embedding: an Android app of its own shows NSGo apps in NsgoViews from

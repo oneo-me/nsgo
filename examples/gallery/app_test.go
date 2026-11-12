@@ -13,15 +13,15 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
-	"github.com/oneo-me/nsgo/i18n"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/i18n"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 
-	"github.com/oneo-me/nsgo/base/richeditor"
-	"github.com/oneo-me/nsgo/ui"
-	uirich "github.com/oneo-me/nsgo/ui/richeditor"
+	"github.com/nsgo-dev/nsgo/base/richeditor"
+	"github.com/nsgo-dev/nsgo/ui"
+	uirich "github.com/nsgo-dev/nsgo/ui/richeditor"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.
@@ -820,7 +820,7 @@ func TestSystem(t *testing.T) {
 	app.Press("role:button Paste image")
 	app.Find("id:pasted-image")
 	app.Press("role:button The website")
-	app.Find("text:Opened https://github.com/oneo-me/nsgo")
+	app.Find("text:Opened https://github.com/nsgo-dev/nsgo")
 	app.OnAlert = func(core.AlertConfig) int { return 1 }
 	app.Press("id:demo-System >> role:button Confirm")
 	app.Find("text:Delete")

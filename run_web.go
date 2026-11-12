@@ -5,8 +5,8 @@ package nsgo
 import (
 	"os"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/platform/web"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/platform/web"
 )
 
 // run fills the page with app, or the element the page names in the

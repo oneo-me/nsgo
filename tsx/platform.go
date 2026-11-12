@@ -1,11 +1,11 @@
 package tsx
 
 import (
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/desktop"
-	"github.com/oneo-me/nsgo/mobile"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/mobile"
 )
 
 // nsgo/mobile and nsgo/desktop (NSH's platform_modules.rs, desktop.rs):

@@ -5,7 +5,7 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Text is laid out once: the engine prepares it with the platform's

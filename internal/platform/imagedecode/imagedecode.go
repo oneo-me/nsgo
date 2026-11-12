@@ -26,7 +26,7 @@ import (
 
 	"golang.org/x/image/webp"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Bounds on what decoding one image takes, NSH's where it has them.

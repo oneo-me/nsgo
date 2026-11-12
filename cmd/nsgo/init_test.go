@@ -35,7 +35,7 @@ func TestInitTemplates(t *testing.T) {
 					t.Fatalf("go %v: %v\n%s", args, err, out)
 				}
 			}
-			run("mod", "edit", "-require=github.com/oneo-me/nsgo@v0.0.0", "-replace=github.com/oneo-me/nsgo="+root)
+			run("mod", "edit", "-require=github.com/nsgo-dev/nsgo@v0.0.0", "-replace=github.com/nsgo-dev/nsgo="+root)
 			run("mod", "tidy")
 			p, err := load(dir)
 			if err != nil {

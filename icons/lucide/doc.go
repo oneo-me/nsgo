@@ -20,7 +20,7 @@ package lucide
 import (
 	"sync"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Zero-value caches avoid package initializers rooting unused SVG resources.

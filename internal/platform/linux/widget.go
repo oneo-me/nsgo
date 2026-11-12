@@ -9,7 +9,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // NsgoView is the GTK widget of one node, as NSH's NshView is: a

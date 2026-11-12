@@ -3,7 +3,7 @@ package msl
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // UniformLayout returns where each of p's uniform variables lies in the

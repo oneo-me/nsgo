@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // edgeFade is how far content fades at an edge it scrolls past.
 const edgeFade core.Points = 24

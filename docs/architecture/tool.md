@@ -32,7 +32,7 @@ A web release's bundles are split ([TSX](tsx.md#split-bundles)): `buildWeb` writ
 
 ## Modules
 
-The first step of `dev`, each rebuild's included, and of `build`, `check` and `test` lists the app's packages and their dependencies (`appPackages` in `i18n_build.go`). When go list says the module's `go.mod` or `go.sum` lacks what one of them comes from, as after pasting an app that imports `ui` into a module made with `go get github.com/oneo-me/nsgo`, the tool runs `go mod tidy` and lists them again, so the build after it finds them. It then requires `tsx` at the NSGo version the app requires, since the types `check` and `dev` write import it through an overlay `go mod tidy` cannot see; writing them after a tidy the user ran does the same.
+The first step of `dev`, each rebuild's included, and of `build`, `check` and `test` lists the app's packages and their dependencies (`appPackages` in `i18n_build.go`). When go list says the module's `go.mod` or `go.sum` lacks what one of them comes from, as after pasting an app that imports `ui` into a module made with `go get github.com/nsgo-dev/nsgo`, the tool runs `go mod tidy` and lists them again, so the build after it finds them. It then requires `tsx` at the NSGo version the app requires, since the types `check` and `dev` write import it through an overlay `go mod tidy` cannot see; writing them after a tidy the user ran does the same.
 
 ## Checking
 

@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // The status bar's settings are layered as UIKit's view controllers
 // decide it, after NSH's status_bar.rs: the app's default at the bottom,

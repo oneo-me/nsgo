@@ -5,7 +5,7 @@ package linux
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // layoutAnim is a view's part of a commit's LayoutAnimation, as NSH's

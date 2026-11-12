@@ -113,7 +113,7 @@ func buildMiniProgram(ctx context.Context, p *project, mp miniProgramPlatform, d
 	env := []string{"GOOS=js", "GOARCH=wasm", "GOEXPERIMENT=" + experiments("nojsonv2")}
 	// A mini program runs no code it did not ship, which the page's
 	// engine would, and goja does not fit in its package.
-	tsx, err := linkedDir(ctx, p, append(env, "GOFLAGS=-tags="+strings.Join(miniprogramTags, ",")), "github.com/oneo-me/nsgo/tsx")
+	tsx, err := linkedDir(ctx, p, append(env, "GOFLAGS=-tags="+strings.Join(miniprogramTags, ",")), "github.com/nsgo-dev/nsgo/tsx")
 	if err != nil {
 		return err
 	}

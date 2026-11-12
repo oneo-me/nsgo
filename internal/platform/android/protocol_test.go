@@ -34,7 +34,7 @@ func TestJavaProtocolMatchesTheDriver(t *testing.T) {
 		files = append(files, f)
 	}
 	conf := types.Config{Importer: importer.ForCompiler(fset, "source", nil)}
-	pkg, err := conf.Check("github.com/oneo-me/nsgo/internal/driver", fset, files, nil)
+	pkg, err := conf.Check("github.com/nsgo-dev/nsgo/internal/driver", fset, files, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

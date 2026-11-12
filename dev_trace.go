@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
 // devTrace is "1" in nsgo dev -trace's builds, set with -ldflags -X.

@@ -8,7 +8,7 @@ import (
 	"syscall/js"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Every call into JavaScript costs Go's WebAssembly more than the work it

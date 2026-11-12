@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // read returns the timeline written in dir, and the names of the images

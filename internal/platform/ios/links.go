@@ -7,7 +7,7 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
 )
 
 // openedURL is the web link that last opened the app (Environment's

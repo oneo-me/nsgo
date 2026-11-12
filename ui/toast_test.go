@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/toast"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/base/toast"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestToasts shows toasts read as alerts, runs an action and closes its

@@ -8,10 +8,10 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/desktop/locales"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/apple"
-	"github.com/oneo-me/nsgo/internal/platform/menutext"
+	"github.com/nsgo-dev/nsgo/desktop/locales"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/apple"
+	"github.com/nsgo-dev/nsgo/internal/platform/menutext"
 )
 
 // The window's chrome, as NSH's macOS chrome.rs does it. A hidden title

@@ -3,7 +3,7 @@ package toast
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Toasts follow NSH's nsh/base, which has gpui-base's three pieces with

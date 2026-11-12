@@ -5,8 +5,8 @@ package windows
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
 )
 
 // Scroll behavior: content insets widen the offsets, NoScroll keeps the

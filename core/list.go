@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // List renders a long run of rows lazily, as NSH's <List>: only the rows

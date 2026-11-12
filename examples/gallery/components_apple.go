@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/ebitengine/purego/objc"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // appleSlider is AppKit's NSSlider or UIKit's UISlider, as a native

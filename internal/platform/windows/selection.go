@@ -3,8 +3,8 @@
 package windows
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/textselect"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/textselect"
 )
 
 // A selection area (a view with SelectionArea, or a selectable text

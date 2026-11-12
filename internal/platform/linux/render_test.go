@@ -5,7 +5,7 @@ package linux
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // TestCanvasReplaysIntoTheSurface plays a recorded drawing into an image

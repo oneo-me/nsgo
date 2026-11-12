@@ -4,7 +4,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // controlKey is a key a focused control binds: whether it repeats, and

@@ -1,7 +1,7 @@
 package watchos
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A view's look is drawn as a canvas is: boxOps records its shadows,

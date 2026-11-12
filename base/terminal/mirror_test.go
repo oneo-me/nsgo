@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
 )
 
 // mirrored is a terminal and another showing its Mirror's frames.

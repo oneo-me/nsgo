@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TreeItem is an item of a Tree, with the items under it.

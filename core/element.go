@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Node is what a tree is made of: a host element (View, Text, Input,

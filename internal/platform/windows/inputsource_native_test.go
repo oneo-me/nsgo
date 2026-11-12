@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestInputSources selects another enabled keyboard layout and restores

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A folder picked on Android is a document tree the runtime holds the

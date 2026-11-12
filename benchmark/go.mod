@@ -1,11 +1,11 @@
-module github.com/oneo-me/nsgo/benchmark
+module github.com/nsgo-dev/nsgo/benchmark
 
 go 1.27.3
 
 require (
 	github.com/ebitengine/purego v0.11.2
 	github.com/egoist/mygo v0.8.3
-	github.com/oneo-me/nsgo v0.0.0
+	github.com/nsgo-dev/nsgo v0.0.0
 	golang.org/x/sys v0.48.0
 )
 
@@ -18,4 +18,4 @@ require (
 	golang.org/x/text v0.43.0 // indirect
 )
 
-replace github.com/oneo-me/nsgo => ../
+replace github.com/nsgo-dev/nsgo => ../

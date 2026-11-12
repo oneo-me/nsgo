@@ -2,7 +2,7 @@
 
 package linux
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // snapshotEdges draws scroll view v's edge effects over its children.
 // GTK draws nothing of what is behind a widget, so the content fades into

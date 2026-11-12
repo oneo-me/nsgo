@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/toast"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/toast"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // AlertDialog, ToastManager and ToastStack of nsgo/base: base's, over

@@ -5,7 +5,7 @@
 package field
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // State is the reporting side of one text field. Backends call it from

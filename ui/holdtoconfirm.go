@@ -3,8 +3,8 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // HoldVariant is a HoldToConfirm's look: the color it fills with.

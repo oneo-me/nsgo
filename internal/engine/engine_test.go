@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // recorder is a platform that keeps the batches it is handed.

@@ -3,7 +3,7 @@ package core
 import (
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Importance is importantForAccessibility, Android's name for Accessible

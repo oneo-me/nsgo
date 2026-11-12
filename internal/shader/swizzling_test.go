@@ -22,10 +22,10 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/glsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/hlsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/glsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/hlsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 func walkSwizzlingExprs(p *shaderir.Program, f func(e *shaderir.Expr)) {

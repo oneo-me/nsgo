@@ -3,7 +3,7 @@ package base
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Progress is a linear progress bar: how far a task of a known extent is,

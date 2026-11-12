@@ -1,7 +1,7 @@
 package base
 
 import (
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // SliderValue is a slider's value: one number, or a range of two with a

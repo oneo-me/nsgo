@@ -12,9 +12,9 @@ import (
 	"github.com/dop251/goja"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
 )
 
 // testHost is the embedding app a test plays for an app (open's host, or

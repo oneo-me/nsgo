@@ -3,7 +3,7 @@ package diff
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // What the app's actions on lines take: the change under the pointer, or

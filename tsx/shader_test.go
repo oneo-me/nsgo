@@ -3,7 +3,7 @@ package tsx_test
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // The shader elements compile their WGSL and send it with their uniforms:

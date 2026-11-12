@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // ids returns the test IDs of the native children n last sent, in order.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // watch is what the page's environment is read from. The page cannot

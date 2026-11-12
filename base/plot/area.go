@@ -3,8 +3,8 @@ package plot
 import (
 	"math"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Area is a series of a Plot drawn as the region between its line and

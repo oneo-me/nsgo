@@ -13,11 +13,11 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/bundler"
-	"github.com/oneo-me/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/tsx/pkg"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.

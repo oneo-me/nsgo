@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 func TestPointerEventsCarryPositionsAndModifiers(t *testing.T) {

@@ -3,8 +3,8 @@ package ui
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Progress is a bar of how far a task is, Value from 0 to 100, or with

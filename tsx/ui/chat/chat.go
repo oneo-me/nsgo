@@ -5,11 +5,11 @@
 package chat
 
 import (
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/ui/chat"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/ui/chat"
 
-	_ "github.com/oneo-me/nsgo/tsx/ui"
+	_ "github.com/nsgo-dev/nsgo/tsx/ui"
 )
 
 const module = "nsgo/ui/chat"

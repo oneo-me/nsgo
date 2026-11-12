@@ -24,11 +24,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/shader"
-	"github.com/oneo-me/nsgo/internal/shaderir"
-	"github.com/oneo-me/nsgo/internal/shaderir/glsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/hlsl"
-	"github.com/oneo-me/nsgo/internal/shaderir/msl"
+	"github.com/nsgo-dev/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/glsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/hlsl"
+	"github.com/nsgo-dev/nsgo/internal/shaderir/msl"
 )
 
 func glslVertexNormalize(str string) string {

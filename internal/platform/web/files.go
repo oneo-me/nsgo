@@ -9,7 +9,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // pickFiles shows the browser's file chooser for the files r offers; a

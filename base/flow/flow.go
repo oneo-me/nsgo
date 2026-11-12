@@ -7,7 +7,7 @@
 package flow
 
 import (
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Direction is the way edges point.

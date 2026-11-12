@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 func TestDragsRubberBandPastTheEdges(t *testing.T) {

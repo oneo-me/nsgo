@@ -11,7 +11,7 @@ import (
 	"syscall/js"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Run in a browser, which has the codecs: nsgo test -target web.

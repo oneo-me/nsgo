@@ -3,7 +3,7 @@ package engine
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The performance panel every backend draws over its surface, as macOS's

@@ -3,7 +3,7 @@ package base
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Radio is one option of a set the user picks exactly one of, in a

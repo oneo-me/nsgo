@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
 	"math"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // A simulated market: fictional companies whose prices walk every 50 ms.

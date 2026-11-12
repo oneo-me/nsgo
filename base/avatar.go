@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // AvatarStatus is where an Avatar's image is.

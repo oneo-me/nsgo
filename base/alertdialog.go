@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // AlertDialog is the system's alert or action sheet: a title, a
 // description and its actions, which the platform places and draws by

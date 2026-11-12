@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/updater"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/updater"
 )
 
 // start runs an app whose Check, Quietly and Daily buttons check for

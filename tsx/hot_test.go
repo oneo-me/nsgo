@@ -7,9 +7,9 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx"
-	"github.com/oneo-me/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
 )
 
 // TestHotUpdatesKeepState edits a component: it renders again with the

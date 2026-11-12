@@ -1,6 +1,6 @@
 package driver
 
-import "github.com/oneo-me/nsgo/internal/shaderir"
+import "github.com/nsgo-dev/nsgo/internal/shaderir"
 
 // ShaderProgram is a fragment shader an app compiled: the program the
 // core checked, so platforms translate it for their GPU without linking

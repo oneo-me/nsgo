@@ -8,12 +8,12 @@ import (
 	"math"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
-	"github.com/oneo-me/nsgo/ui"
-	"github.com/oneo-me/nsgo/widget"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/widget"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
 )
 
 // The gallery's widgets, as nsgo.yaml lists them: Activity comes in every

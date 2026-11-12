@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
 )
 
 // imageKey is a placement of an image as a Mirror placed it in the other

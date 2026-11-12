@@ -25,10 +25,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/terminal/internal/library"
-	"github.com/oneo-me/nsgo/base/terminal/internal/pty"
-	"github.com/oneo-me/nsgo/base/terminal/internal/vt"
-	"github.com/oneo-me/nsgo/base/terminal/locales"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/library"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/pty"
+	"github.com/nsgo-dev/nsgo/base/terminal/internal/vt"
+	"github.com/nsgo-dev/nsgo/base/terminal/locales"
 )
 
 // Options configure a terminal.

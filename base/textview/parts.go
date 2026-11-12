@@ -1,6 +1,6 @@
 package textview
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // Part is a part of a TextView the app styles. A node with several parts
 // (PartHeading then PartHeading2) merges their styles, later parts winning.

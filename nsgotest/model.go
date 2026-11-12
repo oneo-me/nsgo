@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // View is the model of one native view, as the last batch left it.

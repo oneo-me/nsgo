@@ -9,7 +9,7 @@ import (
 	"image/gif"
 	"time"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // decodeGIF decodes a GIF's frames composited as browsers show them: on a

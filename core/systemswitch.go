@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // SystemSwitch is the platform's own switch, NSSwitch on macOS and
 // UISwitch on iOS, a native component they register; ui.Switch's

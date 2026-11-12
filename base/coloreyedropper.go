@@ -1,6 +1,6 @@
 package base
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // ColorEyeDropper is a button picking a color on the screen with the
 // system's sampler, for the picker around it and OnPick; disabled where

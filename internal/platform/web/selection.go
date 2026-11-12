@@ -6,8 +6,8 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
 )
 
 // Text selection is the browser's own. A text with SelectableOn is

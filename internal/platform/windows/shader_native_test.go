@@ -11,8 +11,8 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/shader"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/shader"
 )
 
 // TestShadersReadImages draws a shader that reads an image with Direct3D

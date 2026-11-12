@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	androidruntime "github.com/oneo-me/nsgo/internal/platform/android/runtime"
+	androidruntime "github.com/nsgo-dev/nsgo/internal/platform/android/runtime"
 )
 
 // nsgo build -embed packages the app for a host app of its own instead of
@@ -30,7 +30,7 @@ package main
 
 import "C"
 
-import nsgoembed "github.com/oneo-me/nsgo"
+import nsgoembed "github.com/nsgo-dev/nsgo"
 
 //export NSGoStart
 func NSGoStart() { nsgoembed.StartEmbedded(main) }

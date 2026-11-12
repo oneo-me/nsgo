@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The chat's fictional models: the picker changes the voice and whether

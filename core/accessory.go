@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // InputAccessoryView is the core's part of mobile.InputAccessoryView,
 // which apps use: a bar iOS and Android show above the software keyboard,

@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // EdgeEffect is how a scroll view's side sets the views over it, its
 // bars (View.EdgeBar), apart from the content scrolling under them, as

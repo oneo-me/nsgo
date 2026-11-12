@@ -3,7 +3,7 @@ package base
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // revealTime is how long a reveal takes: as long as gpui-component's

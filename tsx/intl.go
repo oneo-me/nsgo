@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/currency"
 	"golang.org/x/text/feature/plural"

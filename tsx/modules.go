@@ -1,6 +1,6 @@
 package tsx
 
-import "github.com/oneo-me/nsgo/tsx/internal/js"
+import "github.com/nsgo-dev/nsgo/tsx/internal/js"
 
 // The modules a bundle requires (NSH's modules.rs): nsgo, the API apps
 // write against, nsgo/base, and nsgo:rt, what compiled JSX calls.

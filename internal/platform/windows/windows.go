@@ -35,16 +35,16 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/finger"
-	"github.com/oneo-me/nsgo/internal/platform/hover"
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
-	"github.com/oneo-me/nsgo/internal/platform/queue"
-	"github.com/oneo-me/nsgo/internal/platform/scrollbar"
-	"github.com/oneo-me/nsgo/internal/platform/textselect"
-	"github.com/oneo-me/nsgo/internal/platform/updates"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/finger"
+	"github.com/nsgo-dev/nsgo/internal/platform/hover"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/queue"
+	"github.com/nsgo-dev/nsgo/internal/platform/scrollbar"
+	"github.com/nsgo-dev/nsgo/internal/platform/textselect"
+	"github.com/nsgo-dev/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 func init() {

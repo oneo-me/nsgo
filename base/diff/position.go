@@ -3,7 +3,7 @@ package diff
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // HunkBounds is the box of change Index's rows: wrapped lines and

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // TestTestHostChoosesNativeMenus chooses a menu bar item and an item of a

@@ -1,6 +1,6 @@
 package core
 
-import "github.com/oneo-me/nsgo/internal/driver"
+import "github.com/nsgo-dev/nsgo/internal/driver"
 
 // The values apps share with the platforms. core/driver, the platform
 // protocol, defines them; core aliases them so apps import core alone.

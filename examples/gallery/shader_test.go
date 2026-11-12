@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestShaderEffects draws the Shader page's WGSL demos: the wave's card

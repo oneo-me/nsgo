@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/platform/imageload"
+	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 )
 
 // Image downloads go through WinHTTP.

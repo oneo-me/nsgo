@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Tab is one tab of a tab list, in Tabs with the others. The app keeps

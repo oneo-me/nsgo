@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // ops builds a batch's operations for the runtime (nsgo/tree.js): a JSON

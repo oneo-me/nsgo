@@ -2,8 +2,8 @@
 package menutext
 
 import (
-	"github.com/oneo-me/nsgo/desktop/locales"
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/desktop/locales"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Label returns what e says in lang: its own label, or its role's when

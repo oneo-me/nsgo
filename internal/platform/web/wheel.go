@@ -6,7 +6,7 @@ import (
 	"math"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Wheels scroll as NSH's do (nsh.js's wheel): the page moves a scroll view

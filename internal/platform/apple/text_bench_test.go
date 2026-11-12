@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // A cell of the quotes case: four digits and a sign change, 13pt.

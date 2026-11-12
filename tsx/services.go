@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneo-me/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The services of nsgo (NSH's runtime registry): the keyboard, key

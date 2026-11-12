@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // maxSelectionHistory is the most selections undoSelection goes back

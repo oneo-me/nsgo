@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // keyNames are the normalized names of the keys whose name is not their

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Tailwind CSS classes (`flex-row gap-4 p-4 bg-white dark:bg-zinc-900`),

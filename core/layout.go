@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/oneo-me/nsgo/internal/layout"
+	"github.com/nsgo-dev/nsgo/internal/layout"
 )
 
 // Layout runs NSGo's port of Taffy (core/internal/layout): CSS flexbox,

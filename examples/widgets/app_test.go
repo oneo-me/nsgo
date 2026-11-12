@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/widget"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/widget"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.

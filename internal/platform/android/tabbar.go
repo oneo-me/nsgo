@@ -5,7 +5,7 @@ package android
 import (
 	"encoding/json"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // tabBar is core.TabBar's component, which the backend registers itself

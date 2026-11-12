@@ -3,9 +3,9 @@ package base
 import (
 	"time"
 
-	"github.com/oneo-me/nsgo/base/internal/parts"
-	"github.com/oneo-me/nsgo/base/internal/sheet"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/internal/parts"
+	"github.com/nsgo-dev/nsgo/base/internal/sheet"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // Popups (Popover, Tooltip, Menu, ContextMenu, Dialog, Sheet) share one

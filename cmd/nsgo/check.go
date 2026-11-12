@@ -126,8 +126,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/tsx"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/tsx"
 )
 
 func init() {
@@ -239,7 +239,7 @@ func generateTypes(ctx context.Context, p *project) error {
 func generateModuleTypes(ctx context.Context, p *project) error {
 	imports := ""
 	for _, m := range tsxModules {
-		imports += "\t_ \"github.com/oneo-me/nsgo/tsx/" + m + "\"\n"
+		imports += "\t_ \"github.com/nsgo-dev/nsgo/tsx/" + m + "\"\n"
 	}
 	src := strings.Replace(typesInit, "import (\n", "import (\n"+imports, 1) + "\nfunc main() {}\n"
 	pkgDir := p.cache("typesmain")

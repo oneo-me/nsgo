@@ -5,12 +5,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/oneo-me/nsgo/base/commitgraph"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base/commitgraph"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
-	uigraph "github.com/oneo-me/nsgo/ui/commitgraph"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
+	uigraph "github.com/nsgo-dev/nsgo/ui/commitgraph"
 )
 
 var historySubjects = []string{"Fix the empty state", "Keep the scroll position", "Add keyboard shortcuts", "Tidy the settings page",

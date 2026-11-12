@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall/js"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // webFrame is a web view's <iframe>, as NSH's web backend has it. HTML

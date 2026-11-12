@@ -4,8 +4,8 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/icons/lucide"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 )
 
 // compareStep is how far a screen reader's step moves a comparison's

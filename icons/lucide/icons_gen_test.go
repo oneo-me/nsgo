@@ -2,7 +2,7 @@
 
 package lucide
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 var allIcons = []struct {
 	name string

@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Icon draws an SVG — an icon, a logo, an illustration — in the text color

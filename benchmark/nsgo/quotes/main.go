@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/benchmark/internal/bench"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/benchmark/internal/bench"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 var widths = [5]core.Points{80, 90, 80, 80, 100}

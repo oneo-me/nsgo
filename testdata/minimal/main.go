@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 func main() {

@@ -5,13 +5,13 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/base/commitgraph"
-	"github.com/oneo-me/nsgo/base/toast"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/base/commitgraph"
+	"github.com/nsgo-dev/nsgo/base/toast"
+	"github.com/nsgo-dev/nsgo/core"
 
-	"github.com/oneo-me/nsgo/examples/gallery/locales"
-	"github.com/oneo-me/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
+	"github.com/nsgo-dev/nsgo/ui"
 )
 
 // The base forms: each component of package base as an app without package

@@ -36,8 +36,8 @@ NSGo 处于早期阶段，尚无发布版本或稳定的 API。它可在 macOS�
 
 ```sh
 go mod init example.com/hello
-go get github.com/oneo-me/nsgo
-go get -tool github.com/oneo-me/nsgo/cmd/nsgo
+go get github.com/nsgo-dev/nsgo
+go get -tool github.com/nsgo-dev/nsgo/cmd/nsgo
 go tool nsgo init   # 加 -template tsx 创建 TSX 应用
 go tool nsgo dev    # 加 -target web、ios_simulator、tvos_simulator、watchos_simulator、android 或 miniprogram_wechat 在别处运行
 ```

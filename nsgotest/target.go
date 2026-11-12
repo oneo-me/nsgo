@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 // mainRan is set once Main hands the main thread to the platform, and
@@ -66,7 +66,7 @@ func (a *App) startTarget(app func(cx *core.Scope) core.Node) {
 	h := testhost.Current()
 	switch {
 	case h == nil:
-		a.t.Fatal("nsgotest: no test host is linked: test the app's main package, which imports github.com/oneo-me/nsgo, with nsgo test -target")
+		a.t.Fatal("nsgotest: no test host is linked: test the app's main package, which imports github.com/nsgo-dev/nsgo, with nsgo test -target")
 	case !mainRan:
 		a.t.Fatal("nsgotest: a platform needs the main thread: add func TestMain(m *testing.M) { nsgotest.Main(m) }")
 	case opened && !h.Several():

@@ -10,8 +10,8 @@ package i18n
 import (
 	"sync"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/internal/cldr"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/cldr"
 	"golang.org/x/text/language"
 )
 

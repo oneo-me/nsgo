@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/platform/menutext"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/platform/menutext"
 )
 
 // The window's chrome, as NSH's Windows backend has it:

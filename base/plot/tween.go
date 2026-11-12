@@ -1,6 +1,6 @@
 package plot
 
-import "github.com/oneo-me/nsgo/core"
+import "github.com/nsgo-dev/nsgo/core"
 
 // tween is the move of a plot's linear axis to a new domain (Motion.Update),
 // as d3 transitions a scale's domain: the domain shown is interpolated from

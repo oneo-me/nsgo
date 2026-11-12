@@ -6,8 +6,8 @@ package main
 import (
 	"embed"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/tsx/compiler"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/tsx/compiler"
 )
 
 //go:embed *.tsx *.ts

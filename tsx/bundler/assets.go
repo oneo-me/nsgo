@@ -19,8 +19,8 @@ import (
 	"golang.org/x/image/font/sfnt"
 	_ "golang.org/x/image/webp"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/woff"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/woff"
 )
 
 // Assets a module imports (NSH's plugin.rs): an image is an ImageAsset,

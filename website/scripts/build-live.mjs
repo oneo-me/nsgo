@@ -56,7 +56,7 @@ try {
     if (!/^func Root\(/m.test(code)) throw new Error(`${page}: a program needs a Root to run`);
     const name = `p${id}`;
     writePackage(path.join(scratch, name), name, 'app.go', `${code}\n`);
-    imports.push(`\t${name} "github.com/oneo-me/nsgo/website/_live/${name}"`);
+    imports.push(`\t${name} "github.com/nsgo-dev/nsgo/website/_live/${name}"`);
     entries.push(`\t${JSON.stringify(id)}: ${name}.Root, // ${page}`);
   }
   writeFileSync(
@@ -67,10 +67,10 @@ try {
 package main
 
 import (
-\t"github.com/oneo-me/nsgo"
-\t"github.com/oneo-me/nsgo/core"
+\t"github.com/nsgo-dev/nsgo"
+\t"github.com/nsgo-dev/nsgo/core"
 
-\t"github.com/oneo-me/nsgo/website/_live/previews"
+\t"github.com/nsgo-dev/nsgo/website/_live/previews"
 ${imports.join('\n')}
 )
 

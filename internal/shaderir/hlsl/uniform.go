@@ -19,7 +19,7 @@ package hlsl
 import (
 	"fmt"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 const UniformVariableBoundaryInDwords = 4

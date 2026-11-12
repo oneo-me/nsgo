@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/oneo-me/nsgo"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The Windows host is Win32 through syscall: a top-level window holding a

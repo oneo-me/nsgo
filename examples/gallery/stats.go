@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // The gallery counts its use in the NSGo site's Umami, as pages of the

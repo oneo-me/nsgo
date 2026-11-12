@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/oneo-me/nsgo/core"
-	"github.com/oneo-me/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
 // TestDialogListsAndChooses shows a folder's entries, hides hidden ones and

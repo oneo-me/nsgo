@@ -6,7 +6,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // component is a native view's component, as NSH's native.rs has it:

@@ -3,8 +3,8 @@ package dock
 import (
 	"slices"
 
-	"github.com/oneo-me/nsgo/base"
-	"github.com/oneo-me/nsgo/core"
+	"github.com/nsgo-dev/nsgo/base"
+	"github.com/nsgo-dev/nsgo/core"
 )
 
 // A dock layout is data, as gpui-base's and NSH's: each region (the

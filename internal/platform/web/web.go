@@ -21,10 +21,10 @@ import (
 	"unicode"
 	"unicode/utf16"
 
-	"github.com/oneo-me/nsgo/internal/driver"
-	"github.com/oneo-me/nsgo/internal/engine"
-	"github.com/oneo-me/nsgo/internal/platform/webstyle"
-	"github.com/oneo-me/nsgo/internal/testhost"
+	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/engine"
+	"github.com/nsgo-dev/nsgo/internal/platform/webstyle"
+	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
 // Options configure the page.

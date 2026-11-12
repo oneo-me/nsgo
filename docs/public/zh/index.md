@@ -39,7 +39,7 @@ Go 引擎掌管应用：响应式图、样式、flexbox 与 grid 布局，以及
 
 ## 现状
 
-NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的部分记录在[路线图](https://github.com/oneo-me/nsgo/blob/main/docs/roadmap.md)中。它把 [Native Shell](https://github.com/longbridge/nsh) 的设计移植到了 Go。
+NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的部分记录在[路线图](https://github.com/nsgo-dev/nsgo/blob/main/docs/roadmap.md)中。它把 [Native Shell](https://github.com/longbridge/nsh) 的设计移植到了 Go。
 
 ## 如何阅读这些文档
 

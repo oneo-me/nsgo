@@ -30,7 +30,7 @@ import (
 // A key that is an import path supplies another package's catalog in the
 // file's language, under that package's keys:
 //
-//	github.com/oneo-me/nsgo/base/locales:
+//	github.com/nsgo-dev/nsgo/base/locales:
 //	  sortBy: "Nach {column} sortieren"
 
 // genFile is the file the tool writes into a catalogs' directory.

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/oneo-me/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // GTK's settings, which pick light or dark, are the process's, and an

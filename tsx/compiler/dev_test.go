@@ -10,8 +10,8 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/oneo-me/nsgo/nsgotest"
-	"github.com/oneo-me/nsgo/tsx/bundler"
+	"github.com/nsgo-dev/nsgo/nsgotest"
+	"github.com/nsgo-dev/nsgo/tsx/bundler"
 )
 
 // TestDevServerBundlesReplaceTheApp serves a bundle as nsgo dev does

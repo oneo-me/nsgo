@@ -5,7 +5,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/oneo-me/nsgo/internal/shaderir"
+	"github.com/nsgo-dev/nsgo/internal/shaderir"
 )
 
 // checker checks a module and writes it as the IR, one function at a
