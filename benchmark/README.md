@@ -11,6 +11,7 @@ measures them on macOS, Windows and Linux. The website's Benchmarks page shows
 | `counter` | A count and two buttons, left idle (360×260) | Startup, memory, binary size |
 | `quotes` | 40 quotes, ten changed every display frame (560×860) | CPU, the compositor's CPU, memory, frames |
 | `list` | 10,000 rows, scrolled a row further every display frame (480×800) | The same |
+| `grid` | 600 numbers, all changed every display frame (1232×432), NSGo's alone and measured only when named | The same |
 
 Each framework writes them its own way: NSGo's and NSH's rows are signals that
 a tick sets, MyGo builds its view every frame, GPUI renders its view again
@@ -34,6 +35,7 @@ nothing else running and the display awake:
 ```sh
 go run ./runner                                   # every framework and case, 3 runs of 10 s
 go run ./runner -frameworks nsgo,nsh -cases list  # some of them
+go run ./runner -frameworks nsgo -cases grid      # where NSGo's frames run out
 go run ./runner -runs 1 -seconds 3 -out /tmp/x.json
 ```
 

@@ -44,8 +44,10 @@ type view struct {
 	events  driver.EventMask
 	// contentLayer draws a text's or a canvas's content.
 	contentLayer objc.ID
-	// laidFrame is the frame contentLayer was last given.
-	laidFrame apple.CGRect
+	// laidFrame is the frame contentLayer was last given, and needFrame
+	// the frame its content last needed (contentFrame), which a text's
+	// may be smaller than.
+	laidFrame, needFrame apple.CGRect
 	// rasterStep is how many times its pixels the content inside v draws
 	// at, as v's scale has it (rasterscale.go); 0 is 1.
 	rasterStep float64
@@ -1042,6 +1044,10 @@ func (s *surface) apply(b *driver.MountBatch) {
 				v.styleLayer(it.ViewStyle)
 			}
 			v.setBackdrop(it.ViewStyle)
+			if v.layout != nil {
+				// A rounded text's layer takes its exact frame (sizeContent).
+				v.sizeContent()
+			}
 			v.native.Send(selSetHidden, it.ViewStyle.Hidden)
 			if v.kind == driver.KindScroll || v.kind == driver.KindVideo {
 				// A scroll view shows only what it scrolls to, and a video

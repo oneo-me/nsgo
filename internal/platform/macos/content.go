@@ -65,9 +65,12 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 	if v == nil || ctx == 0 || (v.layout == nil && v.drawing == nil) {
 		return
 	}
-	// The layer holds the view and the ink of its text past it
-	// (sizeContent).
+	// The layer holds the view and the ink of its text past it, and a
+	// text's may be larger still (sizeContent).
 	h, f := float64(v.frame.Size.Height), v.contentFrame()
+	if v.layout != nil {
+		f = v.laidFrame
+	}
 	apple.DrawTopDown(ctx, f.Size.Height, !apple.MsgBool(layer, selContentsAreFlipped), func(baseUp bool) {
 		apple.TranslateCTM(ctx, -f.Origin.X, -f.Origin.Y)
 		if v.drawing != nil {
@@ -134,6 +137,7 @@ func (v *view) drawLayer() objc.ID {
 	layer.Send(selSetContentsScale, v.contentScale())
 	layer.Send(selSetZPosition, apple.Z(contentZ))
 	v.laidFrame = v.contentFrame()
+	v.needFrame = v.laidFrame
 	layer.Send(selSetFrame, v.laidFrame)
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease) // its host keeps it
@@ -220,7 +224,9 @@ func (v *view) display() {
 // sizeContent keeps v's content layer over its bounds; a new size draws
 // it again (needsDisplayOnBoundsChange). A frame as before is not sent:
 // a table's cells keep theirs as their texts change, and the CGRect costs
-// purego a reflected call each time.
+// purego a reflected call each time. A text's layer keeps a larger frame
+// (apple.KeptContent) and draws again within it, unless its view is
+// rounded: Core Animation then blends the corners' edges a level apart.
 func (v *view) sizeContent() {
 	if v.shader != nil {
 		v.sizeShader()
@@ -228,7 +234,19 @@ func (v *view) sizeContent() {
 	if v.contentLayer == 0 {
 		return
 	}
-	if f := v.contentFrame(); f != v.laidFrame {
+	f := v.contentFrame()
+	keeps := v.layout != nil && !v.style.Rounded()
+	if f == v.needFrame && (keeps || f == v.laidFrame) {
+		return
+	}
+	v.needFrame = f
+	if keeps {
+		if f = apple.KeptContent(v.laidFrame, f); f == v.laidFrame {
+			v.redraw()
+			return
+		}
+	}
+	if f != v.laidFrame {
 		v.laidFrame = f
 		v.contentLayer.Send(selSetFrame, f)
 	}

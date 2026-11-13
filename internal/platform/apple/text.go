@@ -1039,14 +1039,57 @@ func (l *Layout) Release() {
 	l.carets.Drop()
 	// A frame not made yet stays unmade.
 	l.made.Do(func() {})
-	Release(l.str)
-	Release(l.frame)
-	for _, line := range l.lines {
-		Release(line)
-	}
-	Release(l.truncated)
+	releaseLater(l.str, l.frame, l.truncated)
+	releaseLater(l.lines...)
 	l.str, l.frame, l.lines, l.truncated, l.origins = 0, 0, nil, 0, nil
 	l.under, l.over, l.attachments = nil, nil, nil
+}
+
+// released holds the CoreText objects of layouts let go, which a
+// goroutine of its own releases: a frame that changes every cell of a
+// table frees as many lines, which cost the main thread a microsecond
+// each. CoreFoundation's objects may be released on any thread.
+var released struct {
+	sync.Mutex
+	refs []uintptr
+	wake chan struct{}
+}
+
+// releaseLater releases refs, those not 0, on released's goroutine.
+func releaseLater(refs ...uintptr) {
+	released.Lock()
+	if released.wake == nil {
+		released.wake = make(chan struct{}, 1)
+		go releaseQueued()
+	}
+	n := len(released.refs)
+	for _, r := range refs {
+		if r != 0 {
+			released.refs = append(released.refs, r)
+		}
+	}
+	queued := len(released.refs) > n
+	released.Unlock()
+	if queued {
+		select {
+		case released.wake <- struct{}{}:
+		default:
+		}
+	}
+}
+
+// releaseQueued releases what releaseLater queues, as it comes.
+func releaseQueued() {
+	var refs []uintptr
+	for range released.wake {
+		released.Lock()
+		refs, released.refs = released.refs, refs[:0]
+		released.Unlock()
+		for _, r := range refs {
+			cfRelease(r)
+		}
+		clear(refs)
+	}
 }
 
 // placed returns l's lines, their baselines from the box's top and the
@@ -1238,6 +1281,21 @@ func (l *Layout) ContentFrame(w, h float64, box CGRect) CGRect {
 	}
 	x0, y0 = math.Floor(x0), math.Floor(y0)
 	return Rect(x0, y0, math.Ceil(x1)-x0, math.Ceil(y1)-y0)
+}
+
+// KeptContent returns the frame for the content layer of a text, laid
+// at laid, whose content needs need (ContentFrame): laid grown to hold
+// need while that is no more than four times need's area, else need.
+// Core Animation makes a new backing store for each new size of a layer,
+// and a number changing every frame changes its width with it.
+func KeptContent(laid, need CGRect) CGRect {
+	x0, y0 := min(laid.Origin.X, need.Origin.X), min(laid.Origin.Y, need.Origin.Y)
+	x1 := max(laid.Origin.X+laid.Size.Width, need.Origin.X+need.Size.Width)
+	y1 := max(laid.Origin.Y+laid.Size.Height, need.Origin.Y+need.Size.Height)
+	if (x1-x0)*(y1-y0) > 4*need.Size.Width*need.Size.Height {
+		return need
+	}
+	return Rect(x0, y0, x1-x0, y1-y0)
 }
 
 // TranslateCTM moves ctx's origin by x, y.

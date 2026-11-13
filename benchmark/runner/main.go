@@ -2,7 +2,7 @@
 // and writes what they measured to results/<os>.json, which the website's
 // Benchmarks page shows. Run it from benchmark/:
 //
-//	go run ./runner [-frameworks nsgo,mygo,nsh,gpui,gpui-fast] [-cases counter,quotes,list] [-runs 3] [-seconds 10]
+//	go run ./runner [-frameworks nsgo,mygo,nsh,gpui,gpui-fast] [-cases counter,quotes,list,grid] [-runs 3] [-seconds 10]
 //
 // Each program prints "bench ready" on its first frame and, while a case
 // keeps changing, "bench frames N" each second (internal/bench, cases/).
@@ -31,9 +31,12 @@ import (
 var (
 	frameworks = []string{"nsgo", "mygo", "nsh", "gpui", "gpui-fast"}
 	cases      = []string{"counter", "quotes", "list"}
+	// stress are the cases only NSGo has, measured only when named: they
+	// find where its frames run out rather than compare frameworks.
+	stress = []string{"grid"}
 	// titles name the cases' windows, for the Go programs whose title is
 	// set when they build.
-	titles = map[string]string{"counter": "Counter", "quotes": "Quotes", "list": "List"}
+	titles = map[string]string{"counter": "Counter", "quotes": "Quotes", "list": "List", "grid": "Grid"}
 )
 
 // Results is results/<os>.json.
@@ -107,7 +110,7 @@ func main() {
 	}
 	bins := map[string]map[string]string{}
 	for _, fw := range strings.Split(*fws, ",") {
-		b, err := build(fw)
+		b, err := build(fw, strings.Split(*cs, ","))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %v\n", fw, err)
 			continue
@@ -178,9 +181,9 @@ func fatal(err error) {
 	os.Exit(1)
 }
 
-// build builds a framework's programs as releases, and returns them by
-// case.
-func build(fw string) (map[string]string, error) {
+// build builds a framework's programs of the cases named as releases, and
+// returns them by case.
+func build(fw string, named []string) (map[string]string, error) {
 	exe := ""
 	if runtime.GOOS == "windows" {
 		exe = ".exe"
@@ -188,7 +191,10 @@ func build(fw string) (map[string]string, error) {
 	bins := map[string]string{}
 	switch fw {
 	case "nsgo", "mygo":
-		for _, c := range cases {
+		for _, c := range named {
+			if slices.Contains(stress, c) && fw != "nsgo" {
+				continue
+			}
 			out, err := filepath.Abs(filepath.Join("target", fw, c+exe))
 			if err != nil {
 				return nil, err
@@ -209,10 +215,16 @@ func build(fw string) (map[string]string, error) {
 			dir, target = "gpui", filepath.Join("target", "fast")
 			args = append(args, "--features", "fast")
 		}
+		if !slices.ContainsFunc(named, func(c string) bool { return slices.Contains(cases, c) }) {
+			return bins, nil
+		}
 		if err := run(dir, []string{"CARGO_TARGET_DIR=" + target}, "cargo", args...); err != nil {
 			return nil, err
 		}
-		for _, c := range cases {
+		for _, c := range named {
+			if !slices.Contains(cases, c) {
+				continue
+			}
 			out, err := filepath.Abs(filepath.Join(dir, target, "release", c+exe))
 			if err != nil {
 				return nil, err

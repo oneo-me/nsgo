@@ -251,6 +251,9 @@ func SetTransform(layer objc.ID, t driver.Transform) {
 	if m == (transform3D{M11: 1, M22: 1, M33: 1, M44: 1}) {
 		delete(held, layer)
 	} else {
+		if HoldTransforms != nil {
+			HoldTransforms(layer)
+		}
 		held[layer] = m
 	}
 	setLayerTransform(layer, m)
@@ -389,6 +392,13 @@ var (
 	// held are the transforms SetTransform gave layers.
 	held = map[objc.ID]transform3D{}
 )
+
+// HoldTransforms, when a backend sets it, gives layer the class of
+// HeldTransformMethods as SetTransform first holds a transform for it.
+// Only layers that hold one take that class: AppKit sets each layer's
+// transform as it places its view, and the override's call into Go cost
+// every frame change a few microseconds.
+var HoldTransforms func(layer objc.ID)
 
 // HeldTransformMethods are the methods of a CALayer subclass that keeps
 // the transform SetTransform gave it: AppKit sets its views' layers back

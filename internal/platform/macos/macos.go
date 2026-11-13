@@ -103,8 +103,10 @@ type view struct {
 	// contentLayer is what a text or canvas draws into (content.go);
 	// stale says its content changed while it could not be seen.
 	contentLayer objc.ID
-	// laidFrame is the frame contentLayer was last given.
-	laidFrame apple.CGRect
+	// laidFrame is the frame contentLayer was last given, and needFrame
+	// the frame its content last needed (contentFrame), which a text's
+	// may be smaller than.
+	laidFrame, needFrame apple.CGRect
 	// rasterStep is how many times its pixels the content inside v draws
 	// at, as v's scale has it (rasterscale.go); 0 is 1.
 	rasterStep float64
@@ -500,8 +502,9 @@ var (
 	classLayer     objc.Class // layerBase, holding transforms
 )
 
-// makeBackingLayer gives a view AppKit's own backing layer, made a
-// subclass that keeps the transform a style gives it.
+// makeBackingLayer gives a view AppKit's own backing layer, which takes
+// a subclass that keeps the transform a style gives it once it has one
+// (holdTransforms).
 // clipsBounds answers AppKit, which clips views to their bounds as their
 // frames change, and with them the shadows and outlines drawn outside: a
 // view clips as its style says. AppKit asks before the view is registered
@@ -516,11 +519,17 @@ func makeBackingLayer(self objc.ID, cmd objc.SEL) objc.ID {
 		loadSetClass()
 		layerBase = layer.Class()
 		classLayer = register("NsgoLayer", layerBase, nil, apple.HeldTransformMethods())
+		apple.HoldTransforms = holdTransforms
 	}
+	return layer
+}
+
+// holdTransforms gives a backing layer the class that keeps its
+// transform.
+func holdTransforms(layer objc.ID) {
 	if layer.Class() == layerBase {
 		objectSetClass(layer, classLayer)
 	}
-	return layer
 }
 
 // loadSetClass loads object_setClass, which gives AppKit's objects
@@ -1562,6 +1571,10 @@ func (s *surface) apply(b *driver.MountBatch) {
 				s.repick = true
 			}
 			v.style = *it.ViewStyle
+			if v.layout != nil {
+				// A rounded text's layer takes its exact frame (sizeContent).
+				v.sizeContent()
+			}
 			if apple.UsesFilters(it.ViewStyle) {
 				v.native.Send(sel("setLayerUsesCoreImageFilters:"), true)
 			}

@@ -51,9 +51,12 @@ func drawContent(_ objc.ID, _ objc.SEL, layer objc.ID, ctx uintptr) {
 	if v == nil || ctx == 0 || (v.layout == nil && v.drawing == nil) {
 		return
 	}
-	// The layer holds the view and the ink of its text past it
-	// (sizeContent).
+	// The layer holds the view and the ink of its text past it, and a
+	// text's may be larger still (sizeContent).
 	h, f := float64(v.frame.Size.Height), v.contentFrame()
+	if v.layout != nil {
+		f = v.laidFrame
+	}
 	apple.DrawTopDown(ctx, f.Size.Height, !apple.MsgBool(layer, selContentsAreFlipped), func(baseUp bool) {
 		apple.TranslateCTM(ctx, -f.Origin.X, -f.Origin.Y)
 		if v.drawing != nil {
@@ -88,7 +91,7 @@ func (v *view) newContent() {
 	layer.Send(sel("setZPosition:"), apple.Z(contentZ))
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease)
-	v.contentLayer, v.laidFrame = layer, apple.CGRect{}
+	v.contentLayer, v.laidFrame, v.needFrame = layer, apple.CGRect{}, apple.CGRect{}
 	drawers[layer] = v
 }
 
@@ -117,12 +120,27 @@ func (v *view) redraw() {
 
 // sizeContent fits v's content layer to its frame and its text's ink. A
 // frame as before is not sent: a table's cells keep theirs as their texts
-// change, and the CGRect costs purego a reflected call each time.
+// change, and the CGRect costs purego a reflected call each time. A
+// text's layer keeps a larger frame (apple.KeptContent) and draws again
+// within it, unless its view is rounded: Core Animation then blends the
+// corners' edges a level apart.
 func (v *view) sizeContent() {
 	if v.contentLayer == 0 {
 		return
 	}
-	if f := v.contentFrame(); f != v.laidFrame {
+	f := v.contentFrame()
+	keeps := v.layout != nil && !v.style.Rounded()
+	if f == v.needFrame && (keeps || f == v.laidFrame) {
+		return
+	}
+	v.needFrame = f
+	if keeps && v.laidFrame != (apple.CGRect{}) {
+		if f = apple.KeptContent(v.laidFrame, f); f == v.laidFrame {
+			v.redraw()
+			return
+		}
+	}
+	if f != v.laidFrame {
 		v.laidFrame = f
 		apple.WithoutAnimation(func() {
 			v.contentLayer.Send(selSetFrame, f)
