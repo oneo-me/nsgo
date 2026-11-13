@@ -6,6 +6,9 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"os/exec"
@@ -16,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 // testTimeout bounds one test's run on a target.
@@ -33,7 +38,17 @@ type targetRunner struct {
 // process of its own, as the platform shows one app at a time: the test
 // binary, built with the backend's test host, is the target's package.
 func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
-	names, err := listTests(ctx, p, opts.run)
+	// A package that builds only for its target, as a backend's, is
+	// listed as the target sees it.
+	here, err := buildsHere(ctx, p)
+	if err != nil {
+		return err
+	}
+	seen := opts.target
+	if here {
+		seen = ""
+	}
+	names, err := listTests(ctx, p, seen, opts.run)
 	if err != nil {
 		return err
 	}
@@ -58,7 +73,7 @@ func runTargetTests(ctx context.Context, p *project, opts testOptions) error {
 	// A package that links no platform, as a library's, runs headless in
 	// the target's runtime: the web's engine, say.
 	env := slices.Clone(opts.env)
-	if hosted, err := linksPlatform(ctx, p); err != nil {
+	if hosted, err := linksPlatform(ctx, p, seen); err != nil {
 		return err
 	} else if hosted {
 		env = append(env, "NSGO_TEST_TARGET="+opts.target)
@@ -116,22 +131,54 @@ func (t traceWriter) Write(b []byte) (int, error) {
 }
 
 // linksPlatform reports whether the package's tests link NSGo's root
-// package, which links the platform's test host.
-func linksPlatform(ctx context.Context, p *project) (bool, error) {
-	cmd := exec.CommandContext(ctx, "go", "list", "-test", "-deps", "-f", "{{.ImportPath}}", ".")
-	cmd.Dir = p.Dir
-	out, err := cmd.Output()
+// package, which links the platform's test host: as target builds them,
+// or this machine for "".
+func linksPlatform(ctx context.Context, p *project, target string) (bool, error) {
+	out, err := goListFor(ctx, p, target, "-test", "-deps", "-f", "{{.ImportPath}}")
 	if err != nil {
-		return false, fmt.Errorf("go list: %w", err)
+		return false, err
 	}
 	return slices.Contains(strings.Fields(string(out)), "github.com/nsgo-dev/nsgo"), nil
 }
 
+// goListFor runs go list with args on the package as target's test build
+// sees it, or this machine's for "".
+func goListFor(ctx context.Context, p *project, target string, args ...string) ([]byte, error) {
+	var env []string
+	if target != "" {
+		var err error
+		if env, err = vetEnv(ctx, target); err != nil {
+			return nil, err
+		}
+	}
+	tags := "nsgotest"
+	for i, kv := range env {
+		if t, ok := strings.CutPrefix(kv, "GOFLAGS=-tags="); ok {
+			tags += "," + t
+			env = slices.Delete(env, i, i+1)
+			break
+		}
+	}
+	cmd := exec.CommandContext(ctx, "go", append(append([]string{"list", "-tags=" + tags}, args...), ".")...)
+	cmd.Dir = p.Dir
+	cmd.Env = append(os.Environ(), env...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("go list: %w\n%s", err, stderr.Bytes())
+	}
+	return out, nil
+}
+
 // listTests lists the package's tests that run matches, as go test -list
-// does on this machine.
-func listTests(ctx context.Context, p *project, run string) ([]string, error) {
+// does on this machine, or from its sources as target sees them.
+func listTests(ctx context.Context, p *project, target, run string) ([]string, error) {
 	if run == "" {
 		run = "."
+	}
+	if target != "" {
+		return listTestSources(ctx, p, target, run)
 	}
 	args := []string{"test", "-list", run}
 	// The TSX tests are in a file the tool adds.
@@ -159,6 +206,60 @@ func listTests(ctx context.Context, p *project, run string) ([]string, error) {
 		}
 	}
 	return names, nil
+}
+
+// buildsHere reports whether the package has Go files for this machine.
+func buildsHere(ctx context.Context, p *project) (bool, error) {
+	cmd := exec.CommandContext(ctx, "go", "list", "-e", "-tags=nsgotest", "-f", "{{if or .GoFiles .TestGoFiles .XTestGoFiles}}yes{{end}}", ".")
+	cmd.Dir = p.Dir
+	out, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("go list: %w", err)
+	}
+	return strings.TrimSpace(string(out)) == "yes", nil
+}
+
+// listTestSources lists the top-level tests that run matches in the
+// package's test files for target.
+func listTestSources(ctx context.Context, p *project, target, run string) ([]string, error) {
+	re, err := regexp.Compile(run)
+	if err != nil {
+		return nil, fmt.Errorf("-run: %w", err)
+	}
+	out, err := goListFor(ctx, p, target, "-f", "{{range .TestGoFiles}}{{$.Dir}}/{{.}}\n{{end}}{{range .XTestGoFiles}}{{$.Dir}}/{{.}}\n{{end}}")
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	fset := token.NewFileSet()
+	for _, path := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if path == "" {
+			continue
+		}
+		f, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range f.Decls {
+			fn, ok := d.(*ast.FuncDecl)
+			if !ok || fn.Recv != nil || !isTestName(fn.Name.Name) || !re.MatchString(fn.Name.Name) {
+				continue
+			}
+			names = append(names, fn.Name.Name)
+		}
+	}
+	return names, nil
+}
+
+// isTestName reports whether name names a test, as go test reads it:
+// Test, then no lower-case letter.
+func isTestName(name string) bool {
+	rest, ok := strings.CutPrefix(name, "Test")
+	if !ok {
+		return false
+	}
+	r, _ := utf8.DecodeRuneInString(rest)
+	return rest == "" || !unicode.IsLower(r)
 }
 
 // testLine matches go test -v's result line of a top-level test.

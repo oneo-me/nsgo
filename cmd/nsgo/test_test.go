@@ -90,3 +90,14 @@ func TestTSXTestsSkipOwnTrees(t *testing.T) {
 		t.Fatalf("tsxTestFile = %q, %v, want none", file, err)
 	}
 }
+
+func TestIsTestName(t *testing.T) {
+	for name, want := range map[string]bool{
+		"Test": true, "TestFeel": true, "Test_x": true, "Test2": true,
+		"Testing": false, "testFeel": false, "BenchmarkFeel": false,
+	} {
+		if got := isTestName(name); got != want {
+			t.Errorf("isTestName(%q) = %v", name, got)
+		}
+	}
+}

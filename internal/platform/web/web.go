@@ -894,13 +894,9 @@ func (s *surface) paragraphStyle(t *driver.AttributedText) *paragraphStyle {
 	return ps
 }
 
-// spanClass is the class of a span of style css, a link's with the
-// pointer.
-func (s *surface) spanClass(css map[string]string, link bool) string {
+// spanClass is the class of a span of style css.
+func (s *surface) spanClass(css map[string]string) string {
 	c := s.sortedCSS(css)
-	if link {
-		c.add("cursor", "pointer")
-	}
 	s.css = c
 	if len(c) == 0 {
 		return ""
@@ -1015,7 +1011,7 @@ func (r *richText) fill(s *surface, el js.Value, interactive bool) {
 		}
 		e := doc.Call("createElement", "span")
 		link := sp.link && interactive
-		if c := s.spanClass(sp.style, link); c != "" {
+		if c := s.spanClass(sp.style); c != "" {
 			e.Set("className", c)
 		}
 		r.appendText(doc, e, sp.start, sp.end)
@@ -1805,17 +1801,22 @@ func viewCSS(c *cssText, vs *driver.ViewStyle, size driver.Size, kind driver.Vie
 }
 
 // setFeel gives v the class of what its events and props make of the
-// pointer: its cursor, a pointer over a pressable view; the browser's
-// touch scrolling and zooming kept out of its gestures; pressable views
-// and views with gestures keep the page's own text selection, callout
-// and tap highlight out, and a selection area selects text.
+// pointer.
 func (s *surface) setFeel(v *view) {
-	c := s.css[:0]
-	switch {
-	case v.style.Cursor != driver.CursorAuto:
+	c := v.feelCSS(s.css[:0])
+	s.setClass(v.el, &v.feel, c)
+	s.css = c
+}
+
+// feelCSS appends to c what v's events and props make of the pointer:
+// its cursor only from Style.Cursor, so pressable views keep the arrow
+// as on the desktops; the browser's touch scrolling and zooming kept out
+// of its gestures; pressable views and views with gestures keep the
+// page's own text selection, callout and tap highlight out, and a
+// selection area selects text.
+func (v *view) feelCSS(c cssText) cssText {
+	if v.style.Cursor != driver.CursorAuto {
 		c.add("cursor", v.style.Cursor.Name())
-	case v.pressable():
-		c.add("cursor", driver.CursorPointer.Name())
 	}
 	if v.kind != driver.KindInput {
 		c.add("touch-action", v.touchAction())
@@ -1832,8 +1833,7 @@ func (s *surface) setFeel(v *view) {
 			c.add("-webkit-tap-highlight-color", "transparent")
 		}
 	}
-	s.setClass(v.el, &v.feel, c)
-	s.css = c
+	return c
 }
 
 // unborder places el, framed from its parent view's origin, where the

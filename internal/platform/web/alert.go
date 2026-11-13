@@ -99,7 +99,7 @@ func (s *surface) showAlert(c *driver.AlertConfig) {
 		act := actions[i]
 		b := add("button", row, map[string]string{
 			"font": "inherit", "font-size": "14px", "padding": "8px 16px", "border-radius": "8px",
-			"border": "1px solid " + line, "background": panel, "color": ink, "cursor": "pointer",
+			"border": "1px solid " + line, "background": panel, "color": ink,
 		})
 		b.Set("type", "button")
 		b.Set("textContent", act.Label)
