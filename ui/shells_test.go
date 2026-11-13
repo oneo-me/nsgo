@@ -128,6 +128,65 @@ func TestSidebarShell(t *testing.T) {
 	}
 }
 
+// TestSidebarShellInset floats the content as a card with a margin and
+// an edge that go as the sidebar hides, the window controls following it a frame at
+// a time.
+func TestSidebarShellInset(t *testing.T) {
+	var o *core.Signal[bool]
+	app, p := shell(t, windowEnv, func(cx *core.Scope) core.Node {
+		o = core.NewSignal(cx, true)
+		return SidebarShell{TestID: "shell", Variant: SidebarShellInset, ToggleLabel: "Toggle sidebar",
+			Open: o.Get, OnOpenChange: o.Set, Width: func() core.Points { return 240 },
+			Header:  []core.Node{core.Text{Content: "Inbox", TestID: "title"}},
+			Content: []core.Node{core.Text{Content: "Body"}}}
+	})
+	offset := func() core.Point {
+		for i := len(app.Window) - 1; i >= 0; i-- {
+			if app.Window[i].Action == core.WindowSetControls {
+				return app.Window[i].Controls.Offset
+			}
+		}
+		return core.Point{}
+	}
+	card := app.Find("content")
+	if card.Style.Background != Alpha(p.Background, 0.9) || card.Style.CornerRadius != shellInsetRadius {
+		t.Fatalf("content = %x with corners %v, want a card at 90%%", card.Style.Background, card.Style.CornerRadius)
+	}
+	if got := x(app, "shell", card); got != 5+240+5 {
+		t.Fatalf("card at %v, want after the margin, the sidebar and a gap", got)
+	}
+	if got := y(app, "shell", card); got != 5 {
+		t.Fatalf("card top = %v, want the margin", got)
+	}
+	if got := offset(); got != (core.Point{X: 5, Y: 5}) {
+		t.Fatalf("window controls moved by %v, want the margin", got)
+	}
+	if got := app.Find("content-header").Style.Background; got != 0 {
+		t.Fatalf("content header = %x, want the card's", got)
+	}
+	if card.Style.BorderWidth != 1 || card.Style.BorderColor != p.Line || card.Style.Effects == nil || len(card.Style.Effects.Shadows) == 0 {
+		t.Fatalf("card edge = %v in %x, want an edge and a shadow", card.Style.BorderWidth, card.Style.BorderColor)
+	}
+	if got := within(app.Find("shell"), "sidebar-resize").Children[0].Style.Background; got != 0 {
+		t.Fatalf("handle line = %x, want the card's edge alone", got)
+	}
+
+	app.Press("role:button Toggle sidebar")
+	if got := x(app, "shell", app.Find("content")); got != 0 {
+		t.Fatalf("card at %v once hidden, want the window's edge", got)
+	}
+	if got := offset(); got.X <= 0 || got.X >= 5 {
+		t.Fatalf("window controls jumped to %v, want them on their way", got)
+	}
+	app.Advance(time.Second)
+	if got := offset(); got != (core.Point{}) {
+		t.Fatalf("window controls moved by %v once hidden, want none", got)
+	}
+	if card := app.Find("content"); card.Style.BorderColor != Alpha(p.Line, 0) || card.Style.Effects != nil && len(card.Style.Effects.Shadows) > 0 {
+		t.Fatalf("card edge = %x once hidden, want no edge or shadow", card.Style.BorderColor)
+	}
+}
+
 // TestSidebarShellScrolls keeps a sidebar taller than the window within
 // it, its items scrolling under the sidebar's header.
 func TestSidebarShellScrolls(t *testing.T) {
@@ -165,6 +224,30 @@ func TestShellMaterial(t *testing.T) {
 	if got := app.Find("content-header").Style.Background; got != p.Background {
 		t.Fatalf("content header = %x, want the background", got)
 	}
+}
+
+// TestShellChromeStyle paints the chrome as the app asks.
+func TestShellChromeStyle(t *testing.T) {
+	paint := core.Style{Background: core.RGB(0x112233)}
+	app, _ := shell(t, windowEnv, func(cx *core.Scope) core.Node {
+		return SidebarShell{TestID: "shell", ChromeStyle: func() core.Style { return paint }}
+	})
+	if got := app.Find("shell").Style.Background; got != paint.Background {
+		t.Fatalf("chrome = %x, want the app's", got)
+	}
+}
+
+// TestShellBackdrop fills the window behind the sidebar and the content.
+func TestShellBackdrop(t *testing.T) {
+	app, _ := shell(t, windowEnv, func(cx *core.Scope) core.Node {
+		return SidebarShell{TestID: "shell", Backdrop: []core.Node{core.View{TestID: "grain", Style: FillRest}},
+			Content: []core.Node{core.Text{Content: "Body"}}}
+	})
+	backdrop := app.Find("backdrop")
+	if backdrop.Parent != app.Find("shell") || backdrop.Parent.Children[0] != backdrop || backdrop.Frame.Size != app.Find("shell").Frame.Size {
+		t.Fatal("the backdrop is not behind everything, filling the window")
+	}
+	app.Find("backdrop >> grain")
 }
 
 // TestPlainShell shows the title in the header, clear of the window

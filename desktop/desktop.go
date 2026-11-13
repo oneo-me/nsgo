@@ -107,7 +107,8 @@ func TitleBar(cx *core.Scope) core.Edges { return cx.Env().TitleBar() }
 //
 //	desktop.SetWindowControls(cx, desktop.WindowControls{TrafficLights: core.Point{X: 20, Y: 18}})
 //
-// TitleBar follows where they are. The zero WindowControls restores the
+// Offset moves them from there, as a transition does each frame. TitleBar
+// follows where they are. The zero WindowControls restores the
 // platform's.
 func SetWindowControls(cx *core.Scope, c WindowControls) { cx.SetWindowControls(c) }
 

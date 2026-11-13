@@ -244,6 +244,10 @@ type WindowControls struct {
 	// two after it. A zero X keeps them 16 points in, and a zero Y
 	// centers them in the title bar.
 	TrafficLights Point
+	// Offset moves the traffic lights this far from where TrafficLights
+	// puts them, so they follow what moves beside them without the app
+	// knowing their size.
+	Offset Point
 }
 
 // WindowFrame is where a window moves and how large it becomes, in

@@ -142,7 +142,15 @@ func (s *surface) command(c *driver.WindowCommand) {
 			w.Send(sel("orderOut:"), objc.ID(0))
 		}
 	case driver.WindowSetControls:
+		hidden := s.controls.Hidden
 		s.controls = c.Controls
+		// Moving them, as a transition does each frame, needs no new
+		// style mask.
+		if c.Controls.Hidden == hidden {
+			s.layoutTrafficLights()
+			s.refresh()
+			break
+		}
 		s.applyTitleBar()
 	case driver.WindowSetMaterial:
 		s.setMaterial(c.Material)
@@ -238,15 +246,15 @@ func (s *surface) applyTitleBar() {
 // layoutTrafficLights puts the traffic lights in the app's bar: the
 // close button's top left corner at the app's TrafficLights, by default
 // 16 points in from the window's left edge as NSGo places them and
-// centered in the bar. Without a bar height or a position of the app's
-// they stay where AppKit lays them out. AppKit puts them back whenever it
-// lays the title bar out, so this runs after each of the window's layout
-// passes (NsgoWindow), and changes only what moved.
+// centered in the bar, then moved by its Offset. Without a bar height or
+// a place of the app's they stay where AppKit lays them out. AppKit puts
+// them back whenever it lays the title bar out, so this runs after each
+// of the window's layout passes (NsgoWindow), and changes only what moved.
 func (s *surface) layoutTrafficLights() {
 	w := s.window
 	at := s.controls.TrafficLights
 	// An embedding host's toolbar lays the title bar out itself.
-	if w == 0 || s.titleBar != driver.TitleBarHidden || s.titleHeight <= 0 && at == (driver.Point{}) ||
+	if w == 0 || s.titleBar != driver.TitleBarHidden || s.titleHeight <= 0 && at == (driver.Point{}) && s.controls.Offset == (driver.Point{}) ||
 		w.Send(sel("toolbar")) != 0 {
 		s.restoreTrafficLights()
 		return
@@ -277,6 +285,8 @@ func (s *surface) layoutTrafficLights() {
 	if top <= 0 {
 		top = max((height-button.Size.Height)/2, 0)
 	}
+	left += float64(s.controls.Offset.X)
+	top += float64(s.controls.Offset.Y)
 	if !objc.Send[bool](bar, sel("isFlipped")) {
 		top = objc.Send[apple.CGRect](bar, selBounds).Size.Height - top - button.Size.Height
 	}
