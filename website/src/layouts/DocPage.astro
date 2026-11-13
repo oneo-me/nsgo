@@ -1,5 +1,6 @@
 ---
 import { render } from 'astro:content';
+import DocSearch from '../components/DocSearch.astro';
 import Icon from '../components/Icon.astro';
 import { copies } from '../copy';
 import { groupDocs, type Doc } from '../lib/docs';
@@ -30,6 +31,7 @@ const description = doc.entry.data.description ?? copy.description;
 <Layout lang={lang} page="docs" path={path} title={title} description={description}>
   <div class="container docs">
     <aside class="docs__sidebar">
+      <DocSearch lang={lang} />
       <details class="docs__nav" open>
         <summary>{copy.pages}<Icon name="chevron" size={14} /></summary>
         <nav aria-label={copy.title}>
@@ -77,11 +79,11 @@ const description = doc.entry.data.description ?? copy.description;
       </script>
     </aside>
 
-    <article class="docs__main">
-      {doc.entry.data.group && <p class="docs__group-name">{doc.entry.data.group}</p>}
+    <article class="docs__main" data-pagefind-body>
+      {doc.entry.data.group && <p class="docs__group-name" data-pagefind-ignore>{doc.entry.data.group}</p>}
       <h1 tabindex="-1">{doc.entry.data.title}</h1>
       {doc.entry.data.description && <p class="docs__lead">{doc.entry.data.description}</p>}
-      {doc.fallback && <p class="docs__notice">{copy.fallback}</p>}
+      {doc.fallback && <p class="docs__notice" data-pagefind-ignore>{copy.fallback}</p>}
       <div
         class="prose"
         lang={doc.fallback ? 'en' : undefined}
@@ -93,13 +95,13 @@ const description = doc.entry.data.description ?? copy.description;
         <Content />
       </div>
 
-      <a class="docs__edit" href={`${links.repo}/edit/main/docs/public/${source}`} target="_blank" rel="noopener noreferrer">
+      <a class="docs__edit" data-pagefind-ignore href={`${links.repo}/edit/main/docs/public/${source}`} target="_blank" rel="noopener noreferrer">
         {copy.edit}
         <Icon name="external" size={13} />
       </a>
 
       {(prev || next) && (
-        <nav class="docs__pager">
+        <nav class="docs__pager" data-pagefind-ignore>
           {prev ? (
             <a href={docUrl(lang, prev.id)}>
               <span>{copy.previous}</span>

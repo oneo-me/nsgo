@@ -128,6 +128,12 @@ const en = {
     edit: 'Edit this page on GitHub',
     fallback: 'This page is not translated yet, so it shows the English one.',
     live: { loading: 'Loading the preview…', failed: 'The preview could not start.' },
+    search: {
+      open: 'Search',
+      placeholder: 'Search the docs',
+      empty: 'No pages match.',
+      failed: 'Search is built with the site, so it works only in a build.',
+    },
   },
   components: {
     title: 'Components — NSGo',
@@ -375,6 +381,12 @@ const zh: Copy = {
     edit: '在 GitHub 上编辑此页',
     fallback: '这一页还没有中文版，下面显示的是英文原文。',
     live: { loading: '正在加载预览…', failed: '预览无法启动。' },
+    search: {
+      open: '搜索',
+      placeholder: '搜索文档',
+      empty: '没有匹配的页面。',
+      failed: '搜索索引随网站构建生成，只在构建后的网站里可用。',
+    },
   },
   components: {
     title: '组件 — NSGo',

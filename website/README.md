@@ -9,7 +9,7 @@ tab.
 ```sh
 bun install
 bun run dev          # build the gallery and the docs' apps, then serve the site at /
-bun run build        # build them, typecheck, then build dist/
+bun run build        # build them, typecheck, then build dist/ and its search index
 bun run preview      # serve dist/
 bun run gallery      # rebuild only the gallery
 bun run live         # rebuild only the docs' apps
@@ -107,6 +107,12 @@ A page has the sidebar of its language's groups, under the pages without one, it
 and next pages, an edit link and copy buttons on its code; the styles are in
 `src/styles/docs.css`.
 
+Search (`src/components/DocSearch.astro`, opened from the sidebar, ⌘K or
+`/`) runs on [Pagefind](https://pagefind.app/): `bun run build` indexes each
+page's article after Astro into `dist/pagefind/`, one index per `<html lang>`,
+so each language searches its own pages, and Chinese is split into words.
+The dev server has no index, so search works only in `bun run preview`.
+
 ## Look
 
 White by default; the header's appearance menu chooses light, dark or the
@@ -134,7 +140,7 @@ Chrome and macOS's `sips`; retake them when the gallery's look changes.
   that keeps the page when it exists.
 - **Translations kept current.** The build lists Chinese pages that are
   missing or older than the English.
-- **Search** across a language and version, built with the site.
+- **Search by version**, once versions exist.
 - **Checks.** The build fails on a broken link or anchor, and code blocks
   marked as programs compile through `go tool nsgo check`.
 

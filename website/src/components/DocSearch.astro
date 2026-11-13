@@ -1,0 +1,187 @@
+---
+// The docs' search: a button that opens a dialog searching the pages of
+// its language through Pagefind, whose index `bun run build` writes into
+// dist/pagefind/ after Astro. ⌘K, Ctrl+K or / opens it too.
+import Icon from './Icon.astro';
+import { copies } from '../copy';
+import type { Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+
+const copy = copies[Astro.props.lang].docs.search;
+---
+
+<button type="button" class="doc-search__open" aria-haspopup="dialog">
+  <Icon name="search" size={15} />
+  <span>{copy.open}</span>
+  <kbd>⌘K</kbd>
+</button>
+
+<dialog class="doc-search" aria-label={copy.open} data-empty={copy.empty} data-failed={copy.failed}>
+  <div class="doc-search__field">
+    <Icon name="search" size={17} />
+    <input
+      type="search"
+      placeholder={copy.placeholder}
+      autocomplete="off"
+      spellcheck="false"
+      role="combobox"
+      aria-expanded="false"
+      aria-controls="doc-search-results"
+      aria-autocomplete="list"
+    />
+    <kbd>Esc</kbd>
+  </div>
+  <ul id="doc-search-results" class="doc-search__results" role="listbox" aria-label={copy.open}></ul>
+  <p class="doc-search__status" role="status" hidden></p>
+</dialog>
+
+<script>
+  interface Fragment {
+    url: string;
+    title: string;
+    excerpt: string;
+  }
+  interface Page extends Fragment {
+    meta: { title: string };
+    sub_results?: Fragment[];
+  }
+  interface Pagefind {
+    init(): Promise<void>;
+    debouncedSearch(query: string): Promise<{ results: { data(): Promise<Page> }[] } | null>;
+  }
+
+  const opener = document.querySelector<HTMLButtonElement>('.doc-search__open')!;
+  const dialog = document.querySelector<HTMLDialogElement>('.doc-search')!;
+  const input = dialog.querySelector('input')!;
+  const list = dialog.querySelector('ul')!;
+  const status = dialog.querySelector('p')!;
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+  if (!isMac) opener.querySelector('kbd')!.textContent = 'Ctrl K';
+
+  // Pagefind loads on the first search: its index matches the page's
+  // `lang`, so each language searches only its own pages.
+  let pagefind: Promise<Pagefind> | undefined;
+  const load = () =>
+    (pagefind ??= import(/* @vite-ignore */ `${import.meta.env.BASE_URL}pagefind/pagefind.js`).then(
+      async (module: Pagefind) => {
+        await module.init();
+        return module;
+      },
+    ));
+
+  let hits: HTMLAnchorElement[] = [];
+  let active = -1;
+  const select = (index: number) => {
+    hits[active]?.removeAttribute('aria-selected');
+    active = index;
+    const hit = hits[active];
+    if (hit) {
+      hit.setAttribute('aria-selected', 'true');
+      hit.scrollIntoView({ block: 'nearest' });
+      input.setAttribute('aria-activedescendant', hit.id);
+    } else input.removeAttribute('aria-activedescendant');
+  };
+
+  const say = (message: string) => {
+    status.textContent = message;
+    status.hidden = !message;
+  };
+
+  const hit = (url: string, title: string, excerpt: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.id = `doc-search-hit-${hits.length}`;
+    link.className = 'doc-search__hit';
+    link.setAttribute('role', 'option');
+    const name = document.createElement('strong');
+    name.textContent = title;
+    // Pagefind escapes the page's text and marks the matches.
+    const text = document.createElement('span');
+    text.innerHTML = excerpt;
+    link.append(name, text);
+    hits.push(link);
+    return link;
+  };
+
+  // A page lists the sections that match, up to three, under its title.
+  const render = (pages: Page[]) => {
+    hits = [];
+    active = -1;
+    list.replaceChildren(
+      ...pages.map((page) => {
+        const item = document.createElement('li');
+        item.setAttribute('role', 'presentation');
+        const sections = (page.sub_results ?? []).slice(0, 3);
+        if (sections.length === 0) item.append(hit(page.url, page.meta.title, page.excerpt));
+        else {
+          const title = document.createElement('p');
+          title.textContent = page.meta.title;
+          item.append(title, ...sections.map((section) => hit(section.url, section.title, section.excerpt)));
+        }
+        return item;
+      }),
+    );
+    input.setAttribute('aria-expanded', String(hits.length > 0));
+    select(hits.length ? 0 : -1);
+  };
+
+  let query = '';
+  input.addEventListener('input', async () => {
+    query = input.value.trim();
+    if (!query) {
+      render([]);
+      say('');
+      return;
+    }
+    const asked = query;
+    let pages: Page[];
+    try {
+      const search = await (await load()).debouncedSearch(asked);
+      // A newer query superseded this one.
+      if (!search || asked !== query) return;
+      pages = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
+    } catch {
+      if (asked === query) say(dialog.dataset.failed!);
+      return;
+    }
+    if (asked !== query) return;
+    render(pages);
+    say(pages.length ? '' : dialog.dataset.empty!);
+  });
+
+  input.addEventListener('keydown', (event) => {
+    const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
+    if (step && hits.length) {
+      event.preventDefault();
+      select((active + step + hits.length) % hits.length);
+    } else if (event.key === 'Enter' && hits[active]) {
+      event.preventDefault();
+      hits[active].click();
+    }
+  });
+
+  const open = () => {
+    if (dialog.open) return;
+    dialog.showModal();
+    input.select();
+    void load().catch(() => {});
+  };
+  opener.addEventListener('click', open);
+  document.addEventListener('keydown', (event) => {
+    const target = event.target as HTMLElement;
+    const typing = target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+    if ((event.key === 'k' && (isMac ? event.metaKey : event.ctrlKey)) || (event.key === '/' && !typing)) {
+      event.preventDefault();
+      open();
+    }
+  });
+
+  // Choosing a page, or pressing outside the dialog, closes it; the docs'
+  // own navigation then opens the page.
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog || (event.target as Element).closest('a')) dialog.close();
+  });
+</script>
