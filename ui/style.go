@@ -157,13 +157,13 @@ func sheetContent(cx *core.Scope, side core.Placement, children []core.Node) []c
 
 // tooltipBubble is a tooltip's look: content in the page's color on a
 // small bubble of the text's.
-func tooltipBubble(cx *core.Scope, content string) core.Node {
+func tooltipBubble(cx *core.Scope, content string, contentFunc func() string) core.Node {
 	colors := ColorsOf(cx)
 	return core.View{Style: core.Style{CornerRadius: RadiusSmall, Padding: core.Symmetric(4, 8), MaxWidth: core.Pt(280)},
 		StyleFunc: func() core.Style {
 			return core.Style{Background: colors.Text(), Shadows: FinOf(cx).Raised().Shadows}
 		},
-		Children: []core.Node{core.Text{Content: content, Style: TypeCaption, StyleFunc: Colored(colors.Background)}}}
+		Children: []core.Node{core.Text{Content: content, ContentFunc: contentFunc, Style: TypeCaption, StyleFunc: Colored(colors.Background)}}}
 }
 
 // Inherited is no color, for an icon in the color of the text it is in.

@@ -10,7 +10,7 @@ import (
 
 // Actions are what a message offers a reader: copy with a receipt, retry a
 // reply, and edit a message the user sent. The app says where each applies
-// and own its own actions may follow; the words are ui/chat's, through its
+// and its own actions may follow; the words are ui/chat's, through its
 // catalog.
 type Actions struct {
 	// Text is what Copy copies.
@@ -62,26 +62,33 @@ func (a Actions) Render(cx *core.Scope) core.Node {
 			})
 		})
 	}
-	allowed := func(fn func() bool) func() bool {
-		return func() bool { return fn == nil || fn() }
+	blocked := func(allowed func() bool) func() bool {
+		return func() bool { return allowed != nil && !allowed() }
 	}
 	var children []core.Node
 	if a.Text != nil || a.OnCopy != nil {
-		children = append(children, core.Dynamic(func(cx *core.Scope) core.Node {
-			if copied.Get() {
-				return IconAction{Label: locales.Copied(cx), Icon: lucide.Check, Active: func() bool { return true },
-					Tint: colors.Accent, OnPress: copies}
-			}
-			return IconAction{Label: locales.Copy(cx), Icon: lucide.Copy, Tint: colors.Accent, OnPress: copies}
-		}))
+		// One button says the receipt, so focus stays on it.
+		children = append(children, IconAction{Active: copied.Get, Tint: colors.Accent, OnPress: copies,
+			LabelFunc: func() string {
+				if copied.Get() {
+					return locales.Copied(cx)
+				}
+				return locales.Copy(cx)
+			},
+			IconFunc: func() *core.SVG {
+				if copied.Get() {
+					return lucide.Check()
+				}
+				return lucide.Copy()
+			}})
 	}
 	if a.OnRetry != nil {
-		children = append(children, IconAction{Label: locales.Retry(cx), Icon: lucide.RefreshCw,
-			Disabled: func() bool { return !allowed(a.CanRetry)() }, OnPress: a.OnRetry})
+		children = append(children, IconAction{LabelFunc: func() string { return locales.Retry(cx) }, Icon: lucide.RefreshCw,
+			Disabled: blocked(a.CanRetry), OnPress: a.OnRetry})
 	}
 	if a.OnEdit != nil {
-		children = append(children, IconAction{Label: locales.Edit(cx), Icon: lucide.Pencil,
-			Disabled: func() bool { return !allowed(a.CanEdit)() }, OnPress: a.OnEdit})
+		children = append(children, IconAction{LabelFunc: func() string { return locales.Edit(cx) }, Icon: lucide.Pencil,
+			Disabled: blocked(a.CanEdit), OnPress: a.OnEdit})
 	}
 	children = append(children, a.Children...)
 	return core.View{TestID: a.TestID, Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 4}, Children: children}

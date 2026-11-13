@@ -443,18 +443,6 @@ func chatDemo(cx *core.Scope) core.Node {
 			}
 			return ""
 		}
-		thinkingLabel := func() string {
-			if live() {
-				if thinking.Get() {
-					return tr.ChatThinking(max(0, int(now.Get().Sub(run.thinkStart).Seconds())))
-				}
-				return tr.ChatThoughtFor(max(1, thinkSeconds.Get()))
-			}
-			if r := m().reasoning; r != nil {
-				return tr.ChatThoughtFor(r.seconds)
-			}
-			return ""
-		}
 		tools := func() []chatTool {
 			if live() {
 				return liveTools.Get()
@@ -550,81 +538,82 @@ func chatDemo(cx *core.Scope) core.Node {
 			}
 			return out
 		}
-		return core.Group{
-			// Reasoning streams above the answer and folds itself when it
-			// ends, apart from the turn's steps.
-			chat.Reasoning{Text: reasonText,
-				Status: func() chat.Status {
-					if live() && thinking.Get() {
-						return chat.Running
-					}
-					return chat.Completed
-				},
-				Elapsed: func() time.Duration {
-					if live() && run != nil {
-						return now.Get().Sub(run.thinkStart)
-					}
-					if r := m().reasoning; r != nil {
-						return time.Duration(r.seconds) * time.Second
-					}
-					return 0
-				},
-				Label: thinkingLabel, Summary: thinkingLabel, Conversation: conversation, TestID: "chat-reasoning"},
-			chat.Turn{Status: status.Get, Steps: steps, Conversation: conversation,
-				Summary: func() string { minutes, seconds := elapsed(); return tr.ChatWorked(minutes, seconds) },
-				Working: func() string { minutes, seconds := elapsed(); return tr.ChatWorking(statusLabel(), minutes, seconds) },
-				Prompt: func(cx *core.Scope) core.Node {
-					first := core.Untracked(cx, m)
-					var nodes core.Group
-					if hasImage(first.image) {
-						nodes = append(nodes, chat.AttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
-					}
-					if first.file != nil {
-						nodes = append(nodes, chat.Attachment{Label: first.file.name, Detail: first.file.size})
-					}
-					return append(nodes, core.Text{Content: first.text, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 19}})
-				},
-				Final: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return false }) }, HasFinal: func() bool { return !live() && written.Get() },
-				Footer: func(cx *core.Scope) core.Node {
-					return core.Group{
-						core.Show{When: func() bool { return m().waiting }, Then: func(cx *core.Scope) core.Node {
-							return ui.HStack{Gap: 6, Children: []core.Node{ui.Spinner{Size: 12}, ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
-						}},
-						core.Show{When: func() bool { return status.Get() == chat.Failed }, Then: func(cx *core.Scope) core.Node {
-							return errorRow(cx, func() string {
-								if e := m().err; e != "" {
-									return e
-								}
-								return tr.ChatSomethingWentWrong()
-							}, func() { retry(core.Untracked(cx, m)) })
-						}},
-						core.Show{When: func() bool { return status.Get() == chat.Cancelled }, Then: func(cx *core.Scope) core.Node {
-							return ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)
-						}},
-					}
-				},
-				ShowActions: func() bool { return status.Get() == chat.Completed || status.Get() == chat.Cancelled },
-				Actions: func(cx *core.Scope) core.Node {
-					rate := func(to string) func() {
-						return func() {
-							update(core.Untracked(cx, m).id, func(x msg) msg {
-								if x.rating == to {
-									x.rating = ""
-								} else {
-									x.rating = to
-								}
-								return x
-							})
+		// The reasoning's cost: the block reads it again each second while
+		// it runs.
+		reasonTime := func() time.Duration {
+			switch {
+			case live() && thinking.Get():
+				return cx.Now().Sub(run.thinkStart)
+			case live():
+				return time.Duration(thinkSeconds.Get()) * time.Second
+			case m().reasoning != nil:
+				return time.Duration(m().reasoning.seconds) * time.Second
+			}
+			return 0
+		}
+		return chat.Turn{Status: status.Get, Steps: steps, Conversation: conversation,
+			Summary: func() string { minutes, seconds := elapsed(); return tr.ChatWorked(minutes, seconds) },
+			Working: func() string { minutes, seconds := elapsed(); return tr.ChatWorking(statusLabel(), minutes, seconds) },
+			Reasoning: func(*core.Scope) core.Node {
+				return chat.Reasoning{Text: reasonText, Elapsed: reasonTime, Conversation: conversation, TestID: "chat-reasoning",
+					Status: func() chat.Status {
+						if live() && thinking.Get() {
+							return chat.Running
 						}
+						return chat.Completed
+					}}
+			},
+			Prompt: func(cx *core.Scope) core.Node {
+				first := core.Untracked(cx, m)
+				var nodes core.Group
+				if hasImage(first.image) {
+					nodes = append(nodes, chat.AttachmentPreview{Label: tr.ChatPhoto(), Image: first.image})
+				}
+				if first.file != nil {
+					nodes = append(nodes, chat.Attachment{Label: first.file.name, Detail: first.file.size})
+				}
+				return append(nodes, core.Text{Content: first.text, Selectable: core.SelectableOn, Style: core.Style{FontSize: 13, LineHeight: 19}})
+			},
+			Final: func(*core.Scope) core.Node { return chatMarkdown(md, func() bool { return false }) }, HasFinal: func() bool { return !live() && written.Get() },
+			Footer: func(cx *core.Scope) core.Node {
+				return core.Group{
+					core.Show{When: func() bool { return m().waiting }, Then: func(cx *core.Scope) core.Node {
+						return ui.HStack{Gap: 6, Children: []core.Node{ui.Spinner{Size: 12}, ui.Text(tr.ChatWaitingForAConnection(), 12, ui.Regular, colors.Muted)}}
+					}},
+					core.Show{When: func() bool { return status.Get() == chat.Failed }, Then: func(cx *core.Scope) core.Node {
+						return errorRow(cx, func() string {
+							if e := m().err; e != "" {
+								return e
+							}
+							return tr.ChatSomethingWentWrong()
+						}, func() { retry(core.Untracked(cx, m)) })
+					}},
+					core.Show{When: func() bool { return status.Get() == chat.Cancelled }, Then: func(cx *core.Scope) core.Node {
+						return ui.Text(tr.ChatYouStoppedThisReply(), 13, ui.Regular, colors.Faint)
+					}},
+				}
+			},
+			ShowActions: func() bool { return status.Get() == chat.Completed || status.Get() == chat.Cancelled },
+			Actions: func(cx *core.Scope) core.Node {
+				rate := func(to string) func() {
+					return func() {
+						update(core.Untracked(cx, m).id, func(x msg) msg {
+							if x.rating == to {
+								x.rating = ""
+							} else {
+								x.rating = to
+							}
+							return x
+						})
 					}
-					return chat.Actions{Text: func() string { return m().md },
-						OnRetry:  func() { regenerate(core.Untracked(cx, m)) },
-						CanRetry: func() bool { return run == nil },
-						Children: []core.Node{
-							chat.IconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
-							chat.IconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
-						}}
-				}}}
+				}
+				return chat.Actions{Text: func() string { return m().md },
+					OnRetry: func() { regenerate(core.Untracked(cx, m)) },
+					Children: []core.Node{
+						chat.IconAction{Label: tr.ChatGoodReply(), Icon: lucide.ThumbsUp, Active: func() bool { return m().rating == "up" }, Tint: colors.Accent, OnPress: rate("up")},
+						chat.IconAction{Label: tr.ChatBadReply(), Icon: lucide.ThumbsDown, Active: func() bool { return m().rating == "down" }, Tint: colors.Danger, OnPress: rate("down")},
+					}}
+			}}
 	}
 
 	emptyText := tr.ChatASimulatedAssistantEveryReply()

@@ -11,9 +11,9 @@ import (
 
 // Reasoning is a model's reasoning before its answer. While it streams it
 // stays open with what it has cost so far; once it ends it folds itself,
-// unless the user opened it or is reading older content. It sits above the
-// final answer and does not fold with its turn's steps, so its text stays
-// where the reader left it however the turn's work is folded.
+// unless the user opened it or is reading older content. A Turn shows it
+// as its Reasoning, after the prompt and apart from the steps, so its text
+// stays where the reader left it however the turn's work is folded.
 type Reasoning struct {
 	// Text is the reasoning, which the app streams; the block builds
 	// nothing while it is empty.
@@ -22,7 +22,7 @@ type Reasoning struct {
 	// stops its duration.
 	Status func() Status
 	// Elapsed is what the reasoning has cost so far. A running block reads
-	// it again once a second.
+	// it again once a second; without it, ui/chat's labels give no time.
 	Elapsed func() time.Duration
 	// Label says the row while it runs ("Thinking for 12s") and Summary
 	// once it ends ("Thought for 12s"): the app's words, through its
@@ -52,35 +52,44 @@ func (r Reasoning) Render(cx *core.Scope) core.Node {
 		return r.Text != nil && r.Text() != "" || r.Content != nil
 	}
 	// The row counts a running block's seconds, so its label follows what
-	// the block has cost; the count stops once the block ends.
+	// the block has cost; the count runs while there is reasoning that has
+	// not ended, and starts again if it resumes.
 	ticks := core.NewSignal(cx, 0)
+	var stop func() bool
 	var tick func()
 	tick = func() {
-		if !core.Untracked(cx, running) {
-			return
-		}
 		ticks.Update(func(n int) int { return n + 1 })
-		cx.AfterFunc(time.Second, tick)
+		stop = cx.AfterFunc(time.Second, tick)
 	}
-	if core.Untracked(cx, reasoned) && core.Untracked(cx, running) {
-		cx.AfterFunc(time.Second, tick)
-	}
-	seconds := func() int {
-		if r.Elapsed == nil {
-			return 0
-		}
-		return max(0, int(r.Elapsed().Seconds()+0.5))
-	}
+	cx.Effect(func() {
+		on := reasoned() && running()
+		cx.Untrack(func() {
+			if stop != nil {
+				stop()
+				stop = nil
+			}
+			if on {
+				stop = cx.AfterFunc(time.Second, tick)
+			}
+		})
+	})
+	seconds := func() int { return max(0, int(r.Elapsed().Seconds()+0.5)) }
 	label := func() string {
 		_ = ticks.Get()
 		if running() {
-			if r.Label != nil {
+			switch {
+			case r.Label != nil:
 				return r.Label()
+			case r.Elapsed == nil:
+				return locales.ThinkingUntimed(cx)
 			}
 			return locales.Thinking(cx, seconds())
 		}
-		if r.Summary != nil {
+		switch {
+		case r.Summary != nil:
 			return r.Summary()
+		case r.Elapsed == nil:
+			return locales.Thoughts(cx)
 		}
 		return locales.ThoughtFor(cx, seconds())
 	}

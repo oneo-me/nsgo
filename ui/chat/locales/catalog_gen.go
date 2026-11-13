@@ -13,11 +13,12 @@ const Source = "en"
 // Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
 var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
-// Messages say the messages in one language; with mark, the source's
-// with their arguments marked, which a pseudo locale transforms.
+// Messages say the messages in one language, their times in the hour
+// cycle hc the user set; with mark, the source's with their arguments
+// marked, which a pseudo locale transforms.
 type Messages struct {
-	lang string
-	mark bool
+	lang, hc string
+	mark     bool
 }
 
 // In returns the messages in the catalog's language that suits locale
@@ -25,8 +26,13 @@ type Messages struct {
 func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }
 
 // For returns the messages in the language the app shows under cx
-// (i18n.Language); a binding that says them follows it as it changes.
-func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
+// (i18n.Language), their times as the user reads them; a binding that
+// says them follows both as they change.
+func For(cx *core.Scope) Messages {
+	msgs := In(i18n.Language(cx))
+	msgs.hc = cx.Env().LocaleSettings().HourCycle
+	return msgs
+}
 
 // Parameters names the parameters of each message that has some, by
 // its method, for the TSX declarations of the messages
@@ -54,6 +60,8 @@ const (
 	textCopied
 	textRetry
 	textEdit
+	textThinkingUntimed
+	textThoughts
 	numTexts
 )
 
@@ -64,6 +72,8 @@ var keyOfText = [numTexts]string{
 	"copied",
 	"retry",
 	"edit",
+	"thinkingUntimed",
+	"thoughts",
 }
 
 // textsEn are the messages without arguments in en.
@@ -71,12 +81,16 @@ var textsEn = i18n.NewTexts(""+
 	"Copy"+
 	"Copied"+
 	"Retry"+
-	"Edit",
+	"Edit"+
+	"Thinking…"+
+	"Thoughts",
 	[]uint16{
 		4,
 		6,
 		5,
 		4,
+		11,
+		8,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -84,12 +98,16 @@ var textsZhHans = i18n.NewTexts(""+
 	"拷贝"+
 	"已拷贝"+
 	"重试"+
-	"编辑",
+	"编辑"+
+	"思考中…"+
+	"思考过程",
 	[]uint16{
 		6,
 		9,
 		6,
 		6,
+		12,
+		12,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -248,3 +266,21 @@ func (msgs Messages) ThoughtFor(seconds int) string {
 		}
 	}
 }
+
+// ThinkingUntimed says "Thinking…"
+// in the language the app shows under cx.
+//
+// What a reasoning block reads while it streams, when the app does not say what it costs.
+func ThinkingUntimed(cx *core.Scope) string { return For(cx).ThinkingUntimed() }
+
+// ThinkingUntimed is the package's ThinkingUntimed in the language of msgs.
+func (msgs Messages) ThinkingUntimed() string { return msgs.text(textThinkingUntimed) }
+
+// Thoughts says "Thoughts"
+// in the language the app shows under cx.
+//
+// What a reasoning block reads once it ends, when the app does not say what it cost.
+func Thoughts(cx *core.Scope) string { return For(cx).Thoughts() }
+
+// Thoughts is the package's Thoughts in the language of msgs.
+func (msgs Messages) Thoughts() string { return msgs.text(textThoughts) }

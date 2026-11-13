@@ -204,16 +204,17 @@ func (p chatPill) Render(cx *core.Scope) core.Node {
 
 // IconAction is a named icon button with a tooltip, for a turn's
 // actions or the composer's slots. Active marks a choice in Tint, such as
-// a rating; Icon may follow it through IconFunc.
+// a rating; Label and Icon may follow it through LabelFunc and IconFunc.
 type IconAction struct {
-	Label    string
-	Icon     func() *core.SVG
-	IconFunc func() *core.SVG
-	Active   func() bool
-	Tint     func() core.Color
-	Disabled func() bool
-	OnPress  func()
-	TestID   string
+	Label     string
+	LabelFunc func() string
+	Icon      func() *core.SVG
+	IconFunc  func() *core.SVG
+	Active    func() bool
+	Tint      func() core.Color
+	Disabled  func() bool
+	OnPress   func()
+	TestID    string
 }
 
 // Render implements core.Node.
@@ -229,7 +230,7 @@ func (a IconAction) Render(cx *core.Scope) core.Node {
 		}
 		return colors.Muted()
 	}
-	button := base.Button{Label: a.Label, Selected: a.Active, Disabled: a.Disabled, TestID: a.TestID, OnPress: func(core.PressEvent) {
+	button := base.Button{Label: a.Label, LabelFunc: a.LabelFunc, Selected: a.Active, Disabled: a.Disabled, TestID: a.TestID, OnPress: func(core.PressEvent) {
 		if a.OnPress != nil {
 			a.OnPress()
 		}
@@ -242,5 +243,5 @@ func (a IconAction) Render(cx *core.Scope) core.Node {
 		Children: []core.Node{core.View{StyleFunc: func() core.Style {
 			return core.Style{Color: tint(), GroupStyle: &core.GroupStyle{Name: "chat-action", Hover: &core.Style{Color: colors.Text()}}}
 		}, Children: []core.Node{ui.IconOf(name, 14, ui.Inherited)}}}}
-	return ui.Tooltip{Text: a.Label, Trigger: button}
+	return ui.Tooltip{Text: a.Label, TextFunc: a.LabelFunc, Trigger: button}
 }
