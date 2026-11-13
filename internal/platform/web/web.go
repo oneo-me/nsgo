@@ -176,9 +176,11 @@ type surface struct {
 	ticking  bool
 	// frameWanted is set while the app waits for a display frame.
 	frameWanted bool
-	components  driver.NativeComponents
-	unknown     map[string]bool // component names warned about
-	drag        *view           // the view files are dragged over
+	// perf measures the engine when a test asks (nsgo test -fps).
+	perf       *engine.PerfMonitor
+	components driver.NativeComponents
+	unknown    map[string]bool // component names warned about
+	drag       *view           // the view files are dragged over
 	// shading are the shader views to draw once the batch or the frame
 	// is applied.
 	shading []*view
@@ -374,6 +376,10 @@ func open(app engine.App, opts Options, test *testOpen) *surface {
 		eopts.UseTest(test.options, &test.pin)
 		// The page's size, which the test sets, is the surface's.
 		eopts.Size = s.size()
+		if test.options.FPS {
+			s.perf = engine.NewPerfMonitor()
+			eopts.Perf = s.perf
+		}
 	}
 	s.engine = engine.Start(s, app, eopts)
 	// The host can change size without the window doing so.
@@ -415,6 +421,14 @@ func (s *surface) send(v *view, ev driver.Event) {
 	ev.ID = v.id
 	if s.animator.Gesture(&ev) {
 		s.applyAnimated()
+	}
+	if ev.Kind == driver.EventScroll && s.frameWanted {
+		// The page reports a scroll before the animation frame it
+		// belongs to: while the app waits for that frame, the report
+		// rides with it, where it cost a pass of its own every frame of
+		// an app scrolling in its frames.
+		s.engine.DispatchBeforeFrame(ev)
+		return
 	}
 	s.engine.Dispatch(ev)
 }

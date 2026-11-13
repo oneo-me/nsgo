@@ -46,7 +46,8 @@ type Options struct {
 	Clock core.Clock
 	// FPS measures the app with the backend's performance monitor and
 	// logs its readings once a second (nsgo test -fps), where the backend
-	// has one: macOS, iOS, Windows and Linux.
+	// has one: macOS, iOS, Windows and Linux; the web and Android measure
+	// only the engine, with no frame readings.
 	FPS bool
 }
 

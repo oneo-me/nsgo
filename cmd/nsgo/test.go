@@ -73,8 +73,8 @@ func runTests(ctx context.Context, p *project, opts testOptions) error {
 	if err := p.prepareCatalogs(ctx, "./...", false); err != nil {
 		return err
 	}
-	if opts.fps && !slices.Contains([]string{"macos", "windows", "linux", "ios_simulator"}, opts.target) {
-		return errors.New("test: -fps goes with -target macos, windows, linux or ios_simulator, whose monitors it reads")
+	if opts.fps && !slices.Contains([]string{"macos", "windows", "linux", "ios_simulator", "web", "android"}, opts.target) {
+		return errors.New("test: -fps goes with -target macos, windows, linux, ios_simulator, web or android, whose monitors it reads")
 	}
 	if opts.bench != "" && (opts.target != "" || p.steps != nil) {
 		return errors.New("test: -bench runs headless, on the package's tests")

@@ -214,3 +214,26 @@ func TestPerfRecordsCommitItems(t *testing.T) {
 		t.Fatal("a measured commit was not timestamped")
 	}
 }
+
+// A wake that finds the queue drained, as a push between a wake and the
+// take that drained it leaves, makes no pass.
+func TestAWakeWithNothingQueuedMakesNoPass(t *testing.T) {
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	monitor := NewPerfMonitor()
+	e := Start(p, func(cx *core.Scope) core.Node { return core.View{} }, Options{Perf: monitor})
+	defer e.Close()
+	<-p.mounted
+	// The second Sync waits out the first's pass, which records as it ends.
+	e.Sync()
+	e.Sync()
+	before := monitor.Snapshot().Passes
+	for range 3 {
+		e.wake <- struct{}{}
+		time.Sleep(10 * time.Millisecond)
+	}
+	e.Sync()
+	e.Sync()
+	if passes := monitor.Snapshot().Passes - before; passes > 2 {
+		t.Errorf("three empty wakes and two syncs made %.0f passes, want the syncs' at most", passes)
+	}
+}

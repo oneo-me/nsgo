@@ -85,7 +85,7 @@ func main() {
 		fs.BoolVar(&o.trace, "trace", false, "print each step's mount items and commit times")
 		fs.StringVar(&o.target, "target", "", "run on a `platform`: macos, windows, linux, web, ios_simulator, tvos_simulator, watchos_simulator or android (default: headless)")
 		fs.StringVar(&o.device, "device", "", "the simulator, by name or UDID, or the adb device the target runs on")
-		fs.BoolVar(&o.fps, "fps", false, "log the performance monitor's readings once a second (with -target macos, windows, linux or ios_simulator)")
+		fs.BoolVar(&o.fps, "fps", false, "log the performance monitor's readings once a second (with -target macos, windows, linux, ios_simulator, web or android)")
 		fs.Func("env", "set `KEY=VALUE` in the tests' environment, a phone's too; repeat for more", func(kv string) error {
 			if k, _, ok := strings.Cut(kv, "="); !ok || k == "" {
 				return fmt.Errorf("-env wants KEY=VALUE, not %q", kv)

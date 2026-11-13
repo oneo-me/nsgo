@@ -457,11 +457,17 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 			close(e.quitted)
 			return
 		}
+		// A push between a wake and the take that drained its message
+		// leaves a second wake and nothing to do: no pass for it.
+		taken := e.take()
+		if len(taken) == 0 {
+			continue
+		}
 		if perf != nil {
 			start = time.Now()
 		}
 		var resized []chan struct{}
-		for _, m := range e.take() {
+		for _, m := range taken {
 			switch {
 			case m.frame:
 				frameAsked = false

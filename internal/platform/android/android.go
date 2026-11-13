@@ -127,6 +127,11 @@ type surface struct {
 	engine   *engine.Engine
 	started  chan struct{}      // closed once engine is set
 	env      driver.Environment // the last reported, on the reader goroutine
+	// frameWanted is set while the app waits for a display frame, from
+	// its request until the runtime's answer.
+	frameWanted atomic.Bool
+	// perf measures the engine when a test asks (nsgo test -fps).
+	perf *engine.PerfMonitor
 
 	ratio atomic.Uint32 // the pixel ratio's float32 bits, for rasterizing SVG
 
@@ -242,6 +247,7 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			}
 			s.startEngine(app, size, opts.Appearance, nil)
 		case msgFrame:
+			s.frameWanted.Store(false)
 			s.engine.Frame()
 		case msgResize:
 			s.engine.Resize(driver.Size{Width: r.points(), Height: r.points()})
@@ -307,7 +313,15 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				// A pan's start and end carry its bound values as the size.
 				ev.Values, ev.Size = driver.Point{X: ev.Size.Width, Y: ev.Size.Height}, driver.Size{}
 			}
-			s.engine.Dispatch(ev)
+			if ev.Kind == driver.EventScroll && s.frameWanted.Load() {
+				// The runtime reports the offsets the app's commits set as
+				// it applies them: while the app waits for a frame, the
+				// report rides with it, where it cost a pass of its own
+				// every frame of an app scrolling in its frames.
+				s.engine.DispatchBeforeFrame(ev)
+			} else {
+				s.engine.Dispatch(ev)
+			}
 		case msgMeasured:
 			s.measured <- driver.Size{Width: r.points(), Height: r.points()}
 		case msgLaidOut:
@@ -380,6 +394,10 @@ func (s *surface) startEngine(app engine.App, size driver.Size, appearance drive
 		eopts.UseTest(test.options, &test.pin)
 		// A phone's screen is what it is.
 		eopts.Size = size
+		if test.options.FPS {
+			s.perf = engine.NewPerfMonitor()
+			eopts.Perf = s.perf
+		}
 	}
 	imageload.HTTP = s.httpGet
 	imageload.UseDiskCache(eopts.CacheDir)
@@ -778,7 +796,10 @@ func (l *textLayout) Attachment(i int) (driver.Bounds, bool) {
 // RequestFrame implements engine.Platform: Java answers with msgFrame
 // when its next Choreographer frame begins, before it steps the native
 // animations.
-func (s *surface) RequestFrame() { s.send(msgWantFrame, func(*writer) {}) }
+func (s *surface) RequestFrame() {
+	s.frameWanted.Store(true)
+	s.send(msgWantFrame, func(*writer) {})
+}
 
 // Mount implements engine.Platform: one message per commit, then the
 // loads of the image sources it changed.
