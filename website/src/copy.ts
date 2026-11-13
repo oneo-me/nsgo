@@ -137,6 +137,7 @@ const en = {
     official: 'Official',
     visit: 'Open',
     source: 'Source',
+    stars: 'GitHub stars',
     by: 'By',
     submit: {
       title: 'Built a component for NSGo?',
@@ -146,12 +147,13 @@ const en = {
   },
   showcases: {
     title: 'Showcases — NSGo',
-    description: 'Apps and demos built with NSGo, and what they run on.',
+    description: 'Apps built with NSGo, and what they run on.',
     heading: 'Built with NSGo.',
-    lead: 'Sample apps to try and apps people make with NSGo, on every platform it runs on.',
+    lead: 'Apps people make with NSGo, on every platform it runs on.',
     platforms: 'Platforms',
     visit: 'Open',
     source: 'Source',
+    stars: 'GitHub stars',
     by: 'By',
     submit: {
       title: 'Made something with NSGo?',
@@ -382,6 +384,7 @@ const zh: Copy = {
     official: '官方',
     visit: '打开',
     source: '源码',
+    stars: 'GitHub 星标',
     by: '作者',
     submit: {
       title: '为 NSGo 写了组件？',
@@ -391,12 +394,13 @@ const zh: Copy = {
   },
   showcases: {
     title: '案例 — NSGo',
-    description: '用 NSGo 构建的应用与示例，以及它们运行的平台。',
+    description: '用 NSGo 构建的应用，以及它们运行的平台。',
     heading: '用 NSGo 构建',
-    lead: '可以马上试试的示例，以及大家用 NSGo 做出的应用，运行在它支持的每个平台上。',
+    lead: '大家用 NSGo 做出的应用，运行在它支持的每个平台上。',
     platforms: '平台',
     visit: '打开',
     source: '源码',
+    stars: 'GitHub 星标',
     by: '作者',
     submit: {
       title: '用 NSGo 做了东西？',

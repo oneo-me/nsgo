@@ -2063,6 +2063,16 @@ html[data-theme='dark'] .phone {
   font-weight: 600;
 }
 
+.collection-card__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .collection-card__links a:hover {
   color: var(--blue);
 }

@@ -65,6 +65,10 @@ says how to write one and the page's call to action opens it, so an entry
 is one document and one image in a pull request. `src/lib/cases.ts` and
 `src/lib/components.ts` read them through `src/lib/collection.ts`, which
 fails the build with the document's line when one breaks that shape.
+An entry whose `source` is a repository's root on GitHub shows its stars,
+which `src/lib/stars.ts` reads from GitHub's API as the site builds, with
+`GITHUB_TOKEN` when it is set; an entry GitHub does not answer for shows
+none. The website workflow rebuilds daily to keep them current.
 
 A language's translations sit in its folder, `zh/` for Chinese, under the
 English document's file name; they give the name, the paragraph, an

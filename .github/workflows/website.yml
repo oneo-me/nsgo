@@ -12,6 +12,9 @@ on:
       - "docs/public/**"
       - "website/**"
       - ".github/workflows/website.yml"
+  # Daily, so the Showcases and Components pages' GitHub stars stay current.
+  schedule:
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -47,6 +50,8 @@ jobs:
 
       - name: Build the home page and its gallery
         working-directory: website
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: bun run build
 
       - name: Configure Pages

@@ -3,13 +3,14 @@ import Icon from '../../components/Icon.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
 import { casesIn } from '../../lib/cases';
+import { formatStars, withStars } from '../../lib/stars';
 import { langOf, langPaths, links, platformName } from '../../site';
 
 export const getStaticPaths = () => langPaths('showcases');
 
 const lang = langOf(Astro.params.lang);
 const copy = copies[lang].showcases;
-const cases = casesIn(lang);
+const cases = await withStars(casesIn(lang));
 ---
 
 <Layout lang={lang} page="showcases" path="showcases/" title={copy.title} description={copy.description}>
@@ -53,10 +54,16 @@ const cases = casesIn(lang);
                   ))}
                 </ul>
               )}
-              {(entry.author || entry.site || entry.source) && (
+              {(entry.author || entry.site || entry.source || entry.stars !== undefined) && (
                 <footer class="collection-card__foot">
                   {entry.author && <span class="collection-card__author">{copy.by} {entry.author}</span>}
                   <span class="collection-card__links">
+                    {entry.stars !== undefined && (
+                      <span class="collection-card__stars" title={copy.stars} aria-label={`${copy.stars}: ${entry.stars}`}>
+                        <Icon name="star" size={12} />
+                        {formatStars(entry.stars)}
+                      </span>
+                    )}
                     {entry.site && (
                       <a
                         href={entry.site}

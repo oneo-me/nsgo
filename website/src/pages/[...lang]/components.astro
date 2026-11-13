@@ -4,13 +4,14 @@ import Icon from '../../components/Icon.astro';
 import { copies } from '../../copy';
 import Layout from '../../layouts/Layout.astro';
 import { componentsIn } from '../../lib/components';
+import { formatStars, withStars } from '../../lib/stars';
 import { langOf, langPaths, links } from '../../site';
 
 export const getStaticPaths = () => langPaths('components');
 
 const lang = langOf(Astro.params.lang);
 const copy = copies[lang].components;
-const components = componentsIn(lang);
+const components = await withStars(componentsIn(lang));
 ---
 
 <Layout lang={lang} page="components" path="components/" title={copy.title} description={copy.description}>
@@ -49,10 +50,16 @@ const components = componentsIn(lang);
                 set:html={entry.summary}
               />
               <CopyCommand lang={lang} command={`go get ${entry.package}`} class="collection-card__command" />
-              {(entry.author || entry.site || entry.source) && (
+              {(entry.author || entry.site || entry.source || entry.stars !== undefined) && (
                 <footer class="collection-card__foot">
                   {entry.author && <span class="collection-card__author">{copy.by} {entry.author}</span>}
                   <span class="collection-card__links">
+                    {entry.stars !== undefined && (
+                      <span class="collection-card__stars" title={copy.stars} aria-label={`${copy.stars}: ${entry.stars}`}>
+                        <Icon name="star" size={12} />
+                        {formatStars(entry.stars)}
+                      </span>
+                    )}
                     {entry.site && (
                       <a
                         href={entry.site}

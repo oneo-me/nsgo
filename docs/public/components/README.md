@@ -29,7 +29,8 @@ What it gives an app, in one sentence.
 `Widgets`, and `package` is the Go import path apps `go get`; both are
 required. The screenshot answers what a reader gets, such as the
 library's gallery or a view using it. `site`, `source`, `author` and
-`official` are optional; `official: true` marks one NSGo maintains. The
+`official` are optional; `official: true` marks one NSGo maintains. A `source` at a GitHub
+repository's root shows the repository's stars. The
 screenshot belongs beside the document as a reasonably small JPEG, PNG or
 WebP. A pull request with the document and the image is all it takes.
 

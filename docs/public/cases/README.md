@@ -26,7 +26,8 @@ What it does, in one sentence.
 `platforms` lists the site's platform names, comma-separated: `iOS`,
 `App Clips`, `tvOS`, `watchOS`, `macOS`, `Android`, `Windows`, `Linux`,
 `Web`, `WeChat`, `QQ`, `Alipay` and `Douyin`. `site`, `source` and `author`
-are optional; a screenshot is not, and belongs beside the document with a
+are optional, and a `source` at a GitHub repository's root shows the
+repository's stars; a screenshot is not optional, and belongs beside the document with a
 reasonably small JPEG, PNG or WebP. A pull request with the document and
 the image is all it takes.
 
