@@ -1070,13 +1070,19 @@ func TestWheelScrollsThroughAnOverlay(t *testing.T) {
 // the test ends.
 func startApp(t *testing.T, title string, app engine.App, width, height driver.Points) uintptr {
 	t.Helper()
+	return startAppWith(t, app, Options{Title: title, Width: width, Height: height})
+}
+
+// startAppWith is startApp with the window's options.
+func startAppWith(t *testing.T, app engine.App, opts Options) uintptr {
+	t.Helper()
 	done := make(chan struct{})
 	go func() {
 		runtime.LockOSThread()
 		defer close(done)
-		Run(app, Options{Title: title, Width: width, Height: height})
+		Run(app, opts)
 	}()
-	hwnd := waitForWindow(t, title, done)
+	hwnd := waitForWindow(t, opts.Title, done)
 	t.Cleanup(func() {
 		postMessageW.Call(hwnd, wmClose, 0, 0)
 		select {

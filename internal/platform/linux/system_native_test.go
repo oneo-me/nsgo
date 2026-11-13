@@ -305,20 +305,20 @@ func TestFileDialogsReachGTK(t *testing.T) {
 	}
 	copied := filepath.Join(dir, "copy.txt")
 	cx.Post(func() {
-		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, path string, err error) { status <- fmt.Sprintf("%v %q %v", saved, path, err) })
 	})
 	answer(copied)
-	if s := next("the save"); s != "true <nil>" {
+	if s := next("the save"); s != fmt.Sprintf("true %q <nil>", copied) {
 		t.Errorf("saved %q", s)
 	}
 	if b, _ := os.ReadFile(copied); string(b) != "notes" {
 		t.Errorf("the copy holds %q", b)
 	}
 	cx.Post(func() {
-		cx.SaveFile(core.SaveOptions{Name: "cancelled.txt", Data: []byte("x")}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+		cx.SaveFile(core.SaveOptions{Name: "cancelled.txt", Data: []byte("x")}, func(saved bool, path string, err error) { status <- fmt.Sprintf("%v %q %v", saved, path, err) })
 	})
 	answer("")
-	if s := next("the cancelled save"); s != "false <nil>" {
+	if s := next("the cancelled save"); s != `false "" <nil>` {
 		t.Errorf("a cancelled save answered %q", s)
 	}
 

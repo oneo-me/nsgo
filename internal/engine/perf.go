@@ -150,6 +150,9 @@ type PerfSnapshot struct {
 	// EngineBusy is the engine goroutine's busy time over the last second,
 	// in percent.
 	EngineBusy float32
+	// Passes is the engine's wake-ups per second over the last second: one
+	// a frame for an app that only changes in its frames.
+	Passes float32
 	// Frames are the main-thread costs of the retained frames, oldest
 	// first (for a trace).
 	Frames []time.Duration
@@ -397,9 +400,11 @@ func (m *PerfMonitor) Snapshot() PerfSnapshot {
 		frameIntervals = append(frameIntervals, inner.frames[i].at.Sub(inner.frames[i-1].at))
 	}
 	var busyTime time.Duration
+	passes := 0
 	for _, b := range inner.busy {
 		if recent(b.at) {
 			busyTime += b.d
+			passes++
 		}
 	}
 	var refresh *float32
@@ -426,6 +431,7 @@ func (m *PerfMonitor) Snapshot() PerfSnapshot {
 		Items:         items,
 		Latency:       statOf(inner.latencies),
 		EngineBusy:    float32(busyTime) / float32(perfRateWindow) * 100,
+		Passes:        float32(passes),
 		Frames:        frames,
 		Process:       process,
 	}
@@ -476,9 +482,9 @@ func milliseconds(d time.Duration) float64 {
 // String is the snapshot as one line, as nsgo test -fps logs it.
 func (s PerfSnapshot) String() string {
 	ms := func(d time.Duration) string { return fmt.Sprintf("%.2fms", float64(d.Microseconds())/1000) }
-	line := fmt.Sprintf("fps %.0f (max %.0f) frame %s p95 %s dropped %.0f%% commits %.0f/s app %s core %s items %.0f latency %s engine %.0f%%",
+	line := fmt.Sprintf("fps %.0f (max %.0f) frame %s p95 %s dropped %.0f%% commits %.0f/s app %s core %s items %.0f latency %s engine %.0f%% passes %.0f/s",
 		s.FPS, s.MaxFPS, ms(s.Frame.Mean), ms(s.Frame.P95), s.Dropped*100, s.Commits, ms(s.App.Mean), ms(s.Core.Mean),
-		s.Items, ms(s.Latency.Mean), s.EngineBusy)
+		s.Items, ms(s.Latency.Mean), s.EngineBusy, s.Passes)
 	if c := s.Process.CPU; c != nil {
 		line += fmt.Sprintf(" cpu %.0f%%", *c)
 	}

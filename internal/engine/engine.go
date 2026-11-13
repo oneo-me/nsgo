@@ -591,10 +591,10 @@ func (e *Engine) Dispatch(ev driver.Event) {
 	e.push(message{surface: e.surface, event: ev})
 }
 
-// DispatchBeforeFrame reports a platform event from a backend that is
-// stepping a display frame and ends the step with Frame: the event waits
-// for that call to wake the engine, which then handles it and runs the
-// frame in one pass, with one commit, instead of two.
+// DispatchBeforeFrame reports a platform event from a backend whose frame
+// clock will call Frame next, as the app waits for a display frame: the
+// event waits for that call to wake the engine, which then handles it and
+// runs the frame in one pass, with one commit, instead of two.
 func (e *Engine) DispatchBeforeFrame(ev driver.Event) {
 	if e.event != nil && e.surface == 0 {
 		e.event(ev)

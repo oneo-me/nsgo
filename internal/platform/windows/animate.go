@@ -394,6 +394,19 @@ func (w *window) startClock() {
 	}
 	w.clock.start()
 	w.ticking = true
+	w.clockOn.Store(true)
+}
+
+// reportScroll reports a scroll view's offset. While the app waits for a
+// display frame, the report rides with it: the engine handles both in one
+// pass, where a report that woke it on its own cost a second pass and
+// commit every frame of an app scrolling in its frames.
+func (w *window) reportScroll(ev driver.Event) {
+	if w.frameWanted.Load() {
+		w.engine.DispatchBeforeFrame(ev)
+	} else {
+		w.engine.Dispatch(ev)
+	}
 }
 
 // ticked runs the frame the clock posted.
@@ -487,16 +500,20 @@ func (w *window) tick() {
 		w.animator.Step(now.Sub(w.epoch))
 	}
 	w.animatedChanged()
-	if w.frameWanted {
-		w.frameWanted = false
-		if w.engine != nil {
-			w.engine.Frame()
-		}
+	if w.frameWanted.Swap(false) && w.engine != nil {
+		w.engine.Frame()
 	}
-	// A monitor closes a frame at every composition.
-	if len(live) == 0 && len(w.frames) == 0 && !w.animator.Running() && !w.frameWanted && w.hud == nil {
-		w.clock.stop()
-		w.ticking = false
+	// A monitor closes a frame at every composition. A frame the engine
+	// asks for as the clock stops either finds it stopped and starts it, or
+	// keeps it going here.
+	if len(live) == 0 && len(w.frames) == 0 && !w.animator.Running() && w.hud == nil {
+		w.clockOn.Store(false)
+		if w.frameWanted.Load() {
+			w.clockOn.Store(true)
+		} else {
+			w.clock.stop()
+			w.ticking = false
+		}
 	}
 }
 

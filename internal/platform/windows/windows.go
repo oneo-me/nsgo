@@ -31,6 +31,7 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -387,12 +388,14 @@ type window struct {
 	animating        []*view
 	ticking          bool
 	clock            *frameClock // made as it first ticks
-	// frameWanted is set while the app waits for a display frame.
-	frameWanted bool
-	chrome      chrome
-	webs        map[*webView]bool
-	cacheDir    string                 // where web views keep their profile
-	frames      []func(time.Time) bool // frame clients (onFrame)
+	// frameWanted is set while the app waits for a display frame, by the
+	// engine goroutine; clockOn mirrors ticking for it, as a running clock
+	// serves the frame without a message to the window.
+	frameWanted, clockOn atomic.Bool
+	chrome               chrome
+	webs                 map[*webView]bool
+	cacheDir             string                 // where web views keep their profile
+	frames               []func(time.Time) bool // frame clients (onFrame)
 	// animator runs the animated values on the frame clock, whose times
 	// count from epoch.
 	animator *driver.Animator
@@ -800,9 +803,15 @@ func (w *window) Mount(b *driver.MountBatch) {
 }
 
 // RequestFrame implements engine.Platform: the app waits for the next
-// display frame. Called from the engine goroutine, so it posts to the
-// window, whose frame clock runs on the UI thread.
-func (w *window) RequestFrame() { postMessageW.Call(w.hwnd, wmFrame, 0, 0) }
+// display frame. Called from the engine goroutine, it posts to the window,
+// whose frame clock runs on the UI thread, only to start the clock: an app
+// asking every frame keeps it running, and its next tick serves the frame.
+func (w *window) RequestFrame() {
+	w.frameWanted.Store(true)
+	if !w.clockOn.Load() {
+		postMessageW.Call(w.hwnd, wmFrame, 0, 0)
+	}
+}
 
 // post runs fn on the main thread; any goroutine may call it.
 func (w *window) post(fn func()) {
@@ -1313,7 +1322,7 @@ func (w *window) moveOffset(v *view, offset driver.Point) {
 	w.pinSticky(v)
 	// The engine sees the offset within the content and its insets, as a
 	// touch pulls it past.
-	w.engine.Dispatch(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: scrollbar.Clamp(&v.scroll, v.frame.Size, v.size, offset), Count: v.applied})
+	w.reportScroll(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: scrollbar.Clamp(&v.scroll, v.frame.Size, v.size, offset), Count: v.applied})
 }
 
 // wheelNotch is how far the content under a view taking the wheel moves
@@ -1784,7 +1793,6 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		w.runTasks()
 		return 0
 	case wmFrame:
-		w.frameWanted = true
 		w.startClock()
 		return 0
 	case wmAlert:
@@ -2081,6 +2089,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		// The host's loop goes on: the view's app ends with its window,
 		// and its timers.
 		w.ticking = false
+		w.clockOn.Store(false)
 		if w.clock != nil {
 			w.clock.close()
 			w.clock = nil

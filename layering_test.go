@@ -65,6 +65,7 @@ var layers = []struct {
 	{"updater/locales", []string{"core", "i18n"}},
 	{"updater", []string{"core", "updater/locales"}},
 	{"icons/", []string{"core"}},
+	{"ui/chat/locales", []string{"core", "i18n"}},
 	{"ui/", []string{"core", "base/", "ui/", "mobile", "desktop", "icons/"}},
 	// The TSX test runner drives apps through nsgotest.
 	{"tsx/tsxtest", []string{"core", "internal/driver", "nsgotest", "tsx", "tsx/"}},

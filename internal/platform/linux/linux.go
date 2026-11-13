@@ -33,6 +33,7 @@ import (
 	"runtime"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -127,9 +128,11 @@ type window struct {
 	animating []*view
 	ticking   bool
 	tickID    uint32
-	// frameWanted is set while the app waits for a display frame.
-	frameWanted bool
-	animator    *driver.Animator
+	// frameWanted is set while the app waits for a display frame, by the
+	// engine goroutine; clockOn mirrors ticking for it, as a running clock
+	// serves the frame without a hop to the main loop.
+	frameWanted, clockOn atomic.Bool
+	animator             *driver.Animator
 	// canvasImages are the images canvases draw, and canvasWaiting the
 	// canvases to draw again when one loads.
 	canvasImages  canvasImages
@@ -490,13 +493,14 @@ func (w *window) Mount(b *driver.MountBatch) {
 }
 
 // RequestFrame implements engine.Platform: the app waits for the next
-// display frame. Called from the engine goroutine, so it hops to the main
-// loop, whose frame clock runs there.
+// display frame. Called from the engine goroutine, it hops to the main
+// loop, where the frame clock runs, only to start the clock: an app asking
+// every frame keeps it running, and its next tick serves the frame.
 func (w *window) RequestFrame() {
-	w.post(func() {
-		w.frameWanted = true
-		w.startClock()
-	})
+	w.frameWanted.Store(true)
+	if !w.clockOn.Load() {
+		w.post(w.startClock)
+	}
 }
 
 // post runs fn on the main thread; any goroutine may call it.
@@ -581,6 +585,7 @@ func (w *window) close() {
 	if w.tickID != 0 {
 		gSourceRemove(w.tickID)
 		w.tickID = 0
+		stopYielding()
 	}
 	if w.engine != nil {
 		w.engine.Close()
@@ -1066,7 +1071,7 @@ func (w *window) moveOffset(v *view, offset driver.Point) {
 	w.pinSticky(v)
 	// The engine sees the offset within the content and its insets, as a
 	// touch pulls it past.
-	w.engine.Dispatch(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: scrollbar.Clamp(&v.scroll, v.frame.Size, v.size, offset), Count: v.applied})
+	w.reportScroll(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: scrollbar.Clamp(&v.scroll, v.frame.Size, v.size, offset), Count: v.applied})
 }
 
 // wheel scrolls the innermost scroll view under at that can move in the

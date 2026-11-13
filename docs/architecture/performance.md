@@ -141,7 +141,11 @@ macOS follows NSH's surface:
 - An engine that missed that deadline is not waited for again until its commit lands, so a busy app resizes as before.
 - The display link does not fire while the window is occluded or minimized or the screen is locked: while frames are wanted and it has not ticked for 100 ms, a 60 Hz timer ticks in its place, so animations still end.
 
+Linux and Windows serve the app's frames the same way: `RequestFrame` sets a flag and posts to the main thread only while the clock is stopped, and a scroll reported while the app waits for a frame, from a tick, a batch or the wheel, rides with that frame. A list scrolled a row every frame, as the benchmark's, took two engine passes a frame and now one (`TestAListScrolledEveryFrameWakesTheEngineOnceAFrame` reads the monitor's `Passes`); the second pass had committed nothing.
+
 Every tick on macOS, iOS and watchOS passes the main goroutine through Go's scheduler (`apple.YieldFrame`). That goroutine lives in the platform's callbacks and never yields by itself, so Go's monitor thread, finding it on one P for 10 ms, takes the P and polls every 20 µs for a while: about 3,000 wakeups a second while an app animates. A yield a tick is enough for frames up to 9 ms apart; between slower ones, a 60 Hz display's or a slowed animation's, a timer yields every 8 ms and ends 100 ms after the last slow frame. On macOS the wakeups fall to about 400 a second, and a list scrolled every frame costs 6% fewer instructions at 120 frames a second and 9% at 60 (2026-11-13); iOS and watchOS are not measured.
+
+Linux's clock is a 16 ms GLib timer, so each tick yields and, while any window's clock runs, an 8 ms timer does too (`yield.go`); either alone left about 2,400 wakeups a second. The benchmark's list and quotes went from about 4,100 and 4,500 wakeups a second to 1,000 and 1,100, and from 9.5% to 8.9% and 20.5% to 19.8% of a core (Hyprland, 60 Hz, 2026-11-13). Windows shows no such polling: no thread of the benchmark's list woke more than about 220 times a second, so its loop does not yield.
 
 Windows follows the compositor: a goroutine waits for each composition with `DwmFlush` and posts `wmTick`, one at a time, while something animates, and parks while nothing does. It sleeps a frame's 16 ms where `DwmFlush` fails, and ticks at most every 3 ms should it return at once.
 

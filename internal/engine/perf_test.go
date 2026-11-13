@@ -98,6 +98,17 @@ func TestCommitsAfterWarmup(t *testing.T) {
 	}
 }
 
+func TestPassesAreTheEnginesWakeUps(t *testing.T) {
+	monitor := NewPerfMonitor()
+	for range 4 {
+		monitor.RecordBusy(ms(2))
+	}
+	snapshot := monitor.Snapshot()
+	if snapshot.Passes != 4 {
+		t.Errorf("passes = %v, want 4", snapshot.Passes)
+	}
+}
+
 func TestLatencyIsKeptAfterTheColdFrames(t *testing.T) {
 	monitor := NewPerfMonitor()
 	monitor.RecordLatency(ms(9))

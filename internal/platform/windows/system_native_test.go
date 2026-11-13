@@ -214,20 +214,20 @@ func TestServicesReachTheSystem(t *testing.T) {
 	}
 	copied := filepath.Join(filepath.Dir(shot), "copy.txt")
 	cx.Post(func() {
-		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+		cx.SaveFile(core.SaveOptions{Path: notes}, func(saved bool, path string, err error) { status <- fmt.Sprintf("%v %q %v", saved, path, err) })
 	})
 	answerFileDialog(t, hwnd, copied)
-	if s := <-status; s != "true <nil>" {
+	if s := <-status; s != fmt.Sprintf("true %q <nil>", copied) {
 		t.Errorf("saved %q", s)
 	}
 	if b, _ := os.ReadFile(copied); string(b) != "notes" {
 		t.Errorf("the copy holds %q", b)
 	}
 	cx.Post(func() {
-		cx.SaveFile(core.SaveOptions{Name: "cancelled.txt", Data: []byte("x")}, func(saved bool, err error) { status <- fmt.Sprint(saved, err) })
+		cx.SaveFile(core.SaveOptions{Name: "cancelled.txt", Data: []byte("x")}, func(saved bool, path string, err error) { status <- fmt.Sprintf("%v %q %v", saved, path, err) })
 	})
 	cancelFileDialog(t, hwnd)
-	if s := <-status; s != "false <nil>" {
+	if s := <-status; s != `false "" <nil>` {
 		t.Errorf("a cancelled save answered %q", s)
 	}
 

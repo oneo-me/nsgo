@@ -63,6 +63,7 @@ var (
 	cbSettingsChanged uintptr
 	cbMenuActivate    uintptr
 	cbTick            uintptr
+	cbYield           uintptr
 
 	cbNotificationAction uintptr
 	cbNotificationClosed uintptr
@@ -131,6 +132,7 @@ func init() {
 	cbSettingsChanged = newCallback(settingsChangedCallback)
 	cbMenuActivate = newCallback(menuActivateCallback)
 	cbTick = newCallback(tickCallback)
+	cbYield = newCallback(yieldCallback)
 	cbNotificationAction = newCallback(notificationActionCallback)
 	cbNotificationClosed = newCallback(notificationClosedCallback)
 

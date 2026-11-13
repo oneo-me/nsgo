@@ -3,6 +3,7 @@
 package linux
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -107,6 +108,20 @@ func (w *window) startClock() {
 	if !w.ticking && !w.closing {
 		w.tickID = gTimeoutAdd(frameMillis, cbTick, w.handle)
 		w.ticking = true
+		w.clockOn.Store(true)
+		startYielding()
+	}
+}
+
+// reportScroll reports a scroll view's offset. While the app waits for a
+// display frame, the report rides with it: the engine handles both in one
+// pass, where a report that woke it on its own cost a second pass and
+// commit every frame of an app scrolling in its frames.
+func (w *window) reportScroll(ev driver.Event) {
+	if w.frameWanted.Load() {
+		w.engine.DispatchBeforeFrame(ev)
+	} else {
+		w.engine.Dispatch(ev)
 	}
 }
 
@@ -156,6 +171,7 @@ func tickCallback(data uintptr) int32 {
 	done := w.measuring(true)
 	w.tick()
 	done()
+	runtime.Gosched()
 	// The timer repeats while something animates.
 	return boolInt(w.ticking)
 }
@@ -238,15 +254,20 @@ func (w *window) tick() {
 	if w.stepImages(now) {
 		running = true
 	}
-	if w.frameWanted {
-		w.frameWanted = false
-		if w.engine != nil {
-			w.engine.Frame()
-		}
+	if w.frameWanted.Swap(false) && w.engine != nil {
+		w.engine.Frame()
 	}
-	if len(live) == 0 && !running && !w.frameWanted {
-		// tickCallback's return removes the timer.
-		w.ticking = false
-		w.tickID = 0
+	// A frame the engine asks for as the clock stops either finds it
+	// stopped and starts it, or keeps it going here.
+	if len(live) == 0 && !running {
+		w.clockOn.Store(false)
+		if w.frameWanted.Load() {
+			w.clockOn.Store(true)
+		} else {
+			// tickCallback's return removes the timer.
+			w.ticking = false
+			w.tickID = 0
+			stopYielding()
+		}
 	}
 }
