@@ -24,9 +24,9 @@ func host(name, tag string) export {
 }
 
 // script exports what a JS source evaluates to.
-func script(name, src string) export {
+func script(name string, p *js.Program) export {
 	return export{name, func(r *runtime) js.Value {
-		v, err := r.vm.RunString(src)
+		v, err := r.vm.RunProgram(p)
 		if err != nil {
 			panic(err)
 		}
@@ -52,7 +52,7 @@ var moduleTable = map[string][]export{
 		fn("mount", (*runtime).mount),
 		fn("context", (*runtime).context),
 		fn("ErrorBoundary", (*runtime).errorBoundary),
-		script("split", splitSource),
+		script("split", splitProgram),
 		host("View", "view"),
 		host("Text", "text"),
 		host("Scroll", "scroll"),
@@ -83,7 +83,7 @@ var moduleTable = map[string][]export{
 		fn("each", (*runtime).each),
 		fn("ref", (*runtime).ref),
 		fn("spread", (*runtime).spread),
-		script("merge", mergeSource),
+		script("merge", mergeProgram),
 		fn("keepContext", (*runtime).keepContext),
 		fn("loadChunk", (*runtime).loadChunk),
 	},

@@ -17,6 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/nsgo-dev/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 	"golang.org/x/net/idna"
 
 	"github.com/nsgo-dev/nsgo/core"
@@ -25,10 +26,7 @@ import (
 // The web APIs (NSH's web/): web.js defines the classes on the natives
 // here, fetch on net/http among them.
 
-//go:embed web.js
-var webSource string
-
-var webProgram = js.MustCompile("web.js", webSource, true)
+var webProgram = js.MustCompile(websrc.Web.Name, websrc.Web.Source, true)
 
 //go:embed intl.js
 var intlSource string

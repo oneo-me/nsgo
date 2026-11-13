@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +17,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 )
 
 // buildAll writes one directory per target: <output>/<name>-<version>-<target>.
@@ -657,17 +660,24 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	wasm := filepath.Join(dir, "app.wasm")
 	if !dev {
 		// A release's TSX is split: the page fetches each module an
-		// import() names when the import runs.
+		// import() names when the import runs. Its files hold the scripts
+		// the page's realm runs, wrapped so the runtime finds them by name.
 		stage(ctx, "compiling TSX")
-		split, err := compileSplit(p.Dir, func(name string, data []byte) (string, error) {
-			name = hashedName(name, data)
-			if err := os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755); err != nil {
+		split, err := compileSplit(p.Dir, func(file, name string, data []byte) (string, error) {
+			data = []byte(websrc.Bundle(name, string(data)))
+			file = hashedName(file, data)
+			if err := os.MkdirAll(filepath.Join(dir, filepath.Dir(file)), 0o755); err != nil {
 				return "", err
 			}
-			return name, os.WriteFile(filepath.Join(dir, name), data, 0o644)
+			return file, os.WriteFile(filepath.Join(dir, file), data, 0o644)
 		})
 		if err != nil {
 			return err
+		}
+		// The app links none of them.
+		split.shipped = map[string]bool{}
+		for e := range split.main {
+			split.shipped[e] = true
 		}
 		p.split = split
 		defer func() { p.split = nil }()
@@ -702,6 +712,24 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	}
 	if app.Exec, err = write("wasm_exec.js", js); err != nil {
 		return err
+	}
+	if p.split != nil {
+		// The realm's programs and the app's bundles are the page's files,
+		// so a Content-Security-Policy needs no 'unsafe-eval'
+		// (docs/architecture/tsx.md).
+		if len(p.split.main) > 0 {
+			if app.Runtime, err = write("nsgo-runtime.js", []byte(websrc.Runtime())); err != nil {
+				return err
+			}
+		}
+		for _, e := range slices.Sorted(maps.Keys(p.split.main)) {
+			file := strings.TrimSuffix(filepath.Base(e), filepath.Ext(e)) + ".js"
+			name, err := write(file, []byte(websrc.Bundle(e, p.split.main[e])))
+			if err != nil {
+				return err
+			}
+			app.Scripts = append(app.Scripts, name)
+		}
 	}
 	if page["Loader"], err = write("nsgo.js", loaderJS); err != nil {
 		return err
@@ -768,7 +796,15 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 	if data, err = json.Marshal(app); err != nil {
 		return err
 	}
-	page["App"], page["Exec"] = string(data), app.Exec
+	// The page's own files: its style, and the module that runs the app, so
+	// a policy that runs none of its scripts inline still runs it.
+	page["Exec"] = app.Exec
+	if page["Style"], err = write("page.css", pageCSS(p)); err != nil {
+		return err
+	}
+	if page["Module"], err = write("mount.js", mountJS(app.Loader, string(data))); err != nil {
+		return err
+	}
 	f, err := os.Create(filepath.Join(dir, "index.html"))
 	if err != nil {
 		return err
@@ -780,10 +816,16 @@ func buildWeb(ctx context.Context, p *project, dir string, dev bool) error {
 // webApp is a site's nsgo.json, which names the files of the app for the
 // loader, relative to itself.
 type webApp struct {
-	Wasm      string            `json:"wasm"`
-	Exec      string            `json:"exec"`
-	Loader    string            `json:"loader"`
-	Host      string            `json:"host,omitempty"`
+	Wasm   string `json:"wasm"`
+	Exec   string `json:"exec"`
+	Loader string `json:"loader"`
+	Host   string `json:"host,omitempty"`
+	// Runtime is the script that gives the page's realm the runtime's
+	// programs, and Scripts the app's bundles: the loader runs them in the
+	// realm before the app starts, so a Content-Security-Policy needs no
+	// 'unsafe-eval' (docs/architecture/tsx.md).
+	Runtime   string            `json:"runtime,omitempty"`
+	Scripts   []string          `json:"scripts,omitempty"`
 	Resources map[string]string `json:"resources,omitempty"`
 }
 
@@ -809,6 +851,30 @@ func (p *project) webHost() ([]byte, error) {
 	return os.ReadFile(path)
 }
 
+// pageCSS is the page's style: the app fills the window.
+func pageCSS(p *project) []byte {
+	css := "html, body { margin: 0; height: 100%;"
+	if color := appearanceColor(p.Appearance); color != "" {
+		css += " background: " + color + ";"
+	}
+	return []byte(css + " }\n")
+}
+
+// mountJS is the module that runs the app, and says so when the app cannot
+// start.
+func mountJS(loader, config string) []byte {
+	return []byte(`// Written by nsgo: the page runs the app.
+import { mount } from "./` + loader + `";
+mount(null, null, { config: ` + config + ` }).catch((e) => {
+  console.error(e);
+  const message = document.createElement("pre");
+  message.textContent = "The app could not be loaded: " + e.message;
+  message.style.cssText = "margin:20px;white-space:pre-wrap;font:13px ui-monospace,monospace";
+  document.body.append(message);
+});
+`)
+}
+
 var indexHTML = template.Must(template.New("index").Parse(`<!doctype html>
 <html>
 <head>
@@ -828,20 +894,13 @@ var indexHTML = template.Must(template.New("index").Parse(`<!doctype html>
 {{- if .Manifest}}
 <link rel="manifest" href="manifest.webmanifest">
 {{- end}}
-<style>html, body { margin: 0; height: 100%;{{if .Color}} background: {{.Color}};{{end}} }</style>
+<link rel="stylesheet" href="{{.Style}}">
 <script src="{{.Exec}}"></script>
 </head>
 <body>
-<script type="module">
-import { mount } from "./{{.Loader}}";
-mount(null, null, { config: {{.App}} }).catch((e) => {
-  console.error(e);
-  const message = document.createElement("pre");
-  message.textContent = "The app could not be loaded: " + e.message;
-  message.style.cssText = "margin:20px;white-space:pre-wrap;font:13px ui-monospace,monospace";
-  document.body.append(message);
-});
+<script type="module" src="{{.Module}}"></script>
 {{- if .Reload}}
+<script type="module">
 // nsgo dev's server: each new build loads, a failed one shows over the app.
 const events = new EventSource("/_nsgo/events");
 let overlay;
@@ -878,8 +937,8 @@ events.onmessage = (e) => {
   overlay.append(panel);
   document.body.append(overlay);
 };
-{{- end}}
 </script>
+{{- end}}
 </body>
 </html>
 `))

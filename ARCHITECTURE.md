@@ -27,8 +27,9 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `base/internal/*` | `nsh-base`'s `syntax`, `window` | What `base`'s packages share: highlighting, the rows a virtualized view makes, part styles and sheets |
 | `tsx`, `tsx/textview`, `tsx/editor`, `tsx/diff`, `tsx/richeditor`, `tsx/terminal`, `tsx/ui`, `tsx/ui/chat`, `tsx/ui/richeditor` | `nsh-js` | TSX apps on goja, or the page's engine on the web, with NSH's modules, named `nsgo`, and Go components; the subpackages register `base`'s own, the rich editor's sessions and the terminal, and `ui`'s as `nsgo/ui` and `nsgo/ui/chat` ([TSX](docs/architecture/tsx.md)) |
 | `tsx/internal/js` | `nsh-platform-web`'s `browser` | The engines' one API, goja's: goja's types, and the page's engine over `syscall/js` ([engines](docs/architecture/tsx.md#the-engines)) |
+| `tsx/websrc` | | The scripts a TSX app's realm runs on the web, which a release's page ships as files of its own ([engines](docs/architecture/tsx.md#the-engines)) |
 | `tsx/bundler` | `nsh-bundler` | TSX to one script with esbuild and a port of NSH's JSX compiler; hot and split bundles |
-| `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, fetching a split one's chunks on the web, or compiles it as it starts |
+| `tsx/compiler` | | `compiler.App`: runs an app's bundle compiled ahead, loading a split one's chunks on the web, or compiles it as it starts |
 | `tsx/tsxtest` | `nsh-testing`'s `nsh/test` | Runs `*.test.tsx` files as Go tests on `nsgotest` |
 | `tsx/pkg` | `nsh-package` | Signed packages of TSX apps: keys, certificates, revocation lists and the `Trust` that verifies them for `tsx.View` ([signed packages](docs/architecture/tsx.md#signed-packages)) |
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |

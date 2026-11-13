@@ -160,3 +160,108 @@ func TestWebHostChannel(t *testing.T) {
 		t.Fatalf("after setAppearance, the element's color scheme = %v, want light", got)
 	}
 }
+
+// strictPolicy is a hardened page's: no 'unsafe-eval', and none of the
+// page's own scripts inline. The style the app sets on elements is inline.
+const strictPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; " +
+	"style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'"
+
+// TestWebStrictCSP runs examples/tsx in a headless browser under
+// strictPolicy: the app runs from the files buildWeb wrote, the realm's
+// scripts and its bundle among them, so nothing is compiled from a string
+// (docs/architecture/tsx.md).
+func TestWebStrictCSP(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds an app for the web")
+	}
+	if _, err := findBrowser(); err != nil {
+		t.Skip(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	defer cancel()
+	p, err := load("../../examples/tsx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Release = true
+	dir := t.TempDir()
+	if err := buildWeb(ctx, p, dir, false); err != nil {
+		t.Fatal(err)
+	}
+	var app webApp
+	data, err := os.ReadFile(filepath.Join(dir, "nsgo.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &app); err != nil || app.Runtime == "" || len(app.Scripts) == 0 {
+		t.Fatalf("nsgo.json = %s", data)
+	}
+	files := http.FileServer(http.Dir(dir))
+	srv := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", strictPolicy)
+		files.ServeHTTP(w, r)
+	})}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer srv.Close()
+	go srv.Serve(ln)
+	b, err := startBrowser(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer b.close()
+	raw, err := b.call("", "Target.createTarget", map[string]any{"url": fmt.Sprintf("http://%s/index.html", ln.Addr())})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var target struct{ TargetID string }
+	json.Unmarshal(raw, &target)
+	raw, err = b.call("", "Target.attachToTarget", map[string]any{"targetId": target.TargetID, "flatten": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var attached struct{ SessionID string }
+	json.Unmarshal(raw, &attached)
+	pg := &webPage{b: b, session: attached.SessionID}
+	eval := func(expr string) any {
+		t.Helper()
+		raw, err := pg.call("Runtime.evaluate", map[string]any{"expression": expr, "returnByValue": true, "awaitPromise": true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var res struct{ Result struct{ Value any } }
+		json.Unmarshal(raw, &res)
+		return res.Result.Value
+	}
+	// The app's heading, and the card of the chunk its import() names.
+	for _, text := range []string{"Today", "A 25 minute session"} {
+		for deadline := time.Now().Add(60 * time.Second); ; time.Sleep(100 * time.Millisecond) {
+			if eval(fmt.Sprintf("document.body.innerText.includes(%q)", text)) == true {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("the page never showed %q; it shows %q", text, eval("document.body.innerText"))
+			}
+		}
+	}
+	// The policy is the page's: a script the page makes inline does not run,
+	// as does nothing the runtime would compile from a string.
+	inline := `(() => { const s = document.createElement("script"); s.textContent = "globalThis.__inline = 1"; document.body.append(s); return globalThis.__inline === 1 })()`
+	if eval(inline) != false {
+		t.Fatalf("the page ran an inline script under %s", strictPolicy)
+	}
+	// The realm is the loader's, and it holds what the page shipped: the
+	// runtime ran those rather than their sources.
+	programs := `Array.from(Object.keys(document.querySelector("iframe").contentWindow.__nsgoPrograms ?? {})).sort().join()`
+	if got := eval(programs); got != "harden.js,helpers,merge.js,split.js,time.js,web.js" {
+		t.Fatalf("the realm's programs = %v", got)
+	}
+	// The app's bundle, and the chunk its import() names, each a file the
+	// loader added to the realm: the chunk's script element ran it.
+	scripts := `Array.from(Object.keys(document.querySelector("iframe").contentWindow.__nsgoScripts ?? {})).sort().join()`
+	if got := eval(scripts); got != "App.tsx,focus.tsx" {
+		t.Fatalf("the realm's scripts = %v", got)
+	}
+}

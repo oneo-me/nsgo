@@ -25,6 +25,12 @@
 // module, a compiled WebAssembly.Module or a promise of one, spares
 // fetching and compiling the wasm, so a page showing the app many times,
 // or the wasm compressed, compiles it once.
+//
+// A release's nsgo.json names the scripts of the app's realm: mount loads
+// them into an iframe of the page's own before the app starts, so a
+// Content-Security-Policy that allows no 'unsafe-eval' runs the app
+// (docs/architecture/tsx.md). The iframe is the page's global named
+// NSGO_REALM, which the runtime adopts.
 
 let apps = 0;
 
@@ -118,6 +124,8 @@ export async function mount(element, url, options = {}) {
     }
   }
 
+  let realm;
+  if (config.runtime) realm = await openRealm([config.runtime, ...(config.scripts ?? [])].map(at));
   const go = new Go();
   // The page's nsgo- parameters are the engine's flags: ?nsgo-fps&nsgo-lang=de.
   for (const [k, v] of new URLSearchParams(location.search)) {
@@ -133,25 +141,44 @@ export async function mount(element, url, options = {}) {
   const instance = options.module
     ? await WebAssembly.instantiate(await options.module, go.importObject)
     : (await WebAssembly.instantiateStreaming(wasm, go.importObject)).instance;
+  // The realm's scripts load before instantiation, but the global is set
+  // after, as the app reads it from its first instruction.
+  if (realm) {
+    const name = `nsgoRealm${++apps}`;
+    globalThis[name] = realm;
+    go.env.NSGO_REALM = name;
+  }
   go.run(instance);
   return player;
 }
 
+// openRealm makes the hidden iframe an app runs in, and loads into it the
+// scripts its realm runs: each is the page's own file, which a policy
+// allows where it allows any script.
+async function openRealm(urls) {
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.setAttribute("tabindex", "-1");
+  frame.style.display = "none";
+  document.documentElement.append(frame);
+  for (const url of urls) await loadScript(url, frame.contentWindow);
+  return frame;
+}
+
 const scripts = new Map();
 
-// loadScript runs the classic script at url once.
-function loadScript(url) {
-  if (!scripts.has(url)) {
-    scripts.set(
-      url,
-      new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = url;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error(`${url} could not be loaded`));
-        document.head.append(script);
-      }),
-    );
-  }
-  return scripts.get(url);
+// loadScript runs the classic script at url once in the page's document,
+// or in win's: a realm runs each script of its own, as its own realm.
+function loadScript(url, win) {
+  if (!win && scripts.has(url)) return scripts.get(url);
+  const doc = (win ?? globalThis).document;
+  const loading = new Promise((resolve, reject) => {
+    const script = doc.createElement("script");
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`${url} could not be loaded`));
+    doc.head.append(script);
+  });
+  if (!win) scripts.set(url, loading);
+  return loading;
 }

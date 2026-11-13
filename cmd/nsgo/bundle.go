@@ -105,11 +105,15 @@ func compileBundles(dir string, hot bool) (map[string]string, error) {
 type splitBundles struct {
 	main   map[string]string
 	chunks map[string]map[string]string
+	// shipped are the entries the page runs from its own files, so the
+	// app links no copy of them (bundleFile).
+	shipped map[string]bool
 }
 
-// compileSplit compiles the app's TSX entries split, giving each chunk
-// to write, which returns its URL relative to the page.
-func compileSplit(dir string, write func(name string, data []byte) (string, error)) (*splitBundles, error) {
+// compileSplit compiles the app's TSX entries split, giving each chunk to
+// write, which gets the name the runtime runs it by and returns its URL
+// relative to the page.
+func compileSplit(dir string, write func(file, name string, data []byte) (string, error)) (*splitBundles, error) {
 	entries, err := tsxEntries(dir)
 	if err != nil {
 		return nil, err
@@ -124,7 +128,7 @@ func compileSplit(dir string, write func(name string, data []byte) (string, erro
 		urls := map[string]string{}
 		for key, code := range chunks {
 			name := strings.TrimSuffix(strings.TrimPrefix(key, "app:"), filepath.Ext(key))
-			if urls[key], err = write("chunks/"+strings.ReplaceAll(name, "/", "-")+".js", []byte(code)); err != nil {
+			if urls[key], err = write("chunks/"+strings.ReplaceAll(name, "/", "-")+".js", strings.TrimPrefix(key, "app:"), []byte(code)); err != nil {
 				return nil, err
 			}
 		}
@@ -157,7 +161,12 @@ func (p *project) bundleFile() (string, error) {
 	b.WriteString("// Written by nsgo: the app's TSX, compiled ahead.\n\npackage main\n\n")
 	fmt.Fprintf(&b, "import %q\n\nfunc init() {\n", compilerPath)
 	for _, e := range entries {
-		fmt.Fprintf(&b, "\tcompiler.Bundled(%q, %s)\n", e, strconv.Quote(bundles[e]))
+		if p.split != nil && p.split.shipped[e] {
+			// The page ships it: tsx runs the file's program by name.
+			fmt.Fprintf(&b, "\tcompiler.Bundled(%q, \"\")\n", e)
+		} else {
+			fmt.Fprintf(&b, "\tcompiler.Bundled(%q, %s)\n", e, strconv.Quote(bundles[e]))
+		}
 		if urls := chunks[e]; len(urls) > 0 {
 			fmt.Fprintf(&b, "\tcompiler.BundledChunks(%q, map[string]string{\n", e)
 			for _, k := range slices.Sorted(maps.Keys(urls)) {

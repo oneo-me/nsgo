@@ -18,16 +18,20 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	sjs "syscall/js"
 	"time"
 
 	"github.com/go-sourcemap/sourcemap"
+
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 )
 
 // Browser reports whether apps run on the page's engine.
@@ -83,6 +87,9 @@ type Program struct{ name, src string }
 
 // MustCompile returns the program of src.
 func MustCompile(name, src string, _ bool) *Program { return &Program{name: name, src: src} }
+
+// timeProgram patches Date to read the app's clock.
+var timeProgram = MustCompile(websrc.Time.Name, websrc.Time.Source, true)
 
 // FunctionCall is a call of a Go function from JS.
 type FunctionCall struct {
@@ -224,91 +231,45 @@ type helpers struct {
 	del, bytes, buffer, date, dateValue           sjs.Value
 }
 
-// helperSource is evaluated in each realm.
-const helperSource = `(function (dispatch, release) {
-  "use strict";
-  const THROW = { throw: true }, MISSING = { missing: true };
-  const goKey = Symbol("nsgo.go"), panicKey = Symbol("nsgo.panic");
-  const reg = new FinalizationRegistry((id) => release(id));
-  let thrown;
-  const fn = (id) => {
-    const f = function (...a) {
-      const r = dispatch(id, this, new.target, ...a);
-      if (r === THROW) { const e = thrown; thrown = undefined; throw e; }
-      return r;
-    };
-    reg.register(f, id);
-    return f;
-  };
-  const ctor = (id) => {
-    const f = function (...a) {
-      if (!new.target) throw new TypeError("Class constructor cannot be invoked without 'new'");
-      const r = dispatch(id, this, new.target, ...a);
-      if (r === THROW) { const e = thrown; thrown = undefined; throw e; }
-      return r == null ? this : r;
-    };
-    reg.register(f, id);
-    return f;
-  };
-  const toString = Object.prototype.toString, ev = eval;
-  return {
-    throw: THROW, missing: MISSING, goKey, panicKey,
-    setThrown: (e) => { thrown = e; },
-    fn, ctor,
-    get: (o, k) => (k in o ? o[k] : MISSING),
-    call: (f, t, ...a) => Reflect.apply(f, t, a),
-    construct: (f, t, ...a) => Reflect.construct(f, a, t === undefined ? f : t),
-    defineData: (o, k, v, w, c, e) => { Object.defineProperty(o, k, { value: v, writable: w, configurable: c, enumerable: e }); },
-    defineAccessor: (o, k, g, s, c, e) => {
-      const d = { configurable: c, enumerable: e };
-      if (g !== undefined) d.get = g;
-      if (s !== undefined) d.set = s;
-      Object.defineProperty(o, k, d);
-    },
-    set: (o, k, v) => { o[k] = v; },
-    goObject: (proto, id) => { const o = Object.create(proto); Object.defineProperty(o, goKey, { value: id }); reg.register(o, id); return o; },
-    goID: (o) => (typeof o === "object" || typeof o === "function") && o !== null ? o[goKey] : undefined,
-    newPromise: () => { let res, rej; const p = new Promise((a, b) => { res = a; rej = b; }); return [p, res, rej]; },
-    track: (p, cb) => { p.then((v) => { cb(1, v); }, (e) => { cb(2, e); }); },
-    run: (src) => ev(src),
-    kind: (o) => {
-      if (typeof o === "function") return 1;
-      if (Array.isArray(o)) return 2;
-      if (o instanceof Promise) return 3;
-      if (o instanceof ArrayBuffer) return 4;
-      if (o instanceof Date) return 5;
-      if (o[goKey] !== undefined) return 6;
-      if (o instanceof Error) return 7;
-      return 0;
-    },
-    str: (v) => { try { return String(v); } catch (e) { return "[object]"; } },
-    num: (v) => Number(v),
-    className: (o) => toString.call(o).slice(8, -1),
-    keys: (o) => Object.keys(o),
-    array: (...a) => a,
-    typeError: (m) => new TypeError(m),
-    error: (m) => new Error(m),
-    toObject: (v) => Object(v),
-    setProto: (o, p) => { Object.setPrototypeOf(o, p); },
-    getProto: (o) => Object.getPrototypeOf(o),
-    del: (o, k) => delete o[k],
-    bytes: (n) => new Uint8Array(n),
-    buffer: (b) => (b instanceof ArrayBuffer ? new Uint8Array(b) : new Uint8Array(b.buffer, b.byteOffset, b.byteLength)),
-    date: (ms) => new Date(ms),
-    dateValue: (d) => d.getTime(),
-    json: (o) => JSON.stringify(o),
-    desc: (s) => s.description ?? "",
-  };
-})`
+// factory returns the realm's helper factory: the page's own when it
+// shipped one, else the source compiled here.
+func (r *Runtime) factory() sjs.Value {
+	if f := r.program(websrc.ProgramsGlobal, websrc.Helper.Name); f.Truthy() {
+		return f.Invoke()
+	}
+	return r.global.Call("eval", websrc.Helper.Source)
+}
 
-// New returns a runtime in a realm of its own.
+// program returns what the page's files registered as name on the
+// global object registry, or undefined when they registered none.
+func (r *Runtime) program(registry, name string) sjs.Value {
+	reg := r.global.Get(registry)
+	if !reg.Truthy() {
+		return sjs.Undefined()
+	}
+	return reg.Get(name)
+}
+
+// realmTaken is whether a runtime took the realm the page made.
+var realmTaken atomic.Bool
+
+// New returns a runtime in a realm of its own: the page's, when it made
+// one for the app (nsgo.js, the loader, names it in NSGO_REALM), else one
+// this makes. The first runtime alone takes the page's: a sandbox's, as
+// tsx.View runs a package in, is a realm apart from the app's.
 func New() *Runtime {
-	doc := sjs.Global().Get("document")
-	frame := doc.Call("createElement", "iframe")
-	frame.Call("setAttribute", "aria-hidden", "true")
-	frame.Call("setAttribute", "tabindex", "-1")
-	frame.Get("style").Set("display", "none")
-	doc.Get("documentElement").Call("appendChild", frame)
+	frame := sjs.Undefined()
+	if name := os.Getenv("NSGO_REALM"); name != "" && !realmTaken.Swap(true) {
+		frame = sjs.Global().Get(name)
+	}
+	if !frame.Truthy() {
+		doc := sjs.Global().Get("document")
+		frame = doc.Call("createElement", "iframe")
+		frame.Call("setAttribute", "aria-hidden", "true")
+		frame.Call("setAttribute", "tabindex", "-1")
+		frame.Get("style").Set("display", "none")
+		doc.Get("documentElement").Call("appendChild", frame)
+	}
 	r := &Runtime{
 		frame: frame, global: frame.Get("contentWindow"), mapper: uncapMapper{},
 		funcs: map[int]func(this, target sjs.Value, args []sjs.Value) sjs.Value{}, objects: map[int]any{},
@@ -321,7 +282,7 @@ func New() *Runtime {
 		delete(r.objects, id)
 		return nil
 	})
-	o := r.global.Call("eval", helperSource).Invoke(r.dispatch, r.release)
+	o := r.factory().Invoke(r.dispatch, r.release)
 	g := func(k string) sjs.Value { return o.Get(k) }
 	r.h = helpers{
 		obj: o, throw: g("throw"), missing: g("missing"), goKey: g("goKey"), panicKey: g("panicKey"),
@@ -363,19 +324,7 @@ func (r *Runtime) SetTimeSource(now func() time.Time) {
 	nowMS := r.function(func(FunctionCall) Value {
 		return floatValue(float64(r.now().UnixNano()) / 1e6)
 	})
-	patch, err := r.RunString(`(function (now) {
-  const D = globalThis.Date;
-  const AppDate = function Date(...a) {
-    if (!new.target) return new D(now()).toString();
-    return Reflect.construct(D, a.length ? a : [now()], new.target === AppDate ? D : new.target);
-  };
-  AppDate.prototype = D.prototype;
-  Object.defineProperty(D.prototype, "constructor", { value: AppDate, writable: true, configurable: true });
-  AppDate.now = () => Math.floor(now());
-  AppDate.parse = D.parse;
-  AppDate.UTC = D.UTC;
-  globalThis.Date = AppDate;
-})`)
+	patch, err := r.RunProgram(timeProgram)
 	if err != nil {
 		panic(err)
 	}
@@ -560,8 +509,25 @@ func (r *Runtime) mapStack(stack string) string {
 	})
 }
 
-// RunScript runs a script in the realm's global scope.
+// RunScript runs a script in the realm's global scope: the page's copy of
+// it when it shipped one, else src. An empty src is one the page ships,
+// as a release web build's are (docs/architecture/tsx.md).
 func (r *Runtime) RunScript(name, src string) (Value, error) {
+	if src == "" {
+		f := r.program(websrc.ScriptsGlobal, name)
+		if !f.Truthy() {
+			return nil, fmt.Errorf("nsgo: %s is not on the page; serve the app with the loader nsgo build -target web writes", name)
+		}
+		return r.callProgram(f)
+	}
+	return r.runSource(name, src)
+}
+
+func (r *Runtime) RunString(src string) (Value, error) { return r.runSource("<eval>", src) }
+
+// runSource evaluates src in the realm's global scope, named name in
+// stacks.
+func (r *Runtime) runSource(name, src string) (Value, error) {
 	if i := strings.LastIndex(src, inlineMap); i >= 0 {
 		data, _, _ := strings.Cut(src[i+len(inlineMap):], "\n")
 		if b, err := base64.StdEncoding.DecodeString(strings.TrimSpace(data)); err == nil {
@@ -577,9 +543,24 @@ func (r *Runtime) RunScript(name, src string) (Value, error) {
 	return r.wrap(v), nil
 }
 
-func (r *Runtime) RunString(src string) (Value, error) { return r.RunScript("<eval>", src) }
+// RunProgram runs the program p, returning what it evaluates to: the
+// page's copy of it when it shipped one, else p's source.
+func (r *Runtime) RunProgram(p *Program) (Value, error) {
+	if f := r.program(websrc.ProgramsGlobal, p.name); f.Truthy() {
+		return r.callProgram(f)
+	}
+	return r.RunScript(p.name, p.src)
+}
 
-func (r *Runtime) RunProgram(p *Program) (Value, error) { return r.RunScript(p.name, p.src) }
+// callProgram runs what a shipped file registered: a function whose call
+// makes the program (RunProgram) or runs the script (RunScript).
+func (r *Runtime) callProgram(f sjs.Value) (Value, error) {
+	v, err := r.try(func() sjs.Value { return f.Invoke() })
+	if err != nil {
+		return nil, err
+	}
+	return r.wrap(v), nil
+}
 
 // GlobalObject is the realm's global object.
 func (r *Runtime) GlobalObject() *Object { return &Object{r: r, v: r.global} }
