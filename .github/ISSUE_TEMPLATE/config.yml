@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Security vulnerability
+  - name: Security vulnerability / 安全漏洞
     url: https://github.com/nsgo-dev/nsgo/security/advisories/new
-    about: Report it privately, never in a public issue.
-  - name: Documentation
+    about: Report it privately, never in a public issue. / 请私下报告，不要公开提交 issue。
+  - name: Documentation / 文档
     url: https://nsgo.dev/docs/
-    about: Tutorials, components and how NSGo works.
+    about: Tutorials, components and how NSGo works. / 教程、组件与 NSGo 的工作原理。
   - name: Awesome NSGo
     url: https://awesomensgo.dev
-    about: The community's catalog of apps, packages and guides.
+    about: The community's catalog of apps, packages and guides. / 社区整理的应用、包与指南。

@@ -1,26 +1,18 @@
-name: Feature request
-description: A component, API, service, platform or tool option NSGo lacks.
+name: Feature request / 功能建议
+description: A component, API, platform or tool option NSGo lacks. / NSGo 缺少的组件、API、平台或工具选项。
 labels: [enhancement, needs triage]
 body:
-  - type: markdown
-    attributes:
-      value: Write in any language.
   - type: textarea
     id: problem
     attributes:
-      label: What you want to do
-      description: The app or situation that needs it, and what stops you today.
+      label: What you want to do / 想做什么
+      description: The situation that needs it and the API or behavior you have in mind. / 需要它的场景，以及你设想的 API 或行为。
     validations:
       required: true
-  - type: textarea
-    id: proposal
-    attributes:
-      label: Proposal
-      description: The API or behavior you have in mind, if any.
   - type: dropdown
     id: platforms
     attributes:
-      label: Platforms
+      label: Target platforms / 目标平台
       multiple: true
       options:
         - macOS
@@ -31,12 +23,47 @@ body:
         - Linux
         - Web
         - Android
-        - Mini programs
-        - Every platform
+        - Mini programs / 小程序
     validations:
       required: true
-  - type: textarea
-    id: references
+  - type: dropdown
+    id: language
     attributes:
-      label: References
-      description: How NSH, the platforms or other frameworks do it, and what you have tried instead.
+      label: App language / 应用语言
+      options:
+        - Go
+        - TSX
+        - Both / 两者
+    validations:
+      required: true
+  - type: checkboxes
+    id: latest
+    attributes:
+      label: Latest version / 最新版本
+      options:
+        - label: I have checked that the latest NSGo release still lacks it. / 我已确认最新版 NSGo 仍不支持。
+          required: true
+  - type: input
+    id: nsgo
+    attributes:
+      label: NSGo version / NSGo 版本
+      description: The output of `go list -m github.com/nsgo-dev/nsgo`. / `go list -m github.com/nsgo-dev/nsgo` 的输出。
+      placeholder: github.com/nsgo-dev/nsgo v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Development machine / 开发环境
+      description: Operating system with version, Go and Xcode versions. / 操作系统及版本、Go 与 Xcode 版本。
+      placeholder: macOS 27.1 (Apple M5), Go 1.26.2, Xcode 27.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Target devices / 运行设备
+      description: Each device or simulator with its system version, or browser with its version. / 每台设备或模拟器及其系统版本，或浏览器及其版本。
+      placeholder: iPhone 18 Pro simulator (iOS 27.1), Pixel 10 (Android 17), Chrome 142
+    validations:
+      required: true

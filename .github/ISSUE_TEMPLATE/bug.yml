@@ -1,34 +1,18 @@
-name: Bug report
-description: Something works wrong, crashes or differs from the docs.
+name: Bug report / 问题报告
+description: Something crashes, works wrong or differs from the docs. / 崩溃、行为异常或与文档不符。
 labels: [bug, needs triage]
 body:
-  - type: markdown
-    attributes:
-      value: Write in any language. One problem per issue, please.
   - type: textarea
     id: what
     attributes:
-      label: What happens
-    validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected
-    validations:
-      required: true
-  - type: textarea
-    id: repro
-    attributes:
-      label: Reproduction
-      description: The smallest app or steps that show it.
-      render: go
+      label: What happens and what you expected / 实际与预期
+      description: The smallest app or steps that show it. / 能复现问题的最小应用或步骤。
     validations:
       required: true
   - type: dropdown
     id: platforms
     attributes:
-      label: Platforms
+      label: Target platforms / 目标平台
       multiple: true
       options:
         - macOS
@@ -39,34 +23,51 @@ body:
         - Linux
         - Web
         - Android
-        - Mini programs
-        - Every platform
-        - Not sure
+        - Mini programs / 小程序
     validations:
       required: true
   - type: dropdown
     id: language
     attributes:
-      label: App language
+      label: App language / 应用语言
       options:
         - Go
         - TSX
-        - Both
-  - type: input
-    id: version
+        - Both / 两者
+    validations:
+      required: true
+  - type: checkboxes
+    id: latest
     attributes:
-      label: NSGo version
-      description: The output of `go list -m github.com/nsgo-dev/nsgo`.
+      label: Latest version / 最新版本
+      options:
+        - label: I have reproduced it on the latest NSGo release. / 我已在最新版 NSGo 上复现过。
+          required: true
+  - type: input
+    id: nsgo
+    attributes:
+      label: NSGo version / NSGo 版本
+      description: The output of `go list -m github.com/nsgo-dev/nsgo`. / `go list -m github.com/nsgo-dev/nsgo` 的输出。
+      placeholder: github.com/nsgo-dev/nsgo v0.1.0
     validations:
       required: true
   - type: input
-    id: environment
+    id: host
     attributes:
-      label: Environment
-      description: Operating system and version, device or simulator, Go and Xcode versions.
-      placeholder: macOS 27.1, iPhone 18 Pro simulator, Go 1.26.2, Xcode 27.1
+      label: Development machine / 开发环境
+      description: Operating system with version, Go and Xcode versions. / 操作系统及版本、Go 与 Xcode 版本。
+      placeholder: macOS 27.1 (Apple M5), Go 1.26.2, Xcode 27.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Target devices / 运行设备
+      description: Each device or simulator with its system version, or browser with its version. / 每台设备或模拟器及其系统版本，或浏览器及其版本。
+      placeholder: iPhone 18 Pro simulator (iOS 27.1), Pixel 10 (Android 17), Chrome 142
+    validations:
+      required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs and screenshots
-      render: text
+      label: Logs and screenshots / 日志与截图
