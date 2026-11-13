@@ -20,6 +20,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - Mark unimplemented designs as goals or open questions; never document them as existing behavior.
 - Do nothing implicitly by device: no size, form or behavior that changes on its own for a desktop, a phone or a TV, such as larger controls on desktops and smaller ones on phones. Such changes belong to a component's author: `ui` and apps may make them, `core` and `base` never.
 - Use native views, at MyGo's quality: a component shows the same on every platform. What one platform has natively, such as iOS's Liquid Glass, others imitate the same way rather than drop.
+- Build the web as a desktop app, not a web page: it looks and behaves as NSGo does on macOS, Windows and Linux, never as a site does, such as a pointing hand over buttons.
 
 ## Components
 
@@ -33,7 +34,7 @@ NSGo is a cross-platform native UI engine with a Go backend, ported from the des
 - A component says its own words through its package's catalogs (`locales/`), never string literals, in English and NSGo's other languages ([languages](docs/architecture/languages.md)).
 - In `base` and `ui`, keep one component to a file, named after it (`iconbutton.go`), with the types and parts only it uses; what several share gets a file of its own.
 - Lists, trees, tables and sidebars have two looks, default and selected: no hover and no press. Only the rows of a popup that drops down, such as a menu or a select, follow the pointer.
-- Leave the pointer's look alone, as native apps do: pressables keep the platform's arrow, and `Style.Cursor` is for what the arrow cannot say, such as text fields and resize or scrub drags.
+- Leave the pointer's look alone, as native apps do, on every backend and the web included: pressables keep the platform's arrow, no backend picks a cursor of its own, and `Style.Cursor` is for what the arrow cannot say, such as text fields and resize or scrub drags.
 - Keep a scroll bar against its container's edge: the scroll view fills the container and the padding goes on its content, never around the scroll view.
 - Everything that scrolls follows touchpads and touchscreens smoothly and glides on with inertia when let go, on every target and the web included: scroll through `Scroll`, `List` or the platform's own scrolling, never by stepping offsets from pointer or wheel events. Past an edge, follow the platform: a rubber band on macOS and iOS, its stretch on Android, a stop for touchpads on Windows and Linux, and whatever the browser does on the web.
 - In the gallery, a playground centers its forms, and a form with no width of its own fills a centered column; what lists its results downward, such as a command palette, starts at the top and fills the stage (`Start`). A number's knob is a value left of a 180-point slider.

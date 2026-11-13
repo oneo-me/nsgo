@@ -4,6 +4,14 @@ This plan lists what NSGo may still take from NSH's 0.5.0 release (tag `v0.5.0`,
 
 References are files in `nsh/docs/dev/` unless they give a path from `nsh/`, NSH's checkout beside the repository, with the section to read in brackets, or NSH's pull requests (#931) where no page describes the work. [Reading NSH's releases](architecture/nsh.md#reading-nshs-releases) says how to rebuild this plan for NSH's next release.
 
+## The pointer's look
+
+The web picks cursors of its own where the desktop backends keep the arrow ([components](../AGENTS.md#components)), so this comes first.
+
+| Item | NSH reference | Done when |
+| --- | --- | --- |
+| The arrow on the web | — | The web backend sets CSS `cursor` only from `Style.Cursor`, as macOS, Windows and Linux do: `setFeel` gives pressable views no pointer, nor `showAlert` its buttons, a test of the backend checks it, and [cursors](architecture/interaction.md#cursors) no longer says the web shows one |
+
 ## Performance against NSH's baselines
 
 NSH records what its hot paths cost (`data-table.md` (Performance), `performance.md`, `web.md`), and NSH's own build on each machine is the measure: the gallery's scenarios (`examples/gallery/perf_test.go`) run the same steps as an `nsh test` file there ([performance](architecture/performance.md#keeping-frames-cheap) says how and lists the readings of 2026-11-09). Headless, in headless Chrome, on macOS for the DataTable and the stack, and in the iOS simulator, NSGo costs what NSH does or less. 0.5.0 rewrote `performance.md`, made lists and scroll views cheaper (#1304, #1310, #1371) and Windows' frames and canvases (#1661): Linux, the Android emulator and macOS were measured again against its build (2026-11-12), and Windows, the iOS simulator and headless Chrome still are before an item here closes. What is left:
