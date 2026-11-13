@@ -67,8 +67,8 @@ func buildWatchApp(ctx context.Context, p *project, dir string, simulator bool) 
 	if err != nil {
 		return "", err
 	}
-	if len(p.Widgets) > 0 {
-		detailIn(ctx, "no widgets on watchOS: they are left out")
+	if p.iosExtension() {
+		detailIn(ctx, "no widgets or Live Activities on watchOS: they are left out")
 	}
 	extra := icon + "\n" + names + "\n\t<key>CFBundleSupportedPlatforms</key><array><string>" + sys.platformName(simulator) + "</string></array>"
 	if err := writePlist(filepath.Join(app, "Info.plist"), p, sys.plist, extra); err != nil {

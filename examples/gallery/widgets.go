@@ -419,5 +419,6 @@ func widgetsDemo(cx *core.Scope) core.Node {
 		return Card{Title: tr.WidgetsFamilies(), Description: tr.WidgetsFamiliesDetail(), Children: rows}
 	}
 
-	return demoPage(cx, pageProps{}, contentCard, familiesCard)
+	liveCard := func(cx *core.Scope) core.Node { return liveActivityCard(cx, steps, goal, accent, state) }
+	return demoPage(cx, pageProps{}, contentCard, liveCard, familiesCard)
 }

@@ -5,8 +5,10 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,8 +29,16 @@ import (
 // of the user's home (widgetPathKey), which the app writes and the
 // extension, in the App Sandbox, may read, since macOS opens a group's
 // container to no app signed ad hoc.
+//
+// Live Activities (live_activities) are iOS's alone: the extension draws
+// them with widgets/ActivityViews.swift, and the library starts, updates
+// and ends them with widgets/Activities.swift, both sharing
+// widgets/Activity.swift, their attributes and the LiveActivityIntent
+// their buttons run in the app. App Intents finds intents by the metadata
+// Xcode extracts as it builds (appintentsmetadataprocessor), which the
+// tool extracts as Xcode does, into the extension and the app.
 
-//go:embed widgets/Widgets.swift widgets/Reload.swift
+//go:embed widgets/Widgets.swift widgets/Reload.swift widgets/Activity.swift widgets/Activities.swift widgets/ActivityViews.swift
 var widgetSources embed.FS
 
 const (
@@ -41,9 +51,41 @@ const (
 	widgetKitDylib = "libNSGoWidgetKit.dylib"
 	widgetGroupKey = "NSGoAppGroup"
 	widgetPathKey  = "NSGoWidgetsPath"
-	// maxWidgets is how many kinds a WidgetBundle holds.
+	// maxWidgets is how many kinds a WidgetBundle holds, Live Activities
+	// counting as one.
 	maxWidgets = 10
+	// appIntentsMetadata is where App Intents reads a bundle's intents.
+	appIntentsMetadata = "Metadata.appintents"
 )
+
+// liveActivities is nsgo.yaml's live_activities.
+type liveActivities struct {
+	// Enabled lets the app start Live Activities on iOS and Android.
+	Enabled bool `yaml:"enabled"`
+	// FrequentUpdates lets an iOS app update its activities more often
+	// than the system's budget, as the user allows in its settings
+	// (NSSupportsLiveActivitiesFrequentUpdates).
+	FrequentUpdates bool `yaml:"frequent_updates"`
+}
+
+// iosExtension reports whether the iOS app has a widget extension: for
+// its widgets or its Live Activities.
+func (p *project) iosExtension() bool { return len(p.Widgets) > 0 || p.LiveActivities.Enabled }
+
+// androidPermissions are the permissions the Android app asks for:
+// android.permissions, with those of Live Updates when it has Live
+// Activities.
+func (p *project) androidPermissions() []string {
+	perms := p.Android.Permissions
+	if p.LiveActivities.Enabled {
+		for _, perm := range []string{"android.permission.POST_NOTIFICATIONS", "android.permission.POST_PROMOTED_NOTIFICATIONS"} {
+			if !slices.Contains(perms, perm) {
+				perms = append(slices.Clip(perms), perm)
+			}
+		}
+	}
+	return perms
+}
 
 // widgetKind is a kind of the app's widgets in nsgo.yaml.
 type widgetKind struct {
@@ -64,8 +106,8 @@ var (
 )
 
 func (p *project) validateWidgets() error {
-	if len(p.Widgets) > maxWidgets {
-		return fmt.Errorf("widgets lists %d kinds, more than the %d a widget extension holds", len(p.Widgets), maxWidgets)
+	if limit := p.widgetLimit(); len(p.Widgets) > limit {
+		return fmt.Errorf("widgets lists %d kinds, more than the %d a widget extension holds", len(p.Widgets), limit)
 	}
 	seen := map[string]bool{}
 	for i, w := range p.Widgets {
@@ -86,6 +128,15 @@ func (p *project) validateWidgets() error {
 		return fmt.Errorf("apple.app_group %q is not an app group, as group.com.example.app", g)
 	}
 	return nil
+}
+
+// widgetLimit is how many kinds of widgets the extension holds beside the
+// Live Activities.
+func (p *project) widgetLimit() int {
+	if p.LiveActivities.Enabled {
+		return maxWidgets - 1
+	}
+	return maxWidgets
 }
 
 func (w widgetKind) name() string {
@@ -117,13 +168,21 @@ func (p *project) macWidgetsPath() string {
 }
 
 // widgetPlist returns the entries of the app's Info.plist that tell
-// package widget where the timelines are, "" for an app without widgets.
+// package widget where the timelines are and whether the app has Live
+// Activities, "" for an app without widgets.
 func (p *project) widgetPlist(ios bool) string {
 	switch {
-	case len(p.Widgets) == 0:
+	case ios && p.iosExtension():
+		s := "<key>" + widgetGroupKey + "</key><string>" + xmlText(p.appGroup()) + "</string>"
+		if p.LiveActivities.Enabled {
+			s += "\n\t<key>NSSupportsLiveActivities</key><true/>"
+			if p.LiveActivities.FrequentUpdates {
+				s += "\n\t<key>NSSupportsLiveActivitiesFrequentUpdates</key><true/>"
+			}
+		}
+		return s
+	case ios || len(p.Widgets) == 0:
 		return ""
-	case ios:
-		return "<key>" + widgetGroupKey + "</key><string>" + xmlText(p.appGroup()) + "</string>"
 	}
 	return "<key>" + widgetPathKey + "</key><string>" + xmlText(p.macWidgetsPath()) + "</string>"
 }
@@ -133,8 +192,9 @@ func xmlText(s string) string {
 	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;").Replace(s)
 }
 
-// kindsSwift returns Kinds.swift, the declaration of the kinds of widgets.
-func kindsSwift(p *project) string {
+// kindsSwift returns Kinds.swift, the declaration of the kinds of widgets
+// and, for iOS, of the Live Activities.
+func kindsSwift(p *project, ios bool) string {
 	var b strings.Builder
 	b.WriteString("// Code generated by nsgo from nsgo.yaml's widgets. DO NOT EDIT.\n\nimport SwiftUI\nimport WidgetKit\n")
 	for i, w := range p.Widgets {
@@ -158,6 +218,9 @@ struct NSGoWidget%d: Widget {
 	b.WriteString("\n@main\nstruct NSGoWidgets: WidgetBundle {\n    var body: some Widget {\n")
 	for i := range p.Widgets {
 		fmt.Fprintf(&b, "        NSGoWidget%d()\n", i)
+	}
+	if ios && p.LiveActivities.Enabled {
+		b.WriteString("        if #available(iOS 16.1, *) {\n            NSGoActivityWidget()\n        }\n")
 	}
 	b.WriteString("    }\n}\n")
 	return b.String()
@@ -210,85 +273,223 @@ func iosWidgetTarget(simulator bool) widgetTarget {
 	return widgetTarget{sdk: "iphoneos", triple: "arm64-apple-ios15.0", ios: true}
 }
 
-// compileWidgets compiles the widget extension's executable and the reload
-// library for t, and returns their paths. They are kept in the user's
-// cache by their sources, the target and the toolchain, as actool's icons
-// are, so builds compile them once.
-func compileWidgets(ctx context.Context, p *project, t widgetTarget) (exe, lib string, err error) {
-	widgetsSwift, _ := widgetSources.ReadFile("widgets/Widgets.swift")
-	reloadSwift, _ := widgetSources.ReadFile("widgets/Reload.swift")
-	kinds := kindsSwift(p)
+// compiledWidgets are the widget extension's executable and the library
+// of Swift that compileWidgets made, with, for Live Activities, the App
+// Intents metadata of each.
+type compiledWidgets struct {
+	exe, lib string
+	// exeIntents and libIntents are the Metadata.appintents of the
+	// extension and of the app, which runs the library's intents; "" for
+	// none.
+	exeIntents, libIntents string
+}
+
+// compileWidgets compiles the widget extension's executable and the
+// library for t. They are kept in the user's cache by their sources, the
+// target and the toolchain, as actool's icons are, so builds compile them
+// once.
+func compileWidgets(ctx context.Context, p *project, t widgetTarget) (compiledWidgets, error) {
+	read := func(name string) string {
+		data, _ := widgetSources.ReadFile("widgets/" + name)
+		return string(data)
+	}
+	activities := t.ios && p.LiveActivities.Enabled
+	ext := map[string]string{"Widgets.swift": read("Widgets.swift"), "Kinds.swift": kindsSwift(p, t.ios)}
+	lib := map[string]string{"Reload.swift": read("Reload.swift")}
+	if t.ios {
+		// The extension's buttons name the intent on iOS, with or without
+		// Live Activities.
+		ext["Activity.swift"], ext["ActivityViews.swift"] = read("Activity.swift"), read("ActivityViews.swift")
+	}
+	if activities {
+		lib["Activity.swift"], lib["Activities.swift"] = read("Activity.swift"), read("Activities.swift")
+	}
 	version, err := output(ctx, "xcrun", "--sdk", t.sdk, "swiftc", "--version")
 	if err != nil {
-		return "", "", fmt.Errorf("widgets need Xcode's swiftc: %w", err)
+		return compiledWidgets{}, fmt.Errorf("widgets need Xcode's swiftc: %w", err)
 	}
 	sdk, err := output(ctx, "xcrun", "--sdk", t.sdk, "--show-sdk-path")
 	if err != nil {
-		return "", "", err
+		return compiledWidgets{}, err
 	}
 	sum := sha256.New()
-	for _, part := range []string{string(widgetsSwift), string(reloadSwift), kinds, version, sdk, t.triple} {
+	parts := []string{version, sdk, t.triple}
+	for _, files := range []map[string]string{ext, lib} {
+		for _, name := range slices.Sorted(maps.Keys(files)) {
+			parts = append(parts, name, files[name])
+		}
+		parts = append(parts, "|")
+	}
+	for _, part := range parts {
 		fmt.Fprintf(sum, "%d:%s", len(part), part)
 	}
 	cache, err := os.UserCacheDir()
 	if err != nil {
-		return "", "", err
+		return compiledWidgets{}, err
 	}
 	dir := filepath.Join(cache, "nsgo", "widgets", hex.EncodeToString(sum.Sum(nil)[:16]))
-	exe, lib = filepath.Join(dir, widgetsExec), filepath.Join(dir, widgetKit)
-	if _, err := os.Stat(lib); err == nil {
-		return exe, lib, nil
+	out := compiledWidgets{exe: filepath.Join(dir, widgetsExec), lib: filepath.Join(dir, widgetKit)}
+	if activities {
+		out.exeIntents = filepath.Join(dir, "extension", appIntentsMetadata)
+		out.libIntents = filepath.Join(dir, "app", appIntentsMetadata)
+	}
+	if _, err := os.Stat(out.lib); err == nil {
+		return out, nil
 	}
 	stage(ctx, "compiling the widgets")
 	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
-		return "", "", err
+		return compiledWidgets{}, err
 	}
 	tmp, err := os.MkdirTemp(filepath.Dir(dir), "tmp-")
 	if err != nil {
-		return "", "", err
+		return compiledWidgets{}, err
 	}
 	defer os.RemoveAll(tmp)
-	for name, src := range map[string]string{"Widgets.swift": string(widgetsSwift), "Kinds.swift": kinds, "Reload.swift": string(reloadSwift)} {
-		if err := os.WriteFile(filepath.Join(tmp, name), []byte(src), 0o644); err != nil {
-			return "", "", err
+	write := func(sub string, files map[string]string) ([]string, error) {
+		if err := os.MkdirAll(filepath.Join(tmp, sub), 0o755); err != nil {
+			return nil, err
 		}
+		var paths []string
+		for _, name := range slices.Sorted(maps.Keys(files)) {
+			path := filepath.Join(tmp, sub, name)
+			if err := os.WriteFile(path, []byte(files[name]), 0o644); err != nil {
+				return nil, err
+			}
+			paths = append(paths, path)
+		}
+		return paths, nil
+	}
+	extFiles, err := write("ext", ext)
+	if err != nil {
+		return compiledWidgets{}, err
+	}
+	libFiles, err := write("lib", lib)
+	if err != nil {
+		return compiledWidgets{}, err
 	}
 	installName := "@rpath/" + widgetKitDylib
 	if t.ios {
 		installName = "@rpath/" + widgetKit + ".framework/" + widgetKit
 	}
 	if err := os.Mkdir(filepath.Join(tmp, "out"), 0o755); err != nil {
-		return "", "", err
+		return compiledWidgets{}, err
 	}
-	swiftc := func(out string, args ...string) error {
-		args = append([]string{"--sdk", t.sdk, "swiftc", "-target", t.triple, "-sdk", sdk, "-O", "-swift-version", "5",
-			"-parse-as-library", "-application-extension", "-o", filepath.Join(tmp, "out", out)}, args...)
-		for i, a := range args {
-			if strings.HasSuffix(a, ".swift") {
-				args[i] = filepath.Join(tmp, a)
-			}
+	var protocols string
+	if t.ios {
+		if protocols, err = writeIntentProtocols(ctx, tmp); err != nil {
+			return compiledWidgets{}, err
 		}
-		if err := run(ctx, "xcrun", args...); err != nil {
+	}
+	swiftc := func(out, module string, files []string, args ...string) error {
+		args = append([]string{"--sdk", t.sdk, "swiftc", "-target", t.triple, "-sdk", sdk, "-O", "-swift-version", "5",
+			"-parse-as-library", "-application-extension", "-module-name", module, "-o", filepath.Join(tmp, "out", out)}, args...)
+		if t.ios {
+			// ActivityKit and App Intents are younger than the extension's
+			// iOS 15; App Intents reads the intents' constant values.
+			args = append(args, "-Xlinker", "-weak_framework", "-Xlinker", "ActivityKit", "-Xlinker", "-weak_framework", "-Xlinker", "AppIntents",
+				"-wmo", "-emit-const-values-path", filepath.Join(tmp, module+".swiftconstvalues"),
+				"-Xfrontend", "-const-gather-protocols-file", "-Xfrontend", protocols)
+		}
+		if err := run(ctx, "xcrun", append(args, files...)...); err != nil {
 			return fmt.Errorf("compiling the widgets: %w", err)
 		}
 		return nil
 	}
 	// App extensions start in NSExtensionMain, as Xcode links them, which
 	// runs the WidgetBundle of @main.
-	if err := swiftc(widgetsExec, "-module-name", "NSGoWidgets", "-Xlinker", "-e", "-Xlinker", "_NSExtensionMain",
-		"-Xlinker", "-dead_strip", "Widgets.swift", "Kinds.swift"); err != nil {
-		return "", "", err
+	if err := swiftc(widgetsExec, "NSGoWidgets", extFiles, "-Xlinker", "-e", "-Xlinker", "_NSExtensionMain", "-Xlinker", "-dead_strip"); err != nil {
+		return compiledWidgets{}, err
 	}
-	if err := swiftc(widgetKit, "-emit-library", "-module-name", widgetKit, "-Xlinker", "-install_name", "-Xlinker", installName,
-		"Reload.swift"); err != nil {
-		return "", "", err
+	libArgs := []string{"-emit-library", "-Xlinker", "-install_name", "-Xlinker", installName}
+	if activities {
+		libArgs = append(libArgs, "-DNSGO_APP")
 	}
-	if err := os.Rename(filepath.Join(tmp, "out"), dir); err != nil {
-		if _, statErr := os.Stat(lib); statErr != nil {
-			return "", "", err
+	if err := swiftc(widgetKit, widgetKit, libFiles, libArgs...); err != nil {
+		return compiledWidgets{}, err
+	}
+	if activities {
+		for _, m := range []struct {
+			module, sub string
+			files       []string
+		}{{"NSGoWidgets", "extension", extFiles}, {widgetKit, "app", libFiles}} {
+			if err := extractIntents(ctx, t, sdk, tmp, m.module, m.files, filepath.Join(tmp, "out", m.sub)); err != nil {
+				return compiledWidgets{}, err
+			}
 		}
 	}
-	return exe, lib, nil
+	if err := os.Rename(filepath.Join(tmp, "out"), dir); err != nil {
+		if _, statErr := os.Stat(out.lib); statErr != nil {
+			return compiledWidgets{}, err
+		}
+	}
+	return out, nil
+}
+
+// writeIntentProtocols writes the protocols whose conformances swiftc
+// records the constant values of, which App Intents reads: those the
+// toolchain lists, as Xcode passes them.
+func writeIntentProtocols(ctx context.Context, dir string) (string, error) {
+	protocols := []string{"AppIntent", "AppEntity", "AppEnum", "EntityQuery", "TransientEntity", "AppShortcutsProvider", "DynamicOptionsProvider", "AppIntentsPackage"}
+	if swiftc, err := output(ctx, "xcrun", "--find", "swiftc"); err == nil {
+		data, err := os.ReadFile(filepath.Join(filepath.Dir(filepath.Dir(swiftc)), "share", "swift", "SwiftConstantValues", "AppIntents.json"))
+		var list struct {
+			Protocols []string `json:"constValueProtocols"`
+		}
+		if err == nil && json.Unmarshal(data, &list) == nil && len(list.Protocols) > 0 {
+			protocols = list.Protocols
+		}
+	}
+	data, _ := json.Marshal(protocols)
+	path := filepath.Join(dir, "protocols.json")
+	return path, os.WriteFile(path, data, 0o644)
+}
+
+// extractIntents writes the App Intents metadata of a module compiled from
+// files into out, as Xcode's ExtractAppIntentsMetadata does.
+func extractIntents(ctx context.Context, t widgetTarget, sdk, tmp, module string, files []string, out string) error {
+	swiftc, err := output(ctx, "xcrun", "--find", "swiftc")
+	if err != nil {
+		return err
+	}
+	xcode, err := output(ctx, "xcodebuild", "-version")
+	if err != nil {
+		return err
+	}
+	build := xcode[strings.LastIndex(xcode, " ")+1:]
+	list := func(name string, lines []string) (string, error) {
+		path := filepath.Join(tmp, module+"."+name)
+		return path, os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o644)
+	}
+	sources, err := list("SwiftFileList", files)
+	if err != nil {
+		return err
+	}
+	consts, err := list("SwiftConstValuesFileList", []string{filepath.Join(tmp, module+".swiftconstvalues")})
+	if err != nil {
+		return err
+	}
+	empty, err := list("MetadataFileList", nil)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return err
+	}
+	_, deployment, _ := strings.Cut(strings.TrimSuffix(t.triple, "-simulator"), "-apple-ios")
+	err = run(ctx, "xcrun", "appintentsmetadataprocessor",
+		"--toolchain-dir", filepath.Dir(filepath.Dir(filepath.Dir(swiftc))),
+		"--module-name", module, "--sdk-root", sdk, "--xcode-version", build,
+		"--platform-family", "iOS", "--deployment-target", deployment, "--target-triple", t.triple,
+		"--output", out, "--source-file-list", sources, "--swift-const-vals-list", consts,
+		"--metadata-file-list", empty, "--static-metadata-file-list", empty,
+		"--compile-time-extraction", "--deployment-aware-processing", "--no-app-shortcuts-localization", "--force")
+	if err != nil {
+		return fmt.Errorf("extracting the App Intents of the widgets: %w", err)
+	}
+	if _, err := os.Stat(filepath.Join(out, appIntentsMetadata)); err != nil {
+		return fmt.Errorf("extracting the App Intents of the widgets wrote no %s", appIntentsMetadata)
+	}
+	return nil
 }
 
 // widgetsInfo returns the widget extension's Info.plist, with the
@@ -318,13 +519,13 @@ func addMacWidgets(ctx context.Context, p *project, app, arch string) error {
 	if len(p.Widgets) == 0 {
 		return nil
 	}
-	exe, lib, err := compileWidgets(ctx, p, macWidgetTarget(arch))
+	w, err := compileWidgets(ctx, p, macWidgetTarget(arch))
 	if err != nil {
 		return err
 	}
 	appex := macWidgetsAppex(app)
 	contents := filepath.Join(appex, "Contents")
-	if err := copyLibrary(exe, filepath.Join(contents, "MacOS", widgetsExec)); err != nil {
+	if err := copyLibrary(w.exe, filepath.Join(contents, "MacOS", widgetsExec)); err != nil {
 		return err
 	}
 	info := widgetsInfo(p, map[string]any{
@@ -336,7 +537,7 @@ func addMacWidgets(ctx context.Context, p *project, app, arch string) error {
 		return err
 	}
 	dylib := filepath.Join(app, "Contents", "Frameworks", widgetKitDylib)
-	if err := copyLibrary(lib, dylib); err != nil {
+	if err := copyLibrary(w.lib, dylib); err != nil {
 		return err
 	}
 	if err := run(ctx, "codesign", "--force", "--sign", "-", dylib); err != nil {
@@ -371,17 +572,27 @@ func signMacWidgets(ctx context.Context, p *project, appex, identity string) err
 	return run(ctx, "codesign", append(args, appex)...)
 }
 
-// addIOSWidgets puts the widget extension and the reload framework into
-// an iOS bundle. For the simulator it signs them ad hoc, the extension with
-// the app group, which the simulator grants from the entitlements of ad hoc
-// signatures; device builds sign them with the app (signIOSWidgets).
+// addIOSWidgets puts the widget extension and the framework of Swift
+// into an iOS bundle, with their App Intents metadata. For the simulator
+// it signs them ad hoc, the extension with the app group, which the
+// simulator grants from the entitlements of ad hoc signatures; device
+// builds sign them with the app (signIOSWidgets).
 func addIOSWidgets(ctx context.Context, p *project, app string, simulator bool) error {
-	if len(p.Widgets) == 0 {
+	if !p.iosExtension() {
 		return nil
 	}
-	exe, lib, err := compileWidgets(ctx, p, iosWidgetTarget(simulator))
+	w, err := compileWidgets(ctx, p, iosWidgetTarget(simulator))
 	if err != nil {
 		return err
+	}
+	exe, lib := w.exe, w.lib
+	for _, m := range []struct{ from, to string }{{w.exeIntents, iosWidgetsAppex(app)}, {w.libIntents, app}} {
+		if m.from == "" {
+			continue
+		}
+		if err := copyDir(m.from, filepath.Join(m.to, appIntentsMetadata)); err != nil {
+			return err
+		}
 	}
 	platform, sdk := "iPhoneOS", "iphoneos"
 	if simulator {

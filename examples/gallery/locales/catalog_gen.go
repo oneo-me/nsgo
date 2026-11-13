@@ -2354,6 +2354,11 @@ const (
 	textWidgetsSmallCaps
 	textWidgetsColors
 	textWidgetsPhotoTitle
+	textWidgetsLiveActivity
+	textWidgetsLiveActivityDetail
+	textWidgetsStartActivity
+	textWidgetsEndActivity
+	textWidgetsLiveActivityHow
 	numTexts
 )
 
@@ -4416,6 +4421,11 @@ var keyOfText = [numTexts]string{
 	"widgetsSmallCaps",
 	"widgetsColors",
 	"widgetsPhotoTitle",
+	"widgetsLiveActivity",
+	"widgetsLiveActivityDetail",
+	"widgetsStartActivity",
+	"widgetsEndActivity",
+	"widgetsLiveActivityHow",
 }
 
 // textsEn are the messages without arguments in en.
@@ -6475,7 +6485,12 @@ var textsEn = i18n.NewTexts(""+
 	"Serif"+
 	"Small capitals"+
 	"Colors"+
-	"A walk in the light",
+	"A walk in the light"+
+	"Live Activity"+
+	"The steps on the Lock Screen and in the Dynamic Island, or as a Live Update on Android"+
+	"Start"+
+	"End"+
+	"Its buttons add steps and end it without opening the Gallery on iOS 17 and later; the steps, goal and accent above update it while it runs.",
 	[]uint16{
 		7,
 		7,
@@ -8533,6 +8548,11 @@ var textsEn = i18n.NewTexts(""+
 		14,
 		6,
 		19,
+		13,
+		86,
+		5,
+		3,
+		139,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -10592,7 +10612,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"衬线"+
 	"小型大写"+
 	"颜色"+
-	"在光中漫步",
+	"在光中漫步"+
+	"实时活动"+
+	"步数显示在锁屏和灵动岛里，在 Android 上则是 Live Update"+
+	"开始"+
+	"结束"+
+	"在 iOS 17 及以后，它的按钮无需打开 Gallery 就能增加步数或结束活动；活动进行时，上方的步数、目标和强调色会更新它。",
 	[]uint16{
 		6,
 		6,
@@ -12650,6 +12675,11 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		6,
 		15,
+		12,
+		72,
+		6,
+		6,
+		161,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -31450,3 +31480,40 @@ func WidgetsPhotoTitle(cx *core.Scope) string { return For(cx).WidgetsPhotoTitle
 
 // WidgetsPhotoTitle is the package's WidgetsPhotoTitle in the language of msgs.
 func (msgs Messages) WidgetsPhotoTitle() string { return msgs.text(textWidgetsPhotoTitle) }
+
+// WidgetsLiveActivity says "Live Activity"
+// in the language the app shows under cx.
+func WidgetsLiveActivity(cx *core.Scope) string { return For(cx).WidgetsLiveActivity() }
+
+// WidgetsLiveActivity is the package's WidgetsLiveActivity in the language of msgs.
+func (msgs Messages) WidgetsLiveActivity() string { return msgs.text(textWidgetsLiveActivity) }
+
+// WidgetsLiveActivityDetail says "The steps on the Lock Screen and in the Dynamic Island, or as a Live Update on Android"
+// in the language the app shows under cx.
+func WidgetsLiveActivityDetail(cx *core.Scope) string { return For(cx).WidgetsLiveActivityDetail() }
+
+// WidgetsLiveActivityDetail is the package's WidgetsLiveActivityDetail in the language of msgs.
+func (msgs Messages) WidgetsLiveActivityDetail() string {
+	return msgs.text(textWidgetsLiveActivityDetail)
+}
+
+// WidgetsStartActivity says "Start"
+// in the language the app shows under cx.
+func WidgetsStartActivity(cx *core.Scope) string { return For(cx).WidgetsStartActivity() }
+
+// WidgetsStartActivity is the package's WidgetsStartActivity in the language of msgs.
+func (msgs Messages) WidgetsStartActivity() string { return msgs.text(textWidgetsStartActivity) }
+
+// WidgetsEndActivity says "End"
+// in the language the app shows under cx.
+func WidgetsEndActivity(cx *core.Scope) string { return For(cx).WidgetsEndActivity() }
+
+// WidgetsEndActivity is the package's WidgetsEndActivity in the language of msgs.
+func (msgs Messages) WidgetsEndActivity() string { return msgs.text(textWidgetsEndActivity) }
+
+// WidgetsLiveActivityHow says "Its buttons add steps and end it without opening the Gallery on iOS 17 and later; the steps, goal and accent above update it while it runs."
+// in the language the app shows under cx.
+func WidgetsLiveActivityHow(cx *core.Scope) string { return For(cx).WidgetsLiveActivityHow() }
+
+// WidgetsLiveActivityHow is the package's WidgetsLiveActivityHow in the language of msgs.
+func (msgs Messages) WidgetsLiveActivityHow() string { return msgs.text(textWidgetsLiveActivityHow) }

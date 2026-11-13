@@ -273,7 +273,39 @@ err := widget.Update("counter", widget.Entry{
 })
 ```
 
-`build` and `dev` compile a widget extension into the macOS and iOS packages with Xcode's Swift compiler. It draws the views with SwiftUI and runs none of the app's code, so a widget shows the timeline the app wrote last, whether the app runs or not: call `Update` whenever what it shows changes. `widget.Date` with `Relative` or `Timer` keeps counting by itself. `Entry.URL` and `Style.Link` open URLs when a widget is tapped. On iOS the app and its widgets share an app group: for devices, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. The repository's `examples/widgets` is a counter with widgets, and the gallery's Widgets demo fills every family.
+`build` and `dev` compile a widget extension into the macOS and iOS packages with Xcode's Swift compiler. It draws the views with SwiftUI and runs none of the app's code, so a widget shows the timeline the app wrote last, whether the app runs or not: call `Update` whenever what it shows changes. `widget.Date` with `Relative` or `Timer` keeps counting by itself. `Entry.URL` and `Style.Link` open URLs when a widget is tapped. On iOS the app and its widgets share an app group: `-run` on an iPhone has Xcode sign both and register the group; for an IPA, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. The repository's `examples/widgets` is a counter with widgets, and the gallery's Widgets demo fills every family.
+
+### Live Activities
+
+A Live Activity follows something as it happens, a delivery or a timer, on the Lock Screen and in the Dynamic Island of iPhones from iOS 16.1, and as a Live Update on Android 16, at the top of the shade and in a chip of the status bar; earlier Androids show an ongoing notification. Turn them on in `nsgo.yaml`, then start, update and end them with package `widget`:
+
+```yaml
+live_activities:
+  enabled: true
+  # frequent_updates: true   # iOS: more updates than the system's budget, as the user allows
+```
+
+```go
+func main() {
+	// Before nsgo.Run: iOS starts the app in the background for a press.
+	widget.OnAction(func(p widget.ActivityPress) {
+		if p.Action == "pause" {
+			p.Activity.Update(paused)
+		}
+	})
+	nsgo.Run(Root)
+}
+
+a, err := widget.StartActivity("delivery", widget.ActivityContent{
+	Title: "Your order", Body: "On its way", Symbol: "box.truck.fill",
+	Timer: arrival, ShowProgress: true, Progress: 0.4,
+	Actions: []widget.ActivityAction{{ID: "pause", Title: "Pause", Symbol: "pause.fill"}},
+})
+```
+
+Both platforms show the title, body, status or timer, bar and actions; iOS draws them with the widget extension, and takes views of `widget`'s in their place for the Lock Screen and each part of the Dynamic Island (`LockScreen`, `Leading`, `CompactTrailing`, `Minimal` and the others), whose `widget.Button` runs `OnAction` too. A press of an action runs the handler without opening the app on iOS 17 and later, which holds the activity until it returns, and opens the app on Android. Android asks for `POST_NOTIFICATIONS` and `POST_PROMOTED_NOTIFICATIONS` itself; ask the user with `RequestNotificationPermission` first.
+
+An app in the background updates its activities only while it runs, and the system ends them after eight hours. To follow what happens elsewhere, start one with `widget.ActivityOptions{Push: true}`, send the token `OnPushToken` hears to your server, and have it push APNs `liveactivity` updates whose `content-state` is `widget.ActivityState`; iOS 17.2 gives a token to start them by push too, with the attributes type `widget.ActivityAttributesType`. Pushes need the push notifications entitlement in the app's profile. The gallery's Widgets demo walks the widgets' steps in a Live Activity, and `examples/widgets` counts in one.
 
 ## App Clips
 

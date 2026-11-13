@@ -192,7 +192,7 @@ func signForStore(ctx context.Context, p *project, app string) error {
 	// Devices refuse an app signed with the wildcard itself, as Xcode
 	// knows: a wildcard profile signs the app's own ID.
 	entitlements["application-identifier"] = signedAppID(appID, p.ID)
-	if groups, _ := entitlements["com.apple.security.application-groups"].([]any); len(p.Widgets) > 0 && !slices.Contains(groups, any(p.appGroup())) {
+	if groups, _ := entitlements["com.apple.security.application-groups"].([]any); p.iosExtension() && !slices.Contains(groups, any(p.appGroup())) {
 		return fmt.Errorf("the provisioning profile does not grant the app group %s, which the app shares with its widgets", p.appGroup())
 	}
 	if _, ok := entitlements["com.apple.developer.associated-appclip-app-identifiers"]; p.AppClip != nil && !ok {

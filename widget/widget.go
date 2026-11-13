@@ -20,6 +20,10 @@
 // nsgo.Run too. Elsewhere than macOS and iOS, and in an app not built with
 // its widgets, it reports why it cannot show them. Like microphone, the
 // package reaches the system directly and stands apart from the engine.
+//
+// The same extension draws the app's Live Activities on the Lock Screen
+// and in the Dynamic Island of iPhones, which Android 16 shows as Live
+// Updates: see StartActivity.
 package widget
 
 import (

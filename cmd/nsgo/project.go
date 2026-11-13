@@ -129,6 +129,10 @@ type project struct {
 	// Widgets are the kinds of the app's widgets, which nsgo build puts
 	// into its macOS and iOS packages as a widget extension (widgets.go).
 	Widgets []widgetKind `yaml:"widgets"`
+	// LiveActivities turns on the app's Live Activities, which the iOS
+	// widget extension draws and Android shows as notifications
+	// (widgets.go).
+	LiveActivities liveActivities `yaml:"live_activities"`
 	// AppClip is the app's App Clip, which nsgo build nests in its iOS
 	// package (appclip.go).
 	AppClip *appClip `yaml:"app_clip"`

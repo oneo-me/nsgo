@@ -22,8 +22,9 @@ var layers = []struct {
 	{"internal/layout", nil},
 	{"microphone", nil},
 	// Widgets take core's colors, edges and fonts, and reach WidgetKit
-	// through the files and the library the tool's extension shares.
-	{"widget", []string{"core"}},
+	// through the files and the library the tool's extension shares, and
+	// Android's runtime through the driver's Live Updates.
+	{"widget", []string{"core", "internal/driver"}},
 	{"internal/woff", nil},
 	{"internal/cldr/", nil},
 	{"internal/cldr", nil},

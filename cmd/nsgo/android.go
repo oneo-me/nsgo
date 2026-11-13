@@ -129,7 +129,7 @@ func buildAndroidPackage(ctx context.Context, p *project, dir, goarch, ext strin
 		Icon:        icon,
 		Theme:       androidThemes[p.Appearance],
 		Debuggable:  p.testBinary,
-		Permissions: p.Android.Permissions,
+		Permissions: p.androidPermissions(),
 		TargetSDK:   p.Android.TargetSDK,
 	}, files, key)
 	if err != nil {

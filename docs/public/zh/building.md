@@ -273,7 +273,39 @@ err := widget.Update("counter", widget.Entry{
 })
 ```
 
-`build` 和 `dev` 会用 Xcode 的 Swift 编译器把小组件扩展编进 macOS 和 iOS 包。扩展用 SwiftUI 绘制这些视图，不运行应用的任何代码，因此无论应用是否在运行，小组件都显示应用最后写入的时间线：内容变化时调用 `Update` 即可。`widget.Date` 配合 `Relative` 或 `Timer` 会自己持续计时。`Entry.URL` 和 `Style.Link` 在点击小组件时打开链接。在 iOS 上，应用与小组件共享一个 App Group：真机上需要为 `<id>` 和 `<id>.widgets` 都开启它，并用 `sign.widgets_profile` 为扩展签名。仓库中的 `examples/widgets` 是一个带小组件的计数器，gallery 的 Widgets 演示则覆盖了所有尺寸。
+`build` 和 `dev` 会用 Xcode 的 Swift 编译器把小组件扩展编进 macOS 和 iOS 包。扩展用 SwiftUI 绘制这些视图，不运行应用的任何代码，因此无论应用是否在运行，小组件都显示应用最后写入的时间线：内容变化时调用 `Update` 即可。`widget.Date` 配合 `Relative` 或 `Timer` 会自己持续计时。`Entry.URL` 和 `Style.Link` 在点击小组件时打开链接。在 iOS 上，应用与小组件共享一个 App Group：用 `-run` 装到 iPhone 时，Xcode 会为两者签名并注册它；打 IPA 时需要为 `<id>` 和 `<id>.widgets` 都开启它，并用 `sign.widgets_profile` 为扩展签名。仓库中的 `examples/widgets` 是一个带小组件的计数器，gallery 的 Widgets 演示则覆盖了所有尺寸。
+
+### 实时活动
+
+实时活动跟随正在发生的事，比如外卖或计时器：在 iOS 16.1 起的 iPhone 上显示在锁屏和灵动岛里，在 Android 16 上作为 Live Update 显示在通知栏顶部和状态栏的胶囊里，更早的 Android 则显示为常驻通知。在 `nsgo.yaml` 中开启，再用 `widget` 包开始、更新和结束它们：
+
+```yaml
+live_activities:
+  enabled: true
+  # frequent_updates: true   # iOS：在用户允许时，可超出系统的更新额度
+```
+
+```go
+func main() {
+	// 在 nsgo.Run 之前：iOS 会为一次按下在后台启动应用。
+	widget.OnAction(func(p widget.ActivityPress) {
+		if p.Action == "pause" {
+			p.Activity.Update(paused)
+		}
+	})
+	nsgo.Run(Root)
+}
+
+a, err := widget.StartActivity("delivery", widget.ActivityContent{
+	Title: "Your order", Body: "On its way", Symbol: "box.truck.fill",
+	Timer: arrival, ShowProgress: true, Progress: 0.4,
+	Actions: []widget.ActivityAction{{ID: "pause", Title: "Pause", Symbol: "pause.fill"}},
+})
+```
+
+两个平台都会显示标题、正文、状态或计时、进度条和按钮；iOS 用小组件扩展绘制它们，也可以用 `widget` 的视图替换锁屏和灵动岛的各个部分（`LockScreen`、`Leading`、`CompactTrailing`、`Minimal` 等），其中的 `widget.Button` 同样会运行 `OnAction`。在 iOS 17 及以后，按下按钮会在不打开应用的情况下运行处理函数，系统会等它返回；在 Android 上则会打开应用。Android 会自行申请 `POST_NOTIFICATIONS` 和 `POST_PROMOTED_NOTIFICATIONS` 权限，请先用 `RequestNotificationPermission` 向用户请求。
+
+应用在后台时只有仍在运行才能更新实时活动，系统也会在八小时后结束它们。要跟随别处发生的事，用 `widget.ActivityOptions{Push: true}` 开始活动，把 `OnPushToken` 收到的 token 发给服务器，由服务器推送 APNs 的 `liveactivity` 更新，其 `content-state` 用 `widget.ActivityState` 生成；iOS 17.2 还会给出用推送开始活动的 token，属性类型为 `widget.ActivityAttributesType`。推送需要应用的描述文件包含推送通知权限。gallery 的 Widgets 演示会在实时活动里显示小组件的步数，`examples/widgets` 则在实时活动里计数。
 
 ## 轻 App（App Clip）
 

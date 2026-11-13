@@ -19,19 +19,22 @@ import (
 // its widget extension keep the timelines: in the container of the app
 // group they share (appGroupKey), or on macOS in a directory of the
 // user's home (widgetsPathKey), which the extension, in the App Sandbox,
-// may read. WidgetKit's WidgetCenter, which reloads widgets, has no
-// Objective-C interface: a library of Swift that nsgo build puts among
-// the bundle's frameworks calls it (reloadLibraries), loaded with the
-// first Update.
+// may read. WidgetKit's WidgetCenter, which reloads widgets, and
+// ActivityKit have no Objective-C interface: a library of Swift that nsgo
+// build puts among the bundle's frameworks calls them (kitLibraries),
+// loaded as the app first needs it.
 
 const (
 	appGroupKey    = "NSGoAppGroup"
 	widgetsPathKey = "NSGoWidgetsPath"
+	// activitiesKey is the Info.plist's NSSupportsLiveActivities, which
+	// nsgo build sets in an app with live_activities.
+	activitiesKey = "NSSupportsLiveActivities"
 )
 
-// reloadLibraries are where the bundle's frameworks hold the library
-// that reloads widgets, iOS's and macOS's.
-var reloadLibraries = []string{"NSGoWidgetKit.framework/NSGoWidgetKit", "libNSGoWidgetKit.dylib"}
+// kitLibraries are where the bundle's frameworks hold the library of
+// Swift, iOS's and macOS's.
+var kitLibraries = []string{"NSGoWidgetKit.framework/NSGoWidgetKit", "libNSGoWidgetKit.dylib"}
 
 var native struct {
 	setup sync.Once
@@ -39,6 +42,12 @@ var native struct {
 	err   error
 	// frameworks is the bundle's directory of frameworks.
 	frameworks string
+	// activities is whether the bundle has Live Activities.
+	activities bool
+
+	kit    sync.Once
+	kitLib uintptr
+	kitErr error
 
 	reload    sync.Once
 	reloadFn  uintptr
@@ -70,6 +79,7 @@ func load() {
 			group := goString(send(bundle, "objectForInfoDictionaryKey:", nsString(appGroupKey)))
 			path := goString(send(bundle, "objectForInfoDictionaryKey:", nsString(widgetsPathKey)))
 			native.frameworks = goString(send(bundle, "privateFrameworksPath"))
+			native.activities = send(send(bundle, "objectForInfoDictionaryKey:", nsString(activitiesKey)), "boolValue")&0xff != 0
 			switch {
 			case group == "" && path == "":
 				native.err = ErrNoWidgets
@@ -99,19 +109,32 @@ func containerDir() (string, error) {
 	return native.dir, native.err
 }
 
-// reload asks WidgetKit to read the kind's timeline again.
-func reload(kind string) error {
-	native.reload.Do(func() {
-		for _, name := range reloadLibraries {
+// kit loads the bundle's library of Swift.
+func kit() (uintptr, error) {
+	native.kit.Do(func() {
+		load()
+		for _, name := range kitLibraries {
 			lib, err := purego.Dlopen(filepath.Join(native.frameworks, name), purego.RTLD_LOCAL|purego.RTLD_NOW)
-			if err != nil {
-				continue
-			}
-			if native.reloadFn, err = purego.Dlsym(lib, "nsgo_widgets_reload"); err == nil {
+			if err == nil {
+				native.kitLib = lib
 				return
 			}
 		}
-		native.reloadErr = fmt.Errorf("widget: the timeline is written, but the app has no library to reload its widgets in %s", native.frameworks)
+		native.kitErr = fmt.Errorf("widget: the app has no NSGoWidgetKit library in %s", native.frameworks)
+	})
+	return native.kitLib, native.kitErr
+}
+
+// reload asks WidgetKit to read the kind's timeline again.
+func reload(kind string) error {
+	native.reload.Do(func() {
+		lib, err := kit()
+		if err == nil {
+			native.reloadFn, err = purego.Dlsym(lib, "nsgo_widgets_reload")
+		}
+		if err != nil {
+			native.reloadErr = fmt.Errorf("widget: the timeline is written, but the app cannot reload its widgets: %w", err)
+		}
 	})
 	if native.reloadErr != nil {
 		return native.reloadErr

@@ -112,6 +112,7 @@ final class WNode: Decodable {
     let minScale: Double?
     let textAlign: String?
     let accent: Bool?
+    let action: String?
 }
 
 struct WEntry: Decodable {
@@ -300,6 +301,7 @@ struct NodeView: View {
     let node: WNode
     let dir: URL?
     @Environment(\.colorScheme) var scheme
+    @Environment(\.nsgoActivity) var activity
 
     var children: [WNode] { node.children ?? [] }
     var gap: CGFloat? { node.gap.map { CGFloat($0) } }
@@ -333,6 +335,7 @@ struct NodeView: View {
                     if #available(iOS 16.0, macOS 13.0, *) { view.widgetAccentable() } else { view }
                 }
             }
+            .modify(node.t == "button") { $0.pressed(activity: activity, action: node.action) }
             .linked(node.link)
     }
 
@@ -354,7 +357,7 @@ struct NodeView: View {
             ImageNode(url: dir.flatMap { d in node.image.map { d.appendingPathComponent($0) } }, cover: node.cover == true)
         case "date":
             dateText
-        case "column":
+        case "column", "button":
             VStack(alignment: alignment(node.items).0, spacing: gap) {
                 ForEach(children.indices, id: \.self) { NodeView(node: children[$0], dir: dir) }
             }
@@ -432,7 +435,37 @@ struct ProgressRing: View {
     }
 }
 
+/// nsgoActivity is the ID of the Live Activity a view shows in, whose
+/// buttons say it to the app.
+private struct ActivityKey: EnvironmentKey {
+    static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+    var nsgoActivity: String? {
+        get { self[ActivityKey.self] }
+        set { self[ActivityKey.self] = newValue }
+    }
+}
+
 extension View {
+    /// pressed makes the view a button that runs action in the app, in a
+    /// Live Activity from iOS 17.
+    @ViewBuilder func pressed(activity: String?, action: String?) -> some View {
+        #if os(iOS)
+        if #available(iOS 17.0, *), let activity, let action {
+            Button(intent: NSGoActionIntent(activity: activity, action: action)) {
+                self.contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+
     @ViewBuilder func linked(_ link: String?) -> some View {
         if let link, let url = URL(string: link) {
             Link(destination: url) { self }

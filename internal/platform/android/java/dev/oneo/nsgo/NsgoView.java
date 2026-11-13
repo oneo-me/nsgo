@@ -479,6 +479,9 @@ public class NsgoView extends FrameLayout {
         out = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
         // The host's handlers and tokens come before the app starts.
         host.start();
+        write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
+        if (livePressEarly != null) write(Protocol.LIVE_REPORT, livePressEarly);
+        livePressEarly = null;
         Thread reader = new Thread(this::read, "nsgo-reader");
         reader.setDaemon(true);
         reader.start();
@@ -548,6 +551,12 @@ public class NsgoView extends FrameLayout {
                         break;
                     case Protocol.FETCH:
                         downloads.message(message);
+                        break;
+                    case Protocol.LIVE_UPDATE:
+                        ui.post(() -> {
+                            LiveUpdates.apply(getContext(), activity(), payload);
+                            write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
+                        });
                         break;
                     case Protocol.WANT_FRAME:
                         ui.post(() -> {
@@ -2877,7 +2886,27 @@ public class NsgoView extends FrameLayout {
 
     private void answerPermission(long count) {
         event(Protocol.EVENT_NOTIFICATION, 0, count, 0, 0, "", 0, 0, Notifications.permission(getContext()));
+        // Live Activities show with the permission.
+        write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
     }
+
+    /**
+     * Reports the press of a Live Activity's action, which brought the
+     * activity back or started it: the activity passes its intent here.
+     * Package widget keeps it until the app hears presses.
+     */
+    public void liveActionPressed(android.content.Intent intent) {
+        byte[] press = intent == null ? null : LiveUpdates.press(intent);
+        if (press == null) return;
+        if (out == null) {
+            livePressEarly = press;
+            return;
+        }
+        write(Protocol.LIVE_REPORT, press);
+    }
+
+    /** A Live Activity's press that came before the app's process started. */
+    private byte[] livePressEarly;
 
     /** A notification's press that came before the engine mounted its first batch. */
     private String pressedEarly;

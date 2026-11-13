@@ -40,6 +40,7 @@ public class NsgoActivity extends Activity {
         view.setTest(getIntent().getStringExtra(TestAgent.EXTRA));
         setContentView(view);
         view.notificationPressed(getIntent().getStringExtra(Notifications.EXTRA));
+        view.liveActionPressed(getIntent());
     }
 
     @Override
@@ -47,6 +48,7 @@ public class NsgoActivity extends Activity {
         super.onNewIntent(intent);
         // A notification's press, the activity running.
         view.notificationPressed(intent.getStringExtra(Notifications.EXTRA));
+        view.liveActionPressed(intent);
     }
 
     /**

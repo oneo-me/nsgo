@@ -35,6 +35,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -84,6 +85,9 @@ const (
 	msgFolder = 15
 	// msgFetch starts or cancels an image's download (fetch.go).
 	msgFetch = 16
+	// msgLiveUpdate starts, updates or ends one of package widget's Live
+	// Activities, JSON (driver.SendLiveUpdate).
+	msgLiveUpdate = 17
 
 	// Java to Go.
 	msgStart       = 1
@@ -100,6 +104,9 @@ const (
 	msgFrame       = 12 // a Choreographer frame began, answering msgWantFrame
 	msgFolderReply = 13 // a folder's entries or a file's bytes, answering msgFolder
 	msgFetched     = 14 // a download's progress or response, answering msgFetch
+	// msgLiveReport is what the runtime reports of Live Activities, JSON
+	// (driver.ReportLiveUpdate).
+	msgLiveReport = 15
 )
 
 // The parts of an image view's request msgImage carries.
@@ -203,6 +210,9 @@ func connect(opts Options) *surface {
 	}
 	useDNS()
 	s.sendFonts(opts.Fonts)
+	driver.ConnectLiveUpdates(func(msg []byte) {
+		s.send(msgLiveUpdate, func(w *writer) { w.buf = append(w.buf, msg...) })
+	})
 	return s
 }
 
@@ -340,6 +350,8 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			}
 		case msgHost:
 			s.hostMessage(&r)
+		case msgLiveReport:
+			driver.ReportLiveUpdate(slices.Clone(payload))
 		case msgDNS:
 			servers := make([]string, r.u32())
 			for i := range servers {

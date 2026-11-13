@@ -140,9 +140,9 @@ func buildIOSApp(ctx context.Context, p *project, sys *appleOS, dir string, simu
 		return "", err
 	}
 	// An Apple TV has no widgets.
-	widgets := sys == iOS && len(p.Widgets) > 0
-	if sys != iOS && len(p.Widgets) > 0 {
-		detailIn(ctx, "no widgets on %s: they are left out", sys.name)
+	widgets := sys == iOS && p.iosExtension()
+	if sys != iOS && p.iosExtension() {
+		detailIn(ctx, "no widgets or Live Activities on %s: they are left out", sys.name)
 	}
 	extra := icon + "\n" + names + "\n\t<key>CFBundleSupportedPlatforms</key><array><string>" + sys.platformName(simulator) + "</string></array>"
 	if widgets {
@@ -380,6 +380,21 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 		}
 		data["Entitlements"] = "Clip.entitlements"
 	}
+	if data["Widgets"] != "" {
+		// The extension signs as a target of its own, and both share the
+		// app group, which Xcode's automatic signing registers.
+		info, err := os.ReadFile(filepath.Join(iosWidgetsAppex(app), "Info.plist"))
+		if err != nil {
+			return "", err
+		}
+		group := encodePlist(p.groupEntitlements())
+		for name, content := range map[string][]byte{"Widgets-Info.plist": info, "Widgets.entitlements": group, "App.entitlements": group} {
+			if err := os.WriteFile(filepath.Join(work, name), content, 0o644); err != nil {
+				return "", err
+			}
+		}
+		data["Entitlements"] = "App.entitlements"
+	}
 	f, err := os.Create(filepath.Join(project, "project.pbxproj"))
 	if err != nil {
 		return "", err
@@ -392,9 +407,6 @@ func signIOSApp(ctx context.Context, p *project, sys *appleOS, app, work, team s
 		return "", err
 	}
 	products := filepath.Join(work, "products")
-	if len(p.Widgets) > 0 {
-		warnIn(ctx, "the widgets are left out: Xcode signs the app alone for devices; nsgo build -target ios with sign.profile and sign.widgets_profile keeps them")
-	}
 	if p.AppClip != nil {
 		warnIn(ctx, "the App Clip is left out: Xcode signs the app alone for devices; nsgo dev -clip runs the clip alone, and nsgo build -target ios with sign.profile and sign.clip_profile keeps it")
 	}
@@ -438,12 +450,33 @@ func iosProjectData(p *project, sys *appleOS, team string) map[string]string {
 		data["Minimum"] = p.IOSMinimum()
 		data["ProductType"] = "com.apple.product-type.application.on-demand-install-capable"
 	}
+	if sys == iOS && p.iosExtension() && p.clipParent == "" {
+		data["Widgets"] = "1"
+		data["WidgetsID"] = p.ID + ".widgets"
+		data["WidgetsScript"] = iosWidgetsScript
+	}
 	return data
 }
 
+// iosWidgetsScript replaces Xcode's empty widget extension with the Go
+// build's, except its Info.plist, which Xcode processes itself.
+const iosWidgetsScript = `set -e
+appex="$CODESIGNING_FOLDER_PATH"
+mkdir -p "$appex"
+for file in "$SRCROOT/unsigned/PlugIns/` + widgetsAppex + `"/*; do
+	name=$(basename "$file")
+	case "$name" in
+		Info.plist|_CodeSignature|embedded.mobileprovision) continue ;;
+	esac
+	cp -R "$file" "$appex/"
+done
+chmod +x "$appex/$EXECUTABLE_NAME"
+`
+
 // iosSignScript replaces Xcode's empty app with the Go build's contents,
-// except its Info.plist, which Xcode processes itself, and the widget
-// extension and the App Clip, which Xcode's project has no target to sign.
+// except its Info.plist, which Xcode processes itself, the widget
+// extension, which its own target signs, and the App Clip, which Xcode's
+// project has no target to sign.
 const iosSignScript = `set -e
 app="$CODESIGNING_FOLDER_PATH"
 mkdir -p "$app"
@@ -832,7 +865,40 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 
 /* Begin PBXFileReference section */
 		AA0000000000000000000001 /* Nsgo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = {{pbx .App}}; sourceTree = BUILT_PRODUCTS_DIR; };
+{{- if .Widgets}}
+		AA0000000000000000000010 /* Widgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Widgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+{{- end}}
 /* End PBXFileReference section */
+{{- if .Widgets}}
+
+/* Begin PBXBuildFile section */
+		AA0000000000000000000011 /* Widgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000010 /* Widgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA000000000000000000001A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000000007 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000013;
+			remoteInfo = Widgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA0000000000000000000012 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA0000000000000000000011 /* Widgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+{{- end}}
 
 /* Begin PBXFrameworksBuildPhase section */
 		AA0000000000000000000002 /* Frameworks */ = {
@@ -842,6 +908,15 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+{{- if .Widgets}}
+		AA0000000000000000000015 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+{{- end}}
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -849,6 +924,9 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000001 /* Nsgo.app */,
+{{- if .Widgets}}
+				AA0000000000000000000010 /* Widgets.appex */,
+{{- end}}
 			);
 			sourceTree = "<group>";
 		};
@@ -861,16 +939,40 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			buildPhases = (
 				AA0000000000000000000006 /* Copy the app */,
 				AA0000000000000000000002 /* Frameworks */,
+{{- if .Widgets}}
+				AA0000000000000000000012 /* Embed Foundation Extensions */,
+{{- end}}
 			);
 			buildRules = (
 			);
 			dependencies = (
+{{- if .Widgets}}
+				AA0000000000000000000019 /* PBXTargetDependency */,
+{{- end}}
 			);
 			name = Nsgo;
 			productName = Nsgo;
 			productReference = AA0000000000000000000001 /* Nsgo.app */;
 			productType = {{pbx .ProductType}};
 		};
+{{- if .Widgets}}
+		AA0000000000000000000013 /* Widgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000016 /* Build configuration list for PBXNativeTarget "Widgets" */;
+			buildPhases = (
+				AA0000000000000000000014 /* Copy the extension */,
+				AA0000000000000000000015 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Widgets;
+			productName = Widgets;
+			productReference = AA0000000000000000000010 /* Widgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+{{- end}}
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -899,6 +1001,9 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			projectRoot = "";
 			targets = (
 				AA0000000000000000000004 /* Nsgo */,
+{{- if .Widgets}}
+				AA0000000000000000000013 /* Widgets */,
+{{- end}}
 			);
 		};
 /* End PBXProject section */
@@ -919,7 +1024,34 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			shellPath = /bin/sh;
 			shellScript = {{pbx .Script}};
 		};
+{{- if .Widgets}}
+		AA0000000000000000000014 /* Copy the extension */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy the extension";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = {{pbx .WidgetsScript}};
+		};
+{{- end}}
 /* End PBXShellScriptBuildPhase section */
+{{- if .Widgets}}
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000019 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000013 /* Widgets */;
+			targetProxy = AA000000000000000000001A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+{{- end}}
 
 /* Begin XCBuildConfiguration section */
 		AA0000000000000000000009 /* Debug */ = {
@@ -980,6 +1112,42 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			};
 			name = Release;
 		};
+{{- if .Widgets}}
+		AA0000000000000000000017 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Widgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = {{pbx .Team}};
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = "Widgets-Info.plist";
+				{{.Deployment}} = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = {{pbx .WidgetsID}};
+				PRODUCT_NAME = Widgets;
+				SDKROOT = {{.SDK}};
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = {{pbx .Families}};
+			};
+			name = Debug;
+		};
+		AA0000000000000000000018 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Widgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = {{pbx .Team}};
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = "Widgets-Info.plist";
+				{{.Deployment}} = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = {{pbx .WidgetsID}};
+				PRODUCT_NAME = Widgets;
+				SDKROOT = {{.SDK}};
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = {{pbx .Families}};
+			};
+			name = Release;
+		};
+{{- end}}
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1001,6 +1169,17 @@ var iosProject = template.Must(template.New("ios").Funcs(template.FuncMap{"pbx":
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+{{- if .Widgets}}
+		AA0000000000000000000016 /* Build configuration list for PBXNativeTarget "Widgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000017 /* Debug */,
+				AA0000000000000000000018 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+{{- end}}
 /* End XCConfigurationList section */
 	};
 	rootObject = AA0000000000000000000007 /* Project object */;

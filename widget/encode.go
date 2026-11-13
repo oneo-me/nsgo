@@ -68,6 +68,7 @@ type node struct {
 	MinScale  *float64    `json:"minScale,omitempty"`
 	TextAlign string      `json:"textAlign,omitempty"`
 	Accent    bool        `json:"accent,omitempty"`
+	Action    string      `json:"action,omitempty"`
 }
 
 // font is a text's font: a size or a text style, with a weight, a design
@@ -178,6 +179,8 @@ func (e *encoder) node(v View, parent *font) (*node, error) {
 		s = v.Style
 	case Gauge:
 		s = v.Style
+	case Button:
+		s, children = v.Style, v.Children
 	}
 	f := mergeFont(parent, s)
 	if n.T == "text" || n.T == "symbol" || n.T == "date" {
@@ -212,6 +215,7 @@ func (v Rectangle) node() *node {
 }
 func (v Progress) node() *node { return &node{T: "progress", Value: ptr(min(max(v.Value, 0), 1))} }
 func (v Gauge) node() *node    { return &node{T: "gauge", Value: ptr(min(max(v.Value, 0), 1))} }
+func (v Button) node() *node   { return &node{T: "button", Action: v.Action} }
 
 // applyStyle sets a node's layout and look from s; its font is mergeFont's.
 func applyStyle(n *node, s Style) {
@@ -329,10 +333,21 @@ func writeTimeline(dir string, entries []Entry, now time.Time) error {
 	if err != nil {
 		return err
 	}
+	if err := writeImages(dir, e.images); err != nil {
+		return err
+	}
+	if err := writeAtomic(filepath.Join(dir, timelineFile), data); err != nil {
+		return err
+	}
+	return pruneImages(dir, e.images)
+}
+
+// writeImages writes images into dir, which it makes, by their names.
+func writeImages(dir string, images map[string][]byte) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	for name, img := range e.images {
+	for name, img := range images {
 		path := filepath.Join(dir, name)
 		if _, err := os.Stat(path); err == nil {
 			continue // named by its contents
@@ -341,15 +356,17 @@ func writeTimeline(dir string, entries []Entry, now time.Time) error {
 			return err
 		}
 	}
-	if err := writeAtomic(filepath.Join(dir, timelineFile), data); err != nil {
-		return err
-	}
+	return nil
+}
+
+// pruneImages removes the images of dir that are not among keep.
+func pruneImages(dir string, keep map[string][]byte) error {
 	old, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
 	for _, f := range old {
-		if name := f.Name(); strings.HasPrefix(name, imagePrefix) && e.images[name] == nil {
+		if name := f.Name(); strings.HasPrefix(name, imagePrefix) && keep[name] == nil {
 			os.Remove(filepath.Join(dir, name))
 		}
 	}

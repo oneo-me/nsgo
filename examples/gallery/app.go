@@ -31,6 +31,7 @@ import (
 
 	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
 	"github.com/nsgo-dev/nsgo/ui"
+	"github.com/nsgo-dev/nsgo/widget"
 )
 
 //go:embed logo.png
@@ -778,6 +779,9 @@ func osName(os core.OS) string {
 }
 
 func main() {
+	// Before nsgo.Run: iOS starts the app in the background for a press
+	// of the Widgets demo's Live Activity.
+	widget.OnAction(walkPressed)
 	// The Go fonts' small capitals and Pacifico, shipped in
 	// resources/fonts.
 	opts := []nsgo.Option{nsgo.Fonts("fonts/Go-Smallcaps.ttf", "fonts/Go-Smallcaps-Italic.ttf", "fonts/Pacifico-Regular.ttf")}

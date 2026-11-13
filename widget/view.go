@@ -115,6 +115,16 @@ type Gauge struct {
 	Style Style
 }
 
+// Button stacks its children as a Column does and, pressed in a Live
+// Activity from iOS 17, runs the handler of OnAction with Action, without
+// opening the app. Elsewhere, in widgets and on Android, it shows its
+// children alone.
+type Button struct {
+	Action   string
+	Style    Style
+	Children []View
+}
+
 // Style is how a view lays out and looks. Its text fields (Color and the
 // font's) pass to the views it holds, which change parts of them.
 type Style struct {

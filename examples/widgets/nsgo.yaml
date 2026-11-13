@@ -8,8 +8,11 @@ widgets:
     description: The count of NSGo's widgets example.
     families: [small, medium, circular, rectangular, inline]
 
+live_activities:
+  enabled: true
+
 dev:
   target: native
 
 build:
-  targets: [macos_arm64, ios_simulator]
+  targets: [macos_arm64, ios_simulator, android_arm64]

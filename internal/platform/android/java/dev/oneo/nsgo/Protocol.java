@@ -28,6 +28,8 @@ final class Protocol {
     static final int FONT_DATA = 14;
     static final int FOLDER = 15;
     static final int FETCH = 16;
+    /** Starts, updates or ends a Live Activity: JSON (LiveUpdates). */
+    static final int LIVE_UPDATE = 17;
 
     // Java to Go.
     static final int START = 1;
@@ -44,6 +46,8 @@ final class Protocol {
     static final int FRAME = 12;
     static final int FOLDER_REPLY = 13;
     static final int FETCHED = 14;
+    /** What LiveUpdates reports: JSON. */
+    static final int LIVE_REPORT = 15;
 
     // What a FOLDER message asks, as folders.go has them.
     static final int FOLDER_LIST = 0;

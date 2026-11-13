@@ -116,7 +116,7 @@ func (p *project) clipProject() *project {
 	c.clipParent, c.parentClip = p.ID, p.AppClip
 	c.Name, c.ID = p.AppClip.Name, p.AppClip.ID
 	c.Dir = p.resolve(p.AppClip.Main)
-	c.AppClip, c.Widgets, c.FileTypes = nil, nil, nil
+	c.AppClip, c.Widgets, c.FileTypes, c.LiveActivities = nil, nil, nil, liveActivities{}
 	return &c
 }
 
@@ -185,7 +185,7 @@ func addIOSAppClip(ctx context.Context, p *project, app string, simulator bool) 
 // hoc signature claims a developer entitlement, so the tie between an app
 // and its clip is left to device builds' profiles.
 func (p *project) simulatorEntitlements() map[string]any {
-	if len(p.Widgets) == 0 {
+	if !p.iosExtension() {
 		return nil
 	}
 	return p.groupEntitlements()

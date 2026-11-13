@@ -117,6 +117,45 @@ func TestIOSProject(t *testing.T) {
 	}
 }
 
+// TestIOSWidgetsProject gives an app with widgets or Live Activities an
+// extension target that Xcode signs and embeds, where an App Clip and an
+// Apple TV get none.
+func TestIOSWidgetsProject(t *testing.T) {
+	p := &project{Name: "Gallery", ID: "dev.oneo.nsgo.gallery", LiveActivities: liveActivities{Enabled: true}}
+	var b strings.Builder
+	if err := iosProject.Execute(&b, iosProjectData(p, iOS, "TEAM123")); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`productType = "com.apple.product-type.app-extension";`,
+		`PRODUCT_BUNDLE_IDENTIFIER = "dev.oneo.nsgo.gallery.widgets";`,
+		`CODE_SIGN_ENTITLEMENTS = Widgets.entitlements;`,
+		`dstSubfolderSpec = 13;`,
+		`AA0000000000000000000019 /* PBXTargetDependency */,`,
+		`unsigned/PlugIns/Widgets.appex`,
+	} {
+		if !strings.Contains(b.String(), want) {
+			t.Errorf("project does not contain %q", want)
+		}
+	}
+	for _, sys := range []*appleOS{tvOS} {
+		b.Reset()
+		if err := iosProject.Execute(&b, iosProjectData(p, sys, "TEAM123")); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(b.String(), "app-extension") {
+			t.Errorf("%s's project has the extension", sys.name)
+		}
+	}
+	b.Reset()
+	if err := iosProject.Execute(&b, iosProjectData(&project{Name: "Plain", ID: "dev.example.plain"}, iOS, "TEAM123")); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(b.String(), "Widgets") {
+		t.Error("an app without widgets has the extension")
+	}
+}
+
 func TestTVOSProject(t *testing.T) {
 	var b strings.Builder
 	p := &project{Name: "Gallery", ID: "dev.oneo.nsgo.gallery"}

@@ -92,13 +92,16 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 
 ## Widgets
 
-What package `widget` lacks of WidgetKit, and of widgets elsewhere ([tool](architecture/tool.md#widgets)).
+What package `widget` lacks of WidgetKit and ActivityKit, and of widgets and Live Activities elsewhere ([tool](architecture/tool.md#widgets)).
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Widgets on devices Xcode signs | `signIOSApp`'s project | Xcode's project gets an app extension target signed automatically beside the app's, so `nsgo dev -target ios` and `-run` on an iPhone keep the widgets they now leave out |
 | The app's own links | `CFBundleURLTypes`, `application:openURLs:` | `nsgo.yaml` declares URL schemes and a tap's `Entry.URL` or `Style.Link` of one reaches the running app, which now only opens |
-| Interactive widgets | `Button(intent:)`, `appintentsmetadataprocessor` | A button in a widget runs a Go handler the app declares, as an `AppIntent` the tool compiles with its metadata, without opening the app |
+| Interactive widgets | `Button(intent:)` | A `widget.Button` in a widget runs `OnAction` as one in a Live Activity does, through the same intent and metadata, where it now shows its children alone |
+| Live Activities on screens | ActivityKit, Live Updates | A press of an activity's button on an iPhone's Lock Screen and Dynamic Island reaches `OnAction`, also with the app ended, and an Android 16 device shows a promoted Live Update with its chip; so far the iOS simulator started, updated and ended one, its log showing the Dynamic Island draw it, an iPhone installed the gallery with them signed by Xcode, with `NSGoActionIntent` in both bundles' metadata, and the default views were drawn offscreen (2026-11-13) |
+| Android's actions in place | `PendingIntent.getBroadcast` | A Live Update's action runs `OnAction` through a receiver of the runtime, without opening the app, while the app's process runs |
+| Live Updates by push | Firebase Cloud Messaging | A server updates an Android activity as APNs does an iOS one, with `OnPushToken` giving the FCM token |
+| Vendors' islands | HyperOS focus notifications, HarmonyOS Live View Kit, ColorOS Fluid Cloud, OriginOS Atomic Island | Activities show in the vendor's island where its system does not show Android 16's Live Updates there, as far as each lets apps in without a partnership |
 | Widgets of sandboxed Mac apps | `com.apple.security.application-groups` | A macOS app in the App Sandbox, as the Mac App Store's, shares its timelines through `apple.app_group` and a provisioning profile, where it cannot write the home directory the extension reads |
 | Widgets on Android | `AppWidgetProvider`, `RemoteViews` | The same timelines show in App Widgets drawn by the Java runtime, with `classes.dex` rebuilt |
 

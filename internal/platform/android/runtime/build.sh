@@ -10,13 +10,13 @@ set -eu
 
 dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 sdk=${ANDROID_HOME:-$HOME/Android}
-jar=$sdk/platforms/android-34/android.jar
+jar=$sdk/platforms/android-36/android.jar
 d8=$sdk/cmdline-tools/latest/bin/d8
 if [ ! -x "$d8" ]; then
 	d8=$(ls "$sdk"/build-tools/*/d8 2>/dev/null | sort | tail -1)
 fi
 if ! command -v javac >/dev/null || [ -z "$d8" ] || [ ! -f "$jar" ]; then
-	echo "set PATH to a JDK 17+ and ANDROID_HOME to an SDK with platform-34 and a recent d8" >&2
+	echo "set PATH to a JDK 17+ and ANDROID_HOME to an SDK with platform-36 and a recent d8" >&2
 	exit 1
 fi
 

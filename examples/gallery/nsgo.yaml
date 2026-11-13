@@ -15,6 +15,9 @@ widgets:
     description: The date over a picture the gallery draws.
     families: [small, medium, large, extra_large]
 
+live_activities:
+  enabled: true
+
 build:
   output: dist
   open: true
