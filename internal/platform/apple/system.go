@@ -10,6 +10,8 @@ import (
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
+
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 var (
@@ -178,6 +180,38 @@ func Locale() (tag string, rtl bool) {
 		rtl = objc.Send[int](nsLocale, sel("characterDirectionForLanguage:"), first) == rightToLeft
 	}
 	return tag, rtl
+}
+
+// LocaleSettings returns the regional preferences the user set in
+// Language & Region: the first day of the week (NSCalendar's), the hours
+// of NSDateFormatter's format for the j template, which 24-hour time
+// changes, and NSLocale's measurement system.
+func LocaleSettings() driver.LocaleSettings {
+	var s driver.LocaleSettings
+	locale := objc.ID(Class("NSLocale")).Send(sel("currentLocale"))
+	// NSCalendar numbers Sunday 1.
+	if first := objc.Send[int](objc.ID(Class("NSCalendar")).Send(sel("currentCalendar")), sel("firstWeekday")); first >= 1 && first <= 7 {
+		s.FirstDayOfWeek = (first+5)%7 + 1
+	}
+	format := GoString(objc.ID(Class("NSDateFormatter")).Send(sel("dateFormatFromTemplate:options:locale:"), NSString("j"), uint(0), locale))
+	for _, r := range format {
+		if c := map[rune]string{'H': "h23", 'h': "h12", 'K': "h11", 'k': "h24"}[r]; c != "" {
+			s.HourCycle = c
+			break
+		}
+	}
+	key := Global("/System/Library/Frameworks/Foundation.framework/Foundation", "NSLocaleMeasurementSystem")
+	if key != 0 {
+		switch GoString(locale.Send(sel("objectForKey:"), key)) {
+		case "Metric":
+			s.MeasurementSystem = "metric"
+		case "U.S.":
+			s.MeasurementSystem = "us"
+		case "U.K.":
+			s.MeasurementSystem = "uk"
+		}
+	}
+	return s
 }
 
 // ForEach calls fn with each object of an NSArray or NSSet.

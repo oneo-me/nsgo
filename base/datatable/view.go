@@ -87,7 +87,7 @@ func merge(styles ...core.Style) core.Style {
 // contentWidth is the hit layer's box width, whole columns included.
 func (t *dataTable) contentWidth() float32 {
 	g := t.sizes.Get()
-	return g.lead + g.fixed + float32(g.x.extent())
+	return g.lead + g.fixed + float32(g.x.extent()) + g.right
 }
 
 // below is an absolute view under the header.
@@ -227,9 +227,9 @@ func (s tableSlots) item(cx *core.Scope, slot int) *core.Memo[int] {
 // windows of rows and columns made and where they are placed from.
 type tableWindows struct {
 	rowSlots, colSlots tableSlots
-	// scrollCols and fixedCols are the defs of the scrolling columns made
-	// and of the fixed ones.
-	scrollCols, fixedCols *core.Memo[[]int]
+	// scrollCols, fixedCols and rightCols are the defs of the scrolling
+	// columns made and of those fixed at the left and the right.
+	scrollCols, fixedCols, rightCols *core.Memo[[]int]
 	// rowOrigin is the first row of the chunk rows are placed from;
 	// colOrigin the display index of the first scrolling column of its
 	// chunk, whence the scrolling columns are placed; span how far the made
@@ -266,11 +266,11 @@ func (t *dataTable) windows(cx *core.Scope) tableWindows {
 		cvs, cve := t.visibleCols()
 		c := t.st.columns
 		colOrigin.Set(max(cvs/columnChunk*columnChunk, c.fixed))
-		w.shownCols.Set([2]int{max(cvs-1, c.fixed), min(cve+1, c.len())})
+		w.shownCols.Set([2]int{max(cvs-1, c.fixed), min(cve+1, c.scrollEnd())})
 		var defs []int
 		if cvs < cve {
-			cs, ce := t.colsWin.Span(cvs, cve, c.len())
-			for d := max(cs, c.fixed); d < ce; d++ {
+			cs, ce := t.colsWin.Span(cvs, cve, c.scrollEnd())
+			for d := max(cs, c.fixed); d < min(ce, c.scrollEnd()); d++ {
 				defs = append(defs, c.def(d))
 			}
 		}
@@ -289,6 +289,10 @@ func (t *dataTable) windows(cx *core.Scope) tableWindows {
 	w.fixedCols = core.NewMemoFunc(cx, func() []int {
 		t.layoutRev.Get()
 		return slices.Clone(t.st.columns.order[:t.st.columns.fixed])
+	}, slices.Equal)
+	w.rightCols = core.NewMemoFunc(cx, func() []int {
+		t.layoutRev.Get()
+		return slices.Clone(t.st.columns.order[t.st.columns.scrollEnd():])
 	}, slices.Equal)
 	w.rowOrigin = core.NewMemo(cx, rowOrigin.Get)
 	w.colOrigin = core.NewMemo(cx, colOrigin.Get)
@@ -341,7 +345,47 @@ const (
 	regionLead tableRegion = iota
 	regionFixed
 	regionScroll
+	// regionRight holds the columns fixed at the right.
+	regionRight
 )
+
+// regionShown reports, tracked, whether the region has columns, or the
+// row numbers.
+func (t *dataTable) regionShown(which tableRegion) bool {
+	switch which {
+	case regionLead:
+		return t.rowHeaderShown()
+	case regionFixed:
+		return t.layoutRev.Get() > 0 && t.st.columns.fixed > 0
+	case regionRight:
+		return t.layoutRev.Get() > 0 && t.st.columns.right > 0
+	}
+	return true
+}
+
+// regionOrigin is where the region's columns are placed from, in the
+// unscrolled table.
+func (t *dataTable) regionOrigin(which tableRegion, w tableWindows) float64 {
+	c := t.st.columns
+	switch which {
+	case regionScroll:
+		return c.startOf(w.colOrigin.Get())
+	case regionRight:
+		return c.startOf(c.scrollEnd())
+	}
+	return 0
+}
+
+// regionCols is the defs of the columns the region shows.
+func (w tableWindows) regionCols(which tableRegion) *core.Memo[[]int] {
+	switch which {
+	case regionFixed:
+		return w.fixedCols
+	case regionRight:
+		return w.rightCols
+	}
+	return w.scrollCols
+}
 
 func (t *dataTable) body() core.Node {
 	return core.Func(func(cx *core.Scope) core.Node {
@@ -353,7 +397,9 @@ func (t *dataTable) body() core.Node {
 			Children: []core.Node{
 				t.region(regionScroll, w),
 				t.edge(false),
+				t.rightEdge(false),
 				t.region(regionFixed, w),
+				t.region(regionRight, w),
 				t.region(regionLead, w),
 			},
 		}
@@ -378,6 +424,25 @@ func (t *dataTable) edge(inRow bool) core.Node {
 	}
 }
 
+// rightEdge is the line at the leading edge of the columns fixed at the
+// right.
+func (t *dataTable) rightEdge(inRow bool) core.Node {
+	return core.Show{
+		When: func() bool { return t.layoutRev.Get() > 0 && t.st.columns.right > 0 },
+		Then: func(cx *core.Scope) core.Node {
+			z := core.Pt(0)
+			return core.View{Class: t.p.Classes.FixedEdge, StyleFunc: func() core.Style {
+				g := t.sizes.Get()
+				x := g.lead + g.fixed + float32(g.x.viewport)
+				if inRow {
+					x = 0
+				}
+				return core.Style{Position: core.Absolute, Top: z, Bottom: z, Width: px(1), Left: px(x)}.Merge(t.styles().FixedEdge)
+			}}
+		},
+	}
+}
+
 // regionBox is a region's clipped box, from its left edge.
 // Its size is in points, so the rows moving inside it lay out it alone
 // (layout.Boundary).
@@ -390,6 +455,8 @@ func (t *dataTable) regionBox(which tableRegion) core.Style {
 		s.Left, s.Width = z, px(g.lead)
 	case regionFixed:
 		s.Left, s.Width = px(g.lead), px(g.fixed)
+	case regionRight:
+		s.Left, s.Width = px(g.lead+g.fixed+float32(g.x.viewport)), px(g.right)
 	default:
 		s.Left, s.Width = px(g.lead+g.fixed), px(g.x.viewport)
 	}
@@ -497,16 +564,7 @@ func (f tableFollow) track(cx *core.Scope, t *dataTable, w tableWindows) {
 }
 
 func (t *dataTable) region(which tableRegion, w tableWindows) core.Node {
-	shown := func() bool {
-		switch which {
-		case regionLead:
-			return t.rowHeaderShown()
-		case regionFixed:
-			return t.layoutRev.Get() > 0 && t.st.columns.fixed > 0
-		}
-		return true
-	}
-	return core.Show{When: shown, Then: func(cx *core.Scope) core.Node {
+	return core.Show{When: func() bool { return t.regionShown(which) }, Then: func(cx *core.Scope) core.Node {
 		return core.View{
 			StyleFunc: func() core.Style { return t.regionBox(which) },
 			Children: []core.Node{core.View{
@@ -594,6 +652,8 @@ func (t *dataTable) rowHit(row int, which tableRegion, x core.Points, w tableWin
 		d = c.displayAtTable(float64(x))
 	case regionScroll:
 		d = c.displayAtTable(c.startOf(w.colOrigin.GetUntracked()) + float64(x))
+	case regionRight:
+		d = c.displayAtTable(c.startOf(c.scrollEnd()) + float64(x))
 	}
 	if d >= 0 {
 		h.col = c.def(d)
@@ -612,6 +672,12 @@ func (t *dataTable) bodyRow(cx *core.Scope, row *core.Memo[int], which tableRegi
 		// Above the row's background, below its cells: a selected cell's
 		// trailing border covers the fixed columns' edge.
 		children = []core.Node{t.edge(true), core.Each(w.fixedCols.Get, func(def int) int { return def },
+			func(cx *core.Scope, def func() int, _ func() int) core.Node {
+				d := core.Untracked(cx, def)
+				return t.cell(cx, row, core.NewMemo(cx, func() int { return d }), which, w)
+			})}
+	case regionRight:
+		children = []core.Node{t.rightEdge(true), core.Each(w.rightCols.Get, func(def int) int { return def },
 			func(cx *core.Scope, def func() int, _ func() int) core.Node {
 				d := core.Untracked(cx, def)
 				return t.cell(cx, row, core.NewMemo(cx, func() int { return d }), which, w)
@@ -645,6 +711,8 @@ func (t *dataTable) bodyRow(cx *core.Scope, row *core.Memo[int], which tableRegi
 				s.Width = px(t.sizes.Get().lead)
 			case regionFixed:
 				s.Width = px(t.sizes.Get().fixed)
+			case regionRight:
+				s.Width = px(t.sizes.Get().right)
 			default:
 				s.Width = px(w.span.Get())
 			}
@@ -816,10 +884,7 @@ func (t *dataTable) cell(cx *core.Scope, row, def *core.Memo[int], which tableRe
 			if !colShown.Get() {
 				st.Visibility = core.VisibilityHidden
 			}
-			origin := 0.0
-			if which == regionScroll {
-				origin = c.startOf(w.colOrigin.Get())
-			}
+			origin := t.regionOrigin(which, w)
 			col := t.column(d)
 			st.Left, st.Width = px(c.start(c.displayOf(d))-origin), px(c.width(d))
 			st.JustifyContent = justify(col.Align)
@@ -911,6 +976,7 @@ func (t *dataTable) header() core.Node {
 			Children: []core.Node{
 				t.headerRegion(regionScroll, w),
 				t.headerRegion(regionFixed, w),
+				t.headerRegion(regionRight, w),
 				core.Show{When: t.rowHeaderShown, Then: func(cx *core.Scope) core.Node {
 					return core.View{Class: t.p.Classes.RowHeaderCorner, StyleFunc: func() core.Style {
 						return merge(core.Style{Position: core.Absolute, Top: z, Bottom: z, Left: z, Width: px(t.sizes.Get().lead)},
@@ -928,24 +994,26 @@ func (t *dataTable) headerRowHeightNow() float32 {
 }
 
 func (t *dataTable) headerRegion(which tableRegion, w tableWindows) core.Node {
-	shown := func() bool { return which != regionFixed || t.layoutRev.Get() > 0 && t.st.columns.fixed > 0 }
-	return core.Show{When: shown, Then: func(cx *core.Scope) core.Node {
+	return core.Show{When: func() bool { return t.regionShown(which) }, Then: func(cx *core.Scope) core.Node {
 		groups := core.NewMemoFunc(cx, func() []groupCell {
 			t.layoutRev.Get()
+			if which == regionRight {
+				return nil
+			}
 			return t.groupCells(which == regionScroll, w.scrollCols.Get(), w.colOrigin.Get())
 		}, slices.Equal)
-		list := w.scrollCols
-		if which == regionFixed {
-			list = w.fixedCols
-		}
+		list := w.regionCols(which)
 		z := core.Pt(0)
 		return core.View{
 			StyleFunc: func() core.Style {
 				g := t.sizes.Get()
 				s := core.Style{Position: core.Absolute, Top: z, Bottom: z, Overflow: core.Hidden, Left: px(g.lead)}
-				if which == regionScroll {
-					s.Left, s.Right = px(g.lead+g.fixed), z
-				} else {
+				switch which {
+				case regionScroll:
+					s.Left, s.Width = px(g.lead+g.fixed), px(g.x.viewport)
+				case regionRight:
+					s.Left, s.Width = px(g.lead+g.fixed+float32(g.x.viewport)), px(g.right)
+				default:
 					s.Width = px(g.fixed)
 				}
 				return s
@@ -1033,12 +1101,7 @@ func (t *dataTable) titleCell(cx *core.Scope, def int, which tableRegion, w tabl
 		},
 		OnMove: func(e core.ResponderEvent) {
 			g := t.untrackedGeo()
-			c := t.st.columns
-			d := c.displayOf(def)
-			at := g.lead + float32(c.start(d))
-			if d >= c.fixed {
-				at -= float32(g.cx)
-			}
+			at := t.viewX(t.st.columns.displayOf(def), g)
 			t.moveTo(at+float32(e.Position.X), float32(e.Gesture.Delta.X))
 		},
 		OnRelease:   func(core.ResponderEvent) { t.moveEnd(true) },
@@ -1193,10 +1256,9 @@ func (t *dataTable) moveLine() core.Node {
 			if d.to > d.from {
 				display++
 			}
-			at := float32(c.startOf(display))
-			x := g.lead + at
-			if display > c.fixed {
-				x = max(g.lead+at-float32(g.cx), g.lead+g.fixed)
+			x := t.viewX(display, g)
+			if display > c.fixed && display <= c.scrollEnd() {
+				x = max(x, g.lead+g.fixed)
 			}
 			return merge(core.Style{Position: core.Absolute, Top: z, Bottom: z, Width: px(dropLine), Left: px(x - dropLine/2)},
 				t.styles().MoveIndicator)

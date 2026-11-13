@@ -1,6 +1,9 @@
 package core
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
 	"log"
 	"path/filepath"
 	"strings"
@@ -84,6 +87,9 @@ type webNode struct {
 	download                    func(WebDownload)
 	// refused is the source Access refused last.
 	refused string
+	// evals are the Evaluates waiting for their pages' answers, by the
+	// marker their answers start with.
+	evals map[string]func(string, error)
 }
 
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
@@ -155,6 +161,8 @@ func (t *Tree) dispatchWeb(n *node, ev driver.Event) {
 	}
 	switch ev.Kind {
 	case driver.EventLoadStart:
+		// The page that would answer is going.
+		t.endEvals(n, errWebPageLeft)
 		call(wn.loadStart)
 	case driver.EventLoad:
 		call(wn.load)
@@ -169,6 +177,9 @@ func (t *Tree) dispatchWeb(n *node, ev driver.Event) {
 			t.within(n.owner, func() { wn.download(*d) })
 		}
 	case driver.EventMessage:
+		if t.answerEval(n, ev.Text) {
+			return
+		}
 		if wn.message != nil {
 			t.within(n.owner, func() { wn.message(ev.Text) })
 		}
@@ -183,11 +194,11 @@ func (wn *webNode) events() driver.EventMask {
 			m |= 1 << k
 		}
 	}
-	bit(driver.EventLoadStart, wn.loadStart != nil)
+	bit(driver.EventLoadStart, wn.loadStart != nil || len(wn.evals) > 0)
 	bit(driver.EventLoad, wn.load != nil)
 	bit(driver.EventNavigationStateChange, wn.navigation != nil)
 	bit(driver.EventError, wn.loadError != nil)
-	bit(driver.EventMessage, wn.message != nil)
+	bit(driver.EventMessage, wn.message != nil || len(wn.evals) > 0)
 	bit(driver.EventDownload, wn.download != nil)
 	return m
 }
@@ -248,3 +259,83 @@ func WebText(text string) WebInput { return WebInput{Kind: driver.WebInputText, 
 // WebKey presses key, as KeyboardEvent.key names it: Enter, Tab, Escape
 // or Backspace.
 func WebKey(key string) WebInput { return WebInput{Kind: driver.WebInputKey, Key: key} }
+
+// errWebPageLeft ends an Evaluate whose page left before it answered.
+var errWebPageLeft = errors.New("nsgo: the web view's page left before the script answered")
+
+// evalMarker starts a page's answer to an Evaluate, before its random
+// key, so no message of the page's own is taken for one. It is plain text:
+// a platform's bridge may read the message as a C string.
+const evalMarker = "nsgo-evaluate:"
+
+// Evaluate runs script in the web view's page, as an expression, and
+// calls done on the engine's goroutine, while the web view lives, with
+// its result as JSON, or the
+// error it threw: a promise it returns is awaited, undefined is null, and
+// what JSON cannot hold (a function, a cycle) is an error. The answer
+// comes through the page's channel to the app, as OnMessage's, on every
+// backend with web views. A page that leaves first ends it with an error,
+// as does a view with NoJavaScript, and a view that goes never answers.
+func (r *Ref) Evaluate(script string, done func(json string, err error)) {
+	if r.n == nil || r.n.deleted || r.n.web == nil {
+		done("", errors.New("nsgo: Evaluate on no web view"))
+		return
+	}
+	n, wn := r.n, r.n.web
+	if wn.config.NoJavaScript {
+		done("", errors.New("nsgo: the web view runs no JavaScript"))
+		return
+	}
+	var key [8]byte
+	_, _ = rand.Read(key[:])
+	marker := evalMarker + hex.EncodeToString(key[:]) + ":"
+	if wn.evals == nil {
+		wn.evals = map[string]func(string, error){}
+		r.t.touch(n)
+	}
+	t := r.t
+	wn.evals[marker] = func(json string, err error) {
+		if !n.owner.disposed {
+			t.within(n.owner, func() { done(json, err) })
+		}
+	}
+	r.webCommand(driver.WebInjectJavaScript, driver.WebEvaluateScript(script, marker))
+}
+
+// answerEval hands a page's answer to the Evaluate it is for, and
+// reports whether text was one.
+func (t *Tree) answerEval(n *node, text string) bool {
+	wn := n.web
+	if len(wn.evals) == 0 || !strings.HasPrefix(text, evalMarker) {
+		return false
+	}
+	i := strings.IndexByte(text[len(evalMarker):], ':')
+	if i < 0 {
+		return false
+	}
+	marker := text[:len(evalMarker)+i+1]
+	done, ok := wn.evals[marker]
+	if !ok {
+		return false
+	}
+	delete(wn.evals, marker)
+	if len(wn.evals) == 0 {
+		wn.evals = nil
+		t.touch(n)
+	}
+	done(driver.WebEvaluateAnswer(text[len(marker):]))
+	return true
+}
+
+// endEvals ends the Evaluates n waits for with err.
+func (t *Tree) endEvals(n *node, err error) {
+	evals := n.web.evals
+	if len(evals) == 0 {
+		return
+	}
+	n.web.evals = nil
+	t.touch(n)
+	for _, done := range evals {
+		done("", err)
+	}
+}

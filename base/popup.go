@@ -31,8 +31,8 @@ const (
 	// ReasonSwipe is a sheet swiped down: base.Sheet's, or an iOS
 	// dialog's.
 	ReasonSwipe
-	// ReasonFocus is a hover card's trigger gaining or losing the keyboard
-	// focus.
+	// ReasonFocus is a hover card's or a tooltip's trigger gaining or
+	// losing the keyboard's focus.
 	ReasonFocus
 	// ReasonInputChange is typing in a combobox's input.
 	ReasonInputChange
@@ -54,6 +54,8 @@ type popup struct {
 	// userClosed, for a controlled dialog, is set while the user closed
 	// it and the app has not set Open false since.
 	userClosed *core.Signal[bool]
+	// asked is the reason of the last request, until it is answered.
+	asked Reason
 }
 
 func newPopup(cx *core.Scope, open func() bool, def bool, onChange func(bool, Reason), onOpen, onClose func()) *popup {
@@ -67,20 +69,43 @@ func newPopup(cx *core.Scope, open func() bool, def bool, onChange func(bool, Re
 
 // lifecycle reports OnOpen and OnClose as there, tracked, turns: once a
 // popup is all there and once it is all gone, a sheet after its motion.
+// OnOpen comes after the commit that made the content, so the refs inside
+// it reach their views and OnOpen's Focus moves the keyboard focus in; a
+// popup gone before then reports neither.
 func (p *popup) lifecycle(cx *core.Scope, there func() bool) {
 	if p.onOpen == nil && p.onClose == nil {
 		return
 	}
-	var was bool
+	// opened is whether OnOpen was reported, turn the turn of each
+	// opening, so a close reports OnClose only after it.
+	var was, opened bool
+	turn := 0
 	cx.Effect(func() {
 		is := there()
-		switch {
-		case is && !was && p.onOpen != nil:
-			cx.Untrack(p.onOpen)
-		case !is && was && p.onClose != nil:
-			cx.Untrack(p.onClose)
+		if is == was {
+			return
 		}
 		was = is
+		turn++
+		if is {
+			at := turn
+			cx.Post(func() {
+				if turn != at {
+					return
+				}
+				opened = true
+				if p.onOpen != nil {
+					p.onOpen()
+				}
+			})
+			return
+		}
+		if opened {
+			opened = false
+			if p.onClose != nil {
+				cx.Untrack(p.onClose)
+			}
+		}
 	})
 }
 
@@ -90,6 +115,7 @@ func (p *popup) set(open bool, r Reason) {
 	if p.open() == open {
 		return
 	}
+	p.asked = r
 	if p.own != nil {
 		p.own.Set(open)
 	}
@@ -99,6 +125,23 @@ func (p *popup) set(open bool, r Reason) {
 	if p.onChange != nil {
 		p.onChange(open, r)
 	}
+}
+
+// focusBack gives the keyboard focus inside the popup back to the
+// trigger as the popup starts to close, not once it is gone, so a key
+// pressed while it goes is the trigger's: Return opens it again. A press
+// outside leaves the focus where it went.
+func (p *popup) focusBack(cx *core.Scope, trigger, popup *core.Ref) {
+	var was bool
+	cx.Effect(func() {
+		is := p.open()
+		if was && !is {
+			if p.asked != ReasonPressOutside && popup.HoldsFocus() {
+				trigger.Focus()
+			}
+		}
+		was, p.asked = is, 0
+	})
 }
 
 // cancel reports an attempt to close the popup, which closes it unless
@@ -241,8 +284,12 @@ func modalLayer(st *popup, motion *popupMotion, m core.Modal, d Dialog) core.Nod
 		}
 		nodes = append(nodes, d.Before...)
 		// Its blank space takes presses, which would reach the backdrop.
-		nodes = append(nodes, core.View{Class: popup.Class, ClassFunc: motion.class, Style: popup.Style, StyleFunc: motion.style(popup.Fn), Role: core.RoleDialog,
-			OnPress: func(core.PressEvent) {}, NoFocus: true,
+		role := d.Role
+		if role == core.RoleNone {
+			role = core.RoleDialog
+		}
+		nodes = append(nodes, core.View{Class: popup.Class, ClassFunc: motion.class, Style: popup.Style, StyleFunc: motion.style(popup.Fn), Role: role,
+			OnPress: func(core.PressEvent) {}, NoFocus: true, AccessibilityDescription: d.AccessibilityDescription,
 			OnTransitionEnd: motion.transitionEnd, Label: d.Label, TestID: d.TestID, Children: d.Children})
 		nodes = append(nodes, d.After...)
 		// What is going takes no more presses.

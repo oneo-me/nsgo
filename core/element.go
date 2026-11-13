@@ -218,6 +218,13 @@ type View struct {
 	LabelFunc func() string
 	// Hint says what activating the element does, read after its label.
 	Hint string
+	// AccessibilityDescription says more about the element, read after
+	// its label and before Hint, as ARIA's aria-description: a dialog's
+	// message, what a field expects.
+	AccessibilityDescription string
+	// Invalid marks a field whose content the app rejected, for screen
+	// readers and the aria-invalid: styles (ARIA's aria-invalid).
+	Invalid func() bool
 	// AccessibilityValue is a range's or a textual element's value, as
 	// a slider's or a progress bar's.
 	AccessibilityValue func() AccessibilityValue
@@ -240,7 +247,10 @@ type View struct {
 	LiveRegion LiveRegion
 	// Tooltip shows above the view, 4 points away, once the pointer has
 	// rested on it for half a second on desktops, until the pointer leaves
-	// or presses; it never takes the pointer. Touch screens show none. A
+	// or presses; it never takes the pointer. The keyboard moving the
+	// focus onto the view or into it shows it at once, in every idiom,
+	// until the focus leaves or Escape is pressed; a press that focuses
+	// it leaves it to the pointer. Touch screens show none otherwise. A
 	// HintTooltip (base.Tooltip) decides itself when and where it shows.
 	Tooltip Node
 	TestID  string
@@ -248,12 +258,25 @@ type View struct {
 
 // A HintTooltip is a View's Tooltip that decides itself when it shows,
 // as base.Tooltip does: Hint mounts it against the view anchor names,
-// and hover tells it as the pointer comes onto the view (true) and
-// leaves it or presses (false).
+// and change tells it what the pointer and the keyboard's focus did.
 type HintTooltip interface {
 	Node
-	Hint(cx *Scope, anchor *Ref) (tip Node, hover func(on bool))
+	Hint(cx *Scope, anchor *Ref) (tip Node, change func(HintChange))
 }
+
+// HintChange is what happened to a tooltip's view.
+type HintChange uint8
+
+const (
+	// HintHover is the pointer coming onto the view.
+	HintHover HintChange = iota + 1
+	// HintLeave is the pointer leaving it or pressing it.
+	HintLeave
+	// HintFocus is the keyboard moving the focus onto it or into it.
+	HintFocus
+	// HintBlur is that focus leaving it.
+	HintBlur
+)
 
 // Render implements Node.
 func (v View) Render(*Scope) Node { return v }
@@ -442,6 +465,10 @@ type Input struct {
 	OnLayout      func(Bounds)
 	Ref           *Ref
 	Label         string
+	// AccessibilityDescription and Invalid are a View's: what the field
+	// expects, and that the app rejected its content.
+	AccessibilityDescription string
+	Invalid                  func() bool
 	// Role is what it is for assistive technology, a text field when 0.
 	Role Role
 	// ReadonlyFunc and KeyboardTypeFunc are Readonly and KeyboardType
@@ -602,6 +629,20 @@ func (r *Ref) Focus() {
 	if r.n != nil && !r.n.deleted {
 		r.t.command(driver.ItemFocus, r.n)
 	}
+}
+
+// HoldsFocus reports whether the keyboard focus is on the element or
+// inside it, as the platform last reported it; it is not tracked.
+func (r *Ref) HoldsFocus() bool {
+	if r == nil || r.n == nil || r.n.deleted {
+		return false
+	}
+	for n := r.t.focus; n != nil; n = n.parent {
+		if n == r.n {
+			return true
+		}
+	}
+	return false
 }
 
 // Before reports whether r's view comes before other's in tree order,
@@ -797,6 +838,11 @@ type Overlay struct {
 	// OnPosition reports where an anchored overlay went, again when it
 	// moves or its room changes.
 	OnPosition func(OverlayPosition)
+	// HoldToRoom keeps an anchored overlay no taller than the room on the
+	// side it goes, which the core picks at the overlay's natural height:
+	// the side where it fits whole, else the one with more room. What it
+	// holds scrolls past that, as a menu's items do.
+	HoldToRoom bool
 	// OnTransitionEnd is View's.
 	OnTransitionEnd func()
 	// Ref names the overlay's view: its bounds.

@@ -85,6 +85,17 @@ Every frame runs the commit on the engine goroutine and, on the main thread, the
   | iOS simulator, iPhone 18 Pro: ticking; scrolling; the stack (fps, main thread a frame and its p95, CPU); a push's batch | 0.27 ms, 4–6%; 59 fps, 0.4–0.5 ms, 15–19%; 0.4–0.6 ms, p95 2.0–3.2 ms, 10–13%; 5–6 ms | 0.11 ms, 12–19%; 52–54 fps, 0.15 ms, 20–21%; 0.45 ms, p95 0.9 ms, 9%; 4–7 ms |
   | Android emulator (x86-64), process CPU: ticking; scrolling; the stack | 70%; 125–127%; 46–48% | 82%; 111%; 57% |
 
+  Against NSH 0.5.0's release build (2026-11-12), the same scenarios; NSH's test opens the NavStack demo by its card or its sidebar row, scrolls to "A deep stack" and backs out five times, as its "To the index" now leaves the demo:
+
+  | Where | NSGo | NSH 0.5.0 |
+  | --- | --- | --- |
+  | Linux, Hyprland, 60 Hz: main thread a frame scrolling; process CPU ticking, scrolling, the stack (two rounds) | 5.5 ms; 16%, 51%, 10% | 1.6 ms; 9%, 22–23%, 7% |
+  | Android emulator (x86-64), process CPU: ticking; scrolling | 69–70%; 118–126% | 68%; 110% |
+  | macOS at 120 Hz, 1200×800, the monitors' process CPU, another workspace's iOS simulator busy meanwhile: ticking; scrolling; the stack (fps, main thread a frame, CPU) | 0.25 ms, 10–18%; 120 fps, 0.65 ms, 33–42%; 107–112 fps, 0.2 ms, 6–11% | 2.6 ms, 29–36%; 120 fps, 2.9 ms, 81%, down to 28–35 fps between scrolls; 86–90 fps, 1.9 ms, 22–29% |
+  | macOS, the Animations page, as above: main thread a frame; CPU | 0.3–0.8 ms; 6–15% | 0.6 ms; 10–14% |
+
+  Windows waits for a signed-in session, as SSH has no desktop to draw in, and the iOS simulator and headless Chrome for a quiet machine and NSH's web build.
+
   Measure what a user does: a touchpad's scroll (`Input.synthesizeScrollGesture` over CDP on the web, `App.Scroll` on a target, whose gesture moves 20 points a frame), ticking, at the size users run, and read whether the cells keep up as well as what a frame costs. A wheel's notches scroll by the page's own steps (`wheel.go`), as NSH's do, and a touchpad's scroll is the browser's. Run one measurement at a time, interleaved with NSH's, and check that nothing else runs: a single run moves by a fifth, and a headless browser left behind took 70% of a core and moved every reading.
 - The browser fires a scroll's events in a frame's rendering steps, so a commit run there and applied at once lengthened the frame past the display's: the ticking DataTable scrolled at 6000 points a second drew every other frame. A scroll view's move is reported in a task of its own after the frame (`scrollSoon`), and the bound values that follow it have already moved, so what shows keeps up (31 to 57 fps).
 - A view whose translation animated values set goes to a compositing layer of its own while they do (`will-change`): the DataTable's regions, moved under its scroll bar's sticky track every frame, made Chrome lay out its layers again each frame, 15 ms of the 16 (30 to 59 fps at 2000 points a second).

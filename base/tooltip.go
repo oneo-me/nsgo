@@ -8,9 +8,13 @@ import (
 )
 
 // Tooltip shows a hint beside its trigger while the pointer rests on it
-// (on desktops), or while the app opens it, the only way on touch
-// screens. It never takes the pointer. A View's Tooltip is the shorter
-// form, with the defaults.
+// (on desktops), at once while the focus the keyboard moved is on it or
+// inside it (Tab, an arrow, a shortcut, the app's Focus after a key), in
+// every idiom, until it leaves or Escape is pressed, or while the app
+// opens it, the only other way on touch screens. A press that focuses
+// the trigger leaves it to the pointer, as focus-visible: does. It never
+// takes the pointer. A View's Tooltip is the shorter form, with the
+// defaults.
 type Tooltip struct {
 	Open         func() bool
 	DefaultOpen  bool
@@ -45,18 +49,15 @@ type Tooltip struct {
 
 // Render implements core.Node.
 func (t Tooltip) Render(cx *core.Scope) core.Node {
-	anchor := new(core.Ref)
-	tip, hover := t.Hint(cx, anchor)
-	return core.Group{
-		core.View{Ref: anchor, Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, TestID: t.TestID,
-			OnMouseEnter: func(core.MouseEvent) { hover(true) }, OnMouseLeave: func(core.MouseEvent) { hover(false) }, Children: []core.Node{t.Trigger}},
-		tip,
-	}
+	hint := t
+	hint.Class, hint.Style, hint.StyleFunc, hint.TestID, hint.Trigger = "", core.Style{}, nil, "", nil
+	return core.View{Class: t.Class, Style: t.Style, StyleFunc: t.StyleFunc, TestID: t.TestID,
+		Tooltip: hint, Children: []core.Node{t.Trigger}}
 }
 
 // Hint implements core.HintTooltip: given as a view's Tooltip, the
 // tooltip shows against that view, Trigger left out.
-func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool)) {
+func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(core.HintChange)) {
 	st := newPopup(cx, t.Open, t.DefaultOpen && !t.Disabled, t.OnOpenChange, t.OnOpen, t.OnClose)
 	if t.Disabled {
 		// A disabled tooltip never shows.
@@ -81,18 +82,36 @@ func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool
 		margin = 4
 	}
 	var stop func() bool
+	hovered, focused := false, core.NewSignal(cx, false)
 	// The pointer resting on the trigger asks to open, on desktops, and
-	// leaving it to close.
-	hover := func(on bool) {
+	// leaving it to close; the keyboard's focus asks at once, in every
+	// idiom, and its leaving to close, unless the pointer is still on it.
+	change := func(c core.HintChange) {
 		if stop != nil {
 			stop()
 			stop = nil
 		}
-		switch {
-		case !on:
-			st.set(false, ReasonHover)
-		case !t.Disabled && cx.Env().Desktop():
-			stop = cx.AfterFunc(delay, func() { stop = nil; st.set(true, ReasonHover) })
+		switch c {
+		case core.HintHover:
+			hovered = true
+			if !t.Disabled && !focused.GetUntracked() && cx.Env().Desktop() {
+				stop = cx.AfterFunc(delay, func() { stop = nil; st.set(true, ReasonHover) })
+			}
+		case core.HintLeave:
+			hovered = false
+			if !focused.GetUntracked() {
+				st.set(false, ReasonHover)
+			}
+		case core.HintFocus:
+			focused.Set(true)
+			if !t.Disabled {
+				st.set(true, ReasonFocus)
+			}
+		case core.HintBlur:
+			focused.Set(false)
+			if !hovered {
+				st.set(false, ReasonFocus)
+			}
 		}
 	}
 	// An element's tooltip has no trigger of its own: Class and Style
@@ -107,8 +126,19 @@ func (t Tooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(on bool
 			return s
 		}
 	}
-	return core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
-		return m.overlay(core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
-			Children: t.Children, Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}, parts.Of(class, style, fn))
-	}}, hover
+	return core.Group{
+		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
+			return m.overlay(core.Overlay{Anchor: anchor, Placement: place, Align: t.Align, Offset: offset, Margin: margin,
+				Children: t.Children, Role: core.RoleAlert, PointerEvents: core.PointerEventsNone}, parts.Of(class, style, fn))
+		}},
+		// Escape hides what the keyboard's focus shows (WAI-ARIA's
+		// tooltip pattern), while it shows.
+		core.Show{When: func() bool { return st.open() && focused.Get() }, Then: func(cx *core.Scope) core.Node {
+			cx.OnKey("escape", func() {
+				focused.Set(false)
+				st.set(false, ReasonCancel)
+			})
+			return nil
+		}},
+	}, change
 }

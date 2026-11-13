@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/cldr"
 
 	"golang.org/x/text/feature/plural"
@@ -137,3 +138,50 @@ type DateOptions = cldr.DateOptions
 // calendar, by CLDR's patterns and names: "Jan 5, 2026", "2026年1月5日".
 // Time zones are written as offsets from GMT.
 func FormatDate(lang string, t time.Time, o DateOptions) string { return cldr.FormatDate(lang, t, o) }
+
+// RegionalSettings are how weeks, times and measures read, in Intl's
+// names: FirstDayOfWeek 1 for Monday to 7 for Sunday, HourCycle "h11",
+// "h12", "h23" or "h24", MeasurementSystem "metric", "us" or "uk".
+type RegionalSettings = cldr.Regional
+
+// Regional returns how the user reads weeks, times and measures under
+// cx: what they set on the platform (core.Env.LocaleSettings), else what
+// the region of the locale the app runs in does, by CLDR's data. Read in
+// a binding, it follows them as they change.
+func Regional(cx *core.Scope) RegionalSettings {
+	env := cx.Env()
+	locale, s := env.Locale(), env.LocaleSettings()
+	if s.Region != "" {
+		// The language's, in the region whose formats the user chose.
+		lang, _, _ := strings.Cut(locale, "-")
+		if lang == "" {
+			lang = "und"
+		}
+		locale = lang + "-" + s.Region
+	}
+	r := cldr.RegionalOf(locale)
+	if s.FirstDayOfWeek >= 1 && s.FirstDayOfWeek <= 7 {
+		r.FirstDayOfWeek = s.FirstDayOfWeek
+	}
+	if s.HourCycle != "" {
+		r.HourCycle = s.HourCycle
+	}
+	if s.MeasurementSystem != "" {
+		r.MeasurementSystem = s.MeasurementSystem
+	}
+	return r
+}
+
+// WithHourCycle is lang with the hour cycle the user set under cx as its
+// Unicode extension (-u-hc-), which FormatDate writes times in; lang as
+// it is where they set none.
+func WithHourCycle(cx *core.Scope, lang string) string {
+	if strings.Contains(lang, "-u-") {
+		return lang
+	}
+	hc := cx.Env().LocaleSettings().HourCycle
+	if hc == "" {
+		return lang
+	}
+	return lang + "-u-hc-" + hc
+}

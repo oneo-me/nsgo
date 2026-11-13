@@ -29,6 +29,9 @@ type listState struct {
 	crossStart, crossEnd Points
 	gap, crossGap        Points
 	horizontal, inverted bool
+	// endAligned rests the list at its end (ListAlignEnd): content
+	// shorter than the viewport sits at its end, after lead.
+	endAligned bool
 	// followEnd is AutoscrollToBottomThreshold, or negative when the
 	// list does not follow its end.
 	followEnd    Points
@@ -176,10 +179,19 @@ func (s *listState) blocks() listBlocks {
 // list fills its viewport so its rows sit at the bottom.
 func (s *listState) contentLen() Points {
 	total := s.blocks().total
-	if s.inverted {
+	if s.inverted || s.endAligned {
 		return max(total, s.viewport)
 	}
 	return total
+}
+
+// lead is the room before the content of an end-aligned list shorter
+// than its viewport.
+func (s *listState) leadRoom() Points {
+	if !s.endAligned {
+		return 0
+	}
+	return max(s.viewport-s.blocks().total, 0)
 }
 
 // toContent is the content coordinate of a span at natural position at.
@@ -187,7 +199,7 @@ func (s *listState) toContent(at, size Points) Points {
 	if s.inverted {
 		return s.contentLen() - at - size
 	}
-	return at
+	return at + s.leadRoom()
 }
 
 // naturalOffset is the viewport's start in natural coordinates.
@@ -195,7 +207,25 @@ func (s *listState) naturalOffset() Points {
 	if s.inverted {
 		return s.contentLen() - s.offset - s.viewport
 	}
-	return s.offset
+	return s.offset - s.leadRoom()
+}
+
+// position is the item the viewport starts in, from the side item 0 is
+// on, and how far past its start the viewport starts: index 0 and a
+// negative offset in a header before it; false without items.
+func (s *listState) position() (index int, offset Points, ok bool) {
+	if s.count == 0 {
+		return 0, 0, false
+	}
+	at := s.naturalOffset()
+	if body := s.blocks().body; at < body {
+		return 0, at - body, true
+	}
+	first, _, ok := s.itemsIn(at, at)
+	if !ok {
+		first = s.count - 1
+	}
+	return first, at - s.itemAt(first), true
 }
 
 // itemAt is item i's natural position: its row's start.
@@ -382,7 +412,9 @@ func (s *listState) anchorEnd() Points {
 		}
 		was := s.anchoredEnd
 		s.anchoredEnd = end
-		if isNaN(was) || end <= was || was-s.offset > s.followEnd {
+		// At the end, it stays there as the content grows or shrinks:
+		// scroll views keep an offset past content that shrank.
+		if isNaN(was) || end == was || was-s.offset > s.followEnd {
 			return 0
 		}
 		d := end - s.offset

@@ -810,6 +810,11 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText {
 			css["border-radius"] = webstyle.Px(bg.Radius)
 			css["box-decoration-break"], css["-webkit-box-decoration-break"] = "clone", "clone"
 		}
+		if sp.Hidden {
+			// In place, as the browser hides an inline box: out of copies
+			// and screen readers too.
+			css["visibility"] = "hidden"
+		}
 		spans = append(spans, span{start, end, css, sp.Link})
 		at = end
 	}
@@ -1921,6 +1926,7 @@ var roles = map[driver.Role]string{
 	driver.RoleMenu:         "menu",
 	driver.RoleMenuItem:     "menuitem",
 	driver.RoleDialog:       "dialog",
+	driver.RoleAlertDialog:  "alertdialog",
 	driver.RoleAlert:        "alert",
 	driver.RoleAdjustable:   "slider",
 	driver.RoleSpinButton:   "spinbutton",
@@ -1990,12 +1996,13 @@ func setViewProps(v *view, p *driver.ViewProps) {
 	}
 	setAttr(el, "role", role)
 	setAttr(el, "aria-label", p.Label)
-	setAttr(el, "aria-description", p.Hint)
+	setAttr(el, "aria-description", p.HelpText())
 	setAttr(el, "aria-disabled", flag(p.Disabled))
 	setAttr(el, "aria-selected", flag(p.Selected))
 	setAttr(el, "aria-checked", checked)
 	setAttr(el, "aria-pressed", flag(p.Pressed))
 	setAttr(el, "aria-busy", flag(p.Busy))
+	setAttr(el, "aria-invalid", flag(p.Invalid))
 	expanded := ""
 	if p.Expandable {
 		expanded = strconv.FormatBool(p.Expanded)

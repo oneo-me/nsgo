@@ -220,7 +220,7 @@ func (d DatePicker) Render(cx *core.Scope) core.Node {
 		AccessibilityValue: func() core.AccessibilityValue {
 			format := d.DateFormat
 			if format == "" {
-				format = displayFormat(d.TimePrecision, d.HourCycle)
+				format = displayFormat(d.TimePrecision, d.HourCycle.of(cx))
 			}
 			v, t := date.Get(), times.Get()
 			return core.AccessibilityValue{Text: DateValue{Range: v.Range, Start: t[0].on(v.Start), End: t[1].on(v.End)}.Format(format)}
@@ -304,7 +304,7 @@ func (d DatePicker) content(cx *core.Scope, onSheet bool, s contentState) core.N
 				s.report(s.withTimes(v))
 			}
 		}
-		c := timeConfig{precision: d.TimePrecision, cycle: d.HourCycle, disabled: d.Disabled, label: d.TimeFieldLabel,
+		c := timeConfig{precision: d.TimePrecision, cycle: d.HourCycle.of(cx), disabled: d.Disabled, label: d.TimeFieldLabel,
 			segment:   parts.Of(d.SegmentClass, d.SegmentStyle, d.SegmentStyleFunc),
 			separator: part{Class: d.SeparatorClass, Style: d.SeparatorStyle}, renderSegment: d.RenderSegment}
 		var row []core.Node

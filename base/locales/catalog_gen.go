@@ -15,11 +15,12 @@ const Source = "en"
 // Catalog holds the messages' languages: en, the source, zh-Hans, and those other packages supply.
 var Catalog = i18n.NewCatalog("en", "zh-Hans")
 
-// Messages say the messages in one language; with mark, the source's
-// with their arguments marked, which a pseudo locale transforms.
+// Messages say the messages in one language, their times in the hour
+// cycle hc the user set; with mark, the source's with their arguments
+// marked, which a pseudo locale transforms.
 type Messages struct {
-	lang string
-	mark bool
+	lang, hc string
+	mark     bool
 }
 
 // In returns the messages in the catalog's language that suits locale
@@ -27,8 +28,13 @@ type Messages struct {
 func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }
 
 // For returns the messages in the language the app shows under cx
-// (i18n.Language); a binding that says them follows it as it changes.
-func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }
+// (i18n.Language), their times as the user reads them; a binding that
+// says them follows both as they change.
+func For(cx *core.Scope) Messages {
+	msgs := In(i18n.Language(cx))
+	msgs.hc = cx.Env().LocaleSettings().HourCycle
+	return msgs
+}
 
 // Parameters names the parameters of each message that has some, by
 // its method, for the TSX declarations of the messages
@@ -697,9 +703,9 @@ func (msgs Messages) CalendarMonth(d time.Time) string {
 		}
 		switch lang {
 		case "", "en":
-			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "yMMMM"}))
+			return msgs.arg(i18n.FormatDate(msgs.dated("en"), d, i18n.DateOptions{Skeleton: "yMMMM"}))
 		case "zh-Hans":
-			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "yMMMM"})
+			return i18n.FormatDate(msgs.dated("zh-Hans"), d, i18n.DateOptions{Skeleton: "yMMMM"})
 		}
 	}
 }
@@ -721,9 +727,9 @@ func (msgs Messages) CalendarMonthName(d time.Time) string {
 		}
 		switch lang {
 		case "", "en":
-			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "MMM"}))
+			return msgs.arg(i18n.FormatDate(msgs.dated("en"), d, i18n.DateOptions{Skeleton: "MMM"}))
 		case "zh-Hans":
-			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "MMM"})
+			return i18n.FormatDate(msgs.dated("zh-Hans"), d, i18n.DateOptions{Skeleton: "MMM"})
 		}
 	}
 }
@@ -745,9 +751,9 @@ func (msgs Messages) CalendarWeekday(d time.Time) string {
 		}
 		switch lang {
 		case "", "en":
-			return msgs.arg(i18n.FormatDate("en", d, i18n.DateOptions{Skeleton: "EEEEE"}))
+			return msgs.arg(i18n.FormatDate(msgs.dated("en"), d, i18n.DateOptions{Skeleton: "EEEEE"}))
 		case "zh-Hans":
-			return i18n.FormatDate("zh-Hans", d, i18n.DateOptions{Skeleton: "EEEEE"})
+			return i18n.FormatDate(msgs.dated("zh-Hans"), d, i18n.DateOptions{Skeleton: "EEEEE"})
 		}
 	}
 }
@@ -801,4 +807,12 @@ func (msgs Messages) FlowLabel(nodes int, edges int) string {
 			return i18n.FormatNumber("zh-Hans", float64(nodes)) + " 个节点，" + i18n.FormatNumber("zh-Hans", float64(edges)) + " 条边"
 		}
 	}
+}
+
+// dated is lang with the hour cycle the user set, which times take.
+func (msgs Messages) dated(lang string) string {
+	if msgs.hc == "" {
+		return lang
+	}
+	return lang + "-u-hc-" + msgs.hc
 }

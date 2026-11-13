@@ -236,13 +236,13 @@ type faceTooltip struct{ n *node }
 func (f faceTooltip) Render(*core.Scope) core.Node { return f.n.elem }
 
 // Hint implements core.HintTooltip.
-func (f faceTooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(bool)) {
+func (f faceTooltip) Hint(cx *core.Scope, anchor *core.Ref) (core.Node, func(core.HintChange)) {
 	f.n.props.cx = cx
 	if h, ok := f.n.face(f.n.props).(core.HintTooltip); ok {
 		return h.Hint(cx, anchor)
 	}
 	f.n.r.mountFace(f.n)
-	return f.n.elem, func(bool) {}
+	return f.n.elem, func(core.HintChange) {}
 }
 
 // handler returns a caller of prop name's current function, nil when it

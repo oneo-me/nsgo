@@ -35,7 +35,7 @@ core.Text{Style: core.Style{FontSize: 15}, Spans: []core.Span{
 }}
 ```
 
-`SpansFunc` 在读取的值变化时重新给出 span，只有不同的部分会重新排版，因此代码编辑器的行会在高亮到达时重新着色。span 的 `Background` 和 `CornerRadius` 会在每一行字符后面画一个盒子。
+`SpansFunc` 在读取的值变化时重新给出 span，只有不同的部分会重新排版，因此代码编辑器的行会在高亮到达时重新着色。span 的 `Background` 和 `CornerRadius` 会在每一行字符后面画一个盒子。`Visibility: core.VisibilityHidden` 原地隐藏一个 span：它的文字仍占着位置，显示时各行不会移动，复制和屏幕阅读器都会略过它，适合逐词淡入的文字。
 
 `Attachment` 把一个视图放进文本，替代 span 的内容。它按自身尺寸布局，随周围的文字换行，并接收自己的按压，因此图标、图片或小按钮可以出现在一行里。
 
@@ -82,7 +82,7 @@ textview.TextView{
 }
 ```
 
-`textview.Parse` 读取 Markdown，`textview.ParseHTML` 读取 HTML，得到应用也可以自己构建的块。`Options.Streaming` 修复仍在到达的文档，`StreamingCaret` 在末尾绘制光标，适合逐字生成的回复。
+`textview.Parse` 读取 Markdown，`textview.ParseHTML` 读取 HTML，得到应用也可以自己构建的块。`Options.Streaming` 修复仍在到达的文档：补全末尾未闭合的语法，并暂缓显示含义还要由后续字符决定的最后一行，例如单独的列表标记，让回复不会把标记闪成文本；`StreamingCaret` 在末尾绘制光标，适合逐字生成的回复。
 
 ## 下一步
 

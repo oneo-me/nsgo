@@ -28,6 +28,9 @@ const (
 	spiGetScreenReader        = 0x0046
 	spiGetClientAreaAnimation = 0x1042
 	localeIReadingLayout      = 0x0070
+	localeIFirstDayOfWeek     = 0x100C // 0 Monday to 6 Sunday
+	localeSTimeFormat         = 0x1003
+	localeIMeasure            = 0x000D // 0 metric, 1 U.S.
 	localeReturnNumber        = 0x20000000
 	localeNameMaxLength       = 85
 
@@ -48,6 +51,7 @@ func (w *window) environment() driver.Environment {
 		RTL:            rightToLeft(locale),
 		PixelRatio:     float32(w.scale),
 		Locale:         locale,
+		LocaleSettings: localeSettings(),
 		OS:             driver.OSWindows,
 		OSVersion:      osVersion(),
 		Idiom:          driver.IdiomDesktop,
@@ -147,6 +151,44 @@ func userLocale() string {
 	// An alternate sort order follows an underscore, as in "de-DE_phoneb".
 	name, _, _ := strings.Cut(syscall.UTF16ToString(buf[:]), "_")
 	return name
+}
+
+// localeSettings reads the regional format with the user's changes:
+// the first day of the week, the time format's hour letter and the
+// measurement system.
+func localeSettings() driver.LocaleSettings {
+	var s driver.LocaleSettings
+	number := func(kind uintptr) (uint32, bool) {
+		var v uint32
+		r, _, _ := getLocaleInfoEx.Call(0, kind|localeReturnNumber, uintptr(unsafe.Pointer(&v)), unsafe.Sizeof(v)/2)
+		return v, r != 0
+	}
+	if first, ok := number(localeIFirstDayOfWeek); ok && first <= 6 {
+		s.FirstDayOfWeek = int(first) + 1
+	}
+	var buf [80]uint16
+	if r, _, _ := getLocaleInfoEx.Call(0, localeSTimeFormat, uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf))); r != 0 {
+		// The hours' letter, outside quoted text.
+		quoted := false
+		for _, c := range syscall.UTF16ToString(buf[:]) {
+			if c == '\'' {
+				quoted = !quoted
+				continue
+			}
+			if c == 'H' && !quoted {
+				s.HourCycle = "h23"
+				break
+			}
+			if c == 'h' && !quoted {
+				s.HourCycle = "h12"
+				break
+			}
+		}
+	}
+	if m, ok := number(localeIMeasure); ok {
+		s.MeasurementSystem = map[uint32]string{0: "metric", 1: "us"}[m]
+	}
+	return s
 }
 
 // rightToLeft reports whether locale's script reads right to left.

@@ -99,6 +99,6 @@ func (m ContextMenu) Render(cx *core.Scope) core.Node {
 			offset:       m.Offset, margin: m.Margin, popup: parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
 			backdrop: parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
 			starting: parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
-			ending:   parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, m.Children),
+			ending:   parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, newMenuLevel(cx), m.Children),
 	}
 }

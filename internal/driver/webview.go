@@ -1,6 +1,8 @@
 package driver
 
 import (
+	"encoding/json"
+	"errors"
 	"net/url"
 	"strings"
 )
@@ -183,6 +185,46 @@ const (
 // that sends its string argument to the app.
 func WebBridge(post string) string {
 	return "window.nsgo = window.nsgo || { postMessage: function (data) { (" + post + ")(String(data)); } };"
+}
+
+// WebEvaluateScript is the script that runs script in a page as an
+// expression and posts its answer through the bridge, marker first: its
+// result as JSON, a promise's once settled, or what it threw (decoded by
+// WebEvaluateAnswer).
+func WebEvaluateScript(script, marker string) string {
+	return `(function () {
+  var bridge = window.nsgo, post = bridge && bridge.postMessage;
+  if (!post) return;
+  var send = function (answer) { post.call(bridge, ` + JSString(marker) + ` + JSON.stringify(answer)); };
+  var fail = function (e) { send({ error: String(e && e.message !== undefined ? e.message : e) }); };
+  try {
+    Promise.resolve((0, eval)(` + JSString(script) + `)).then(function (v) {
+      var json;
+      try { json = JSON.stringify(v === undefined ? null : v); } catch (e) { fail(e); return; }
+      if (json === undefined) { fail("the result is no JSON value"); return; }
+      send({ json: json });
+    }, fail);
+  } catch (e) { fail(e); }
+})();`
+}
+
+// WebEvaluateAnswer decodes what WebEvaluateScript posted after its
+// marker: the result as JSON, or the error the script threw.
+func WebEvaluateAnswer(answer string) (string, error) {
+	var a struct {
+		JSON  *string `json:"json"`
+		Error *string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(answer), &a); err != nil {
+		return "", err
+	}
+	switch {
+	case a.Error != nil:
+		return "", errors.New(*a.Error)
+	case a.JSON == nil:
+		return "", errors.New("nsgo: a web view's answer holds no result")
+	}
+	return *a.JSON, nil
 }
 
 // WebMessageScript is the script WebPostMessage runs in the page.

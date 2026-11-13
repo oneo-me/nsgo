@@ -106,8 +106,10 @@ type view struct {
 	// rasterStep is how many times its pixels the content inside v draws
 	// at, as v's scale has it (rasterscale.go); 0 is 1.
 	rasterStep float64
-	// axNodes are a canvas's named parts, its accessibility children.
+	// axNodes are a canvas's named parts, its accessibility children;
+	// axBar a scroll view's bar (axscroll.go).
 	axNodes []objc.ID
+	axBar   objc.ID
 	stale   bool
 	// up is the view the batches inserted v in, nil while v is out of
 	// the tree.
@@ -380,6 +382,7 @@ func loadAppKit() {
 		{Cmd: sel("mouseDownCanMoveWindow"), Fn: func(objc.ID, objc.SEL) bool { return false }},
 	}
 	common = append(common, accessMethods()...)
+	common = append(common, axScrollMethods()...)
 	classView = register("NsgoView", nsView, nil, append(common, focusMethods()...))
 	// NSGo's own windows place the traffic lights again after each layout
 	// pass: macOS 27's AppKit puts them back whenever it lays the title
@@ -907,6 +910,7 @@ func (s *surface) environment() driver.Environment {
 		RTL:            rtl,
 		PixelRatio:     s.backingScale(),
 		Locale:         locale,
+		LocaleSettings: apple.LocaleSettings(),
 		OS:             driver.OSMacOS,
 		Idiom:          driver.IdiomDesktop,
 		OSVersion:      osVersion(),
@@ -1785,6 +1789,7 @@ func (s *surface) delete(v *view, kept bool) {
 	apple.ForgetDecor(v.native.Send(selLayer))
 	v.forgetContent()
 	v.releaseCanvasNodes()
+	v.releaseAXBar()
 	if v.shader != nil {
 		v.shader.Release()
 	}

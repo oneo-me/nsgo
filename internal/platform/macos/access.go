@@ -102,6 +102,8 @@ var roles = map[driver.Role][2]string{
 	// WebKit's subroles for ARIA's dialog and alert.
 	driver.RoleDialog: {"AXGroup", "AXApplicationDialog"},
 	driver.RoleAlert:  {"AXGroup", "AXApplicationAlert"},
+	// And for alertdialog.
+	driver.RoleAlertDialog: {"AXGroup", "AXApplicationAlertDialog"},
 	// A listbox and a tree are lists, as WebKit maps ARIA's. Their items
 	// are static text that reports its state: AppKit's rows need a
 	// table's columns, and its menu items a menu.
@@ -130,6 +132,9 @@ func (v *view) axRole() [2]string {
 		return [2]string{"AXCheckBox", "AXToggle"}
 	}
 	if r, ok := roles[p.Role]; ok {
+		return r
+	}
+	if r, ok := v.axScrollRole(); ok {
 		return r
 	}
 	switch {
@@ -242,6 +247,13 @@ func accessibilityChildren(self objc.ID, cmd objc.SEL) objc.ID {
 		return nsArray(nil)
 	} else if v != nil && len(v.axNodes) > 0 {
 		return nsArray(v.axNodes)
+	} else if v != nil && v.sc != nil && v.axElement {
+		// A scroll area's bar goes with its content.
+		kids := apple.SendSuper[objc.ID](self, cmd)
+		if kids == 0 {
+			return nsArray([]objc.ID{v.axScrollBar()})
+		}
+		return kids.Send(sel("arrayByAddingObject:"), v.axScrollBar())
 	}
 	return apple.SendSuper[objc.ID](self, cmd)
 }
@@ -284,7 +296,7 @@ func (v *view) updateAccessibility() {
 	}
 	native.Send(selSetAccessibilityRole, apple.NSString(role[0]))
 	native.Send(selSetAccessibilitySubrole, nsOrNil(role[1]))
-	native.Send(selSetAccessibilityHelp, nsOrNil(p.Hint))
+	native.Send(selSetAccessibilityHelp, nsOrNil(p.HelpText()))
 	native.Send(selSetAccessibilityEnabled, !p.Disabled)
 	native.Send(selSetAccessibilitySelected, p.Selected)
 	if p.Expandable {

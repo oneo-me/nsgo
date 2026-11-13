@@ -20,7 +20,8 @@ type Calendar struct {
 	DefaultValue   base.DateValue
 	Range          bool
 	NumberOfMonths int
-	// FirstDayOfWeek starts the weeks, Sunday 0.
+	// FirstDayOfWeek starts the weeks: 1 for Monday to 7 for Sunday, the
+	// user's when 0.
 	FirstDayOfWeek int
 	// DisabledMatcher says which days take no press.
 	DisabledMatcher func(day time.Time) bool

@@ -1,6 +1,8 @@
 package nsgotest
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
@@ -467,4 +469,33 @@ func (a *App) Emit(selector, name string, data any) {
 		a.t.Fatalf("nsgotest: %d views match %q\n%s", len(vs), selector, a.Dump())
 	}
 	a.dispatch(driver.Event{Kind: driver.EventNative, ID: vs[0].ID, Text: name, Data: data})
+}
+
+// AnswerScript answers the oldest Ref.Evaluate the web view selector
+// matches still waits for, as its page would: with result, JSON, or
+// when errText is set the error the script threw.
+func (a *App) AnswerScript(selector, result, errText string) {
+	a.t.Helper()
+	v := a.Find(selector)
+	for i := v.answered; i < len(v.WebCommands); i++ {
+		c := v.WebCommands[i]
+		at := strings.Index(c.Value, "nsgo-evaluate:")
+		if c.Command != driver.WebInjectJavaScript || at < 0 {
+			continue
+		}
+		end := strings.IndexByte(c.Value[at+len("nsgo-evaluate:"):], ':')
+		if end < 0 {
+			continue
+		}
+		marker := c.Value[at : at+len("nsgo-evaluate:")+end+1]
+		v.answered = i + 1
+		answer := map[string]string{"json": result}
+		if errText != "" {
+			answer = map[string]string{"error": errText}
+		}
+		data, _ := json.Marshal(answer)
+		a.PostMessage(selector, marker+string(data))
+		return
+	}
+	a.t.Fatalf("nsgotest: %q waits for no script's answer", selector)
 }

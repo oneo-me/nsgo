@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/i18n"
 )
 
 const (
@@ -208,7 +209,9 @@ type CalendarEntry struct {
 type CalendarConfig struct {
 	// NumberOfMonths shown side by side, one when 0.
 	NumberOfMonths int
-	// FirstDayOfWeek starts the weeks, Sunday 0.
+	// FirstDayOfWeek starts the weeks: 1 for Monday to 7 for Sunday, as
+	// ISO 8601 numbers them, or the user's when 0, the day they set, else
+	// their region's (i18n.Regional).
 	FirstDayOfWeek int
 	// DisabledMatcher says which days take no press, following what it
 	// reads.
@@ -276,6 +279,9 @@ func addMonths(t time.Time, n int) time.Time {
 }
 
 func newCalendarGrid(cx *core.Scope, config CalendarConfig, value func() DateValue) *calendarGrid {
+	if config.FirstDayOfWeek == 0 {
+		config.FirstDayOfWeek = core.Untracked(cx, func() int { return i18n.Regional(cx).FirstDayOfWeek })
+	}
 	y, m, d := cx.WallTime().Date()
 	today := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	start := core.Untracked(cx, value)

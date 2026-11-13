@@ -32,8 +32,11 @@ type Dialog struct {
 	// Bare leaves out the surface's padding, gap and width, for content
 	// that fills it, sizes it and is clipped to its corners.
 	Bare bool
-	// Label names the dialog for assistive technology, Title when empty.
+	// Label names the dialog for assistive technology, Title when empty,
+	// which reads Description after it. Role makes it an alert dialog,
+	// one asking for an answer, as a confirmation.
 	Label  string
+	Role   core.Role
 	TestID string
 	// Style merges over the surface's.
 	Style core.Style
@@ -84,6 +87,7 @@ func (d Dialog) Render(cx *core.Scope) core.Node {
 		return core.View{Style: core.Style{FlexGrow: grow, MinHeight: core.Pt(0)}, PointerEvents: core.PointerEventsNone}
 	}
 	return base.Dialog{Open: d.Open, OnOpenChange: d.OnOpenChange, OnClose: d.OnClose, Animation: core.ModalNone, NoCloseOnEscape: d.NoCloseOnEscape,
+		Role: d.Role, AccessibilityDescription: d.Description,
 		NoCloseOnBackdropPress: d.NoCloseOnBackdropPress, BackdropStyle: core.Style{Background: Black(0.18), Transition: dialogFade},
 		BackdropStartingStyle: core.Style{Opacity: core.Alpha(0)}, BackdropEndingStyle: core.Style{Opacity: core.Alpha(0)},
 		PopupStyle: popup, StartingStyle: dialogStarting, EndingStyle: dialogEnding,

@@ -124,6 +124,7 @@ func (a *App) pressAt(v *View, at driver.Point, index int) {
 		return
 	}
 	a.countClick(v)
+	a.inputBy(driver.ModalityPointer)
 	a.touchAt(driver.GestureBegan, at, 0)
 	a.pressOutside(v, at)
 	// A pointer's press takes the keyboard focus off pressable views.
@@ -271,6 +272,7 @@ func (a *App) half(selector string, kind driver.EventKind) {
 		return t, t != nil && (kind == driver.EventContextMenu || !m.disabled(t))
 	})
 	_, at := v.center()
+	a.inputBy(driver.ModalityPointer)
 	ev := a.pressEvent(v, at)
 	ev.Kind = kind
 	if kind == driver.EventContextMenu {
@@ -318,6 +320,7 @@ func (a *App) LongPress(selector string) {
 		a.done()
 		return
 	}
+	a.inputBy(driver.ModalityPointer)
 	a.touchAt(driver.GestureBegan, at, 0)
 	a.pressOutside(v, at)
 	ev := a.pressEvent(v, at)
@@ -367,6 +370,7 @@ func (a *App) inputStep(selector, step string) *View {
 			a.target.press(a.target.reveal(v), 0)
 			a.target.settle()
 		} else {
+			a.inputBy(driver.ModalityPointer)
 			for _, o := range a.views {
 				if o != v {
 					a.setFocus(o, false)
@@ -647,6 +651,7 @@ func (a *App) Key(key string) {
 		return
 	}
 	k := driver.NormalizeKey(key)
+	a.inputBy(driver.ModalityKeyboard)
 	names := a.keyNames(k)
 	for _, b := range a.Keymap {
 		if slices.Contains(names, b) {
@@ -758,7 +763,7 @@ func (a *App) tabs() bool {
 func (a *App) moveFocus(back bool) {
 	var stops []*View
 	at := -1
-	for _, v := range a.shown() {
+	for _, v := range a.tabOrder(a.shown()) {
 		stop := v.Kind == driver.KindInput && !v.Input.Readonly ||
 			v.Kind != driver.KindInput && (pressable(v) || v.Props.Focusable) && !v.Props.NoFocus
 		if !stop || v.disabled(nil) {
@@ -787,6 +792,61 @@ func (a *App) moveFocus(back bool) {
 		}
 	}
 	a.setFocus(stops[next], true)
+}
+
+// tabOrder puts views, in tree order, in the Tab order: each dialog
+// overlay's views right after the view its TabAfter names, before that
+// view's children, as a popover's content follows its trigger.
+func (a *App) tabOrder(views []*View) []*View {
+	moved := false
+	for _, v := range views {
+		if v.Props.TabAfter != 0 {
+			moved = true
+			break
+		}
+	}
+	if !moved {
+		return views
+	}
+	// The views inside each overlay, by the overlay.
+	inside := map[*View][]*View{}
+	var rest []*View
+	for _, v := range views {
+		o := v.upTo(func(u *View) bool { return u.Props.TabAfter != 0 })
+		if o == nil {
+			rest = append(rest, v)
+			continue
+		}
+		inside[o] = append(inside[o], v)
+	}
+	placed := map[driver.NodeID]bool{}
+	for _, v := range rest {
+		placed[v.ID] = true
+	}
+	after := map[driver.NodeID][]*View{}
+	for _, v := range views {
+		if o := v; v.Props.TabAfter != 0 {
+			if placed[o.Props.TabAfter] {
+				after[o.Props.TabAfter] = append(after[o.Props.TabAfter], o)
+			} else {
+				rest = append(rest, inside[o]...)
+			}
+		}
+	}
+	var out []*View
+	var put func(v *View)
+	put = func(v *View) {
+		out = append(out, v)
+		for _, o := range after[v.ID] {
+			for _, w := range inside[o] {
+				put(w)
+			}
+		}
+	}
+	for _, v := range rest {
+		put(v)
+	}
+	return out
 }
 
 // Back goes back as Escape, the back button or the back gesture does.

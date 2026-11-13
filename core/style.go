@@ -297,14 +297,14 @@ type Style struct {
 	// selected, which the app sets; FocusWithin, while the focus is on the
 	// node or inside it; hovered, focused (text fields) and pressed, which
 	// the platform reports; the aria-* states of its accessibility state,
-	// busy, checked, expanded, pressed (a toggle that is on, not a press)
-	// and selected; the data-* attributes a control's parts show; then
+	// busy, checked, expanded, invalid, pressed (a toggle that is on, not
+	// a press) and selected; the data-* attributes a control's parts show; then
 	// disabled over all. While the node is disabled only Disabled applies
 	// of its own, as NSH's state styles; its classes' variants (checked:,
 	// hover:, ...) apply.
 	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
 	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
-	FocusVisible                                                        *Style
+	FocusVisible, AriaInvalid                                           *Style
 	// Data are styles of data-* attributes, sorted by name.
 	Data []DataStyle
 }
@@ -317,7 +317,7 @@ type DataStyle struct {
 }
 
 // stateCount is how many states stateSet lists.
-const stateCount = 14
+const stateCount = 15
 
 // stateSet points at the state styles of a Style or a GroupStyle: all
 // but Data's in the order they merge, as classStates lists their class
@@ -329,12 +329,12 @@ type stateSet struct {
 
 func (s *Style) states() stateSet {
 	return stateSet{[stateCount]**Style{&s.Checked, &s.Indeterminate, &s.Selected, &s.FocusWithin, &s.Hover, &s.Focus,
-		&s.FocusVisible, &s.Active, &s.AriaBusy, &s.AriaChecked, &s.Expanded, &s.Pressed, &s.AriaSelected, &s.Disabled}, &s.Data}
+		&s.FocusVisible, &s.Active, &s.AriaBusy, &s.AriaChecked, &s.Expanded, &s.AriaInvalid, &s.Pressed, &s.AriaSelected, &s.Disabled}, &s.Data}
 }
 
 func (g *GroupStyle) states() stateSet {
 	return stateSet{[stateCount]**Style{&g.Checked, &g.Indeterminate, &g.Selected, &g.FocusWithin, &g.Hover, &g.Focus,
-		&g.FocusVisible, &g.Active, &g.AriaBusy, &g.AriaChecked, &g.Expanded, &g.Pressed, &g.AriaSelected, &g.Disabled}, &g.Data}
+		&g.FocusVisible, &g.Active, &g.AriaBusy, &g.AriaChecked, &g.Expanded, &g.AriaInvalid, &g.Pressed, &g.AriaSelected, &g.Disabled}, &g.Data}
 }
 
 // copyFrom sets s's styles to o's.
@@ -506,7 +506,7 @@ type GroupStyle struct {
 	Name                                                                string
 	Hover, Focus, Active, Selected, Checked, Indeterminate, Disabled    *Style
 	FocusWithin, AriaBusy, AriaChecked, Expanded, Pressed, AriaSelected *Style
-	FocusVisible                                                        *Style
+	FocusVisible, AriaInvalid                                           *Style
 	// Data are styles of data-* attributes of the group, sorted by name.
 	Data []DataStyle
 }
@@ -820,7 +820,7 @@ type shownStates struct {
 func statesOf(states uint8, p *driver.ViewProps, data []string) shownStates {
 	return shownStates{data: data, on: [stateCount]bool{p.Checked, p.Indeterminate, p.Selected, states&stateFocusWithin != 0,
 		states&stateHovered != 0, states&stateFocused != 0, states&stateFocusVisible != 0, states&statePressed != 0, p.Busy, p.Checked, p.Expanded,
-		p.Pressed, p.Selected, p.Disabled}}
+		p.Invalid, p.Pressed, p.Selected, p.Disabled}}
 }
 
 // withStates returns s with the styles of the states n is in merged in,

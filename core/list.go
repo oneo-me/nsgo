@@ -42,6 +42,13 @@ type List struct {
 	// OnLoadMoreAtStart it does so only while row 0 shows; scrolled away,
 	// rows arriving at row 0's end keep the visible rows in place.
 	Inverted bool
+	// Alignment is where the list rests: at its start, or with
+	// ListAlignEnd at its end, as a chat without inverting its rows: it
+	// opens there before its first frame, keeps there as rows come,
+	// measure or shrink, stops following while scrolled away and follows
+	// again once back, and holds content shorter than its viewport at its
+	// end. An inverted list, or one in its parent's viewport, ignores it.
+	Alignment ListAlignment
 	// MaintainVisibleContentPosition, when set, follows the end of a list
 	// that is not inverted while it is within AutoscrollToBottomThreshold
 	// of it, as content grows or the viewport shrinks.
@@ -144,6 +151,35 @@ type VisibleContentPosition struct {
 	// AutoscrollToBottomThreshold is how near the end the list must be
 	// to follow it.
 	AutoscrollToBottomThreshold Points
+}
+
+// ListAlignment is where a List rests.
+type ListAlignment uint8
+
+const (
+	ListAlignStart ListAlignment = iota
+	ListAlignEnd
+)
+
+// ListPosition is where a list's viewport starts among its rows: the
+// row it starts in, from the side row 0 is on, and how far past that
+// row's start, as GPUI's ListOffset.
+type ListPosition struct {
+	Index  int
+	Offset Points
+}
+
+// ListPosition reads where the element, a List, has its viewport start
+// among its rows after the last commit, from the list's own row
+// positions: ScrollToIndexAt(p.Index, 0, -p.Offset, false) brings a list
+// made anew back there. In a header before the first row the index is 0
+// and the offset negative; false for a list without rows, or no list.
+func (r *Ref) ListPosition() (ListPosition, bool) {
+	if r == nil || r.n == nil || r.n.deleted || r.n.list == nil {
+		return ListPosition{}, false
+	}
+	i, off, ok := r.n.list.st.position()
+	return ListPosition{Index: i, Offset: off}, ok
 }
 
 // ViewabilityConfig is when a row counts as viewable. Without a
@@ -315,6 +351,10 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		if m := l.MaintainVisibleContentPosition; m != nil {
 			st.followEnd = max(m.AutoscrollToBottomThreshold, 0)
 		}
+		if st.endAligned = l.Alignment == ListAlignEnd && !l.Inverted; st.endAligned {
+			// At the end within a pixel's rounding, it follows.
+			st.followEnd = max(st.followEnd, pinSlack)
+		}
 	}
 
 	var v *node
@@ -349,7 +389,9 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 	if l.ContentOffset != (Point{}) {
 		ln.cmds = append(ln.cmds, listCommand{to: l.ContentOffset})
 	}
-	if l.InitialScrollIndex > 0 {
+	if st.endAligned {
+		ln.cmds = append(ln.cmds, listCommand{pin: &listPin{end: true}})
+	} else if l.InitialScrollIndex > 0 {
 		ln.cmds = append(ln.cmds, listCommand{pin: &listPin{index: l.InitialScrollIndex}})
 	}
 
@@ -573,24 +615,28 @@ func (t *Tree) updateList(v *node) bool {
 		st.rebuild()
 	}
 
-	// Rows laid out since the last update correct the estimates.
+	// Rows laid out since the last update correct the estimates, each
+	// anchored as the ones before it left the offset, in any order.
 	var anchor Points
 	for i, c := range ln.byIndex {
 		if c.node.layoutDirty || c.node.frame.Size == (Size{}) {
 			continue
 		}
-		anchor += st.measured(i, ln.main(c.node.frame.Size))
+		d := st.measured(i, ln.main(c.node.frame.Size))
+		st.offset += d
+		anchor += d
 	}
 	for kind, c := range ln.extras {
 		if c != nil && !c.layoutDirty {
-			anchor += st.measuredExtra(kind, ln.main(c.frame.Size))
+			d := st.measuredExtra(kind, ln.main(c.frame.Size))
+			st.offset += d
+			anchor += d
 		}
 	}
 	if !st.parent {
 		st.viewport = ln.main(v.frame.Size)
 	}
 	cross := ln.cross(v.frame.Size) - ln.cross(Size{Width: b.Left + b.Right, Height: b.Top + b.Bottom})
-	st.offset += anchor
 	anchor += st.takeSpliceAnchor()
 	anchor += st.anchorEnd()
 	var retarget *Points
@@ -653,7 +699,10 @@ func (t *Tree) updateList(v *node) bool {
 	// The window, then cells freed outside it and bound inside it.
 	count := st.count
 	first, last, ok, stickies := st.window()
-	wanted := func(i int) bool { return ok && i >= first && i <= last || slices.Contains(stickies, i) }
+	held := t.heldRows(ln, count)
+	wanted := func(i int) bool {
+		return ok && i >= first && i <= last || slices.Contains(stickies, i) || slices.Contains(held, i)
+	}
 	for i, c := range ln.byIndex {
 		if !wanted(i) {
 			delete(ln.byIndex, i)
@@ -693,6 +742,9 @@ func (t *Tree) updateList(v *node) bool {
 		}
 	}
 	for _, i := range stickies {
+		bind(i)
+	}
+	for _, i := range held {
 		bind(i)
 	}
 	if len(ln.waiting) > 0 {
@@ -779,6 +831,45 @@ func (t *Tree) updateList(v *node) bool {
 		t.mark(v)
 	}
 	return changed
+}
+
+// heldRows are the rows list ln keeps whatever its window: the one
+// holding the keyboard focus and the rows beside it, so Tab walks every
+// row, and those holding an open overlay, such as a row's menu.
+func (t *Tree) heldRows(ln *listNode, count int) []int {
+	var held []int
+	cellOf := func(n *node) (int, bool) {
+		for ; n != nil; n = n.parent {
+			if n.parent != ln.cells {
+				continue
+			}
+			for i, c := range ln.byIndex {
+				if c.node == n {
+					return i, true
+				}
+			}
+			break
+		}
+		return 0, false
+	}
+	if i, ok := cellOf(t.focus); ok {
+		for j := max(i-1, 0); j <= min(i+1, count-1); j++ {
+			held = append(held, j)
+		}
+	}
+	hosts := []*node{t.view}
+	for k := 0; k < len(hosts); k++ {
+		for _, o := range hosts[k].hosted {
+			if o.deleted {
+				continue
+			}
+			hosts = append(hosts, o)
+			if i, ok := cellOf(o.parent); ok {
+				held = append(held, i)
+			}
+		}
+	}
+	return held
 }
 
 // placeCell moves cell c to at along the list and x across it, w wide, and

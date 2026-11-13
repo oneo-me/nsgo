@@ -247,6 +247,8 @@ type message struct {
 	// attach is the platform of an opened surface; detach ends it.
 	attach Platform
 	detach bool
+	// hidden is closed once the OnQuit handlers ran for a hidden app.
+	hidden chan struct{}
 }
 
 // Trace, when set, hears each commit's batch, before the platform, and
@@ -467,6 +469,10 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 				continue
 			case m.fn != nil:
 				m.fn()
+				continue
+			case m.hidden != nil:
+				root.Hiding()
+				close(m.hidden)
 				continue
 			case m.tokens != nil:
 				tree.SetTokens(*m.tokens)
@@ -706,6 +712,22 @@ func (e *Engine) Close() {
 	case <-e.exited:
 	case <-timer.C:
 		log.Print("nsgo: an OnQuit handler outlasted its time; the app ends without it")
+	}
+}
+
+// Hide runs the OnQuit handlers for an app the system hides and may end
+// unheard (core.Scope.Hiding), keeping them and the engine for when it
+// shows the app again, and waits for them as Close does.
+func (e *Engine) Hide() {
+	done := make(chan struct{})
+	e.push(message{hidden: done})
+	timer := time.NewTimer(core.QuitTimeout + quitGrace)
+	defer timer.Stop()
+	select {
+	case <-done:
+	case <-e.exited:
+	case <-timer.C:
+		log.Print("nsgo: an OnQuit handler outlasted its time; the app hides without it")
 	}
 }
 

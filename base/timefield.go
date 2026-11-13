@@ -7,6 +7,7 @@ import (
 
 	"github.com/nsgo-dev/nsgo/base/internal/parts"
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/i18n"
 )
 
 // TimeOfDay is a time of day.
@@ -71,9 +72,24 @@ func (p TimePrecision) truncate(t TimeOfDay) TimeOfDay {
 type HourCycle uint8
 
 const (
-	HourCycle23 HourCycle = iota
+	// HourCycleUser is the hours the user reads: the 12- or 24-hour time
+	// they set, else their region's (i18n.Regional).
+	HourCycleUser HourCycle = iota
+	HourCycle23
 	HourCycle12
 )
+
+// of is c, the user's under cx when it is HourCycleUser.
+func (c HourCycle) of(cx *core.Scope) HourCycle {
+	if c != HourCycleUser {
+		return c
+	}
+	switch core.Untracked(cx, func() string { return i18n.Regional(cx).HourCycle }) {
+	case "h11", "h12":
+		return HourCycle12
+	}
+	return HourCycle23
+}
 
 // format is a strftime format of the time.
 func (p TimePrecision) format(c HourCycle) string {
@@ -486,7 +502,7 @@ func (t TimeField) Render(cx *core.Scope) core.Node {
 			t.OnChange(v)
 		}
 	}
-	c := timeConfig{precision: t.Precision, cycle: t.HourCycle, disabled: t.Disabled, label: t.Label,
+	c := timeConfig{precision: t.Precision, cycle: t.HourCycle.of(cx), disabled: t.Disabled, label: t.Label,
 		segment:   parts.Of(t.SegmentClass, t.SegmentStyle, t.SegmentStyleFunc),
 		separator: part{Class: t.SeparatorClass, Style: t.SeparatorStyle}, renderSegment: t.RenderSegment}
 	return core.View{Class: t.Class, Style: calendarRow.Merge(t.Style), StyleFunc: t.StyleFunc, Disabled: t.Disabled, TestID: t.TestID,

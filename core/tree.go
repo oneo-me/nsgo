@@ -142,6 +142,14 @@ type Tree struct {
 	focusVisible   bool
 	focusVisibleOn *node
 	focusParts     []*node
+	// focusByKeyboard is whether the keyboard moved the focus where it
+	// is (keyboardMovesFocus), decided as it moves and kept whatever is
+	// typed meanwhile; focusHint is the node whose tooltip that focus
+	// shows (updateFocusHint).
+	focusByKeyboard bool
+	focusHint       *node
+	// reveals are the Reveals asked for, done at the commit's layout.
+	reveals []reveal
 	// pointerStyled is set once a style has named PointerEvents, as apps
 	// without one skip their walk; pointersMoved asks the next commit
 	// for it (updatePointerEvents).
@@ -178,7 +186,7 @@ type node struct {
 	follow    *following // what its frame follows (View.Follow)
 	match     string     // View.MatchID
 	// tip is the tooltip's: what shows it as the pointer comes onto the
-	// view, and hides it as the pointer leaves or presses.
+	// view or the keyboard's focus into it, and hides it.
 	tip *tooltipHooks
 
 	base   Style
@@ -1150,6 +1158,11 @@ func (t *Tree) focusReported(n *node, focused bool) {
 		t.focusVisible = t.focusShows(n)
 	}
 	if t.focus != n {
+		t.focusByKeyboard = n != nil && t.keyboardMovesFocus()
+		if t.focusByKeyboard {
+			// A stop the keyboard reaches scrolls into view.
+			t.reveals = append(t.reveals, reveal{n, RevealOptions{Vertical: ScrollAlignNearest, Horizontal: ScrollAlignNearest}})
+		}
 		t.focus, t.focusMoved = n, true
 		t.changed = true
 	} else if n != nil && (t.focusVisibleOn == n) != t.focusVisible {
@@ -1178,7 +1191,43 @@ func (t *Tree) inputModality(m uint32) {
 // after a press. Before any input it shows, as a browser's autofocus.
 func (t *Tree) focusShows(n *node) bool {
 	edits := n.kind == driver.KindInput && n.input != nil && !n.input.config.Readonly && !n.input.config.Disabled
-	return edits || t.modality != driver.ModalityPointer
+	return edits || t.keyboardMovesFocus()
+}
+
+// keyboardMovesFocus reports whether the focus moving now is the
+// keyboard's, by the surface's last input: unless that was a pointer.
+// focus-visible: (focusShows) and the tooltips the focus shows
+// (updateFocusHint) follow it, the tooltips with no exception for an
+// input that edits, so a click into a field leaves its tooltip to the
+// pointer.
+func (t *Tree) keyboardMovesFocus() bool {
+	return t.modality != driver.ModalityPointer
+}
+
+// updateFocusHint shows the tooltip of the view the keyboard moved the
+// focus onto or into, the nearest around the focus that has one, and
+// hides the one it showed before, once the commit is out.
+func (t *Tree) updateFocusHint() {
+	var tip *node
+	if t.focusByKeyboard {
+		for n := t.focus; n != nil; n = n.parent {
+			if n.tip != nil {
+				tip = n
+				break
+			}
+		}
+	}
+	old := t.focusHint
+	if tip == old {
+		return
+	}
+	t.focusHint = tip
+	if old != nil && !old.deleted && old.tip != nil {
+		t.after(old, func() { old.tip.focus(false) })
+	}
+	if tip != nil {
+		t.after(tip, func() { tip.tip.focus(true) })
+	}
 }
 
 // updateFocusVisible puts stateFocusVisible on the focus while it shows
@@ -1402,6 +1451,7 @@ func (t *Tree) mountView(cx *Scope, parent *node, v View) {
 	t.bindBool(cx, n, v.Indeterminate, &n.props.Indeterminate)
 	t.bindBool(cx, n, v.Pressed, &n.props.Pressed)
 	t.bindBool(cx, n, v.Busy, &n.props.Busy)
+	t.bindBool(cx, n, v.Invalid, &n.props.Invalid)
 	if v.HitSlopFunc != nil {
 		cx.renderEffect(func() {
 			if e := v.HitSlopFunc(); e != n.props.HitSlop {
@@ -1454,8 +1504,8 @@ func (t *Tree) setViewParts(n *node, v View) {
 	n.h.action = v.OnAccessibilityAction
 	n.responder = v.Responder
 	n.match = v.MatchID
-	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, LiveRegion: v.LiveRegion, TestID: v.TestID,
-		WindowDrag: v.Desktop.WindowDrag, SelectionArea: v.Selectable, PointerEvents: v.PointerEvents, HitSlop: v.HitSlop,
+	n.props = driver.ViewProps{Role: v.Role, Label: v.Label, Hint: v.Hint, Description: v.AccessibilityDescription,
+		LiveRegion: v.LiveRegion, TestID: v.TestID, WindowDrag: v.Desktop.WindowDrag, SelectionArea: v.Selectable, PointerEvents: v.PointerEvents, HitSlop: v.HitSlop,
 		DelayLongPress: v.DelayLongPress, NoFocus: v.NoFocus, Ripple: v.Android.Ripple}
 	n.material, n.elevation = v.IOS.BackdropMaterial, v.Android.Elevation
 	if v.EdgeBar.Scroll != nil {
@@ -1476,42 +1526,61 @@ func (t *Tree) setViewParts(n *node, v View) {
 const tooltipDelay = 500 * time.Millisecond
 
 // mountTooltip shows tip in a hint overlay above n while the pointer
-// rests on it, on desktops.
+// rests on it, on desktops, or the focus the keyboard moved is on it, at
+// once, until it leaves or Escape is pressed.
 func (t *Tree) mountTooltip(cx *Scope, n *node, tip Node) {
 	if n.ref == nil {
 		t.setRef(n, &Ref{})
 	}
 	anchor := n.ref
 	if h, ok := tip.(HintTooltip); ok {
-		hint, hover := h.Hint(cx, anchor)
-		n.tip = &tooltipHooks{show: func() { hover(true) }, hide: func() { hover(false) }}
+		hint, change := h.Hint(cx, anchor)
+		n.tip = &tooltipHooks{show: func() { change(HintHover) }, hide: func() { change(HintLeave) },
+			focus: func(on bool) {
+				if on {
+					change(HintFocus)
+				} else {
+					change(HintBlur)
+				}
+			}}
 		t.mount(cx, n, hint)
 		return
 	}
-	shown := NewSignal(cx, false)
+	hovered, focused := NewSignal(cx, false), NewSignal(cx, false)
 	var stop func() bool
 	hide := func() {
 		if stop != nil {
 			stop()
 			stop = nil
 		}
-		shown.Set(false)
+		hovered.Set(false)
 	}
 	n.tip = &tooltipHooks{show: func() {
 		if cx.Env().Desktop() && stop == nil {
-			stop = cx.AfterFunc(tooltipDelay, func() { stop = nil; shown.Set(true) })
+			stop = cx.AfterFunc(tooltipDelay, func() { stop = nil; hovered.Set(true) })
 		}
-	}, hide: hide}
-	t.mount(cx, n, Show{When: shown.Get, Then: func(*Scope) Node {
-		return Overlay{Anchor: anchor, Placement: PlaceTop, Offset: 4, Margin: 4, PointerEvents: PointerEventsNone,
-			Children: []Node{tip}}
+	}, hide: hide, focus: focused.Set}
+	t.mount(cx, n, Show{When: func() bool { return hovered.Get() || focused.Get() }, Then: func(cx *Scope) Node {
+		return Group{
+			Overlay{Anchor: anchor, Placement: PlaceTop, Offset: 4, Margin: 4, PointerEvents: PointerEventsNone,
+				Children: []Node{tip}},
+			// Escape hides what the focus shows, while it does.
+			Show{When: focused.Get, Then: func(cx *Scope) Node {
+				cx.OnKey("escape", func() { hide(); focused.Set(false) })
+				return nil
+			}},
+		}
 	}})
 }
 
-// tooltipHooks are what a view's tooltip hears of the pointer: show as
-// it comes onto the view, hide as it leaves or, where the view takes
-// presses already, presses.
-type tooltipHooks struct{ show, hide func() }
+// tooltipHooks are what a view's tooltip hears: show as the pointer
+// comes onto the view, hide as it leaves or, where the view takes presses
+// already, presses, and focus as the keyboard moves the focus onto the
+// view or into it (true) and the focus leaves (false).
+type tooltipHooks struct {
+	show, hide func()
+	focus      func(on bool)
+}
 
 func (t *Tree) mountText(cx *Scope, parent *node, v Text) {
 	n := t.newNode(driver.KindText, parent, cx)
@@ -1660,7 +1729,8 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 	t.setClasses(n, v.Class)
 	t.bindStyle(cx, n, v.Style, v.StyleFunc)
 	n.h = handlers{change: v.OnChange, submit: v.OnSubmit, focus: v.OnFocus, blur: v.OnBlur, layout: v.OnLayout}
-	n.props = driver.ViewProps{Role: cmpOr(v.Role, RoleTextField), Label: v.Label, TestID: v.TestID}
+	n.props = driver.ViewProps{Role: cmpOr(v.Role, RoleTextField), Label: v.Label, Description: v.AccessibilityDescription, TestID: v.TestID}
+	t.bindBool(cx, n, v.Invalid, &n.props.Invalid)
 	n.h.action = v.OnAccessibilityAction
 	t.bindAccessibility(cx, n, a11y{value: v.AccessibilityValue, actions: v.AccessibilityActions, expanded: v.Expanded})
 	t.setRef(n, v.Ref)
@@ -1933,7 +2003,9 @@ func (t *Tree) Dispatch(ev driver.Event) {
 	}
 	press := func(fn func(PressEvent)) {
 		if fn != nil {
-			t.within(n.owner, func() { fn(pressOf(ev)) })
+			e := pressOf(ev)
+			e.Keyboard = t.modality == driver.ModalityKeyboard
+			t.within(n.owner, func() { fn(e) })
 		}
 	}
 	mouse := func(fn func(MouseEvent)) {

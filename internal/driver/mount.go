@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 // NodeID identifies a view of one tree. IDs start at 1, stay dense and
@@ -766,17 +768,21 @@ type ViewProps struct {
 	// Level is a heading's or a tree item's level, from 1; 0 for none.
 	Level int
 	Label string
-	// Hint says what activating the element does.
-	Hint     string
-	Disabled bool
+	// Description says more about the element, read after its name, as
+	// ARIA's aria-description; Hint says what activating it does.
+	Description string
+	Hint        string
+	Disabled    bool
 	// Selected, Checked and Indeterminate (mixed) are reported to
 	// assistive technology, and Expanded when Expandable.
 	Selected      bool
 	Checked       bool
 	Indeterminate bool
-	// Pressed is a toggle that is on and Busy an element still loading.
+	// Pressed is a toggle that is on and Busy an element still loading;
+	// Invalid a field whose content the app rejected (aria-invalid).
 	Pressed    bool
 	Busy       bool
+	Invalid    bool
 	Expandable bool
 	Expanded   bool
 	// Value is a range's or a textual element's value.
@@ -806,6 +812,13 @@ type ViewProps struct {
 	// NoFocus keeps a pressable view out of the Tab stops, and Focusable
 	// makes a Tab stop of a view that takes no presses.
 	NoFocus, Focusable bool
+	// TabAfter is a shown dialog overlay's place in the Tab order, the
+	// view it follows, before that view's children: the native view
+	// right before it where the app put it, as WAI-ARIA's non-modal
+	// popups follow their trigger. Backends that order Tab themselves
+	// take it; the toolkits ordering it by their own trees (AppKit's key
+	// view loop, the browser's DOM) leave the overlay where it is.
+	TabAfter NodeID
 	// Appearance is the one its subtree forces (Scope.SetSubtreeAppearance),
 	// for the platform's views in it; AppearanceSystem follows the window.
 	Appearance Appearance
@@ -817,6 +830,22 @@ type ViewProps struct {
 	// Ripple is Android's press ripple, nil for none. It is shared and
 	// never changed, as Actions is.
 	Ripple *Ripple
+}
+
+// HelpText is what a platform with one place for what is read after the
+// name reads there: the description, then the hint, each a sentence.
+func (p *ViewProps) HelpText() string {
+	switch {
+	case p.Description == "":
+		return p.Hint
+	case p.Hint == "":
+		return p.Description
+	}
+	d := p.Description
+	if r, _ := utf8.DecodeLastRuneInString(d); unicode.IsLetter(r) || unicode.IsDigit(r) {
+		d += "."
+	}
+	return d + " " + p.Hint
 }
 
 // Ripple is Android's ripple over a view while it is pressed.
@@ -890,6 +919,10 @@ const (
 	// RoleCombobox picks a value from a list it opens, as a select's
 	// trigger.
 	RoleCombobox
+	// RoleAlertDialog is a dialog that asks for an answer to what it
+	// says, as a confirmation, ARIA's alertdialog; RoleDialog is any
+	// other.
+	RoleAlertDialog
 )
 
 // ScrollConfig configures a scroll view.

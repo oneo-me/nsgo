@@ -1,6 +1,7 @@
 package base_test
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -185,7 +186,7 @@ func TestContextMenusOpenAtThePointerOrAfterAHold(t *testing.T) {
 	}
 	app := startDesktop(t, menu)
 	app.RightClick("id:area")
-	popup := app.Find("id:inspect").Parent
+	popup := app.Find("role:menu")
 	if got := popup.Frame.Origin; got.Y != 100 {
 		t.Errorf("popup at %v, want below the pointer at the area's middle", got)
 	}
@@ -503,5 +504,170 @@ func TestCommandInputSource(t *testing.T) {
 	app.Settle()
 	if app.InputSource != "" {
 		t.Fatalf("left %q", app.InputSource)
+	}
+}
+
+// The keyboard moving the focus onto a view shows its tooltip at once,
+// until the focus leaves or Escape is pressed; a press that focuses it
+// leaves it to the pointer.
+func TestTooltipsShowForTheKeyboardsFocus(t *testing.T) {
+	var reasons []string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Style: core.Style{Padding: core.All(40), Gap: 8}, Children: []core.Node{
+			base.Button{Label: "Plain", TestID: "plain", OnPress: func(core.PressEvent) {}, Style: core.Style{Height: core.Pt(20)},
+				Tooltip: core.Text{Content: "plain hint"}},
+			base.Tooltip{TestID: "trigger",
+				OnOpenChange: func(open bool, r base.Reason) { reasons = append(reasons, fmt.Sprint(open, ":", r)) },
+				Trigger:      base.Button{Label: "Styled", OnPress: func(core.PressEvent) {}, Style: core.Style{Height: core.Pt(20)}},
+				Children:     []core.Node{core.Text{Content: "styled hint"}}},
+			base.Button{Label: "Next", OnPress: func(core.PressEvent) {}, Style: core.Style{Height: core.Pt(20)}},
+		}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, OS: core.OSMacOS}))
+	app.Key("tab")
+	if !app.Exists("text:plain hint") {
+		t.Fatal("Tab onto a view showed no tooltip\n" + app.Dump())
+	}
+	app.Key("tab")
+	if app.Exists("text:plain hint") || !app.Exists("text:styled hint") {
+		t.Fatal("the focus moving on did not move the tooltip")
+	}
+	app.Key("escape")
+	if app.Exists("text:styled hint") {
+		t.Fatal("Escape left the tooltip")
+	}
+	app.Key("tab")
+	if app.Exists("text:styled hint") {
+		t.Fatal("the focus leaving showed it again")
+	}
+	// A press focusing the trigger shows nothing, and the pointer's rest
+	// shows it, which its leave hides.
+	app.Press("label:Plain")
+	app.Advance(time.Second)
+	if app.Exists("text:plain hint") {
+		t.Fatal("a press's focus showed the tooltip")
+	}
+	app.Hover("label:Styled")
+	app.Advance(600 * time.Millisecond)
+	app.HoverOut()
+	if app.Exists("text:styled hint") {
+		t.Fatal("the pointer leaving kept the tooltip")
+	}
+	want := []string{"true:focus", "false:cancel", "true:hover", "false:hover"}
+	if !slices.Equal(reasons, want) {
+		t.Errorf("reasons %v, want %v", reasons, want)
+	}
+}
+
+// OnOpen comes once the popup's content is there, so its Focus moves the
+// keyboard focus in.
+func TestPopoverOnOpenFocusesItsContent(t *testing.T) {
+	field := new(core.Ref)
+	var log []string
+	var open *core.Signal[bool]
+	app := startDesktop(t, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, false)
+		return base.Popover{Label: "More", Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) },
+			OnOpen:   func() { log = append(log, "open"); field.Focus() },
+			OnClose:  func() { log = append(log, "close") },
+			Trigger:  core.Text{Content: "More"},
+			Children: []core.Node{core.Input{Ref: field, TestID: "field", Style: core.Style{Width: core.Pt(80), Height: core.Pt(20)}}}}
+	})
+	app.Press("label:More")
+	if !app.Find("id:field").Focused {
+		t.Fatalf("OnOpen's Focus did not reach the content (%v)", log)
+	}
+	// Opened and closed in one turn, it reports neither.
+	open.Set(false)
+	app.Settle()
+	open.Set(true)
+	open.Set(false)
+	app.Settle()
+	if !slices.Equal(log, []string{"open", "close"}) {
+		t.Errorf("log %v", log)
+	}
+}
+
+// Escape closes a controlled menu the app opened itself, each time.
+func TestEscapeClosesAMenuTheAppOpened(t *testing.T) {
+	var open *core.Signal[bool]
+	app := startDesktop(t, func(cx *core.Scope) core.Node {
+		open = core.NewSignal(cx, false)
+		return core.View{Children: []core.Node{
+			base.Button{Label: "Open", OnPress: func(core.PressEvent) { open.Set(true) }, Style: core.Style{Height: core.Pt(20)}},
+			base.Menu{Open: open.Get, OnOpenChange: func(o bool, _ base.Reason) { open.Set(o) }, Label: "Menu",
+				Trigger:  core.Text{Content: "Menu"},
+				Children: []core.Node{base.MenuItem{Label: "Copy", Children: []core.Node{core.Text{Content: "Copy"}}}}},
+		}}
+	})
+	for round := range 3 {
+		app.Press("label:Open")
+		if !app.Exists("text:Copy") {
+			t.Fatalf("round %d: the menu did not open", round)
+		}
+		app.Key("escape")
+		if app.Exists("text:Copy") {
+			t.Fatalf("round %d: Escape left the menu open", round)
+		}
+	}
+}
+
+// The focus inside a popover goes back to its trigger as it starts to
+// close, before its exit ends; a press outside leaves it where it went.
+func TestPopoverGivesTheFocusBackAsItCloses(t *testing.T) {
+	field := new(core.Ref)
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Children: []core.Node{
+			base.Popover{Label: "More", TestID: "trigger", OnOpen: func() { field.Focus() },
+				EndingStyle: core.Style{Opacity: core.Alpha(0)},
+				PopupStyle:  core.Style{Transition: core.Transition{Duration: 200 * time.Millisecond, Properties: core.TransitionOpacity}},
+				Trigger:     core.Text{Content: "More"},
+				Children:    []core.Node{core.Input{Ref: field, TestID: "field", Style: core.Style{Width: core.Pt(80), Height: core.Pt(20)}}}},
+			base.Button{Label: "Other", TestID: "other", OnPress: func(core.PressEvent) {}, Style: core.Style{Height: core.Pt(20)}},
+		}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, OS: core.OSMacOS}))
+	app.Key("tab")
+	app.Key("enter")
+	if !app.Find("id:field").Focused {
+		t.Fatal("the popover's OnOpen did not focus its field")
+	}
+	app.Key("escape")
+	if !app.Exists("id:field") {
+		t.Fatal("the popover left before its exit")
+	}
+	if !app.Find("id:trigger").Focused {
+		t.Fatal("the focus did not go back to the trigger as the popover started to close")
+	}
+	app.Advance(time.Second)
+	app.Key("enter")
+	if !app.Find("id:field").Focused {
+		t.Fatal("Return on the trigger did not open it again")
+	}
+	app.Press("id:other")
+	if app.Find("id:trigger").Focused {
+		t.Error("a press outside took the focus back to the trigger")
+	}
+}
+
+// A popover's content follows its trigger in the Tab order, before what
+// comes after the trigger.
+func TestPopoverContentFollowsItsTriggerInTheTabOrder(t *testing.T) {
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Children: []core.Node{
+			base.Popover{Label: "More", TestID: "trigger", DefaultOpen: true, Trigger: core.Text{Content: "More"},
+				Children: []core.Node{base.Button{Label: "Inside", TestID: "inside", OnPress: func(core.PressEvent) {}, Style: core.Style{Width: core.Pt(60), Height: core.Pt(20)}}}},
+			base.Button{Label: "After", TestID: "after", OnPress: func(core.PressEvent) {}, Style: core.Style{Height: core.Pt(20)}},
+		}}
+	}, nsgotest.Environment(core.Environment{Idiom: core.IdiomDesktop, OS: core.OSMacOS}))
+	var order []string
+	for range 3 {
+		app.Key("tab")
+		for _, id := range []string{"trigger", "inside", "after"} {
+			if app.Find("id:" + id).Focused {
+				order = append(order, id)
+			}
+		}
+	}
+	if want := []string{"trigger", "inside", "after"}; !slices.Equal(order, want) {
+		t.Errorf("Tab went %v, want %v", order, want)
 	}
 }

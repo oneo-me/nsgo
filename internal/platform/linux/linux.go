@@ -800,7 +800,7 @@ func (w *window) apply(b *driver.MountBatch) {
 			}
 			v.text = it.Text.Layout
 			v.content = it.Text.Content
-			v.plain = it.Text.Text
+			v.plain, v.spans = it.Text.Text, it.Text.Spans
 			w.accessChanged(v)
 			w.changed(v)
 		case driver.ItemInput:

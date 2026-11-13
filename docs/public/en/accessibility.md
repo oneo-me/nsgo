@@ -7,7 +7,7 @@ order: 61
 
 ## What a screen reader reads
 
-A view's `Label` is what assistive technology says, `Hint` what activating it does, and `Role` what it is: `core.RoleButton`, `RoleLink`, `RoleHeader`, `RoleImage`, `RoleCheckbox`, `RoleSwitch`, `RoleRadio`, `RoleTab`, `RoleTextField`, `RoleMenu`, `RoleMenuItem`, `RoleDialog`, `RoleAlert`, `RoleAdjustable`, `RoleProgressBar`, `RoleTable` and the rest. A text without a label is read as its content.
+A view's `Label` is what assistive technology says, `AccessibilityDescription` more about it, read after the label, `Hint` what activating it does, and `Role` what it is: `core.RoleButton`, `RoleLink`, `RoleHeader`, `RoleImage`, `RoleCheckbox`, `RoleSwitch`, `RoleRadio`, `RoleTab`, `RoleTextField`, `RoleMenu`, `RoleMenuItem`, `RoleDialog`, `RoleAlertDialog`, `RoleAlert`, `RoleAdjustable`, `RoleProgressBar`, `RoleTable` and the rest. A dialog is read with its role and label as it opens, and its description after them, as `ui.Dialog`'s title and description are. A text without a label is read as its content.
 
 ```go
 core.View{
@@ -51,7 +51,7 @@ core.View{
 }
 ```
 
-`Expanded` says whether a disclosure or a menu button is open, `Busy` that content is loading, and `Checked`, `Selected` and `Pressed` report a control's state. A control's parts can take its state through `PartStates`, so an indicator follows its checkbox without being a stop of its own.
+`Expanded` says whether a disclosure or a menu button is open, `Busy` that content is loading, `Invalid` that the app rejected a field's content (styled with `aria-invalid:`), and `Checked`, `Selected` and `Pressed` report a control's state. A control's parts can take its state through `PartStates`, so an indicator follows its checkbox without being a stop of its own.
 
 ## Live changes
 
@@ -64,7 +64,7 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("%d items in the baske
 
 ## Focus and the keyboard
 
-On macOS, the web and an Apple TV, views that take presses are Tab stops beside text fields; `NoFocus` keeps one out and `Focusable` makes a view without presses a stop. `Style.FocusVisible` draws the focus ring only when the keyboard moved the focus (`focus-visible:`), `Style.Focus` any focus and `Style.FocusWithin` the focus inside a view, `OnFocus` and `OnBlur` hear it, and `Ref.Focus()` and `Ref.SetAccessibilityFocus()` move it. Return and Space press the focused view, and arrow keys move through tab lists, radio groups and menus.
+On macOS, the web and an Apple TV, views that take presses are Tab stops beside text fields; `NoFocus` keeps one out and `Focusable` makes a view without presses a stop. `Style.FocusVisible` draws the focus ring only when the keyboard moved the focus (`focus-visible:`), `Style.Focus` any focus and `Style.FocusWithin` the focus inside a view, `OnFocus` and `OnBlur` hear it, and `Ref.Focus()` and `Ref.SetAccessibilityFocus()` move it. Return and Space press the focused view, and arrow keys move through tab lists, radio groups and menus. A view's `Tooltip` shows at once when the keyboard moves the focus to it, until the focus leaves or Escape is pressed. A popup's `OnOpen` runs once its content is there, so a `Focus` there moves the focus in, as a non-modal dialog's should; a popover's content follows its trigger in the Tab order, and the focus goes back to the trigger as the popup closes.
 
 `cx.Env().ScreenReader()` says whether one runs, `cx.Env().ReduceMotion()` whether the user asked for less motion, `cx.Env().FontScale()` the text size, and `cx.Env().RTL()` the layout direction. Texts follow the text size unless `NoFontScaling` is set, and a layout that is right to left mirrors its physical edges when it uses the logical ones.
 

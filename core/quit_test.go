@@ -50,3 +50,18 @@ func TestOnQuitRunsLivingHandlersOldestFirstOnce(t *testing.T) {
 		t.Errorf("a second quit ran %v", ran)
 	}
 }
+
+func TestHidingKeepsTheHandlersForTheNextHide(t *testing.T) {
+	runs := 0
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		cx.OnQuit(func(context.Context) { runs++ })
+		return View{}
+	})
+	h.commit()
+	if !h.root.Hiding() || !h.root.Hiding() || runs != 2 {
+		t.Errorf("two hides ran the handler %d times", runs)
+	}
+	if !h.root.Quitting() || h.root.Hiding() || runs != 3 {
+		t.Errorf("a hide after quitting ran it %d times", runs)
+	}
+}

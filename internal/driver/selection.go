@@ -347,10 +347,18 @@ func (m *SelectionModel) Ranges(texts SelectionTexts) []SelectionRange {
 	return out
 }
 
+// SelectionSpans is what SelectionTexts whose texts have spans also tell:
+// text i's spans, whose hidden ones a copy leaves out.
+type SelectionSpans interface {
+	Spans(i int) []TextSpan
+}
+
 // Text returns the selected text as a copy gives it: each text's selected
-// part, attachments (U+FFFC) left out, texts on one row (their frames
-// overlap vertically) joined by a tab and the others by a line break.
+// part, attachments (U+FFFC) and hidden spans left out, texts on one row
+// (their frames overlap vertically) joined by a tab and the others by a
+// line break.
 func (m *SelectionModel) Text(texts SelectionTexts) string {
+	spans, _ := texts.(SelectionSpans)
 	var out strings.Builder
 	var previous Bounds
 	for k, r := range m.Ranges(texts) {
@@ -366,8 +374,12 @@ func (m *SelectionModel) Text(texts SelectionTexts) string {
 		}
 		previous = frame
 		content := texts.Content(r.Text)
-		part := content[byteOffset(content, r.Start):byteOffset(content, r.End)]
-		out.WriteString(strings.ReplaceAll(part, string(AttachmentRune), ""))
+		from, to := byteOffset(content, r.Start), byteOffset(content, r.End)
+		var hidden []TextSpan
+		if spans != nil {
+			hidden = spans.Spans(r.Text)
+		}
+		out.WriteString(CopiedText(content, hidden, from, to))
 	}
 	return out.String()
 }

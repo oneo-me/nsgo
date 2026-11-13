@@ -40,13 +40,36 @@ func spec(w float32, fixed bool) columnSpec {
 	return columnSpec{width: w, min: 20, max: 400, fixed: fixed}
 }
 
+// Columns fixed at the right close the order, outside the scrolling ones,
+// and move only among themselves.
+func TestTableColumnsFixedAtTheRight(t *testing.T) {
+	right := columnSpec{width: 50, min: 20, max: 400, fixed: true, right: true}
+	c := newTableColumns([]columnSpec{right, spec(100, false), spec(60, true), spec(80, false)})
+	if !slices.Equal(c.order, []int{2, 1, 3, 0}) || c.right != 1 || c.rightWidth() != 50 || c.scrollWidth() != 180 {
+		t.Fatalf("order %v, right %d %v, scrolling %v", c.order, c.right, c.rightWidth(), c.scrollWidth())
+	}
+	// A view of 100 between them: the right column at 160 in the view,
+	// whatever the scroll.
+	for _, x := range [][3]float64{{30, 0, 0}, {70, 0, 1}, {100, 90, 2}, {170, 0, 3}, {170, 500, 3}, {155, 120, -1}} {
+		if got := c.displayAt(x[0], x[1], 100); got != int(x[2]) {
+			t.Errorf("displayAt(%v, %v) = %d, want %v", x[0], x[1], got, x[2])
+		}
+	}
+	if a, b := c.visible(0, 1000); a != 1 || b != 3 {
+		t.Errorf("visible = %d..%d, want the scrolling columns alone", a, b)
+	}
+	if c.moveTo(3, 1) || c.moveTo(1, 3) || !c.moveTo(1, 2) {
+		t.Error("columns moved across the right's edge, or not within the scrolling ones")
+	}
+}
+
 func TestTableColumns(t *testing.T) {
 	c := newTableColumns([]columnSpec{spec(100, false), spec(60, true), spec(80, false), spec(120, false)})
 	if !slices.Equal(c.order, []int{1, 0, 2, 3}) || c.fixedWidth() != 60 || c.total() != 360 || c.start(2) != 160 {
 		t.Fatalf("order %v, fixed %v, total %v: fixed columns lead", c.order, c.fixedWidth(), c.total())
 	}
 	for _, x := range [][3]float64{{30, 0, 0}, {30, 90, 0}, {70, 0, 1}, {100, 90, 2}, {400, 0, -1}} {
-		if got := c.displayAt(x[0], x[1]); got != int(x[2]) {
+		if got := c.displayAt(x[0], x[1], 1e9); got != int(x[2]) {
 			t.Errorf("displayAt(%v, %v) = %d, want %v", x[0], x[1], got, x[2])
 		}
 	}

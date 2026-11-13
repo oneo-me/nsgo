@@ -48,6 +48,9 @@ type Environment struct {
 	PixelRatio float32
 	// Locale is a BCP 47 language tag, such as "en-US".
 	Locale string
+	// LocaleSettings are how the user reads weeks, times and measures,
+	// apart from the language, where the platform says.
+	LocaleSettings LocaleSettings
 	OS     OS
 	// OSVersion is the system's version: major and minor on Apple
 	// platforms, Windows and Linux (the kernel's), Android's API level
@@ -69,6 +72,20 @@ type Environment struct {
 	// link; "" when none did.
 	AppClip   bool
 	OpenedURL string
+}
+
+// LocaleSettings are the regional preferences the user set, in Intl's
+// names: FirstDayOfWeek 1 for Monday to 7 for Sunday (ISO 8601),
+// HourCycle "h11", "h12", "h23" or "h24", MeasurementSystem "metric",
+// "us" or "uk"; zero where the platform does not say, which Region
+// decides, else the locale's region (i18n.Regional). Region is the region
+// whose formats the user chose apart from the language, such as Linux's
+// LC_TIME, an ISO 3166 code.
+type LocaleSettings struct {
+	FirstDayOfWeek    int
+	HourCycle         string
+	MeasurementSystem string
+	Region            string
 }
 
 // Lifecycle is whether the app is in use, as NSH's lifecycle() reads it.

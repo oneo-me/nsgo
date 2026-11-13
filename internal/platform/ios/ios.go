@@ -90,9 +90,10 @@ type view struct {
 	// wheel: a trackpad's two fingers and a mouse wheel's turns.
 	scrolls, notches objc.ID
 
-	// A text's content and selection, whether a view is an area, and the
-	// long press that selects in it.
+	// A text's content, spans and selection, whether a view is an area,
+	// and the long press that selects in it.
 	plain            string
+	spans            []driver.TextSpan
 	selectable       driver.Selectable
 	selColor         driver.Color
 	selStart, selEnd int // UTF-16
@@ -579,6 +580,7 @@ func (s *surface) environment() driver.Environment {
 		RTL:              rtl,
 		PixelRatio:       float32(scale),
 		Locale:           locale,
+		LocaleSettings:   apple.LocaleSettings(),
 		OS:               driver.OSIOS,
 		OSVersion:        osVersion(),
 		Idiom:            idiom,
@@ -1138,6 +1140,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 			if it.Text.Text != v.plain {
 				v.textReplaced()
 			}
+			v.spans = it.Text.Spans
 			v.textChanged(it.Text.Text)
 			v.redraw()
 		case driver.ItemInput:

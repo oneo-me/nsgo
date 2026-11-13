@@ -31,6 +31,9 @@ type PressEvent struct {
 	// Clicks counts consecutive clicks at the same place: 1 for a click,
 	// 2 for a double click.
 	Clicks int
+	// Keyboard is set when the last input was a key, as Return or Space
+	// pressing the focused view: a menu opened so focuses its first item.
+	Keyboard bool
 }
 
 // MouseEvent is where the mouse is over a view, as GPUI's MouseMoveEvent

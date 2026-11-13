@@ -43,11 +43,12 @@ func (c *catalog) generate() ([]byte, error) {
 	if err := c.writeSupplies(g); err != nil {
 		return nil, err
 	}
-	g.p("// Messages say the messages in one language; with mark, the source's")
-	g.p("// with their arguments marked, which a pseudo locale transforms.")
+	g.p("// Messages say the messages in one language, their times in the hour")
+	g.p("// cycle hc the user set; with mark, the source's with their arguments")
+	g.p("// marked, which a pseudo locale transforms.")
 	g.p("type Messages struct {")
-	g.p("\tlang string")
-	g.p("\tmark bool")
+	g.p("\tlang, hc string")
+	g.p("\tmark     bool")
 	g.p("}")
 	g.p("")
 	g.p("// In returns the messages in the catalog's language that suits locale")
@@ -55,8 +56,13 @@ func (c *catalog) generate() ([]byte, error) {
 	g.p("func In(locale string) Messages { return Messages{lang: Catalog.Match(locale)} }")
 	g.p("")
 	g.p("// For returns the messages in the language the app shows under cx")
-	g.p("// (i18n.Language); a binding that says them follows it as it changes.")
-	g.p("func For(cx *core.Scope) Messages { return In(i18n.Language(cx)) }")
+	g.p("// (i18n.Language), their times as the user reads them; a binding that")
+	g.p("// says them follows both as they change.")
+	g.p("func For(cx *core.Scope) Messages {")
+	g.p("\tmsgs := In(i18n.Language(cx))")
+	g.p("\tmsgs.hc = cx.Env().LocaleSettings().HourCycle")
+	g.p("\treturn msgs")
+	g.p("}")
 	g.p("")
 	g.p("// Parameters names the parameters of each message that has some, by")
 	g.p("// its method, for the TSX declarations of the messages")
@@ -287,6 +293,16 @@ func (c *catalog) generate() ([]byte, error) {
 
 	if bytes.Contains(body.Bytes(), []byte("time.Time")) {
 		g.imports["time"] = "time"
+	}
+	if bytes.Contains(body.Bytes(), []byte("msgs.dated(")) {
+		g.p("")
+		g.p("// dated is lang with the hour cycle the user set, which times take.")
+		g.p("func (msgs Messages) dated(lang string) string {")
+		g.p("\tif msgs.hc == \"\" {")
+		g.p("\t\treturn lang")
+		g.p("\t}")
+		g.p("\treturn lang + \"-u-hc-\" + msgs.hc")
+		g.p("}")
 	}
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "%s\n\npackage %s\n\nimport (\n", genHeader, c.pkg)
@@ -542,7 +558,7 @@ func (g *goWriter) argTerm(part msgPart, lang string, params []param, pound *cou
 		}
 		switch {
 		case p.typ == "time.Time":
-			return fmt.Sprintf("i18n.FormatDate(%q, %s, %s)", lang, v, dateOptions(part))
+			return fmt.Sprintf("i18n.FormatDate(msgs.dated(%q), %s, %s)", lang, v, dateOptions(part))
 		case part.style == "integer":
 			return fmt.Sprintf("i18n.FormatInteger(%q, %s)", lang, num)
 		case part.style == "percent":

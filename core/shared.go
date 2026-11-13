@@ -154,6 +154,9 @@ type (
 	Idiom = driver.Idiom
 	// Lifecycle is whether the app is in use: Env.Lifecycle.
 	Lifecycle = driver.Lifecycle
+	// LocaleSettings are the user's regional preferences:
+	// Env.LocaleSettings.
+	LocaleSettings = driver.LocaleSettings
 	// ImageScales is a set of ImageScaleValues: the variants an image asset
 	// ships in.
 	ImageScales = driver.ImageScales
@@ -702,12 +705,14 @@ const (
 	RoleRegion     = driver.RoleRegion
 	RoleNavigation = driver.RoleNavigation
 	// RoleTree holds RoleTreeItems.
-	RoleTree       = driver.RoleTree
-	RoleTreeItem   = driver.RoleTreeItem
-	RoleToolbar    = driver.RoleToolbar
-	RoleDialog     = driver.RoleDialog
-	RoleAlert      = driver.RoleAlert
-	RoleAdjustable = driver.RoleAdjustable
+	RoleTree     = driver.RoleTree
+	RoleTreeItem = driver.RoleTreeItem
+	RoleToolbar  = driver.RoleToolbar
+	RoleDialog   = driver.RoleDialog
+	// RoleAlertDialog is a dialog asking for an answer, a confirmation.
+	RoleAlertDialog = driver.RoleAlertDialog
+	RoleAlert       = driver.RoleAlert
+	RoleAdjustable  = driver.RoleAdjustable
 	// RoleSpinButton is a field for a number, stepped with its actions.
 	RoleSpinButton = driver.RoleSpinButton
 	// RoleCombobox picks a value from a list it opens.

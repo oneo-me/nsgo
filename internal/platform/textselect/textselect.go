@@ -11,6 +11,7 @@ import "github.com/nsgo-dev/nsgo/internal/driver"
 type Text struct {
 	ID      driver.NodeID
 	Content string
+	Spans   []driver.TextSpan
 	Box     driver.Bounds
 	Layout  driver.TextHitTester
 }
@@ -51,6 +52,9 @@ func (s *Selection) Len() int { return len(s.Texts) }
 
 // Content implements driver.SelectionTexts.
 func (s *Selection) Content(i int) string { return s.Texts[i].Content }
+
+// Spans implements driver.SelectionSpans.
+func (s *Selection) Spans(i int) []driver.TextSpan { return s.Texts[i].Spans }
 
 // Frame implements driver.SelectionTexts.
 func (s *Selection) Frame(i int) driver.Bounds { return s.Texts[i].Box }

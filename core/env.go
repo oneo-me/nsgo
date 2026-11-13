@@ -23,6 +23,7 @@ type Env struct {
 	// locale and systemRTL are the platform's or the host's; forced is
 	// the locale Scope.SetLocale forces.
 	locale, forced *Signal[string]
+	settings       *Signal[LocaleSettings]
 	systemRTL      *Signal[bool]
 	language       *Memo[string]
 	rtl            *Memo[bool]
@@ -65,6 +66,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
 		forced:           NewSignal(cx, ""),
+		settings:         NewSignal(cx, LocaleSettings{}),
 		os:               NewSignal(cx, OS("")),
 		version:          NewSignal(cx, OSVersion{}),
 		idiom:            NewSignal(cx, IdiomPhone),
@@ -149,6 +151,7 @@ func (e *Env) set(v Environment) {
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
+	e.settings.Set(v.LocaleSettings)
 	e.os.Set(v.OS)
 	e.version.Set(v.OSVersion)
 	e.appleKeys.Set(v.OS == OSMacOS || v.OS == OSIOS || v.AppleKeyboard)
@@ -245,6 +248,11 @@ func (e *Env) Locale() string {
 	}
 	return e.locale.Get()
 }
+
+// LocaleSettings returns how the user reads weeks, times and measures,
+// apart from the language, where the platform says: zero where it does
+// not. Package i18n's Regional fills them in from the locale's region.
+func (e *Env) LocaleSettings() LocaleSettings { return e.settings.Get() }
 
 // Language returns the language the app shows: of its catalogs'
 // languages, the one that suits Locale best, as SetLanguageMatch says;

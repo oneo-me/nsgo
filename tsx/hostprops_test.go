@@ -31,6 +31,9 @@ func TestViewPropsSetTheirFields(t *testing.T) {
 		`{accessibilityState: {disabled: true, selected: true, expanded: false, pressed: "true", busy: true, checked: true}}`: func(p *core.View) bool {
 			return p.Disabled() && p.Selected() && !p.Expanded() && p.Pressed() && p.Busy() && p.Checked() && p.Indeterminate == nil
 		},
+		`{accessibilityDescription: "d", accessibilityState: {invalid: true}, role: "alertdialog"}`: func(p *core.View) bool {
+			return p.AccessibilityDescription == "d" && p.Invalid() && p.Role == core.RoleAlertDialog
+		},
 		`{accessibilityState: {checked: "mixed"}}`: func(p *core.View) bool {
 			return p.Checked == nil && p.Indeterminate() && p.Expanded == nil
 		},

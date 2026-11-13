@@ -206,13 +206,13 @@ func (v *view) announceLive(text string) {
 func (v *view) updateAccessibility() {
 	native, p := v.native, &v.props
 	// VoiceOver keeps to a dialog while it shows.
-	native.Send(sel("setAccessibilityViewIsModal:"), p.Role == driver.RoleDialog)
+	native.Send(sel("setAccessibilityViewIsModal:"), p.Role == driver.RoleDialog || p.Role == driver.RoleAlertDialog)
 	native.Send(selSetAccessibilityElementsHidden, p.ElementsHidden)
 	const noContainer, semanticGroup = 0, 4
 	pressable := v.events.Has(driver.EventPress) || v.events.Has(driver.EventLongPress)
 	var t uint64
 	switch p.Role {
-	case driver.RoleRadioGroup, driver.RoleTabList, driver.RoleMenu, driver.RoleDialog, driver.RoleAlert,
+	case driver.RoleRadioGroup, driver.RoleTabList, driver.RoleMenu, driver.RoleDialog, driver.RoleAlertDialog, driver.RoleAlert,
 		driver.RoleTable, driver.RoleGrid, driver.RoleRowGroup, driver.RoleRow, driver.RoleListbox, driver.RoleGroup,
 		driver.RoleRegion, driver.RoleNavigation, driver.RoleTree, driver.RoleToolbar:
 		// Groups are containers, so their children stay accessible.
@@ -275,7 +275,7 @@ func (v *view) updateAccessibility() {
 		return
 	}
 	native.Send(selSetAccessibilityTraits, t)
-	native.Send(selSetAccessibilityHint, nsOrNil(p.Hint))
+	native.Send(selSetAccessibilityHint, nsOrNil(p.HelpText()))
 	native.Send(selSetAccessibilityValue, nsOrNil(spokenValue(p)))
 	var custom []objc.ID
 	for _, a := range p.ActionList() {
@@ -333,6 +333,10 @@ func spokenValue(p *driver.ViewProps) string {
 		} else {
 			parts = append(parts, "collapsed")
 		}
+	}
+	// UIKit has no trait for it, so it is spoken, as mixed is.
+	if p.Invalid {
+		parts = append(parts, "invalid data")
 	}
 	return strings.Join(parts, ", ")
 }

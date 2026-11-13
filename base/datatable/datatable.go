@@ -60,8 +60,9 @@ type Column struct {
 	// Sortable gives its title a sort button that asks for a sort.
 	Sortable bool
 	// Fixed keeps it at the left while the other columns scroll under it;
-	// fixed columns lead, in their order.
-	Fixed bool
+	// fixed columns lead, in their order. With FixedRight too it stays at
+	// the right instead, those columns closing the order.
+	Fixed, FixedRight bool
 	// NoResize and NoMove keep a drag of its edge or title from resizing
 	// or moving it; NoSelect keeps it and its cells out of selection (a
 	// column of buttons).
@@ -91,7 +92,8 @@ func (c Column) spec() columnSpec {
 		return float32(v)
 	}
 	lo := max(or(c.MinWidth, tableMinWidth), 0)
-	return columnSpec{width: or(c.Width, tableColumnWidth), min: lo, max: max(or(c.MaxWidth, tableMaxWidth), lo), fixed: c.Fixed}
+	return columnSpec{width: or(c.Width, tableColumnWidth), min: lo, max: max(or(c.MaxWidth, tableMaxWidth), lo),
+		fixed: c.Fixed || c.FixedRight, right: c.FixedRight}
 }
 
 // ColumnGroup is a label over Span columns (1 when 0), or over
@@ -510,7 +512,9 @@ type tableDrag struct {
 
 // tableGeo is what layout and the windows need, read at one moment.
 type tableGeo struct {
-	rowHeight, header, lead, fixed float32
+	// fixed and right are the widths of the columns fixed at the left and
+	// at the right.
+	rowHeight, header, lead, fixed, right float32
 	y, x                           tableAxis
 	// cx and cy are the content offsets.
 	cx, cy float64
@@ -790,10 +794,26 @@ func (t *dataTable) measureSizes() tableGeo {
 	w, h := max(float32(size.Width), 0), max(float32(size.Height), 0)
 	rh := t.rowHeight()
 	g := tableGeo{rowHeight: rh, header: t.headerRowHeight() * float32(t.headerLevels()), lead: t.leadWidth(),
-		fixed: float32(t.st.columns.fixedWidth())}
+		fixed: float32(t.st.columns.fixedWidth()), right: float32(t.st.columns.rightWidth())}
 	g.y = tableAxis{float64(t.rowCount()) * float64(rh), float64(max(h-g.header, 0))}
-	g.x = tableAxis{t.st.columns.scrollWidth(), float64(max(w-g.lead-g.fixed, 0))}
+	g.x = tableAxis{t.st.columns.scrollWidth(), float64(max(w-g.lead-g.fixed-g.right, 0))}
 	return g
+}
+
+// viewX is where the column at display starts in the table's view, the
+// row numbers' column included, from this geometry: the columns fixed at
+// the left from its start, the scrolling ones scrolled, those fixed at
+// the right after the scrolling ones' view.
+func (t *dataTable) viewX(display int, g tableGeo) float32 {
+	c := t.st.columns
+	at := float32(c.startOf(display))
+	switch {
+	case display < c.fixed:
+		return g.lead + at
+	case display < c.scrollEnd() || display == c.scrollEnd() && c.right == 0:
+		return g.lead + at - float32(g.cx)
+	}
+	return g.lead + g.fixed + float32(g.x.viewport) + at - float32(c.startOf(c.scrollEnd()))
 }
 
 // visibleRows is the rows in view (tracked).
@@ -953,7 +973,7 @@ func (t *dataTable) revealColumn(def int) {
 		return
 	}
 	display := c.displayOf(def)
-	if display < c.fixed {
+	if !c.scrolls(display) {
 		return
 	}
 	start := c.start(display) - c.fixedWidth()
@@ -975,7 +995,7 @@ func (t *dataTable) scrollToRow(row int, animated bool) {
 func (t *dataTable) scrollToColumn(key string, animated bool) {
 	def := t.defOf(key)
 	c := t.st.columns
-	if !c.hasDef(def) || c.displayOf(def) < c.fixed {
+	if !c.hasDef(def) || !c.scrolls(c.displayOf(def)) {
 		return
 	}
 	g := t.untrackedGeo()
@@ -1003,7 +1023,7 @@ func (t *dataTable) hitAt(p core.Point) tableHit {
 		h.lead = true
 		return h
 	}
-	if d := t.st.columns.displayAt(vx-float64(g.lead), g.cx); d >= 0 {
+	if d := t.st.columns.displayAt(vx-float64(g.lead), g.cx, g.x.viewport); d >= 0 {
 		h.col = t.st.columns.def(d)
 	}
 	return h
@@ -1138,7 +1158,7 @@ func (t *dataTable) resizeMove(offset core.Points) {
 	// passes the viewport's end.
 	c := t.st.columns
 	display := c.displayOf(def)
-	if display < c.fixed {
+	if !c.scrolls(display) {
 		return
 	}
 	g := t.untrackedGeo()
@@ -1224,14 +1244,11 @@ func (t *dataTable) moveTo(x, travelled float32) {
 	tx := float64(x - g.lead)
 	var at int
 	if tx < float64(g.fixed) {
-		at = c.displayAt(math.Max(tx, 0), 0)
+		at = c.displayAt(math.Max(tx, 0), 0, g.x.viewport)
 	} else {
-		at = c.displayAt(tx, g.cx)
+		at = c.displayAt(tx, g.cx, g.x.viewport)
 	}
-	lo, hi := c.fixed, c.len()-1
-	if d.from < c.fixed {
-		lo, hi = 0, max(c.fixed-1, 0)
-	}
+	lo, hi := c.groupRange(d.from)
 	if at < 0 {
 		if tx < 0 {
 			at = lo

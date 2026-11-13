@@ -30,6 +30,10 @@ go tool nsgo dev -lang en-XA
 
 runs the app in a pseudo locale that shows untranslated and cut text. Any build takes it as it starts: `--nsgo-lang=en-XA`.
 
+## Weeks, times and measures
+
+`i18n.Regional(cx)` says how the user reads weeks, times and measures, apart from the language: the day weeks start on, 12- or 24-hour time and the measurement system, as they set them on the platform, else as their region does. Calendars and date pickers start their weeks there and time fields show those hours unless the app sets `FirstDayOfWeek` or `HourCycle`, and the times a catalog's messages write follow the user's hours.
+
 ## NSGo's own words
 
 NSGo's components say their words in the languages NSGo is translated to. For another language, a key that names a package, such as `github.com/nsgo-dev/nsgo/base/locales`, gives that package's messages in the file's language.

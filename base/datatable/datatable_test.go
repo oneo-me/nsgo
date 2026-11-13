@@ -250,3 +250,59 @@ func TestDataTableReadsRowsAColumnAtATime(t *testing.T) {
 		t.Fatalf("a fall's color is %v", got)
 	}
 }
+
+// pageX is where v starts across the surface, the scroll offsets around
+// it applied.
+func pageX(v *nsgotest.View) float32 {
+	x := float32(0)
+	for p := v; p != nil; p = p.Parent {
+		x += float32(p.Frame.Origin.X)
+		if p.Parent != nil {
+			x -= float32(p.Parent.Offset.X)
+		}
+	}
+	return x
+}
+
+// A column fixed at the right stays against the table's right edge while
+// the others scroll under it, after them in the order.
+func TestDataTableColumnFixedAtTheRight(t *testing.T) {
+	var ref datatable.Ref
+	var pressed []datatable.Selection
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return datatable.DataTable{
+			TestID: "table", Ref: &ref, CellSelect: func() bool { return true }, NoRowHeader: true,
+			Columns: func() []datatable.Column {
+				cols := tableColumns(20)
+				cols[19].FixedRight = true
+				return cols
+			},
+			RowCount:          func() int { return 100 },
+			Text:              func(row, col int) string { return fmt.Sprintf("R%dC%d", row, col) },
+			Style:             core.Style{Width: core.Pt(400), Height: core.Pt(332)},
+			OnSelectionChange: func(s datatable.Selection) { pressed = append(pressed, s) },
+		}
+	}, nsgotest.Size(400, 400))
+	right := pageX(app.Find("text:R0C19").Parent)
+	if right != 300 {
+		t.Fatalf("the right column starts at %v, want against the right edge (300)", right)
+	}
+	ref.ScrollToColumn("c15", false)
+	app.Settle()
+	if x := pageX(app.Find("text:R0C19").Parent); x != right {
+		t.Errorf("the right column moved to %v as the others scrolled", x)
+	}
+	shown := false
+	for _, v := range app.Query("text:R0C15") {
+		if x := pageX(v.Parent); x >= 100 && x+100 <= 300 {
+			shown = true
+		}
+	}
+	if !shown {
+		t.Error("column 15 is not between the fixed columns")
+	}
+	app.Press("text:R2C19")
+	if len(pressed) == 0 || pressed[len(pressed)-1] != (datatable.Selection{Row: 2, Column: 19}) {
+		t.Errorf("a press on the right column selected %v", pressed)
+	}
+}

@@ -68,16 +68,29 @@ func (a tableAxis) reveal(from, start, end float64) float64 {
 
 func clampF(v, lo, hi float64) float64 { return math.Max(lo, math.Min(v, hi)) }
 
-// columnSpec is a column's widths and whether it is fixed.
+// columnSpec is a column's widths and whether it is fixed, at the left
+// or with right at the right.
 type columnSpec struct {
 	width, min, max float32
-	fixed           bool
+	fixed, right    bool
+}
+
+// group is where the column goes: 0 the fixed ones at the left, 1 the
+// scrolling ones, 2 the fixed ones at the right.
+func (s columnSpec) group() int {
+	switch {
+	case s.fixed && s.right:
+		return 2
+	case s.fixed:
+		return 0
+	}
+	return 1
 }
 
 func (s columnSpec) clamp(w float32) float32 { return max(s.min, min(w, max(s.max, s.min))) }
 
 // tableColumns is a table's columns as shown: their order (fixed ones
-// first), widths and the prefix sums of the widths, so finding the column
+// at the left first, those at the right last), widths and the prefix sums of the widths, so finding the column
 // at an x is a binary search over a million columns. Columns are named by
 // their definition index (def) or their place as shown (display).
 type tableColumns struct {
@@ -86,7 +99,8 @@ type tableColumns struct {
 	order  []int // def at each display index
 	shown  []int // display index of each def
 	starts []float64
-	fixed  int
+	// fixed and right count the columns fixed at the left and the right.
+	fixed, right int
 }
 
 func newTableColumns(specs []columnSpec) *tableColumns {
@@ -94,11 +108,14 @@ func newTableColumns(specs []columnSpec) *tableColumns {
 	for i, s := range specs {
 		c.widths[i] = s.clamp(s.width)
 		c.order[i] = i
-		if s.fixed {
+		switch s.group() {
+		case 0:
 			c.fixed++
+		case 2:
+			c.right++
 		}
 	}
-	sort.SliceStable(c.order, func(a, b int) bool { return specs[c.order[a]].fixed && !specs[c.order[b]].fixed })
+	sort.SliceStable(c.order, func(a, b int) bool { return specs[c.order[a]].group() < specs[c.order[b]].group() })
 	c.reindex()
 	c.rebuild(0)
 	return c
@@ -123,8 +140,8 @@ func (c *tableColumns) updated(specs []columnSpec, oldOf func(def int) int) *tab
 	}
 	sort.SliceStable(next.order, func(a, b int) bool {
 		da, db := next.order[a], next.order[b]
-		if specs[da].fixed != specs[db].fixed {
-			return specs[da].fixed
+		if ga, gb := specs[da].group(), specs[db].group(); ga != gb {
+			return ga < gb
 		}
 		if position[da] != position[db] {
 			return position[da] < position[db]
@@ -164,15 +181,25 @@ func (c *tableColumns) start(display int) float64   { return c.starts[display] }
 func (c *tableColumns) displayWidth(d int) float32  { return c.widths[c.order[d]] }
 func (c *tableColumns) total() float64              { return c.starts[len(c.order)] }
 func (c *tableColumns) fixedWidth() float64         { return c.starts[c.fixed] }
-func (c *tableColumns) scrollWidth() float64        { return c.total() - c.fixedWidth() }
+func (c *tableColumns) scrollEnd() int              { return len(c.order) - c.right }
+func (c *tableColumns) rightWidth() float64         { return c.total() - c.starts[c.scrollEnd()] }
+func (c *tableColumns) scrollWidth() float64        { return c.starts[c.scrollEnd()] - c.fixedWidth() }
+func (c *tableColumns) scrolls(display int) bool    { return display >= c.fixed && display < c.scrollEnd() }
 func (c *tableColumns) hasDef(def int) bool         { return def >= 0 && def < len(c.shown) }
 func (c *tableColumns) startOf(display int) float64 { return c.starts[min(display, len(c.order))] }
 
-// displayAt is the column under x in the viewport, the scrolling columns
-// scrolled by scrollX; -1 for none.
-func (c *tableColumns) displayAt(x, scrollX float64) int {
-	if x >= c.fixedWidth() {
+// displayAt is the column under x in the viewport, view wide, the
+// scrolling columns scrolled by scrollX; -1 for none.
+func (c *tableColumns) displayAt(x, scrollX, view float64) int {
+	right := c.fixedWidth() + view
+	switch {
+	case c.right > 0 && x >= right:
+		x = c.starts[c.scrollEnd()] + x - right
+	case x >= c.fixedWidth():
 		x += scrollX
+		if x >= c.starts[c.scrollEnd()] {
+			return -1
+		}
 	}
 	return c.displayAtTable(x)
 }
@@ -189,8 +216,8 @@ func (c *tableColumns) displayAtTable(x float64) int {
 // visible is the display indexes of the scrolling columns from to to, in
 // table coordinates.
 func (c *tableColumns) visible(from, to float64) (int, int) {
-	n := len(c.order)
-	if c.fixed >= n || to <= from || from >= c.total() {
+	n := c.scrollEnd()
+	if c.fixed >= n || to <= from || from >= c.starts[n] {
 		return n, n
 	}
 	first := max(sort.Search(n, func(i int) bool { return c.starts[i] > from })-1, c.fixed)
@@ -209,11 +236,33 @@ func (c *tableColumns) setWidth(def int, w float32) bool {
 	return true
 }
 
-// moveTo moves the column at display from to display to, within the fixed
-// columns or the others; it reports a move.
+// groupOf is the group the column at display is in (columnSpec.group).
+func (c *tableColumns) groupOf(display int) int {
+	switch {
+	case display < c.fixed:
+		return 0
+	case display >= c.scrollEnd():
+		return 2
+	}
+	return 1
+}
+
+// groupRange is the display indexes of display's group, first to last.
+func (c *tableColumns) groupRange(display int) (int, int) {
+	switch c.groupOf(display) {
+	case 0:
+		return 0, max(c.fixed-1, 0)
+	case 2:
+		return c.scrollEnd(), len(c.order) - 1
+	}
+	return c.fixed, max(c.scrollEnd()-1, c.fixed)
+}
+
+// moveTo moves the column at display from to display to, within the
+// columns fixed at either side or the others; it reports a move.
 func (c *tableColumns) moveTo(from, to int) bool {
 	n := len(c.order)
-	if from < 0 || to < 0 || from >= n || to >= n || from == to || (from < c.fixed) != (to < c.fixed) {
+	if from < 0 || to < 0 || from >= n || to >= n || from == to || c.groupOf(from) != c.groupOf(to) {
 		return false
 	}
 	def := c.order[from]

@@ -53,14 +53,85 @@ func FormatDate(locale string, t time.Time, o DateOptions) string {
 		i := find(locale)
 		d := dataAt(i)
 		lang, _, _ := strings.Cut(tables().names[i], "-")
-		f, _ = formatters.LoadOrStore(key, &formatter{data: d, lang: lang, items: parsePattern(pattern(d, o))})
+		f, _ = formatters.LoadOrStore(key, &formatter{data: d, lang: lang, items: parsePattern(cycled(pattern(withHour(d, locale), o), locale))})
 	}
 	return f.(*formatter).format(t)
 }
 
 // Pattern returns the CLDR pattern FormatDate writes for locale and o, as
 // "MMM d, y".
-func Pattern(locale string, o DateOptions) string { return pattern(dataAt(find(locale)), o) }
+func Pattern(locale string, o DateOptions) string {
+	return cycled(pattern(withHour(dataAt(find(locale)), locale), o), locale)
+}
+
+// withHour is d with the hour a -u-hc- of locale names as its own, which
+// a skeleton's j takes.
+func withHour(d localeData, locale string) localeData {
+	h := hourOf(locale)
+	if h == 0 || h == hourLetter(d) {
+		return d
+	}
+	out := make(localeData, len(d))
+	for k, v := range d {
+		out[k] = v
+	}
+	// hourLetter reads the short time's.
+	out["T.short"] = cycled(d["T.short"], locale)
+	return out
+}
+
+// cycled is pattern with its hours in the cycle a -u-hc- of locale
+// names: a 24-hour clock drops the day period and the space before it,
+// a 12-hour one gains a period after its time.
+func cycled(pattern, locale string) string {
+	h := hourOf(locale)
+	if h == 0 {
+		return pattern
+	}
+	items := parsePattern(pattern)
+	twelve := h == 'h' || h == 'K'
+	period := func(it item) bool { return it.letter == 'a' || it.letter == 'b' || it.letter == 'B' }
+	hasPeriod, lastTime := false, -1
+	for i, it := range items {
+		switch it.letter {
+		case 'a', 'b', 'B':
+			hasPeriod = true
+		case 'h', 'H', 'K', 'k', 'm', 's', 'S':
+			lastTime = i
+		}
+	}
+	var b strings.Builder
+	for i, it := range items {
+		switch {
+		case it.letter == 'h' || it.letter == 'H' || it.letter == 'K' || it.letter == 'k':
+			// Across cycles, a 12-hour hour unpadded and a 24-hour one
+			// padded, as Intl writes them.
+			n := it.n
+			if was := it.letter == 'h' || it.letter == 'K'; was != twelve {
+				n = 1
+				if !twelve {
+					n = 2
+				}
+			}
+			b.WriteString(strings.Repeat(string(h), n))
+		case period(it) && !twelve:
+		case it.letter == 0 && !twelve && i+1 < len(items) && period(items[i+1]):
+			b.WriteString(quote(strings.TrimRightFunc(it.text, isSpace)))
+		case it.letter == 0 && !twelve && i > 0 && period(items[i-1]):
+			b.WriteString(quote(strings.TrimLeftFunc(it.text, isSpace)))
+		case it.letter == 0:
+			b.WriteString(quote(it.text))
+		default:
+			b.WriteString(strings.Repeat(string(it.letter), it.n))
+		}
+		if twelve && !hasPeriod && i == lastTime {
+			b.WriteString(" a")
+		}
+	}
+	return b.String()
+}
+
+func isSpace(r rune) bool { return r == ' ' || r == '\u00a0' || r == '\u202f' }
 
 // pattern is the pattern of o in d.
 func pattern(d localeData, o DateOptions) string {

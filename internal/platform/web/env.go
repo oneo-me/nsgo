@@ -20,6 +20,9 @@ type watch struct {
 	// probe is padded by the safe area and as wide as the root font size.
 	probe   js.Value
 	changed js.Func
+	// settings are what Intl says of settingsFor's hours and weeks.
+	settingsFor string
+	settings    driver.LocaleSettings
 }
 
 // rtlLanguages are the languages written right to left.
@@ -71,6 +74,17 @@ func (s *surface) watchChanges() {
 	g.Call("addEventListener", "focus", w.changed)
 	g.Call("addEventListener", "blur", w.changed)
 	s.doc.Call("addEventListener", "visibilitychange", w.changed)
+	// A page that hides is the app quitting, unless the browser keeps it
+	// in its back-forward cache to show again, where it may also discard
+	// it unheard: the OnQuit handlers run then too, kept for the next.
+	g.Call("addEventListener", "pagehide", js.FuncOf(func(_ js.Value, args []js.Value) any {
+		if args[0].Get("persisted").Bool() {
+			s.engine.Hide()
+		} else {
+			s.engine.Close()
+		}
+		return nil
+	}))
 	if vv := g.Get("visualViewport"); vv.Truthy() {
 		vv.Call("addEventListener", "resize", w.changed)
 		vv.Call("addEventListener", "scroll", w.changed)
@@ -152,6 +166,7 @@ func (s *surface) environment() driver.Environment {
 		env.Locale = lang.String()
 		primary, _, _ := strings.Cut(strings.ToLower(env.Locale), "-")
 		env.RTL = rtlLanguages[primary]
+		env.LocaleSettings = s.localeSettings(env.Locale)
 	}
 	// The keyboard shrinks the visual viewport from the bottom; so does
 	// a pinch zoom, which is told apart by its scale.
@@ -160,4 +175,35 @@ func (s *surface) environment() driver.Environment {
 		env.KeyboardHeight = driver.Points(math.Max(0, math.Round(h)))
 	}
 	return env
+}
+
+// localeSettings is what the browser's Intl says of locale's hours and
+// weeks, read once per locale: its hour cycle, which some browsers take
+// from the system's 24-hour time, and its first day of the week.
+func (s *surface) localeSettings(locale string) driver.LocaleSettings {
+	if s.watch.settingsFor == locale {
+		return s.watch.settings
+	}
+	var out driver.LocaleSettings
+	intl := js.Global().Get("Intl")
+	if intl.Truthy() {
+		opts := intl.Get("DateTimeFormat").New(locale, map[string]any{"hour": "numeric"}).Call("resolvedOptions")
+		if hc := opts.Get("hourCycle"); hc.Type() == js.TypeString {
+			out.HourCycle = hc.String()
+		}
+		if loc := intl.Get("Locale"); loc.Truthy() {
+			l := loc.New(locale)
+			info := l.Get("weekInfo")
+			if get := l.Get("getWeekInfo"); get.Type() == js.TypeFunction {
+				info = l.Call("getWeekInfo")
+			}
+			if info.Type() == js.TypeObject {
+				if d := info.Get("firstDay"); d.Type() == js.TypeNumber {
+					out.FirstDayOfWeek = d.Int()
+				}
+			}
+		}
+	}
+	s.watch.settingsFor, s.watch.settings = locale, out
+	return out
 }

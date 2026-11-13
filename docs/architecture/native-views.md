@@ -15,6 +15,7 @@
 ## Web views
 
 - Every page starts with `WebBridge`, defining `window.nsgo.postMessage(data)`, which reaches `OnMessage` as a string. `PostMessage` dispatches a `MessageEvent` on the page's window.
+- `Ref.Evaluate` answers with a script's result as JSON, or its error, through that bridge rather than each platform's evaluation callback, so every backend with web views answers alike, Android's with no runtime rebuilt: `WebEvaluateScript` runs the script as an expression, awaits a promise, and posts the answer after a marker with a random key, which the core takes for the `Evaluate` waiting on it and never hands to `OnMessage`. A page leaving (`EventLoadStart`, reported while one waits) ends those waiting with an error. A page whose bridge is gone, such as a URL on the web, which gets none, never answers.
 - A page loads again only when the source or an injected script changes. Other settings apply to the live view.
 - Load start and load each come with a navigation state change, carrying `WebNavigation`. Errors arrive as `*WebError` with the failing URL.
 - A web view with `OnDownload` saves what its pages download, as NSH's macOS one does: core sends `WebConfig.DownloadDir`, the app's data directory's `downloads`, and Apple's host turns a main frame's response WebKit cannot show or marked an attachment, and a link asking for a download, into a `WKDownload` saved to `<id>/<file name>` under it, reporting its start, end and bytes or failure. Other targets save nothing ([roadmap](../roadmap.md#finish-the-existing-platforms)).

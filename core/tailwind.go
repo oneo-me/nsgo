@@ -38,12 +38,13 @@ const (
 	classAriaPressed
 	classAriaSelected
 	classFocusVisible
+	classAriaInvalid
 )
 
 // classStates are the class states in the order of StateStyles.slots.
 var classStates = [stateCount]uint16{classChecked, classIndeterminate, classSelected, classFocusWithin, classHovered,
-	classFocused, classFocusVisible, classPressed, classAriaBusy, classAriaChecked, classExpanded, classAriaPressed, classAriaSelected,
-	classDisabled}
+	classFocused, classFocusVisible, classPressed, classAriaBusy, classAriaChecked, classExpanded, classAriaInvalid, classAriaPressed,
+	classAriaSelected, classDisabled}
 
 // classVariants are the variants that read one state, group-* too.
 var classVariants = map[string]struct {
@@ -55,7 +56,8 @@ var classVariants = map[string]struct {
 	"focus-visible": {classFocusVisible, rankFocusVisible}, "active": {classPressed, rankActive},
 	"disabled": {classDisabled, rankDisabled}, "aria-busy": {classAriaBusy, rankAriaBusy},
 	"aria-checked": {classAriaChecked, rankAriaChecked}, "aria-expanded": {classExpanded, rankAriaExpanded},
-	"aria-pressed": {classAriaPressed, rankAriaPressed}, "aria-selected": {classAriaSelected, rankAriaSelected}}
+	"aria-invalid": {classAriaInvalid, rankAriaInvalid}, "aria-pressed": {classAriaPressed, rankAriaPressed},
+	"aria-selected": {classAriaSelected, rankAriaSelected}}
 
 // Positions among siblings: first:, last:, odd:, even:, only:.
 const (
@@ -157,11 +159,12 @@ const (
 	rankAriaBusy      = 40
 	rankAriaChecked   = 41
 	rankAriaExpanded  = 42
-	rankAriaPressed   = 43
-	rankAriaSelected  = 44
-	rankData          = 45
-	rankMotionSafe    = 46
-	rankMotionReduce  = 47
+	rankAriaInvalid   = 43
+	rankAriaPressed   = 44
+	rankAriaSelected  = 45
+	rankData          = 46
+	rankMotionSafe    = 47
+	rankMotionReduce  = 48
 	rankMax           = 50
 	rankMin           = 51
 	rankPortrait      = 60

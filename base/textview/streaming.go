@@ -8,13 +8,25 @@ import (
 	"unicode/utf8"
 )
 
+// wordRune reports whether r is a letter or a digit of a script that
+// spaces its words, where a star inside a word is no emphasis.
+func wordRune(r rune) bool {
+	return (unicode.IsLetter(r) || unicode.IsDigit(r)) &&
+		!unicode.In(r, unicode.Han, unicode.Hiragana, unicode.Katakana, unicode.Hangul)
+}
+
 // RepairStreaming closes the syntax that the last block of Markdown still
 // arriving (a reply streamed token by token) leaves open, so it shows as
 // it will once the rest arrives: `**bold` as bold, a backtick and code as
 // code, `$x^2` and `\(x^2` as formulas, `[text](htt` as its text and a
-// table's header as a table, instead of markers as text. The blocks
-// before the last are complete and kept.
+// table's header as a table, instead of markers as text. A last line not
+// yet ended whose meaning the next characters decide is held back: a
+// list marker alone, digits that may become one, a line of - or = (an
+// underline now, a rule, an item or text later), a fence's opening line
+// and the start of its closer. The blocks before the last are complete
+// and kept.
 func RepairStreaming(markdown string) string {
+	markdown = holdLine(markdown)
 	start, ok := lastBlock(markdown)
 	if !ok {
 		return markdown
@@ -30,7 +42,91 @@ func RepairStreaming(markdown string) string {
 	if repaired == tail {
 		return markdown
 	}
-	return markdown[:start] + repaired
+	// What the repair left may be such a line (`- **` leaves `-`).
+	return holdLine(markdown[:start] + repaired)
+}
+
+// holdLine drops src's last line while it has not ended and the next
+// characters decide what it is.
+func holdLine(src string) string {
+	at := strings.LastIndexByte(src, '\n') + 1
+	line := src[at:]
+	if line == "" {
+		return src
+	}
+	ch, n := openFence(src[:at])
+	if ch != 0 {
+		// Inside a fence: the start of its closer.
+		rest, ok := stripIndent(line)
+		if m := run(rest, 0, is(ch)); ok && m > 0 && m == len(rest) && m < n {
+			return src[:at]
+		}
+		return src
+	}
+	if _, _, ok := fenceOpens(stripQuotes(line)); ok {
+		return src[:at]
+	}
+	if undecided(strings.TrimSpace(stripQuotes(line))) {
+		return src[:at]
+	}
+	return src
+}
+
+// stripQuotes drops the quote markers before a line's content.
+func stripQuotes(line string) string {
+	for {
+		rest, ok := strings.CutPrefix(strings.TrimLeft(line, " \t"), ">")
+		if !ok {
+			return line
+		}
+		line = rest
+	}
+}
+
+// undecided reports whether a line's content is a list marker alone,
+// digits that may become one, or a line of - or =.
+func undecided(s string) bool {
+	switch {
+	case s == "":
+		return false
+	case s == "-" || s == "*" || s == "+":
+		return true
+	case strings.Trim(s, "-") == "" || strings.Trim(s, "=") == "":
+		return true
+	}
+	digits := run(s, 0, func(b byte) bool { return b >= '0' && b <= '9' })
+	switch {
+	case digits == 0 || digits > 9:
+		return false
+	case digits == len(s):
+		return true
+	}
+	return digits == len(s)-1 && (s[digits] == '.' || s[digits] == ')')
+}
+
+// openFence is the fence src ends inside, its character and length, 0
+// when none.
+func openFence(src string) (byte, int) {
+	var fence byte
+	var fenceLen int
+	for start := 0; start < len(src); {
+		end := strings.IndexByte(src[start:], '\n')
+		if end < 0 {
+			end = len(src)
+		} else {
+			end += start
+		}
+		line := stripContainers(src[start:end])
+		if fence != 0 {
+			if fenceCloses(line, fence, fenceLen) {
+				fence = 0
+			}
+		} else if ch, n, ok := fenceOpens(line); ok {
+			fence, fenceLen = ch, n
+		}
+		start = end + 1
+	}
+	return fence, fenceLen
 }
 
 // lastBlock returns where the last block of src starts (after its last
@@ -440,7 +536,10 @@ func closeMarkers(text string) string {
 		next, _ := utf8.DecodeRuneInString(text[i+n:])
 		hasPrev, hasNext := i > 0, i+n < len(text)
 		canOpen := hasNext && !unicode.IsSpace(next) && (b != '_' || !hasPrev || !isAlnum(prev)) &&
-			(b != '$' || next < '0' || next > '9')
+			(b != '$' || next < '0' || next > '9') &&
+			// A lone star inside a word (a*b) is text until it closes, and
+			// is never closed for it; CJK text keeps emphasis there.
+			(b != '*' || n != 1 || !hasPrev || !wordRune(prev) || !wordRune(next))
 		canClose := hasPrev && !unicode.IsSpace(prev) && (b != '_' || !hasNext || !isAlnum(next))
 		var opened []string
 		for _, token := range markerTokens(b, n) {

@@ -62,7 +62,7 @@ func (w *window) listSelection() {
 				box := v.content
 				box.Origin.X += b.Origin.X
 				box.Origin.Y += b.Origin.Y
-				sl.Texts = append(sl.Texts, textselect.Text{ID: v.id, Content: v.plain, Box: box, Layout: l})
+				sl.Texts = append(sl.Texts, textselect.Text{ID: v.id, Content: v.plain, Spans: v.spans, Box: box, Layout: l})
 			}
 			return
 		}

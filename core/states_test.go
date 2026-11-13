@@ -188,13 +188,15 @@ func TestAriaAndDataVariants(t *testing.T) {
 			View{TestID: "toggle", Class: "group active:bg-[#111111] aria-pressed:bg-[#222222]", Pressed: on.Get,
 				Style: Style{Pressed: &Style{BorderWidth: 2}}, Children: []Node{View{TestID: "icon", Class: "group-aria-pressed:bg-[#333333]"}}},
 			View{TestID: "busy", Class: "aria-busy:bg-[#444444]", Busy: on.Get},
+			View{TestID: "invalid", Class: "group aria-invalid:bg-[#888888]", Invalid: on.Get, AccessibilityDescription: "Too short",
+				Children: []Node{View{TestID: "mark", Class: "group-aria-invalid:bg-[#999999]"}}},
 			View{TestID: "day", Class: "group data-range-start:bg-[#555555] data-other:bg-[#666666]", PartStates: data,
 				Children: []Node{View{TestID: "dot", Class: "group-data-range-start:bg-[#777777]"}}},
 		}}
 	})
 	h.commit()
 	bg := func(id string) Color { return h.find(id).style.Background }
-	for _, id := range []string{"toggle", "icon", "busy", "day", "dot"} {
+	for _, id := range []string{"toggle", "icon", "busy", "invalid", "mark", "day", "dot"} {
 		if c := bg(id); c != 0 {
 			t.Errorf("%s starts %x", id, c)
 		}
@@ -206,6 +208,11 @@ func TestAriaAndDataVariants(t *testing.T) {
 	want(t, "pressed style", h.find("toggle").style.BorderWidth, 2)
 	want(t, "group-aria-pressed", bg("icon"), RGB(0x333333))
 	want(t, "aria-busy", bg("busy"), RGB(0x444444))
+	want(t, "aria-invalid", bg("invalid"), RGB(0x888888))
+	want(t, "group-aria-invalid", bg("mark"), RGB(0x999999))
+	if p := h.find("invalid").sentProps(); !p.Invalid || p.Description != "Too short" {
+		t.Errorf("invalid view's props %+v", p)
+	}
 	want(t, "data-*", bg("day"), RGB(0x555555))
 	want(t, "group-data-*", bg("dot"), RGB(0x777777))
 	// An on toggle keeps its look under a press, aria-* being after active:.

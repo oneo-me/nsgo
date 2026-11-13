@@ -145,6 +145,9 @@ func (seed) Write(driver.StorageChange)         {}
 type App struct {
 	t    testing.TB
 	size driver.Size
+	// modality is the input modality last reported, as a platform reports
+	// a key or a press before what it causes (inputBy).
+	modality uint32
 	// report takes what the app reports failing (Errors).
 	report func(error)
 	// Clipboard is the clipboard's text, ClipboardImage its image as the

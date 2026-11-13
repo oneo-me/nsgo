@@ -35,6 +35,7 @@ type view struct {
 	text             driver.TextLayout
 	content          driver.Bounds
 	plain            string
+	spans            []driver.TextSpan
 	selStart, selEnd int
 
 	// glide is how a scroll view a finger let go comes to rest, and

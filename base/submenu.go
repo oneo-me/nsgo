@@ -49,7 +49,11 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 					press()
 				}
 			},
-			OnMouseEnter: func(core.MouseEvent) { hover() }, Children: []core.Node{s.Trigger}}
+			OnMouseEnter: func(core.MouseEvent) {
+				if hover != nil {
+					hover()
+				}
+			}, Children: []core.Node{s.Trigger}}
 	}
 	if menu == nil {
 		// Outside a menu: nothing to open.
@@ -100,6 +104,28 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 		}
 	}
 	isOpen := func() bool { return menu.openSub.Get() == id }
+	// Its level's keys, and its trigger among its menu's items: Right
+	// opens it with the focus on its first item, and Left closes it with
+	// the focus back on the trigger.
+	level := newMenuLevel(cx)
+	inner.keys = level
+	level.close = func() {
+		menu.openSub.Set(0)
+		anchor.Focus()
+	}
+	var item *menuItem
+	if menu.keys != nil {
+		item = menu.keys.add(cx, anchor, s.Disabled, func() {
+			if core.Untracked(cx, isOpen) {
+				if items := level.enabled(); len(items) > 0 {
+					level.focus(items[0])
+				}
+				return
+			}
+			level.focusFirst = true
+			open()
+		})
+	}
 	popup := menu.popup
 	if own := (parts.Of(s.PopupClass, s.PopupStyle, s.PopupStyleFunc)); own.Set() {
 		popup = own
@@ -108,13 +134,27 @@ func (s Submenu) Render(cx *core.Scope) core.Node {
 	shown := func() bool { return isOpen() && menu.open() }
 	inner.open = shown
 	m := newPopupMotion(cx, shown, menu.starting, menu.ending)
+	hover := func() {
+		open()
+		if item != nil {
+			menu.keys.current = item
+		}
+	}
+	t := trigger(open, hover, isOpen, anchor, nil)
+	t.OnFocus = func() {
+		if item != nil {
+			menu.keys.current = item
+		}
+	}
 	return core.Group{
-		trigger(open, open, isOpen, anchor, nil),
+		t,
 		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 			menuKey.Provide(cx, &inner)
-			return m.overlay(core.Overlay{Anchor: anchor, Placement: core.PlaceRight, Align: core.AlignStart,
-				Children: s.Children, Role: core.RoleMenu,
-				OnCancel: func() { menu.openSub.Set(0) }}, popup)
+			o, part := heldToRoom(core.Overlay{Anchor: anchor, Placement: core.PlaceRight, Align: core.AlignStart,
+				Children: s.Children, Role: core.RoleMenu, Ref: level.panel,
+				OnCancel: func() { level.close() }}, popup, level)
+			level.opened(cx)
+			return core.Group{m.overlay(o, part), level.keys(shown)}
 		}},
 	}
 }

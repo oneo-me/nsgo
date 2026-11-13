@@ -138,6 +138,27 @@ func TestCloseRunsTheQuitHandlersFirst(t *testing.T) {
 	}
 }
 
+func TestHideRunsTheQuitHandlersAndKeepsTheApp(t *testing.T) {
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	runs := 0
+	disposed := false
+	e := Start(p, func(cx *core.Scope) core.Node {
+		cx.OnQuit(func(context.Context) { runs++ })
+		cx.Cleanup(func() { disposed = true })
+		return core.View{}
+	}, Options{})
+	<-p.mounted
+	e.Hide()
+	e.Hide()
+	if runs != 2 || disposed {
+		t.Errorf("two hides ran the handler %d times, the app disposed: %v", runs, disposed)
+	}
+	e.Close()
+	if runs != 3 || !disposed {
+		t.Errorf("closing after hides ran the handler %d times, the app disposed: %v", runs, disposed)
+	}
+}
+
 func TestCloseWaitsNoLongerThanTheQuitTimeout(t *testing.T) {
 	p := &recorder{mounted: make(chan struct{}, 1)}
 	release := make(chan struct{})

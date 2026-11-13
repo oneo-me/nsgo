@@ -35,7 +35,7 @@ core.Text{Style: core.Style{FontSize: 15}, Spans: []core.Span{
 }}
 ```
 
-`SpansFunc` gives spans again when what it reads changes, and only the parts that differ are prepared again, so a code editor's rows recolor as highlighting arrives. A span's `Background` and `CornerRadius` draw a box behind its characters on every line.
+`SpansFunc` gives spans again when what it reads changes, and only the parts that differ are prepared again, so a code editor's rows recolor as highlighting arrives. A span's `Background` and `CornerRadius` draw a box behind its characters on every line. `Visibility: core.VisibilityHidden` hides a span in place: its words keep their room, so the lines stay put as it shows, and copies and screen readers leave it out, for words that fade in one by one.
 
 `Attachment` puts a view inside a text, in place of the span's content. It is laid out at its own size, wraps with the words around it and takes its own presses, so an icon, an image or a small button can sit in a line.
 
@@ -82,7 +82,7 @@ textview.TextView{
 }
 ```
 
-`textview.Parse` reads Markdown and `textview.ParseHTML` reads HTML into blocks the app can also build. `Options.Streaming` repairs a document that arrives in pieces, and `StreamingCaret` draws a caret at its end, for a reply written as it streams.
+`textview.Parse` reads Markdown and `textview.ParseHTML` reads HTML into blocks the app can also build. `Options.Streaming` repairs a document that arrives in pieces, closing what its end leaves open and holding back a last line whose meaning the next characters decide, such as a list marker alone, so a reply never flashes markers as text, and `StreamingCaret` draws a caret at its end, for a reply written as it streams.
 
 ## Next
 

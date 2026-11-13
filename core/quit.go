@@ -20,11 +20,14 @@ type quitHandler struct {
 // OnQuit runs fn, while the current owner lives, as the app quits,
 // however it stops: its own Quit, the last window closing, the Dock's or
 // the system's quit, the runtime ending on Android, a host removing its
-// view. fn cleans up, such as saving a draft or closing a connection; it
-// cannot keep the app running. The handlers run on the engine goroutine,
-// oldest first, with one context that ends QuitTimeout after the first
-// starts: a handler may wait on it for its own goroutines' work, and the
-// engine ends once they return or the time is up.
+// view. A page hiding on the web and a watchOS app going to the
+// background run it too, as the system may end either unheard, and keep
+// it for the next time in case the app shows again. fn cleans up, such
+// as saving a draft or closing a connection; it cannot keep the app
+// running. The handlers run on the engine goroutine, oldest first, with
+// one context that ends QuitTimeout after the first starts: a handler
+// may wait on it for its own goroutines' work, and the engine ends once
+// they return or the time is up.
 func (cx *Scope) OnQuit(fn func(ctx context.Context)) {
 	rt := cx.rt
 	h := &quitHandler{owner: cx.current(), fn: fn}
@@ -36,12 +39,27 @@ func (cx *Scope) OnQuit(fn func(ctx context.Context)) {
 // the engine as it stops, and reports whether there were any. Each runs
 // once: a second call runs none.
 func (cx *Scope) Quitting() bool {
+	return cx.quitting(false)
+}
+
+// Hiding runs the OnQuit handlers as Quitting does but keeps them, for an
+// app the system hides and may end without a word: a page the browser
+// keeps in its back-forward cache, or a watchOS app in the background.
+// It may show the app again, which runs them again at its next hide or
+// quit.
+func (cx *Scope) Hiding() bool {
+	return cx.quitting(true)
+}
+
+func (cx *Scope) quitting(keep bool) bool {
 	rt := cx.rt
-	hs := rt.quits
+	hs := slices.Clone(rt.quits)
 	if len(hs) == 0 {
 		return false
 	}
-	rt.quits = nil
+	if !keep {
+		rt.quits = nil
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), QuitTimeout)
 	defer cancel()
 	for _, h := range hs {

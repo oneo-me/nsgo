@@ -47,8 +47,10 @@ type View struct {
 	ZoomScale float32
 	Image     driver.ImageConfig
 	Web       driver.WebConfig
-	// WebCommands are what the app asked a web view to do, oldest first.
+	// WebCommands are what the app asked a web view to do, oldest first;
+	// answered counts those AnswerScript went past.
 	WebCommands []WebCommand
+	answered    int
 	Video       driver.VideoConfig
 	// Seeks are the positions the app asked a video to jump to, oldest
 	// first.
@@ -225,6 +227,17 @@ func (a *App) dispatch(ev driver.Event) {
 	}
 	a.tree.Dispatch(ev)
 	a.Settle()
+}
+
+// inputBy reports the input the next step gives, a key
+// (driver.ModalityKeyboard) or a press (ModalityPointer), as it changes,
+// before what it causes, as platforms do.
+func (a *App) inputBy(m uint32) {
+	if a.target != nil || a.modality == m {
+		return
+	}
+	a.modality = m
+	a.tree.Dispatch(driver.Event{Kind: driver.EventInputModality, Count: m})
 }
 
 // send dispatches ev to v when v reports its kind, as platforms do.

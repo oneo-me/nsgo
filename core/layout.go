@@ -396,6 +396,12 @@ func (n *node) layoutStyle() layout.Style {
 			l.Size = layout.Size[layout.Length]{Width: layout.Px(float32(n.fill.Width)), Height: layout.Px(float32(n.fill.Height))}
 			l.MinSize, l.MaxSize = layout.Size[layout.Length]{}, layout.Size[layout.Length]{}
 		}
+		if h := n.hoist; h != nil && h.held > 0 {
+			// A max height of its own below the room stays.
+			if m := l.MaxSize.Height; m.Unit != layout.UnitPx || m.Value > float32(h.held) {
+				l.MaxSize.Height = layout.Px(float32(h.held))
+			}
+		}
 		if a := n.accessory; a != nil {
 			l.Size.Width = layout.Px(float32(a.width))
 			l.MinSize.Width, l.MaxSize.Width = layout.Auto, layout.Auto

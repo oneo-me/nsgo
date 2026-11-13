@@ -23,6 +23,8 @@ func (r *runtime) viewProp(p *core.View, name string, v js.Value) bool {
 		p.Label = stringOf(v)
 	case "accessibilityHint":
 		p.Hint = stringOf(v)
+	case "accessibilityDescription":
+		p.AccessibilityDescription = stringOf(v)
 	case "accessible":
 		p.Accessible = v.ToBoolean()
 	case "role":
@@ -38,6 +40,7 @@ func (r *runtime) viewProp(p *core.View, name string, v js.Value) bool {
 		pressed := o.get("pressed")
 		p.Pressed = boolFunc(defined(pressed) && pressed.String() == "true")
 		p.Busy = boolFunc(o.bool("busy", false))
+		p.Invalid = boolFunc(o.bool("invalid", false))
 		switch c := o.get("checked"); {
 		case !defined(c):
 			p.Checked, p.Indeterminate = nil, nil
@@ -555,6 +558,10 @@ func (r *runtime) inputProp(p *core.Input, name string, v js.Value) bool {
 		p.TestID = stringOf(v)
 	case "accessibilityLabel":
 		p.Label = stringOf(v)
+	case "accessibilityDescription":
+		p.AccessibilityDescription = stringOf(v)
+	case "accessibilityState":
+		p.Invalid = boolFunc(r.options(v).bool("invalid", false))
 	case "onChange":
 		p.OnChange = r.textHandler(v)
 	case "onSubmit":
@@ -767,7 +774,7 @@ var roles = map[string]core.Role{"button": core.RoleButton, "imagebutton": core.
 	"text": core.RoleText, "summary": core.RoleText, "search": core.RoleTextField, "combobox": core.RoleCombobox,
 	"checkbox": core.RoleCheckbox, "switch": core.RoleSwitch, "radio": core.RoleRadio,
 	"radiogroup": core.RoleRadioGroup, "tab": core.RoleTab, "tablist": core.RoleTabList, "menu": core.RoleMenu,
-	"menubar": core.RoleMenu, "menuitem": core.RoleMenuItem, "dialog": core.RoleDialog, "alert": core.RoleAlert,
+	"menubar": core.RoleMenu, "menuitem": core.RoleMenuItem, "dialog": core.RoleDialog, "alertdialog": core.RoleAlertDialog, "alert": core.RoleAlert,
 	"adjustable": core.RoleAdjustable, "spinbutton": core.RoleSpinButton, "scrollbar": core.RoleAdjustable,
 	"progressbar": core.RoleProgressBar, "timer": core.RoleText, "toolbar": core.RoleToolbar, "list": core.RoleNone,
 	"listbox": core.RoleListbox, "option": core.RoleOption, "group": core.RoleGroup, "region": core.RoleRegion,

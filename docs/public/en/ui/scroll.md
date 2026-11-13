@@ -47,7 +47,13 @@ core.Scroll{
 
 `OnScroll` reports the offset at most once a turn, or once per `ScrollEventThrottle`. `OnScrollDragStart`, `OnScrollDragEnd`, `OnMomentumStart`, `OnMomentumEnd` and `OnScrollEnd` bracket the user's gestures.
 
-`OffsetValues` follows the offset on the main thread, for a header that collapses without a commit per frame. `Ref` scrolls from code with `ScrollTo`, `ScrollToEnd` and `ZoomTo`.
+`OffsetValues` follows the offset on the main thread, for a header that collapses without a commit per frame. `Ref` scrolls from code with `ScrollTo`, `ScrollToEnd` and `ZoomTo`, and the ref of any view inside brings it into view with `Reveal`, scrolling every scroll view around it:
+
+```go
+row.Reveal(core.RevealOptions{Vertical: core.ScrollAlignCenter, Animated: true})
+```
+
+A view the keyboard moves the focus to scrolls into view by itself.
 
 ## Layout
 

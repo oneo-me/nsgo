@@ -64,6 +64,7 @@ func messaging(cx *core.Scope) core.Node {
 	message := core.NewSignal(cx, "")
 	sent := core.NewSignal(cx, 0)
 	saved := core.NewSignal(cx, "")
+	result := core.NewSignal(cx, "")
 	// Where the page's button and link are, which it posts as it loads.
 	var at struct{ Post, Save [2]core.Points }
 	web := &core.Ref{}
@@ -98,6 +99,7 @@ func messaging(cx *core.Scope) core.Node {
 			return fmt.Sprintf("hi #%d", sent.Get())
 		}},
 		Caption{Label: tr.MediaSaved(), Note: func() string { return or(saved.Get()) }},
+		Caption{Label: tr.MediaScriptResult(), Note: func() string { return or(result.Get()) }},
 		ui.Wrap{Children: []core.Node{
 			ui.Button{Text: tr.MediaPostToThePage(), OnPress: func() {
 				sent.Set(int(time.Now().UnixMilli() % 1000))
@@ -107,6 +109,17 @@ func messaging(cx *core.Scope) core.Node {
 				OnPress: func() { web.SendInput(core.WebClick(at.Post[0], at.Post[1])) }},
 			ui.Button{Text: tr.MediaSaveANote(), Variant: ui.ButtonSecondary, TestID: "save-note",
 				OnPress: func() { web.SendInput(core.WebClick(at.Save[0], at.Save[1])) }},
+			// A promise the page settles, answered as JSON.
+			ui.Button{Text: tr.MediaRunAScript(), Variant: ui.ButtonSecondary, TestID: "run-script", OnPress: func() {
+				web.Evaluate("Promise.resolve(document.body.childElementCount).then(n => ({elements: n > 0, sum: 6 * 7}))",
+					func(json string, err error) {
+						if err != nil {
+							result.Set(err.Error())
+							return
+						}
+						result.Set(json)
+					})
+			}},
 		}},
 	}}
 }

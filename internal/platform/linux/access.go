@@ -131,7 +131,7 @@ var roleNicks = [...]string{
 	driver.RoleCheckbox: "checkbox", driver.RoleSwitch: "switch", driver.RoleRadio: "radio", driver.RoleTab: "tab",
 	driver.RoleText: "label", driver.RoleTextField: "text-box", driver.RoleRadioGroup: "radio-group",
 	driver.RoleTabList: "tab-list", driver.RoleMenu: "menu", driver.RoleMenuItem: "menu-item",
-	driver.RoleDialog: "dialog", driver.RoleAlert: "alert", driver.RoleAdjustable: "slider", driver.RoleSpinButton: "spin-button", driver.RoleCombobox: "combo-box",
+	driver.RoleDialog: "dialog", driver.RoleAlertDialog: "alert-dialog", driver.RoleAlert: "alert", driver.RoleAdjustable: "slider", driver.RoleSpinButton: "spin-button", driver.RoleCombobox: "combo-box",
 	driver.RoleProgressBar: "progress-bar", driver.RoleTable: "table", driver.RoleGrid: "grid",
 	driver.RoleRowGroup: "row-group", driver.RoleRow: "row", driver.RoleColumnHeader: "column-header",
 	driver.RoleCell: "cell", driver.RoleListbox: "list-box", driver.RoleOption: "option", driver.RoleGroup: "group",
@@ -216,7 +216,7 @@ type accessState struct {
 	label, description, valueText string
 	min, max, now                 float32
 	ranged                        bool
-	states                        [7]int8 // disabled, selected, checked, pressed, expanded, hidden, busy: -1 unset, 0, 1, 2 mixed
+	states                        [8]int8 // disabled, selected, checked, pressed, expanded, hidden, busy, invalid: -1 unset, 0, 1, 2 mixed
 	testID                        string
 	set                           bool
 }
@@ -233,11 +233,11 @@ func (w *window) updateAccess(v *view) bool {
 		label = v.plain
 	}
 	old := v.access
-	n := accessState{label: label, description: p.Hint, valueText: p.Value.Text, set: true, testID: p.TestID}
+	n := accessState{label: label, description: p.HelpText(), valueText: p.Value.Text, set: true, testID: p.TestID}
 	if p.Value.IsRange() {
 		n.ranged, n.min, n.max, n.now = true, p.Value.Min, p.Value.Max, p.Value.Now
 	}
-	n.states = [7]int8{-1, -1, -1, -1, -1, -1, -1}
+	n.states = [8]int8{-1, -1, -1, -1, -1, -1, -1, -1}
 	bit := func(b bool) int8 {
 		if b {
 			return 1
@@ -268,6 +268,7 @@ func (w *window) updateAccess(v *view) bool {
 	}
 	n.states[5] = bit(p.ElementsHidden || v.style.Hidden)
 	n.states[6] = bit(p.Busy)
+	n.states[7] = bit(p.Invalid)
 	if n == old {
 		return false
 	}
@@ -305,7 +306,7 @@ func (w *window) updateAccess(v *view) bool {
 			gValueUnset(uintptr(unsafe.Pointer(&val)))
 		}
 	}
-	for i, nick := range []string{"disabled", "selected", "checked", "pressed", "expanded", "hidden", "busy"} {
+	for i, nick := range []string{"disabled", "selected", "checked", "pressed", "expanded", "hidden", "busy", "invalid"} {
 		s := n.states[i]
 		if old.set && s == old.states[i] {
 			continue
@@ -319,11 +320,16 @@ func (w *window) updateAccess(v *view) bool {
 			continue
 		}
 		var val gValue
-		if nick == "checked" || nick == "pressed" {
+		switch nick {
+		case "checked", "pressed":
 			// GTK reads a tristate as an int.
 			gValueInit(uintptr(unsafe.Pointer(&val)), gTypeInt)
 			gValueSetInt(&val, enumValue("tristate", [...]string{"false", "true", "mixed"}[s]))
-		} else {
+		case "invalid":
+			// And GtkAccessibleInvalidState, whose true is 1.
+			gValueInit(uintptr(unsafe.Pointer(&val)), gTypeInt)
+			gValueSetInt(&val, int32(s))
+		default:
 			gValueInit(uintptr(unsafe.Pointer(&val)), gTypeBoolean)
 			gValueSetBoolean(&val, int32(s))
 		}

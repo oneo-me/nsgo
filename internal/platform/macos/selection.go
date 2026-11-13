@@ -57,6 +57,9 @@ func (s *selection) Len() int { return len(s.texts) }
 // Content implements core.SelectionTexts.
 func (s *selection) Content(i int) string { return s.texts[i].plain }
 
+// Spans implements driver.SelectionSpans.
+func (s *selection) Spans(i int) []driver.TextSpan { return s.texts[i].spans }
+
 // Frame implements core.SelectionTexts.
 func (s *selection) Frame(i int) driver.Bounds { return s.frames[i] }
 

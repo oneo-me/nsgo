@@ -44,6 +44,9 @@ type menuContext struct {
 	popup, starting, ending part
 	// open says the popup holding this level is open.
 	open func() bool
+	// keys is this level's items and keys in a desktop popup; nil in a
+	// sheet.
+	keys *menuLevel
 }
 
 // shown reports, tracked, whether a sheet shows this level's items.
@@ -88,7 +91,7 @@ type menuParts struct {
 // point when anchor is nil, or its sheet, with the context its items
 // read.
 func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal[core.Point], p menuParts,
-	items []core.Node) core.Node {
+	level *menuLevel, items []core.Node) core.Node {
 	onSheet := p.presentation == PresentSheet
 	path := core.NewSignalFunc(cx, []int(nil), slices.Equal)
 	openSub := core.NewSignal(cx, 0)
@@ -124,20 +127,23 @@ func menuSurface(cx *core.Scope, st *popup, anchor *core.Ref, point *core.Signal
 	}
 	m := newPopupMotion(cx, st.open, p.starting, p.ending)
 	st.lifecycle(cx, m.shown.Get)
+	ctx.keys = level
 	return core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 		openSub.Set(0)
 		menuKey.Provide(cx, ctx)
 		onSheetKey.Provide(cx, false)
-		o := m.overlay(core.Overlay{
+		o, popup := heldToRoom(core.Overlay{
 			Anchor: anchor, AnchorContent: anchor != nil, Placement: p.placement, Align: p.align, Offset: p.offset, Margin: p.margin,
-			Children: items, Role: core.RoleMenu, Label: p.label, TestID: p.testID, OnPosition: p.onPosition,
+			Children: items, Role: core.RoleMenu, Label: p.label, TestID: p.testID, OnPosition: p.onPosition, Ref: level.panel,
 			OnPressOutside: func(core.Point) { dismiss(ReasonPressOutside) },
 			OnCancel:       cancel,
-		}, p.popup)
+		}, p.popup, level)
+		o = m.overlay(o, popup)
 		if anchor == nil {
 			o.AnchorBounds = func() core.Bounds { return core.Bounds{Origin: point.Get()} }
 		}
-		return o
+		level.opened(cx)
+		return core.Group{o, level.keys(st.open)}
 	}}
 }
 
@@ -195,7 +201,8 @@ type Menu struct {
 func (m Menu) Render(cx *core.Scope) core.Node {
 	st := newPopup(cx, m.Open, m.DefaultOpen, m.OnOpenChange, m.OnOpen, m.OnClose)
 	st.onCancel = m.OnCancel
-	anchor := new(core.Ref)
+	anchor, level := new(core.Ref), newMenuLevel(cx)
+	st.focusBack(cx, anchor, level.panel)
 	align := m.Align
 	if align == 0 {
 		align = core.AlignStart
@@ -204,7 +211,11 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 	return core.Group{
 		barTrigger(cx, around, core.View{Ref: anchor, Class: m.Class, Style: m.Style, StyleFunc: m.StyleFunc, Label: m.Label, TestID: m.TestID, OnLayout: m.OnLayout, Tooltip: m.Tooltip, Role: core.RoleButton,
 			Expanded: st.open, ShowsExpanded: true,
-			OnPress:      func(core.PressEvent) { st.set(!st.open(), ReasonTriggerPress) },
+			OnPress: func(e core.PressEvent) {
+				// The keyboard's opening focuses the first item.
+				level.focusFirst = e.Keyboard && !st.open()
+				st.set(!st.open(), ReasonTriggerPress)
+			},
 			OnMouseEnter: barMenu(cx, around, st),
 			Children:     []core.Node{m.Trigger}}),
 		menuSurface(cx, st, anchor, nil, menuParts{placement: m.Placement, align: align, offset: m.Offset, margin: m.Margin, onPosition: m.OnPosition,
@@ -212,7 +223,7 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 			popup:        parts.Of(m.PopupClass, m.PopupStyle, m.PopupStyleFunc),
 			backdrop:     parts.Of(m.BackdropClass, m.BackdropStyle, m.BackdropStyleFunc),
 			starting:     parts.Part{Class: m.StartingClass, Style: m.StartingStyle},
-			ending:       parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, m.Children),
+			ending:       parts.Part{Class: m.EndingClass, Style: m.EndingStyle}}, level, m.Children),
 	}
 }
 
@@ -269,12 +280,26 @@ func (i MenuItem) Render(cx *core.Scope) core.Node {
 			role = core.RoleMenuItemCheckbox
 		}
 	}
-	return core.View{Class: i.Class, Style: i.Style, StyleFunc: merged(i.StyleFunc, menu.hiddenUnlessShown()),
+	ref := new(core.Ref)
+	var item *menuItem
+	if menu != nil && menu.keys != nil {
+		item = menu.keys.add(cx, ref, i.Disabled, nil)
+	}
+	return core.View{Ref: ref, Class: i.Class, Style: i.Style, StyleFunc: merged(i.StyleFunc, menu.hiddenUnlessShown()),
 		Role: role, Label: i.Label, TestID: i.TestID, OnLayout: i.OnLayout, Tooltip: i.Tooltip, Disabled: i.Disabled, Checked: i.Checked, Children: children,
-		// Over another item, a submenu of its level closes.
+		// Over another item, a submenu of its level closes, and the keys
+		// go on from this one.
 		OnMouseEnter: func(core.MouseEvent) {
 			if menu != nil && !menu.sheet {
 				menu.openSub.Set(0)
+			}
+			if item != nil {
+				menu.keys.current = item
+			}
+		},
+		OnFocus: func() {
+			if item != nil {
+				menu.keys.current = item
 			}
 		},
 		OnPress: func(core.PressEvent) {

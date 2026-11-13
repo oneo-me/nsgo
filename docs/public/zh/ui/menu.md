@@ -16,7 +16,7 @@ ui.Menu{Trigger: ui.Button{Text: "操作", Variant: ui.ButtonSecondary}, Childre
 }}
 ```
 
-菜单自己打开和关闭；`Open` 和 `OnOpenChange` 让应用保存它的状态。`Trigger` 是按钮的外观和内容，按压由菜单接管。`MaxHeight` 让条目超过一定高度后滚动。
+菜单自己打开和关闭；`Open` 和 `OnOpenChange` 让应用保存它的状态。`Trigger` 是按钮的外观和内容，按压由菜单接管。弹出层不会超出触发器旁的空间：它在能完整放下的一侧打开，条目超出该空间或 `MaxHeight` 后滚动。
 
 ## 条目
 
@@ -48,7 +48,7 @@ ui.ContextMenu{Trigger: fileRow, Children: []core.Node{
 
 ## 行为
 
-Escape、返回和点击外部会关闭菜单。菜单是由 `Placement` 和 `Align` 定位的弹出层，按要求呈现时则是从底部弹出的 sheet。键盘可以在条目间移动、打开子菜单并用回车选择。
+Escape、返回和点击外部会关闭菜单。菜单是由 `Placement` 和 `Align` 定位的弹出层，按要求呈现时则是从底部弹出的 sheet。在桌面上，下、上、Home、End、Page Down 和 Page Up 在可用条目间移动，从指针所在的条目开始，右键打开子菜单、左键关闭，回车选择。用键盘打开的菜单会聚焦第一个条目，菜单关闭时焦点回到触发器。
 
 ## 无障碍
 

@@ -53,18 +53,18 @@ core.List{
 
 `Header`, `Footer`, `Empty` and `Separator` hold the content around and between rows. `NumColumns` places rows side by side, `Gap` and `ColumnGap` separate them, and `Horizontal` scrolls across. `StickyHeaderIndices` pins those rows to the start of the viewport until the next one pushes them out, and `StickyHeaderOffset` keeps a header above them clear.
 
-`OnViewableItemsChange` reports the rows in view by `ViewabilityConfig`'s thresholds, and `OnLoadMore` runs as the viewport nears the end, once per number of rows. `OnLoadMoreAtStart` does the same at the beginning, and `InitialScrollIndex` opens the list at a row. `Inverted` puts row 0 at the end, as a chat does, and `MaintainVisibleContentPosition` follows the end of a growing list while the user is near it.
+`OnViewableItemsChange` reports the rows in view by `ViewabilityConfig`'s thresholds, and `OnLoadMore` runs as the viewport nears the end, once per number of rows. `OnLoadMoreAtStart` does the same at the beginning, and `InitialScrollIndex` opens the list at a row. `Alignment: core.ListAlignEnd` rests a list at its end, as a chat does with its rows in reading order: it opens at its newest row, follows new rows while the user is at the end, and holds a short conversation at the bottom. `Inverted` puts row 0 at the end instead, and `MaintainVisibleContentPosition` follows the end of a growing list while the user is near it.
 
 ```go
 core.List{Ref: list, Count: count, EstimatedSize: 64, Row: row, OnLoadMore: loadMore,
 	StickyHeaderIndices: headers(cx), Footer: core.View{Style: core.Style{Height: core.Pt(24)}}}
 ```
 
-`list.ScrollToIndexAt(index, 0.5, 0, true)` scrolls a row to the middle of the viewport, and `list.ScrollToEnd(true)` to the end. A list can also lie in one page with other content: set `Viewport: core.ListViewportParent`, and the scroll view around it scrolls the list with the rest.
+`list.ScrollToIndexAt(index, 0.5, 0, true)` scrolls a row to the middle of the viewport, and `list.ScrollToEnd(true)` to the end. `list.ListPosition()` reads where the viewport starts, a row and how far into it, to keep a reading position: `list.ScrollToIndexAt(p.Index, 0, -p.Offset, false)` brings a list made anew back there. A list can also lie in one page with other content: set `Viewport: core.ListViewportParent`, and the scroll view around it scrolls the list with the rest.
 
 ## Tables
 
-`base/datatable` shows a table of a million rows with virtualized rows and columns, a sticky header, sorting, selecting, resizing and moving columns, and the app's own cells. `base.Table` is a plain table of the app's rows for smaller data, and `base/plot` draws charts.
+`base/datatable` shows a table of a million rows with virtualized rows and columns, a sticky header, columns fixed at the left (`Fixed`) or the right (`FixedRight`) while the others scroll under them, sorting, selecting, resizing and moving columns, and the app's own cells. `base.Table` is a plain table of the app's rows for smaller data, and `base/plot` draws charts.
 
 ## Next
 

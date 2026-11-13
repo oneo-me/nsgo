@@ -86,7 +86,7 @@ func TestTextViewStreamsWithACaret(t *testing.T) {
 	if !strings.Contains(app.Find("id:caret").Parent.Parent.Text, "two") {
 		t.Error("the caret is not at the end of the last item")
 	}
-	md.Set("Done\n\n---")
+	md.Set("Done\n\n---\n")
 	app.Settle()
 	if p := app.Find("id:caret").Parent.Parent; p != nil && p.Kind == nsgotest.KindText {
 		t.Error("after a rule the caret is not on a line of its own")

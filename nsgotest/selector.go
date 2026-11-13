@@ -418,7 +418,7 @@ func (v *View) showsText(m textMatch) bool {
 	case v.Node != nil:
 		return m.matches(v.Node.Label)
 	case v.Kind == driver.KindText:
-		return m.matches(v.Text) || v.spanAt(m) >= 0
+		return m.matches(driver.VisibleText(v.Text, v.Spans)) || v.spanAt(m) >= 0
 	case v.Kind == driver.KindInput:
 		return v.Text != "" && m.matches(v.Text) || v.Text == "" && v.Input.Placeholder != "" && m.matches(v.Input.Placeholder)
 	}
@@ -432,7 +432,7 @@ func (v *View) spanAt(m textMatch) int {
 		return -1
 	}
 	for _, sp := range v.Spans {
-		if sp.Start >= 0 && sp.Start < sp.End && sp.End <= len(v.Text) && m.matches(v.Text[sp.Start:sp.End]) {
+		if !sp.Hidden && sp.Start >= 0 && sp.Start < sp.End && sp.End <= len(v.Text) && m.matches(v.Text[sp.Start:sp.End]) {
 			return sp.Start
 		}
 	}
@@ -447,7 +447,7 @@ func (v *View) textWithin() string {
 			if b.Len() > 0 {
 				b.WriteByte(' ')
 			}
-			b.WriteString(strings.TrimSpace(v.Text))
+			b.WriteString(strings.TrimSpace(driver.VisibleText(v.Text, v.Spans)))
 		}
 		for _, c := range v.Children {
 			walk(c)
@@ -462,7 +462,7 @@ var roles = map[driver.Role]string{
 	driver.RoleCheckbox: "checkbox", driver.RoleSwitch: "switch", driver.RoleRadio: "radio", driver.RoleTab: "tab",
 	driver.RoleText: "text", driver.RoleTextField: "textbox", driver.RoleAdjustable: "adjustable",
 	driver.RoleProgressBar: "progressbar", driver.RoleRadioGroup: "radiogroup", driver.RoleTabList: "tablist",
-	driver.RoleMenu: "menu", driver.RoleMenuItem: "menuitem", driver.RoleDialog: "dialog", driver.RoleAlert: "alert",
+	driver.RoleMenu: "menu", driver.RoleMenuItem: "menuitem", driver.RoleDialog: "dialog", driver.RoleAlertDialog: "alertdialog", driver.RoleAlert: "alert",
 	driver.RoleTable: "table", driver.RoleGrid: "grid", driver.RoleRowGroup: "rowgroup", driver.RoleRow: "row",
 	driver.RoleColumnHeader: "columnheader", driver.RoleCell: "cell", driver.RoleListbox: "listbox",
 	driver.RoleOption: "option", driver.RoleGroup: "group", driver.RoleRegion: "region",

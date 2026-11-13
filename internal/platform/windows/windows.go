@@ -225,6 +225,7 @@ type view struct {
 	text             drawnText
 	content          driver.Bounds
 	plain            string
+	spans            []driver.TextSpan
 	selStart, selEnd int
 
 	// The shadow drawn under the background, and the box shadows, by
@@ -1025,7 +1026,7 @@ func (w *window) apply(b *driver.MountBatch) {
 			v.text, _ = it.Text.Layout.(drawnText)
 			v.content = it.Text.Content
 			if v.plain != it.Text.Text {
-				v.plain = it.Text.Text
+				v.plain, v.spans = it.Text.Text, it.Text.Spans
 				w.accessChanged(v, true)
 			}
 		case driver.ItemInput:

@@ -96,6 +96,8 @@ const (
 	propLiveSetting         = 30135
 	propHeadingLevel        = 30173
 	propIsDialog            = 30174
+	propFullDescription     = 30159
+	propIsDataValidForForm  = 30103
 
 	ctButton      = 50000
 	ctCheckBox    = 50002
@@ -308,6 +310,8 @@ func patternIID(id uintptr) (guid, bool) {
 type uiaSpec struct {
 	control                        int32
 	name, help, automationID       string
+	description                    string
+	invalid                        bool
 	enabled, focusable, focused    bool
 	invoke, ranged, expandable     bool
 	selectable, selected, expanded bool
@@ -329,6 +333,7 @@ var uiaControls = [...]int32{
 	driver.RoleOption: ctListItem, driver.RoleGroup: ctGroup, driver.RoleRegion: ctGroup,
 	driver.RoleNavigation: ctGroup, driver.RoleTree: ctTree, driver.RoleTreeItem: ctTreeItem,
 	driver.RoleToolbar: ctToolBar, driver.RoleMenuItemCheckbox: ctMenuItem, driver.RoleMenuItemRadio: ctMenuItem,
+	driver.RoleAlertDialog: ctWindow,
 }
 
 // groups reports whether role groups the texts and images inside it.
@@ -379,7 +384,7 @@ func (e *uiaElement) spec(v *view) uiaSpec {
 			invoke: n.Role == driver.RoleButton || n.Role == driver.RoleLink, selectable: n.Selected, selected: n.Selected}
 	}
 	p := &v.props
-	s := uiaSpec{name: p.Label, help: p.Hint, automationID: p.TestID, enabled: !p.Disabled, toggle: -1, live: p.LiveRegion}
+	s := uiaSpec{name: p.Label, help: p.Hint, description: p.Description, invalid: p.Invalid, automationID: p.TestID, enabled: !p.Disabled, toggle: -1, live: p.LiveRegion}
 	pressable := takesPresses(v)
 	switch {
 	case int(p.Role) < len(uiaControls) && uiaControls[p.Role] != 0:
@@ -404,7 +409,7 @@ func (e *uiaElement) spec(v *view) uiaSpec {
 			s.name = groupedText(v)
 		}
 	}
-	s.heading, s.dialog = p.Role == driver.RoleHeader, p.Role == driver.RoleDialog
+	s.heading, s.dialog = p.Role == driver.RoleHeader, p.Role == driver.RoleDialog || p.Role == driver.RoleAlertDialog
 	if p.Role == driver.RoleAlert && s.live == driver.LiveRegionNone {
 		s.live = driver.LiveRegionAssertive
 	}
@@ -575,6 +580,10 @@ func uiaGetPropertyValue(i *uiaIface, id uintptr, out *variant) uintptr {
 		out.setString(s.name)
 	case propHelpText:
 		out.setString(s.help)
+	case propFullDescription:
+		out.setString(s.description)
+	case propIsDataValidForForm:
+		out.setBool(!s.invalid)
 	case propAutomationID:
 		out.setString(s.automationID)
 	case propClassName:

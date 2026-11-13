@@ -393,3 +393,43 @@ func TestTextPressesOnlyOnLinks(t *testing.T) {
 		}
 	}
 }
+
+// spannedTexts are fakeTexts that tell their spans.
+type spannedTexts struct {
+	*fakeTexts
+	spans [][]TextSpan
+}
+
+func (s spannedTexts) Spans(i int) []TextSpan { return s.spans[i] }
+
+// A copy leaves out the hidden spans of every text it takes, inside the
+// selection and across its ends.
+func TestSelectionCopiesLeaveHiddenSpansOut(t *testing.T) {
+	texts := spannedTexts{column(), [][]TextSpan{
+		{{Start: 0, End: 6}, {Start: 6, End: 11, Hidden: true}}, // "Hello " shown, "world" hidden
+		nil,
+		{{Start: 0, End: 2, Hidden: true}, {Start: 2, End: 4}}, // "La" hidden, "st" shown
+	}}
+	var m SelectionModel
+	m.Press(texts, at(0, 5), 1, false)
+	m.Drag(texts, at(200, 110))
+	wantText(t, &m, texts, "Hello \nSecond line\nmore text\nst")
+	// Without spans, as before.
+	wantText(t, &m, column(), "Hello world\nSecond line\nmore text\nLast")
+}
+
+func TestCopiedTextCutsHiddenSpansAtTheRangesEnds(t *testing.T) {
+	spans := []TextSpan{{Start: 0, End: 3}, {Start: 3, End: 8, Hidden: true}, {Start: 8, End: 12}}
+	text := "abcHIDDEdefg"
+	for _, c := range []struct {
+		from, to int
+		want     string
+	}{{0, 12, "abcdefg"}, {1, 5, "bc"}, {5, 10, "de"}, {4, 7, ""}} {
+		if got := CopiedText(text, spans, c.from, c.to); got != c.want {
+			t.Errorf("CopiedText(%d, %d) = %q, want %q", c.from, c.to, got, c.want)
+		}
+	}
+	if got := VisibleText("a"+string(AttachmentRune)+"b", []TextSpan{{Start: 0, End: 1, Hidden: true}}); got != string(AttachmentRune)+"b" {
+		t.Errorf("VisibleText = %q: attachments keep their place", got)
+	}
+}

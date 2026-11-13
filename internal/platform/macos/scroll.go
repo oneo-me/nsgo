@@ -603,6 +603,7 @@ func (v *view) reportScroll() {
 		return
 	}
 	s.report = false
+	v.updateAXBar(true)
 	if v.events.Has(driver.EventScroll) {
 		v.surface.engine.Dispatch(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: v.reported(), Value: v.zoomValue(), Count: s.applied})
 	}

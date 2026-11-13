@@ -35,6 +35,13 @@ type TextSpan struct {
 	// Link marks a span with a press handler: a press on it reports
 	// EventPress with Index set to a byte offset inside it.
 	Link bool
+	// Hidden hides the span in place, as CSS's visibility: hidden on an
+	// inline element: its characters lay out as visible ones, but
+	// nothing of them is drawn, they take no press, and copies and screen
+	// readers leave them out. It changes no line. The core draws it in a
+	// transparent color with no background, so an engine that does not
+	// skip it draws nothing.
+	Hidden bool
 	// Background is drawn behind the span's characters: a box per line
 	// from the font's ascent to its descent, behind the selection and
 	// the glyphs.
@@ -63,6 +70,50 @@ type TextBackground struct {
 	Color Color
 	// Radius rounds each line's box, at most to half its height.
 	Radius Points
+}
+
+// HasHidden reports whether a span of t is hidden.
+func (t *AttributedText) HasHidden() bool {
+	for _, sp := range t.Spans {
+		if sp.Hidden {
+			return true
+		}
+	}
+	return false
+}
+
+// CopiedText is what a copy of text's bytes from to to takes: its hidden
+// spans and attachments left out.
+func CopiedText(text string, spans []TextSpan, from, to int) string {
+	return strings.ReplaceAll(withoutHidden(text, spans, from, to), string(AttachmentRune), "")
+}
+
+// VisibleText is text with its hidden spans left out, its attachments'
+// places kept.
+func VisibleText(text string, spans []TextSpan) string { return withoutHidden(text, spans, 0, len(text)) }
+
+func withoutHidden(text string, spans []TextSpan, from, to int) string {
+	var b strings.Builder
+	at := from
+	for _, sp := range spans {
+		if !sp.Hidden || sp.End <= at || sp.Start >= to {
+			continue
+		}
+		if sp.Start > at {
+			b.WriteString(text[at:sp.Start])
+		}
+		at = max(at, sp.End)
+	}
+	if at < to {
+		b.WriteString(text[at:to])
+	}
+	return b.String()
+}
+
+// ShownText is text as screen readers read it: its hidden spans left
+// out.
+func ShownText(text string, spans []TextSpan) string {
+	return CopiedText(text, spans, 0, len(text))
 }
 
 // AttachmentRune stands in a text for an attachment, as the object

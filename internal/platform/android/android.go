@@ -1792,7 +1792,12 @@ func writeViewStyle(w *writer, v *driver.ViewStyle) {
 
 // writeViewProps writes a view's props as NsgoView.props reads it.
 func writeViewProps(w *writer, p *driver.ViewProps) {
-	w.byte(byte(p.Role))
+	role := p.Role
+	if role == driver.RoleAlertDialog {
+		// The runtime knows a dialog, which names its pane alike.
+		role = driver.RoleDialog
+	}
+	w.byte(byte(role))
 	w.flags(p.Disabled, p.Selected, p.Checked, p.Indeterminate)
 	w.str(p.Label)
 	w.str(p.TestID)
@@ -1803,7 +1808,7 @@ func writeViewProps(w *writer, p *driver.ViewProps) {
 	w.points(a.FailOffsetX)
 	w.points(a.FailOffsetY)
 	// Accessibility beyond the role, label and states.
-	w.str(p.Hint)
+	w.str(p.HelpText())
 	w.flags(p.Expandable, p.Expanded, p.ElementsHidden, p.Value.IsRange())
 	w.byte(byte(p.Accessible))
 	w.byte(byte(p.LiveRegion))

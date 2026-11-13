@@ -118,3 +118,27 @@ func TestLanguage(t *testing.T) {
 		t.Errorf("fr shows %q, want en", got)
 	}
 }
+
+// Times take the hour cycle the user set, where they set one.
+func TestWithHourCycle(t *testing.T) {
+	at := time.Date(2026, 1, 5, 13, 7, 0, 0, time.UTC)
+	for _, c := range []struct {
+		settings core.LocaleSettings
+		want     string
+	}{
+		{core.LocaleSettings{}, "1:07 PM"},
+		{core.LocaleSettings{HourCycle: "h23"}, "13:07"},
+	} {
+		var got string
+		nsgotest.Start(t, func(cx *core.Scope) core.Node {
+			got = i18n.FormatDate(i18n.WithHourCycle(cx, "en"), at, i18n.DateOptions{Time: i18n.ShortStyle})
+			return core.View{}
+		}, nsgotest.Environment(core.Environment{Locale: "en-US", LocaleSettings: c.settings}))
+		if got != c.want {
+			t.Errorf("with %+v: %q, want %q", c.settings, got, c.want)
+		}
+	}
+	if got := i18n.WithHourCycle(nil, "en-u-hc-h12"); got != "en-u-hc-h12" {
+		t.Errorf("a tag with its own extension became %q", got)
+	}
+}

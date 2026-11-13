@@ -16,7 +16,7 @@ ui.Menu{Trigger: ui.Button{Text: "Actions", Variant: ui.ButtonSecondary}, Childr
 }}
 ```
 
-The menu opens and closes itself; `Open` and `OnOpenChange` let the app hold it. `Trigger` is the button's look and content, and the menu takes its presses. `MaxHeight` scrolls the items past a height.
+The menu opens and closes itself; `Open` and `OnOpenChange` let the app hold it. `Trigger` is the button's look and content, and the menu takes its presses. A popup never runs past the room beside its trigger: it opens on the side where it fits whole and its items scroll past that room, or past `MaxHeight`.
 
 ## Items
 
@@ -48,7 +48,7 @@ ui.ContextMenu{Trigger: fileRow, Children: []core.Node{
 
 ## Behavior
 
-Escape, back and a press outside close a menu. The menu is a popup placed by `Placement` and `Align`, or a sheet from the bottom when presented so. The keyboard moves through items, opens submenus and chooses with Return.
+Escape, back and a press outside close a menu. The menu is a popup placed by `Placement` and `Align`, or a sheet from the bottom when presented so. On a desktop, Down, Up, Home, End, Page Down and Page Up move through the enabled items, starting at the one the pointer is over, Right opens a submenu and Left closes it, and Return chooses. A menu opened with the keyboard focuses its first item, and the focus goes back to the trigger as the menu closes.
 
 ## Accessibility
 

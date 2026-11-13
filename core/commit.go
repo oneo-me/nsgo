@@ -25,6 +25,10 @@ func (t *Tree) Commit() *driver.MountBatch { return t.commit(false) }
 // Go's collector paid for on the page's thread.
 func (t *Tree) CommitShared() *driver.MountBatch { return t.commit(true) }
 
+// hiddenInk is a hidden span's color: transparent, and not 0, which
+// some engines read as none set.
+const hiddenInk = driver.Color(0xffffff00)
+
 func (t *Tree) commit(shared bool) *driver.MountBatch {
 	if !t.changed {
 		return nil
@@ -40,6 +44,7 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 		if t.focusMoved {
 			t.updateFocusWithin()
 			t.updateFocusVisible()
+			t.updateFocusHint()
 		}
 		if t.pointersMoved {
 			t.updatePointerEvents()
@@ -201,6 +206,10 @@ func (t *Tree) commitRound() {
 	}
 	t.markHeaderScrolls()
 	t.markEdgeScrolls()
+	t.revealViews()
+	if len(t.view.hosted) > 0 {
+		t.placeTabStops(t.view)
+	}
 	t.sendSticky()
 	t.sizeCanvases()
 	t.laidOut = t.laidOut[:0]
@@ -365,9 +374,14 @@ func (t *Tree) resolve(n *node, inherited textFields, force bool) {
 					spanStyle := scaleText(own.textStyle(), scale)
 					spanStyle.RTL = ts.RTL
 					spanStyle.Align = sidedAlign(spanStyle.Align, ts.RTL)
-					at.Spans = append(at.Spans, driver.TextSpan{Start: start, End: b.Len(),
-						Style: spanStyle, Link: sp.press != nil,
-						Background: driver.TextBackground{Color: currentIn(sp.style.Background, spanStyle.Color), Radius: sp.style.CornerRadius}})
+					span := driver.TextSpan{Start: start, End: b.Len(), Style: spanStyle, Link: sp.press != nil,
+						Background: driver.TextBackground{Color: currentIn(sp.style.Background, spanStyle.Color), Radius: sp.style.CornerRadius}}
+					if sp.style.Visibility == VisibilityHidden {
+						// In place: laid out, drawn as nothing, no link.
+						span.Hidden, span.Link, span.Background = true, false, driver.TextBackground{}
+						span.Style.Color, span.Style.DecorationColor = hiddenInk, hiddenInk
+					}
+					at.Spans = append(at.Spans, span)
 				}
 				at.Text = b.String()
 			}

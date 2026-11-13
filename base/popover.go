@@ -56,7 +56,8 @@ func (p Popover) Render(cx *core.Scope) core.Node {
 	m := newPopupMotion(cx, st.open, parts.Part{Class: p.StartingClass, Style: p.StartingStyle},
 		parts.Part{Class: p.EndingClass, Style: p.EndingStyle})
 	st.lifecycle(cx, m.shown.Get)
-	anchor := new(core.Ref)
+	anchor, panel := new(core.Ref), new(core.Ref)
+	st.focusBack(cx, anchor, panel)
 	outside := func() { st.cancel(ReasonPressOutside, p.NoCloseOnPressOutside) }
 	around := popupBar(cx)
 	return core.Group{
@@ -67,7 +68,7 @@ func (p Popover) Render(cx *core.Scope) core.Node {
 		core.Show{When: m.shown.Get, Then: func(cx *core.Scope) core.Node {
 			popup := m.overlay(core.Overlay{
 				Anchor: anchor, AnchorContent: true, Placement: p.Placement, Align: p.Align, Offset: p.Offset, Margin: p.Margin,
-				Children: p.Children, Role: core.RoleDialog, OnPosition: p.OnPosition,
+				Children: p.Children, Role: core.RoleDialog, OnPosition: p.OnPosition, Ref: panel,
 				OnCancel: func() { st.cancel(ReasonCancel, p.NoCloseOnEscape) },
 			}, parts.Of(p.PopupClass, p.PopupStyle, p.PopupStyleFunc))
 			if core.Untracked(cx, cx.Env().Desktop) {

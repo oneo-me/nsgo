@@ -31,6 +31,87 @@ type hoistNode struct {
 	// of size kept with the view at place in its parent.
 	covering bool
 	covered  *covered
+	// tabAfter is a dialog overlay's place in the Tab order
+	// (placeTabStops).
+	tabAfter NodeID
+	// held is the height a HoldToRoom overlay is held to, 0 for none.
+	held Points
+}
+
+// hold holds overlay n to height, 0 for none, and lays it out again in
+// space if that changed.
+func (t *Tree) hold(n *node, height Points, space Size) {
+	if n.hoist.held == height {
+		return
+	}
+	n.hoist.held = height
+	n.lstyleOK = false
+	n.lstate.Invalidate()
+	t.layoutRoot(n, space, false)
+}
+
+// placeTabStops gives each dialog overlay host hosts, and those inside
+// its modals, its place in the Tab order: the native view right before
+// it where the app put it, other overlays passed over, so a popover's
+// content follows its trigger. Menus and lists of options keep their
+// place: their own keys move the focus.
+func (t *Tree) placeTabStops(host *node) {
+	for _, n := range host.hosted {
+		h := n.hoist
+		if n.deleted {
+			continue
+		}
+		if h.modal != nil {
+			t.placeTabStops(n)
+			continue
+		}
+		var after NodeID
+		if h.overlay != nil && n.props.Role == RoleDialog {
+			if p := nativeBefore(n); p != nil {
+				after = p.id
+			}
+		}
+		if after != h.tabAfter {
+			h.tabAfter = after
+			t.mark(n)
+		}
+	}
+}
+
+// nativeBefore is the native view right before n in depth-first order
+// where the app put it: the last one inside the siblings before it,
+// regions opened and hoisted views passed over, else the nearest native
+// view around it.
+func nativeBefore(n *node) *node {
+	for c := n; c.parent != nil; c = c.parent {
+		p := c.parent
+		for j := slices.Index(p.children, c) - 1; j >= 0; j-- {
+			if last := lastNative(p.children[j]); last != nil {
+				return last
+			}
+		}
+		if p.kind != 0 {
+			return p
+		}
+	}
+	return nil
+}
+
+// lastNative is the last native view in n's subtree in depth-first
+// order, hoisted views passed over.
+func lastNative(n *node) *node {
+	if n.deleted || n.hoist != nil {
+		return nil
+	}
+	for i := len(n.children) - 1; i >= 0; i-- {
+		if l := lastNative(n.children[i]); l != nil {
+			return l
+		}
+	}
+	if n.kind != 0 {
+		return n
+	}
+	return nil
 }
 
 // covered is where an overlay's Cover view is in it.
@@ -269,6 +350,11 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 	t.layoutRoot(n, hostSize, false)
 	l := &n.lstate.Rounded
 	size := Size{Width: Points(l.Size.Width), Height: Points(l.Size.Height)}
+	if held := n.hoist.held; held > 0 && size.Height >= held {
+		// Held to its last room: its side is picked at its natural size.
+		t.hold(n, 0, hostSize)
+		size = Size{Width: Points(l.Size.Width), Height: Points(l.Size.Height)}
+	}
 	var origin Point
 	anchor, ok := t.anchorRect(o, host)
 	if !ok && n.hoist.anchorBounds != nil {
@@ -310,6 +396,17 @@ func (t *Tree) placeOverlay(n *node, host *node, hostSize Size) {
 			side, room = want, area.Size
 		} else {
 			origin, side, room = place(anchor, size, area, want, o.Align, o.Offset, rtl)
+			if o.HoldToRoom {
+				var held Points
+				if size.Height > room.Height {
+					held = room.Height
+				}
+				if held != n.hoist.held {
+					t.hold(n, held, hostSize)
+					size = Size{Width: Points(l.Size.Width), Height: Points(l.Size.Height)}
+					origin, side, room = place(anchor, size, area, side, o.Align, o.Offset, rtl)
+				}
+			}
 		}
 		origin = t.onPixel(origin)
 		pos := OverlayPosition{Placement: side, Bounds: Bounds{Origin: origin, Size: size}, Available: room}

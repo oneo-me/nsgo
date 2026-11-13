@@ -1790,3 +1790,21 @@ func TestRichEditorTakesTyping(t *testing.T) {
 		t.Fatalf("the commit took %d changes", changes)
 	}
 }
+
+// TestWebEvaluate runs a script in the inline page, a promise it settles,
+// and shows its result as JSON: answered by the platform's web view on a
+// target, by the test as the page would headless.
+func TestWebEvaluate(t *testing.T) {
+	app := startDesktop(t)
+	open(app, "WebView and Video")
+	app.WaitFor("id:bridge", 10*time.Second)
+	if nsgotest.Target() != "" {
+		// The page loads before it can answer.
+		time.Sleep(2 * time.Second)
+	}
+	app.Press("id:run-script")
+	if nsgotest.Target() == "" {
+		app.AnswerScript("id:bridge", `{"elements":true,"sum":42}`, "")
+	}
+	app.WaitFor(`text:{"elements":true,"sum":42}`, 10*time.Second)
+}

@@ -48,7 +48,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 
 `Overlay` and `Modal` stay in the shadow tree where they are built, for their owner, context, inherited text and lifetime. Their native views are hoisted into their host: the nearest modal around them, or the root view. Each is a layout root of its own at the host's size, placed after the main layout.
 
-- An overlay with an anchor goes beside it as NSH's `place` does: the side asked unless only the opposite side fits or has more room, aligned along it, then clamped into the safe area. `OnPosition` reports the side, the frame and the room on that side, again when they change.
+- An overlay with an anchor goes beside it as NSH's `place` does: the side asked unless only the opposite side fits or has more room, aligned along it, then clamped into the safe area. `OnPosition` reports the side, the frame and the room on that side, again when they change. A `HoldToRoom` overlay picks its side at its natural height and is then held to the room there (`hoistNode.held`, a max height its layout takes, kept below one of its own), laid out again at its natural height only while that hold still limits it; a menu's items scroll past it.
 - A modal provides the insets its content keeps clear of; a screen does too, without the top when it has a header. `Insets` reads them.
 - `EventBack` (Escape, the back button) goes to the topmost overlay that listens for cancel, else the topmost modal's `OnRequestClose`, else the `Scope.OnBackPress` handlers newest first, else the innermost stack that can pop.
 - A back gesture that begins (Android's predictive back, iOS's swipe) sends `EventBackStarted`; the core answers `ItemBackPreview` with the screen a back would pop and shows the one below. `EventBackCancelled` hides it again.
@@ -72,7 +72,7 @@ A component is any type whose `Render(cx) Node` returns its nodes, like `http.Ha
 - `EventModalShown` and `EventModalDismissed` (`Modal.OnShown`, `OnDismissed`) are a platform's reports that a modal finished presenting or going away. No backend sends them yet, so base's `Dialog` reports its open and close once the modal's animation would have ended.
 - `IOS.SupportedOrientations` goes to the controllers' `supportedInterfaceOrientations`. On Android a modal over the surface starts below the status bar unless `Android.StatusBarTranslucent`.
 - `EventPressOutside` reports presses outside an overlay, ignoring those on its anchor or on overlays above it.
-- A view's `Tooltip` is a hint overlay above it that the core shows after half a second of hover on desktops, and hides when a finger or pointer goes down on the view; `Overlay.PointerEvents` keeps it from taking the pointer.
+- A view's `Tooltip` is a hint overlay above it that the core shows after half a second of hover on desktops, and hides when a finger or pointer goes down on the view, and shows at once while the focus the keyboard moved is on the view or inside it (`updateFocusHint`); `Overlay.PointerEvents` keeps it from taking the pointer.
 - A `mobile.InputAccessoryView` is a layout root as wide as the surface and as tall as its content, which no view holds: its views are sent before the tree's, and an input's `InputConfig.Accessory` names it.
 - iOS makes it the field's `inputAccessoryView`; Android shows it above the keyboard while the field has focus; other platforms leave it unmounted.
 

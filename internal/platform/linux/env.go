@@ -5,7 +5,10 @@ package linux
 import (
 	"os"
 	"strings"
+	"sync"
 	"unsafe"
+
+	"github.com/ebitengine/purego"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
@@ -56,20 +59,21 @@ func (w *window) environment() driver.Environment {
 		frame.Width, frame.Height = driver.Points(width), driver.Points(height)
 	}
 	return driver.Environment{
-		Dark:         dark,
-		FontScale:    fontScale,
-		ReduceMotion: reduce,
-		RTL:          systemDirection() == gtkTextDirRTL || rightToLeft(locale),
-		PixelRatio:   float32(scale),
-		Locale:       locale,
-		OS:           driver.OSLinux,
-		OSVersion:    osVersion(),
-		Idiom:        driver.IdiomDesktop,
-		TitleBar:     w.titleBarArea(),
-		Maximized:    w.win != 0 && gtkWindowIsMaximized(w.win) != 0,
-		FullScreen:   w.chrome.fullScreen,
-		WindowFrame:  frame,
-		Lifecycle:    w.lifecycle(),
+		Dark:           dark,
+		FontScale:      fontScale,
+		ReduceMotion:   reduce,
+		RTL:            systemDirection() == gtkTextDirRTL || rightToLeft(locale),
+		PixelRatio:     float32(scale),
+		Locale:         locale,
+		LocaleSettings: localeSettings(),
+		OS:             driver.OSLinux,
+		OSVersion:      osVersion(),
+		Idiom:          driver.IdiomDesktop,
+		TitleBar:       w.titleBarArea(),
+		Maximized:      w.win != 0 && gtkWindowIsMaximized(w.win) != 0,
+		FullScreen:     w.chrome.fullScreen,
+		WindowFrame:    frame,
+		Lifecycle:      w.lifecycle(),
 	}
 }
 
@@ -219,6 +223,84 @@ func sessionLocale() string {
 	}
 	return strings.ReplaceAll(locale, "_", "-")
 }
+
+// localeSettings is what the session sets apart from the language: the
+// region of LC_TIME's formats, LC_MEASUREMENT's system, and GNOME's
+// clock-format over the hours.
+func localeSettings() driver.LocaleSettings {
+	region := func(category string) string {
+		for _, key := range []string{"LC_ALL", category, "LANG"} {
+			if v := os.Getenv(key); v != "" {
+				v, _, _ = strings.Cut(v, ".")
+				v, _, _ = strings.Cut(v, "@")
+				if _, r, ok := strings.Cut(v, "_"); ok && len(r) == 2 {
+					return strings.ToUpper(r)
+				}
+				return ""
+			}
+		}
+		return ""
+	}
+	s := driver.LocaleSettings{Region: region("LC_TIME")}
+	switch region("LC_MEASUREMENT") {
+	case "":
+	case "US", "LR", "MM":
+		s.MeasurementSystem = "us"
+	case "GB":
+		s.MeasurementSystem = "uk"
+	default:
+		s.MeasurementSystem = "metric"
+	}
+	switch gnomeClockFormat() {
+	case "24h":
+		s.HourCycle = "h23"
+	case "12h":
+		s.HourCycle = "h12"
+	}
+	return s
+}
+
+// gnomeClockFormat is GNOME's clock-format setting, "" where its schema
+// is not installed.
+func gnomeClockFormat() string {
+	const schema = "org.gnome.desktop.interface"
+	gnomeSettingsOnce.Do(func() {
+		var lookup, source, settingsNew uintptr
+		var err error
+		if source, err = purego.Dlsym(gioLib, "g_settings_schema_source_get_default"); err != nil {
+			return
+		}
+		if lookup, err = purego.Dlsym(gioLib, "g_settings_schema_source_lookup"); err != nil {
+			return
+		}
+		if settingsNew, err = purego.Dlsym(gioLib, "g_settings_new"); err != nil {
+			return
+		}
+		src, _, _ := purego.SyscallN(source)
+		if src == 0 {
+			return
+		}
+		if found, _, _ := purego.SyscallN(lookup, src, uintptr(unsafe.Pointer(cstr(schema))), 1); found == 0 {
+			return
+		}
+		gnomeSettings, _, _ = purego.SyscallN(settingsNew, uintptr(unsafe.Pointer(cstr(schema))))
+		gnomeGetString, _ = purego.Dlsym(gioLib, "g_settings_get_string")
+	})
+	if gnomeSettings == 0 || gnomeGetString == 0 {
+		return ""
+	}
+	p, _, _ := purego.SyscallN(gnomeGetString, gnomeSettings, uintptr(unsafe.Pointer(cstr("clock-format"))))
+	s := goString(p)
+	if p != 0 {
+		gFree(p)
+	}
+	return s
+}
+
+var (
+	gnomeSettingsOnce             sync.Once
+	gnomeSettings, gnomeGetString uintptr
+)
 
 // rightToLeft reports whether locale's language reads right to left.
 func rightToLeft(locale string) bool {

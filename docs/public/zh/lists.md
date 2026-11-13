@@ -53,18 +53,18 @@ core.List{
 
 `Header`、`Footer`、`Empty` 和 `Separator` 放置在列表首尾和行之间。`NumColumns` 让行并排，`Gap` 和 `ColumnGap` 设置间距，`Horizontal` 横向滚动。`StickyHeaderIndices` 把这些行固定在视口起点，直到下一行把它们推走，`StickyHeaderOffset` 让它们上方的内容保持可见。
 
-`OnViewableItemsChange` 按 `ViewabilityConfig` 的阈值报告可见行，`OnLoadMore` 在视口接近末尾时运行，每批行只运行一次。`OnLoadMoreAtStart` 在开头做同样的事，`InitialScrollIndex` 让列表从某一行打开。`Inverted` 把第 0 行放在末尾，像聊天一样，`MaintainVisibleContentPosition` 在用户接近末尾时跟随增长的内容。
+`OnViewableItemsChange` 按 `ViewabilityConfig` 的阈值报告可见行，`OnLoadMore` 在视口接近末尾时运行，每批行只运行一次。`OnLoadMoreAtStart` 在开头做同样的事，`InitialScrollIndex` 让列表从某一行打开。`Alignment: core.ListAlignEnd` 让列表停在末尾，像聊天一样且行保持阅读顺序：打开时就在最新一行，用户在末尾时跟随新行，较短的对话停在底部。`Inverted` 则把第 0 行放在末尾，`MaintainVisibleContentPosition` 在用户接近末尾时跟随增长的内容。
 
 ```go
 core.List{Ref: list, Count: count, EstimatedSize: 64, Row: row, OnLoadMore: loadMore,
 	StickyHeaderIndices: headers(), Footer: core.View{Style: core.Style{Height: core.Pt(24)}}}
 ```
 
-`list.ScrollToIndexAt(index, 0.5, 0, true)` 把某一行滚到视口中间，`list.ScrollToEnd(true)` 滚到末尾。列表也可以和其他内容放在同一个页面里：设置 `Viewport: core.ListViewportParent`，外层的滚动视图会带着列表一起滚动。
+`list.ScrollToIndexAt(index, 0.5, 0, true)` 把某一行滚到视口中间，`list.ScrollToEnd(true)` 滚到末尾。`list.ListPosition()` 读取视口从哪一行、该行内多远处开始，用于保存阅读位置：`list.ScrollToIndexAt(p.Index, 0, -p.Offset, false)` 让重新创建的列表回到那里。列表也可以和其他内容放在同一个页面里：设置 `Viewport: core.ListViewportParent`，外层的滚动视图会带着列表一起滚动。
 
 ## 表格
 
-`base/datatable` 显示百万行的表格，行和列都虚拟化，带固定表头、排序、选择、调整和移动列，以及应用自己的单元格。`base.Table` 用于较小数据的普通表格，`base/plot` 绘制图表。
+`base/datatable` 显示百万行的表格，行和列都虚拟化，带固定表头，可以把列固定在左侧（`Fixed`）或右侧（`FixedRight`），其余列在它们下面滚动，支持排序、选择、调整和移动列，以及应用自己的单元格。`base.Table` 用于较小数据的普通表格，`base/plot` 绘制图表。
 
 ## 下一步
 

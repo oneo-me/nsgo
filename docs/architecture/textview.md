@@ -27,7 +27,7 @@ Highlighting is its own package because chroma's lexers add about 4.5 MB to a bi
 - An HTML block that opens an element a later block closes (`<details>`, Markdown, `</details>`) holds the Markdown between them. So does a formatting tag in a paragraph (`<b>x *y*</b>`), as gpui-kit pairs them.
 - Other paired tags read as one HTML fragment from the source between them.
 - `ParseWith` takes NSH's `MarkdownOptions` as `Options`, their defaults as zero values: `NoMath`, `NoHTML` and `NoAlerts` turn formulas, HTML and alerts off, `Frontmatter` makes YAML front matter a `Custom` block "frontmatter", and `MDX` makes every element a `Custom` node named by its tag and `{expressions}` ones named "expression".
-- `RepairStreaming`, which `Options.Streaming` applies before parsing, ports NSH's streaming repair.
+- `RepairStreaming`, which `Options.Streaming` applies before parsing, ports NSH's streaming repair: it closes what the last block leaves open, holds back a last line not yet ended whose meaning the next characters decide (a list marker alone, digits that may become one, a line of `-` or `=`, a fence's opening line and the start of its closer), again after the inline repair, and opens no emphasis at a lone `*` inside a word of a script that spaces its words.
 - It closes what the last block leaves open (emphasis, strikethrough, inline code, `$` and `$$` formulas, `\(` and `\[`) and shows unfinished links as their text.
 - It drops unfinished images, footnote references and HTML tags, and completes a table's delimiter row. A text ending inside a `$$` block needs nothing.
 - An `Extension` makes `Custom` nodes from a regular expression in text (`Pattern`), a fenced code language (`Language`), a `:::name` container (`Container`) or an HTML element (`Tag`).

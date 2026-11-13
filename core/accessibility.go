@@ -92,8 +92,15 @@ func (t *Tree) bindAccessibility(cx *Scope, n *node, a a11y) {
 func (n *node) sentProps() driver.ViewProps {
 	p := n.props
 	p.Appearance = n.appearance
+	if n.hoist != nil {
+		p.TabAfter = n.hoist.tabAfter
+	}
 	if n.input != nil && n.input.config.Disabled {
 		p.Disabled = true
+	}
+	if tn := n.text; tn != nil && p.Label == "" && tn.text.HasHidden() {
+		// Screen readers leave hidden spans out.
+		p.Label = driver.ShownText(tn.text.Text, tn.text.Spans)
 	}
 	if p.Accessible == AccessibleYes && p.Label == "" && n.text == nil {
 		var b strings.Builder
@@ -115,7 +122,7 @@ func (n *node) appendText(b *strings.Builder) {
 		case c.props.Label != "":
 			s = c.props.Label
 		case c.text != nil:
-			s = strings.ReplaceAll(c.text.text.Text, string(driver.AttachmentRune), "")
+			s = driver.ShownText(c.text.text.Text, c.text.text.Spans)
 		}
 		if s = strings.TrimSpace(s); s != "" {
 			if b.Len() > 0 {

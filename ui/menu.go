@@ -28,7 +28,8 @@ type Menu struct {
 	Placement    core.Placement
 	Align        core.Align
 	Children     []core.Node
-	// MaxHeight, when set, scrolls the items past that height.
+	// MaxHeight, when set, scrolls the items past that height, as they
+	// scroll past the room beside the trigger.
 	MaxHeight core.Points
 	Label     string
 	TestID    string
@@ -43,8 +44,13 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 	sheet := m.Presentation == base.PresentSheet
 	popup, backdrop := menuSurface(cx, sheet)
 	children := m.Children
-	if m.MaxHeight > 0 {
-		popup, children = menuScroll(sheet, popup, m.MaxHeight, children)
+	switch {
+	case m.MaxHeight > 0 && sheet:
+		popup, children = menuScroll(popup, m.MaxHeight, children)
+	case m.MaxHeight > 0:
+		// base scrolls a popup's items past its room, or this.
+		surface := popup
+		popup = func() core.Style { s := surface(); s.MaxHeight = core.Pt(m.MaxHeight); return s }
 	}
 	return base.Menu{Open: m.Open, OnOpenChange: m.OnOpenChange, Presentation: m.Presentation, Placement: m.Placement, Align: m.Align,
 		Offset: 4, Margin: 8,
@@ -55,21 +61,10 @@ func (m Menu) Render(cx *core.Scope) core.Node {
 // menuPadding is a popup's padding around its items.
 const menuPadding core.Points = 4
 
-// menuScroll scrolls children past height, with a popup's padding moved
-// onto them to keep the scroll bar against its edge.
-func menuScroll(sheet bool, popup func() core.Style, height core.Points, children []core.Node) (func() core.Style, []core.Node) {
-	var pad core.Edges
-	surface := popup
-	if !sheet {
-		pad = core.All(menuPadding)
-		surface = func() core.Style {
-			s := popup()
-			s.Padding = core.Edges{}
-			return s
-		}
-	}
-	return surface, []core.Node{core.Scroll{Style: core.Style{MaxHeight: core.Pt(height)},
-		Children: []core.Node{core.View{Style: core.Style{Padding: pad}, Children: children}}}}
+// menuScroll scrolls a sheet's children past height.
+func menuScroll(popup func() core.Style, height core.Points, children []core.Node) (func() core.Style, []core.Node) {
+	return popup, []core.Node{core.Scroll{Style: core.Style{MaxHeight: core.Pt(height)},
+		Children: []core.Node{core.View{Children: children}}}}
 }
 
 // menuSurface is the popup, or the sheet and its backdrop.

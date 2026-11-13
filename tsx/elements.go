@@ -238,6 +238,9 @@ func (r *runtime) list(call js.FunctionCall) js.Value {
 
 var listViewports = map[string]core.ListViewport{"own": core.ListViewportOwn, "parent": core.ListViewportParent}
 
+// listAlignments are a List's alignment values: "top" or "bottom", NSH's.
+var listAlignments = map[string]core.ListAlignment{"top": core.ListAlignStart, "bottom": core.ListAlignEnd}
+
 func listFace(p *props) core.Node {
 	r := p.r
 	rows := r.listRows(p)
@@ -252,6 +255,7 @@ func listFace(p *props) core.Node {
 		HideIndicator:            !p.boolOr("scrollbar", true),
 		Bar:                      r.scrollbarTheme(p.get("scrollbar")),
 		Inverted:                 p.bool("inverted"),
+		Alignment:                listAlignments[p.str("alignment")],
 		StickyHeaderIndicesFunc:  func() []int { return r.ints(p.get("stickyHeaderIndices")) },
 		InitialScrollIndex:       p.int("initialScrollIndex"),
 		OnLoadMore:               p.on("onLoadMore"),

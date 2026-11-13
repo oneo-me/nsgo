@@ -106,7 +106,9 @@ func TestRepairTables(t *testing.T) {
 		{"| a | b |\n| --- | --: |", "| a | b |\n| --- | ---: |"},
 		{"| a | b |\n|", "| a | b |"},
 		{"| a | b |\n| --- | --- |\n| 1 |", "| a | b |\n| --- | --- |\n| 1 |"},
-		{"Title\n---", "Title\n---"},
+		// A line of - not yet ended is held: a rule, an item or text later.
+		{"Title\n---", "Title\n"},
+		{"Title\n---\n", "Title\n---\n"},
 	})
 }
 
@@ -158,4 +160,43 @@ func TestRepairEveryPrefix(t *testing.T) {
 			t.Errorf("%q shows %q", prefix, text)
 		}
 	}
+}
+
+// A last line whose meaning the next characters decide is held back
+// until it ends.
+func TestRepairHoldsUndecidedLines(t *testing.T) {
+	checkRepair(t, [][2]string{
+		{"para\n\n-", "para\n\n"},
+		{"- one\n-", "- one\n"},
+		{"- one\n- ", "- one\n"},
+		{"1. one\n2.", "1. one\n"},
+		{"1. one\n2", "1. one\n"},
+		{"> -", ""},
+		{"Title\n--", "Title\n"},
+		{"Title\n==", "Title\n"},
+		{"Text\n- **", "Text\n"},
+		// Ended, it is what it is.
+		{"para\n\n-\n", "para\n\n-\n"},
+		{"Title\n--\n", "Title\n--\n"},
+		// Text that only starts with digits shows.
+		{"2026 was", "2026 was"},
+		{"- item", "- item"},
+	})
+}
+
+func TestRepairHoldsFences(t *testing.T) {
+	checkRepair(t, [][2]string{
+		{"Look:\n```pyth", "Look:\n"},
+		{"Look:\n```", "Look:\n"},
+		{"```go\nx := 1\n``", "```go\nx := 1\n"},
+		{"````\nx\n```", "````\nx\n"},
+		{"```go\nx := 1\n", "```go\nx := 1\n"},
+	})
+}
+
+func TestRepairLeavesStarsInsideWords(t *testing.T) {
+	checkRepair(t, [][2]string{
+		{"a*b", "a*b"},
+		{"x*y and *more", "x*y and *more*"},
+	})
 }
