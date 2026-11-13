@@ -287,25 +287,33 @@ func (t *Tree) pace(ln *listNode) bool {
 	return true
 }
 
-// paceLater has the next display frame commit again while lists wait to
-// bind rows.
+// paceLater has the next display frame commit again while views wait to
+// be made (pace.go) or lists to bind rows.
 func (t *Tree) paceLater() {
-	if t.paceStop != nil {
+	if t.paceStop != nil || !t.pacing() {
 		return
+	}
+	t.paceStop = t.root.RequestAnimationFrame(func(time.Time) {
+		t.paceStop = nil
+		t.changed = true
+	})
+}
+
+// pacing reports whether views or rows wait for a later commit.
+func (t *Tree) pacing() bool {
+	if len(t.waiting) > 0 {
+		return true
 	}
 	for _, l := range t.lists {
 		if !l.deleted && len(l.list.waiting) > 0 {
-			t.paceStop = t.root.RequestAnimationFrame(func(time.Time) {
-				t.paceStop = nil
-				t.changed = true
-			})
-			return
+			return true
 		}
 	}
+	return false
 }
 
-// Pacing reports whether lists wait for display frames to bind the rest
-// of their windows.
+// Pacing reports whether views wait for display frames to be made, or
+// lists to bind the rest of their windows.
 func (t *Tree) Pacing() bool { return t.paceStop != nil }
 
 type listCell struct {

@@ -40,6 +40,7 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	t.items = t.items[:0]
 	t.commits++
 	t.commitStart = t.rt.clock.Now()
+	t.resetPace()
 	for round := 0; t.changed && round < maxRounds; round++ {
 		if t.focusMoved {
 			t.updateFocusWithin()
@@ -215,7 +216,9 @@ func (t *Tree) commitRound() {
 	t.laidOut = t.laidOut[:0]
 	t.emitAccessories()
 	t.emitHeaderViews()
+	t.makeCommanded()
 	t.emit(t.view)
+	t.syncPaced()
 	for _, n := range t.transits {
 		n.transit = false
 	}
@@ -595,14 +598,22 @@ func (t *Tree) emit(n *node) bool {
 		moved = t.emitParts(n)
 	}
 	kids := n.nativeChildren()
-	kidsMoved := false
+	kidsMoved, held := false, false
 	for _, c := range kids {
+		if !c.created && t.holdView(n, c) {
+			held = true
+			continue
+		}
 		if t.emit(c) {
 			kidsMoved = true
 		}
 	}
 	if n.childrenDirty {
-		t.syncChildren(n, kids)
+		if held {
+			t.syncChildren(n, madeChildren(kids))
+		} else {
+			t.syncChildren(n, kids)
+		}
 		n.childrenDirty = false
 		kidsMoved = true
 	}
@@ -645,7 +656,8 @@ func (t *Tree) emitParts(n *node) bool {
 		if n.match != "" {
 			t.matchNew = append(t.matchNew, n)
 		}
-		n.created = true
+		n.created, n.pace = true, 0
+		t.views.made++
 	}
 	// What goes into an item is a copy made only when it is sent: the
 	// comparison alone would otherwise put both values on the heap for

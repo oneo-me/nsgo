@@ -119,6 +119,10 @@ type Tree struct {
 	commits     int
 	commitStart time.Time
 	paceStop    func()
+	// views and waiting pace views over frames (pace.go): waiting are the
+	// views not made yet whose parents are.
+	views   viewPace
+	waiting []*node
 	// positional is set once a node has classes that follow its place
 	// among its siblings (first:, odd:).
 	positional bool
@@ -278,6 +282,7 @@ type node struct {
 
 	created       bool
 	deleted       bool
+	pace          uint8 // paceWaiting or paceNow, until its view is made
 	childrenDirty bool
 	flat          []*node // native children, through regions
 	sent          sent

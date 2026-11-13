@@ -87,3 +87,4 @@ Binding is paced, as NSH's: a fast scroll or a jump asks for a screen of cells a
 
 - The viewport, twice the last scroll step ahead of it (none after a jump longer than the viewport) and the sticky rows bind in the commit that asks for them.
 - The rest of the window waits and binds nearest the leading edge first, `paceCells` (4) a list per commit while the commit has run less than 2 ms, then on the next display frames (`Tree.Pacing`).
+- A bound cell's views past a commit's first 64 are made over frames too, those in sight at once ([performance](performance.md#keeping-frames-cheap)).

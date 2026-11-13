@@ -386,6 +386,10 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		if _, ok := p.(SharedMounter); ok && opts.Observe == nil {
 			s.commit = t.CommitShared
 		}
+		if opts.Observe != nil {
+			// A test's steps reach every view, as NSH's test drivers.
+			t.SetViewPacing(false)
+		}
 		surfaces[t.ID()] = s
 		return s
 	}

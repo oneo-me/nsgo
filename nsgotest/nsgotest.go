@@ -386,6 +386,8 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 		engine = a.textEngine
 	}
 	a.tree = core.NewTree(a.root, engine)
+	// Steps reach every view, not only those in sight.
+	a.tree.SetViewPacing(false)
 	a.tree.Resize(a.size)
 	if a.env != nil {
 		a.tree.SetEnvironment(*a.env)
