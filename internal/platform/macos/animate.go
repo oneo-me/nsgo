@@ -83,6 +83,7 @@ func (s *surface) frameRateRange() frameRateRange {
 // 60 Hz, both in the run loop's common modes so they keep running while a
 // menu tracks or a window resizes.
 func (s *surface) startTicking() {
+	defer s.publishPace()
 	if s.ticking {
 		s.setPace()
 		return
@@ -116,7 +117,7 @@ func (s *surface) startTicking() {
 // wantedPace is the rate the frame clock need run at: the animations' own
 // when they are all it steps, else the screen's highest.
 func (s *surface) wantedPace() float64 {
-	if len(s.motions) > 0 || len(s.ghosts) > 0 || len(s.live) > 0 || s.frameWanted || s.selecting != nil || s.perf != nil {
+	if len(s.motions) > 0 || len(s.ghosts) > 0 || len(s.live) > 0 || s.frameWanted.Load() || s.selecting != nil || s.perf != nil {
 		return 0
 	}
 	return s.animator.FrameRate()
@@ -126,14 +127,24 @@ func (s *surface) wantedPace() float64 {
 // theirs: the animator holds a slowed run to its rate on any clock.
 func (s *surface) setPace() {
 	pace := s.wantedPace()
-	if pace == s.pace {
-		return
+	if pace != s.pace {
+		s.pace = pace
+		if s.link != 0 {
+			s.link.Send(sel("setPreferredFrameRateRange:"), s.frameRateRange())
+		}
 	}
-	s.pace = pace
-	if s.link != 0 {
-		s.link.Send(sel("setPreferredFrameRateRange:"), s.frameRateRange())
+	s.publishPace()
+	// The app asked for a frame as the clock slowed, seeing it still at
+	// the full rate.
+	if pace != 0 && s.frameWanted.Load() {
+		s.setPace()
 	}
 }
+
+// publishPace tells the engine goroutine whether the clock ticks at the
+// display's full rate, so that a frame the app asks for needs no hop to
+// the main thread (RequestFrame).
+func (s *surface) publishPace() { s.fullRate.Store(s.ticking && s.pace == 0) }
 
 // repeating returns a retained timer that sends action to target every
 // interval seconds in the main run loop's common modes.
@@ -167,6 +178,7 @@ func (s *surface) stopTicking() {
 		return
 	}
 	s.ticking = false
+	s.publishPace()
 	invalidate(&s.watcher)
 	invalidate(&s.stall)
 	if s.link != 0 {
@@ -226,6 +238,9 @@ func (s *surface) tick(period time.Duration) {
 	if s.perf != nil {
 		start = time.Now()
 	}
+	// A scroll reported from here to the frame below rides with that frame
+	// (reportScroll).
+	s.stepping = true
 	// The batches that waited for this frame, before it steps.
 	if s.held() {
 		s.applyBatches(frameBatches, false)
@@ -251,18 +266,22 @@ func (s *surface) tick(period time.Duration) {
 	if len(s.motions) > 0 {
 		s.revisit()
 	}
-	if s.frameWanted {
-		s.frameWanted = false
-		if s.engine != nil {
-			s.engine.Frame()
-		}
+	if s.frameWanted.Swap(false) && s.engine != nil {
+		s.engine.Frame()
 	}
+	s.stepping = false
 	if s.perf != nil {
 		s.perf.RecordWork(time.Since(start), dirty)
 		s.perf.Vsync(time.Now(), period)
 	}
-	if !s.animating() && !s.frameWanted && !s.held() && !selecting && s.perf == nil {
+	apple.YieldFrame()
+	if !s.animating() && !s.frameWanted.Load() && !s.held() && !selecting && s.perf == nil {
 		s.stopTicking()
+		// The app asked for a frame as the clock stopped, seeing it still
+		// ticking.
+		if s.frameWanted.Load() {
+			s.startTicking()
+		}
 		return
 	}
 	s.setPace()

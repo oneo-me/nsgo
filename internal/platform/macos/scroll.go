@@ -305,6 +305,7 @@ func (v *view) moveZoom(at driver.Point, z float64) {
 		apple.WithoutAnimation(sf.applyAnimated)
 	}
 	sf.revisit()
+	sf.contentMoved(true)
 	if apple.Msg(v.native, selWindow) != 0 {
 		v.tickOn()
 	} else {
@@ -597,6 +598,9 @@ func (v *view) tickScroll(t time.Duration) bool {
 }
 
 // reportScroll reports the offset if it moved since it was last reported.
+// In a tick that ends with the frame the app waits for, the report rides
+// with that frame: the engine handles both in one pass, where a report
+// that woke it on its own cost a second pass and commit every frame.
 func (v *view) reportScroll() {
 	s := v.sc
 	if !s.report {
@@ -604,8 +608,14 @@ func (v *view) reportScroll() {
 	}
 	s.report = false
 	v.updateAXBar(true)
-	if v.events.Has(driver.EventScroll) {
-		v.surface.engine.Dispatch(driver.Event{Kind: driver.EventScroll, ID: v.id, Point: v.reported(), Value: v.zoomValue(), Count: s.applied})
+	if !v.events.Has(driver.EventScroll) {
+		return
+	}
+	ev := driver.Event{Kind: driver.EventScroll, ID: v.id, Point: v.reported(), Value: v.zoomValue(), Count: s.applied}
+	if sf := v.surface; sf.stepping && sf.frameWanted.Load() {
+		sf.engine.DispatchBeforeFrame(ev)
+	} else {
+		sf.engine.Dispatch(ev)
 	}
 }
 

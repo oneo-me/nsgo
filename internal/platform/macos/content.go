@@ -133,7 +133,8 @@ func (v *view) drawLayer() objc.ID {
 	layer.Send(selSetNeedsDisplayOnResize, true)
 	layer.Send(selSetContentsScale, v.contentScale())
 	layer.Send(selSetZPosition, apple.Z(contentZ))
-	layer.Send(selSetFrame, v.contentFrame())
+	v.laidFrame = v.contentFrame()
+	layer.Send(selSetFrame, v.laidFrame)
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease) // its host keeps it
 	v.contentLayer = layer
@@ -217,7 +218,9 @@ func (v *view) display() {
 }
 
 // sizeContent keeps v's content layer over its bounds; a new size draws
-// it again (needsDisplayOnBoundsChange).
+// it again (needsDisplayOnBoundsChange). A frame as before is not sent:
+// a table's cells keep theirs as their texts change, and the CGRect costs
+// purego a reflected call each time.
 func (v *view) sizeContent() {
 	if v.shader != nil {
 		v.sizeShader()
@@ -225,7 +228,10 @@ func (v *view) sizeContent() {
 	if v.contentLayer == 0 {
 		return
 	}
-	v.contentLayer.Send(selSetFrame, v.contentFrame())
+	if f := v.contentFrame(); f != v.laidFrame {
+		v.laidFrame = f
+		v.contentLayer.Send(selSetFrame, f)
+	}
 }
 
 // contentFrame is the frame of v's content layer: its bounds, grown to

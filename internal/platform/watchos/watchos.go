@@ -14,6 +14,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -126,8 +127,12 @@ type surface struct {
 	// culled changed (cull.go).
 	recull bool
 
-	animator    *driver.Animator
-	frameWanted bool
+	animator *driver.Animator
+	// frameWanted is set while the app waits for a display frame, by the
+	// engine goroutine; ticks mirrors ticking for it, as the host's frames
+	// serve the frame without a hop to the main thread.
+	frameWanted atomic.Bool
+	ticks       atomic.Bool
 	ticking     bool
 	motions     map[*view]bool
 	alerts      map[uint32][]driver.AlertAction
@@ -333,12 +338,14 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	}
 }
 
-// RequestFrame implements engine.Platform.
+// RequestFrame implements engine.Platform. It hops to the main thread
+// only to start the host's frames: an app asking every frame keeps them
+// running, and the next serves it.
 func (s *surface) RequestFrame() {
-	apple.OnMain(func() {
-		s.frameWanted = true
-		s.tick(true)
-	})
+	s.frameWanted.Store(true)
+	if !s.ticks.Load() {
+		apple.OnMain(func() { s.tick(true) })
+	}
 }
 
 // tick starts or stops the host's display frames.
@@ -347,6 +354,7 @@ func (s *surface) tick(on bool) {
 		return
 	}
 	s.ticking = on
+	s.ticks.Store(on)
 	var v uintptr
 	if on {
 		v = 1
@@ -370,13 +378,18 @@ func hostFrame(float64) {
 		}
 	})
 	s.stepMotions()
-	if s.frameWanted {
-		s.frameWanted = false
+	if s.frameWanted.Swap(false) {
 		s.engine.Frame()
 	}
 	s.flush()
-	if !s.frameWanted && !s.animator.Running() && len(s.motions) == 0 {
+	apple.YieldFrame()
+	if !s.frameWanted.Load() && !s.animator.Running() && len(s.motions) == 0 {
 		s.tick(false)
+		// The app asked for a frame as the frames stopped, seeing them
+		// still running.
+		if s.frameWanted.Load() {
+			s.tick(true)
+		}
 	}
 }
 

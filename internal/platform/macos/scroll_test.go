@@ -43,6 +43,26 @@ func TestARunningAnimationHoldsACommitOnlyBriefly(t *testing.T) {
 	}
 }
 
+func TestAScrollPutsThePickOffUntilItSettles(t *testing.T) {
+	ms := func(n int) time.Duration { return time.Duration(n) * time.Millisecond }
+	// Ten seconds of steps, each pushing the deadline on: never mid-scroll.
+	for at := 0; at < 10_000; at += 16 {
+		if repickIn(ms(at+16), ms(at)+repickDelay, false) == 0 {
+			t.Fatalf("picked mid-scroll at %d ms", at)
+		}
+	}
+	last := ms(10_000) + repickDelay
+	if got := repickIn(ms(10_050), last, false); got != ms(70) {
+		t.Fatalf("waits %v 50 ms after the last step, want 70ms", got)
+	}
+	if repickIn(last, last, false) != 0 {
+		t.Fatal("did not pick when the scroll settled")
+	}
+	if repickIn(last, last, true) == 0 {
+		t.Fatal("picked while a batch applied")
+	}
+}
+
 func TestAScrollUnderWayNeedsNoRouting(t *testing.T) {
 	v := &view{id: 1, sc: &scrollState{}}
 	s := &surface{views: []*view{nil, v}}
