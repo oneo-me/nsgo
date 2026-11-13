@@ -508,8 +508,7 @@ func (r *runtime) nativeModule(call js.FunctionCall) js.Value {
 	name := arg(call, 0).String()
 	_, builtIn := moduleTable[name]
 	if _, ok := registeredExports(name); !ok && !builtIn {
-		ref, _ := r.vm.RunString("ReferenceError")
-		ctor, _ := js.AssertConstructor(ref)
+		ctor, _ := js.AssertConstructor(r.vm.Get("ReferenceError"))
 		e, _ := ctor(nil, r.vm.ToValue(fmt.Sprintf("nativeModule: no module %q is registered", name)))
 		panic(e)
 	}

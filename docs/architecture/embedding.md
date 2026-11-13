@@ -23,7 +23,7 @@ The host owns the window around a view:
 - A view takes the keyboard while the focus is in it, which a press gives it, and keymaps fire only then. On Windows the host's loop translates keys before NSGo sees them, so a shortcut drops the character that follows.
 - macOS fields get NSGo's field editor from their cell (`fieldEditorForView:`) rather than from the window's delegate, which is the host's.
 
-On the web each app is a Go program of its own, and a page shows several. `nsgo build -target web` writes `nsgo.json` beside the app, naming its WebAssembly, `wasm_exec.js`, resources, host module and `nsgo.js`, the loader (`cmd/nsgo/web/nsgo.js`), relative to itself. The loader's `mount(element, url, options)` runs the app in the element, or the whole page for null, with `NSGO_MOUNT` (a CSS selector of the element), `NSGO_BASE`, `NSGO_RESOURCES` and `NSGO_HOST` in its environment; the app's own page mounts it so too. An app in an element of a page, or in a frame, leaves the browser's history and title to the page.
+On the web each app is a Go program of its own, and a page shows several. `nsgo build -target web` writes `nsgo.json` beside the app, naming its WebAssembly, `wasm_exec.js`, resources, host module, the scripts its realm runs and `nsgo.js`, the loader (`cmd/nsgo/web/nsgo.js`), relative to itself. The loader's `mount(element, url, options)` runs the app in the element, or the whole page for null, with `NSGO_MOUNT` (a CSS selector of the element), `NSGO_BASE`, `NSGO_RESOURCES`, `NSGO_HOST` and `NSGO_REALM` (the page's global of the frame its realm runs in) in its environment; the app's own page mounts it so too. An app in an element of a page, or in a frame, leaves the browser's history and title to the page.
 
 ## The host channel
 

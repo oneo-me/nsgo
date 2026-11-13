@@ -26,7 +26,7 @@ func main() { nsgo.Run(compiler.App(src, "App.tsx")) }
 | `nsh-js` `hot.rs`, `chunks.rs` | `tsx/bundler/hot.go`, `split.go` (their runtimes), `components.go` | Hot updates; chunks loaded on demand |
 | `nsh-js` `animated.rs`, `touch.rs`, `canvas.rs` | `tsx/animated.go`, `touch.go`, `canvas.go` | Animation, gestures and the responder, Canvas 2D |
 | `nsh-js` `env.rs`, `platform_modules.rs`, `desktop.rs`, `host_channel.rs` | `tsx/env.go`, `platform.go`, `services.go`, `host.go` | The environment, services, `nsgo/mobile`, `nsgo/desktop`, `host` |
-| `nsh-js` `web/` | `tsx/web.js`, `web.go`, `intl.js`, `intl.go` | Web APIs and `Intl` |
+| `nsh-js` `web/` | `tsx/websrc/web.js`, `web.go`, `intl.js`, `intl.go` | Web APIs and `Intl` |
 | `nsh-js` `sandbox.rs`, `nsh-core` `access.rs` | `tsx/sandbox.go`, `core/access.go` | Time budgets, stack depth, hardening, quotas; capabilities |
 | `nsh-js` `declarations.rs` | `tsx/declarations.go`, `tsx/types/*.d.ts` | `.nsgo/types` |
 | `nsh-testing`'s `nsh/test` | `tsx/tsxtest` | `*.test.tsx` as Go tests |
@@ -62,6 +62,8 @@ What goja lacks, and the answer:
 
 Each `js.Runtime` on the web is a realm of its own, a hidden iframe of the page's origin, removed with the app: a bundle runs in it as a script, and what the runtime installs (`require`, `nsgo:rt`, the web APIs, timers on the app's clock, `Date` reading it) is its globals, as on goja. The iframe is no sandbox: the app has the page's authority.
 
+- A release's page makes that iframe and loads into it, before the app starts, the scripts its realm runs: `tsx/websrc`'s sources (the helpers, `web.js`, the props helpers, `Date`'s patch and the sandbox's hardening), which the tool writes as `nsgo-runtime.<hash>.js`, and the app's bundle and chunks, which it writes beside them. Each registers itself on the realm's `__nsgoPrograms` or `__nsgoScripts`, and the runtime calls what it finds there, so nothing is compiled from a string and a `Content-Security-Policy` needs no `'unsafe-eval'`. A build that ships none (a dev build, a test) has the runtime make its own iframe and compile the sources, which such a policy forbids.
+
 - Primitives are copied into Go and objects are handles; Go functions are JS functions calling back through one `syscall/js` function by ID, Go values objects whose prototype holds their type's methods and fields, both let go of when JS collects them (`FinalizationRegistry`). Values export as goja's do (integers as `int64`, arrays as `[]any`), so the runtime reads them alike.
 - What JS throws comes back as an `*Exception`, its stack read through the bundle's source map as goja reads it; a JS error a Go function panics with is thrown in JS; any other Go panic unwinds JS and goes on in the Go code that called it, even if JS caught it.
 - Promise reactions and the browser's own callbacks run once Go gives the page its turn, after the engine's commit, not as the outermost call returns. What they call of Go runs under the app's root, untracked, and a commit follows (`engine_browser.go`). `nsgotest`'s headless runs give the page its turn as they settle on the web.
@@ -82,7 +84,7 @@ Each `js.Runtime` on the web is a realm of its own, a hidden iframe of the page'
 
 ### Split bundles
 
-`bundler.CompileSplit` (`split.go`, NSH's `split.rs`) makes each app module an `import()` names a chunk of its own, with the modules it imports that the entry's script does not, and the tool splits a web release so: its page fetches a chunk as the import first runs, and every other package holds the whole app, `import()` resolving at once. goja's parser reads no `import()`, so the transform writes each as `_$load(spec, key)`, the same length, so the source map holds; a module's key is esbuild's name for it (`app:screen.tsx`). The modules of the entry's script and the chunks are defined once in the VM by key (`__nsgo_split`), so a chunk shares the entry's modules and their state, and a chunk imports them from the VM rather than holding them again. `tsx.SplitApp` takes the function that loads a chunk's script, which `compiler.App` fetches relative to the page (`compiler.BundledChunks`).
+`bundler.CompileSplit` (`split.go`, NSH's `split.rs`) makes each app module an `import()` names a chunk of its own, with the modules it imports that the entry's script does not, and the tool splits a web release so: its page loads a chunk's script as the import first runs, and every other package holds the whole app, `import()` resolving at once. goja's parser reads no `import()`, so the transform writes each as `_$load(spec, key)`, the same length, so the source map holds; a module's key is esbuild's name for it (`app:screen.tsx`). The modules of the entry's script and the chunks are defined once in the VM by key (`__nsgo_split`), so a chunk shares the entry's modules and their state, and a chunk imports them from the VM rather than holding them again. `tsx.SplitApp` takes the function that loads a chunk's script, which `compiler.App` loads into the app's realm from its URL relative to the page (`compiler.BundledChunks`).
 
 `compiler.App` runs the bundle the `nsgo` tool compiled ahead when the build has one ([tool](tool.md#tsx-apps)), else compiles the embedded sources as it starts. The tool's builds take the `nsgo_bundled` tag, under which the compiler's esbuild part is left out, so packages ship no compiler.
 

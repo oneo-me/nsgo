@@ -10,6 +10,7 @@ import (
 
 	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 	"github.com/nsgo-dev/nsgo/tsx/pkg"
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 
 	"github.com/nsgo-dev/nsgo/core"
 )
@@ -301,25 +302,9 @@ func (r *runtime) within(budget time.Duration, fn func()) {
 	fn()
 }
 
-// hardenSource closes what makes code from strings and freezes the
-// shared prototypes.
-const hardenSource = `(function (g) {
-	"use strict";
-	const refuse = function () { throw new EvalError("nsgo: code is not made from strings here"); };
-	for (const make of [function () {}, async function () {}, function* () {}]) {
-		const F = make.constructor;
-		Object.defineProperty(F.prototype, "constructor", { value: refuse });
-	}
-	delete g.eval;
-	g.Function = refuse;
-	for (const C of [Object, Array, Function, String, Number, Boolean, Symbol, Promise, Map, Set, WeakMap,
-		WeakSet, Date, RegExp, Error, TypeError, RangeError, SyntaxError, ArrayBuffer, Uint8Array, JSON, Math, Reflect]) {
-		Object.freeze(C);
-		if (C.prototype) Object.freeze(C.prototype);
-	}
-})`
-
-var hardenProgram = js.MustCompile("harden.js", hardenSource, true)
+// harden closes what makes code from strings and freezes the shared
+// prototypes.
+var hardenProgram = js.MustCompile(websrc.Harden.Name, websrc.Harden.Source, true)
 
 func (r *runtime) harden() {
 	v, err := r.vm.RunProgram(hardenProgram)

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nsgo-dev/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 
 	"github.com/nsgo-dev/nsgo/core"
 )
@@ -740,13 +741,7 @@ func (r *runtime) mount(call js.FunctionCall) js.Value {
 // merge is `merge(...sources)`: an object of the sources' own properties,
 // later ones winning, getters kept, so props spread into a component stay
 // live.
-const mergeSource = `(function (...sources) {
-	const out = {};
-	for (const s of sources) {
-		if (s != null) Object.defineProperties(out, Object.getOwnPropertyDescriptors(s));
-	}
-	return out;
-})`
+var mergeProgram = js.MustCompile(websrc.Merge.Name, websrc.Merge.Source, true)
 
 // installGlobals installs If and Each, which tags name without an import,
 // for the compiler's component calls of them (const C = c ? If : View).

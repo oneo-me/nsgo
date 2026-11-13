@@ -217,7 +217,11 @@ func (r *runtime) class(def *classDef) *classObj {
 	})
 	_ = proto.Set("dispose", dispose)
 	// esbuild's lowering of using reads Symbol.dispose, else this.
-	disposeKey, _ := r.vm.RunString(`Symbol.dispose ?? Symbol.for("Symbol.dispose")`)
+	sym := r.vm.GlobalObject().Get("Symbol").ToObject(r.vm)
+	disposeKey := sym.Get("dispose")
+	if disposeKey == nil || js.IsUndefined(disposeKey) {
+		disposeKey = r.call(sym.Get("for"), r.vm.ToValue("Symbol.dispose"))
+	}
 	_ = proto.DefineDataPropertySymbol(disposeKey.(*js.Symbol), dispose, js.FLAG_TRUE, js.FLAG_FALSE, js.FLAG_TRUE)
 	for _, s := range def.statics {
 		name := def.name + "." + s.name

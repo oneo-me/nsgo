@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nsgo-dev/nsgo/tsx/internal/js"
+	"github.com/nsgo-dev/nsgo/tsx/websrc"
 
 	"github.com/nsgo-dev/nsgo/core"
 )
@@ -201,10 +202,5 @@ func (r *runtime) loadChunk(call js.FunctionCall) js.Value {
 	return r.vm.ToValue(p)
 }
 
-// splitSource is `split(props, keys)`: [picked, rest], getters kept.
-const splitSource = `(function (props, keys) {
-	const picked = {}, rest = {};
-	const all = Object.getOwnPropertyDescriptors(props);
-	for (const k of Object.keys(all)) Object.defineProperty(keys.includes(k) ? picked : rest, k, all[k]);
-	return [picked, rest];
-})`
+// split is `split(props, keys)`: [picked, rest], getters kept.
+var splitProgram = js.MustCompile(websrc.Split.Name, websrc.Split.Source, true)
