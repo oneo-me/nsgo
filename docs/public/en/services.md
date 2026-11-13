@@ -1,8 +1,8 @@
 ---
 title: Platform services
 description: Alerts, the clipboard, files, photos, sharing, storage, speech, networking and the app's lifecycle.
-group: Core concepts
-order: 60
+group: Platform features
+order: 44
 ---
 
 ## Alerts and the clipboard
@@ -130,23 +130,9 @@ cx.SetLocale("de")
 cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 ```
 
-## Notifications and haptics
-
-`cx.RequestNotificationPermission` asks the user to let the app show notifications, as they do something that needs them, and `cx.NotificationPermission` reads the answer without asking. `cx.ShowNotification` shows one, also while the app is in front, replacing one of the same `ID`; `cx.OnNotificationPress` hears the user press one, the one that started the app included. `cx.SetBadge` puts a count on the app's icon: the Dock's, the Home Screen's, the taskbar button's or an installed web app's.
-
-```go
-cx.RequestNotificationPermission(func(p core.NotificationPermission) {
-	if p == core.NotificationsGranted {
-		cx.ShowNotification(core.Notification{ID: "chat:42", Title: "Ada", Body: "Lunch?"}, nil)
-	}
-})
-cx.OnNotificationPress(func(id string) { openChat(id) })
-```
-
-An Android app asking from Android 13 lists `android.permission.POST_NOTIFICATIONS` in `nsgo.yaml`'s `android.permissions`. `mobile.PlayHaptic` plays a selection, an impact or an outcome under the user's finger on iOS and Android, and nothing elsewhere.
-
 ## Next
 
+- [Notifications](notifications.md): permission, badges and presses.
 - [Forms](forms.md): text fields and the keyboard.
 - [Embedding](embedding.md): services a host app gives its embedded app.
 - [Building and shipping](building.md): the permissions and files a package needs.

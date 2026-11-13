@@ -1,8 +1,8 @@
 ---
 title: 平台服务
 description: 警告框、剪贴板、文件、照片、分享、存储、语音、网络和应用生命周期。
-group: 核心概念
-order: 60
+group: 平台功能
+order: 44
 ---
 
 ## 警告框与剪贴板
@@ -130,23 +130,9 @@ cx.SetLocale("de")
 cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 ```
 
-## 通知与触感反馈
-
-`cx.RequestNotificationPermission` 在用户做需要通知的操作时请求显示通知的权限，`cx.NotificationPermission` 不打扰用户地读取结果。`cx.ShowNotification` 显示一条通知，应用在前台时也显示，并替换同一 `ID` 的通知；`cx.OnNotificationPress` 听到用户点按通知，包括启动应用的那一条。`cx.SetBadge` 在应用图标上显示数字：程序坞、主屏幕、任务栏按钮或已安装的 Web 应用的图标。
-
-```go
-cx.RequestNotificationPermission(func(p core.NotificationPermission) {
-	if p == core.NotificationsGranted {
-		cx.ShowNotification(core.Notification{ID: "chat:42", Title: "Ada", Body: "一起吃午饭？"}, nil)
-	}
-})
-cx.OnNotificationPress(func(id string) { openChat(id) })
-```
-
-从 Android 13 起请求权限的 Android 应用要在 `nsgo.yaml` 的 `android.permissions` 中列出 `android.permission.POST_NOTIFICATIONS`。`mobile.PlayHaptic` 在 iOS 和 Android 上播放选择、碰撞或结果的触感反馈，其他平台不做任何事。
-
 ## 下一步
 
+- [通知](notifications.md)：权限、图标角标和点按。
 - [表单](forms.md)：文本框和键盘。
 - [嵌入](embedding.md)：宿主应用提供给嵌入应用的服务。
 - [构建与发布](building.md)：应用包需要的权限和文件。

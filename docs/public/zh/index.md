@@ -49,6 +49,7 @@ NSGo 还处于早期：尚无稳定 API，也还没有发布版本，缺少的�
 - **工具链**：[运行与调试](debugging.md)、[测试](testing.md)、[构建与发布](building.md)和[嵌入](embedding.md)。
 - **组件**：[最常用的组件](ui.md)，以及它们的变体、状态和无障碍。
 - **核心概念**：[组件与状态](components.md)、[布局](layout.md)、[样式](styles.md)、[文本](text.md)、[列表](lists.md)、[导航](navigation.md)、[表单](forms.md)、[本地化](localization.md)、[TSX](tsx.md) 等。
+- **平台功能**：[平台服务](services.md)、[通知](notifications.md)、[触感反馈](haptics.md)、[小组件](widgets.md)和[实时活动](live-activities.md)。
 - **编写组件**：[给别人的应用用的组件](authoring/index.md)，无样式和带样式两种形式。
 - **参与项目**：[从源码构建 NSGo](contributing.md)、了解代码结构并提交改动。
 - [在线体验](https://nsgo.dev/gallery/)：在浏览器中查看全部组件。

@@ -18,9 +18,11 @@ GitHub; `website/` builds them into the site.
   sidebar `group`, in the page's language, and its `order` in the sidebar.
   Pages without a group, the introduction and the comparison, come first.
   The groups follow a reader's way in: Get started (the setup in
-  `getting-started.md`, then the examples in `tutorials/`), Toolchain, Components (`ui/`),
-  Core concepts, Writing components (`authoring/`) and Contributing
-  (`contributing/`).
+  `getting-started.md`, then the examples in `tutorials/`), Toolchain,
+  Components (`ui/`), Platform features (`services.md`,
+  `notifications.md`, `haptics.md`, `widgets.md` and
+  `live-activities.md`), Core concepts, Writing components (`authoring/`)
+  and Contributing (`contributing/`).
 - `index.md` is the docs' first page. Link between pages with relative
   `.md` links (`[Testing](testing.md#run-on-a-platform)`); the site rewrites
   them.

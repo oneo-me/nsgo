@@ -49,6 +49,7 @@ Every page answers one question. A code example is a fragment of a component unl
 - **Toolchain**: [running and debugging](debugging.md), [testing](testing.md), [building and shipping](building.md) and [embedding](embedding.md).
 - **Components**: [the most-used components](ui.md), their variants, states and accessibility.
 - **Core concepts**: [components and state](components.md), [layout](layout.md), [styles](styles.md), [text](text.md), [lists](lists.md), [navigation](navigation.md), [forms](forms.md), [localization](localization.md), [TSX](tsx.md) and the rest.
+- **Platform features**: [platform services](services.md), [notifications](notifications.md), [haptics](haptics.md), [widgets](widgets.md) and [Live Activities](live-activities.md).
 - **Writing components**: [components for other people's apps](authoring/index.md), unstyled and styled.
 - **Contributing**: [build NSGo from source](contributing.md), find your way around it and send a change.
 - The [live demo](https://nsgo.dev/gallery/): every component, in your browser.

@@ -251,61 +251,9 @@ sign:
 
 `build` then signs with the hardened runtime, submits the disk image, waits for Apple's verdict, a few minutes, and staples the ticket to the image and the app; a rejection prints Apple's log. In CI, `NSGO_NOTARY_KEY`, `NSGO_NOTARY_KEY_ID` and `NSGO_NOTARY_ISSUER`, an App Store Connect API key's `.p8` file, ID and issuer, take the profile's place. The hardened runtime denies the microphone and the camera unless the app claims them, which `build` does when `apple.info` has `NSMicrophoneUsageDescription` or `NSCameraUsageDescription`.
 
-## Widgets
+## Widgets and Live Activities
 
-Widgets show a glance of the app on the Home Screen and the Lock Screen of iPhones and iPads, and on the Mac's desktop and in Notification Center. List their kinds in `nsgo.yaml`, and give each what to show with package `widget`:
-
-```yaml
-widgets:
-  - kind: counter
-    name: Counter                 # shown in the system's gallery of widgets
-    description: Shows the count.
-    families: [small, medium, circular]  # also large, extra_large, rectangular and inline
-# apple: { app_group: group.dev.example.hello }  # the iOS app group, group.<id> by default
-```
-
-```go
-err := widget.Update("counter", widget.Entry{
-	View: widget.Column{Style: widget.Style{Gap: 4}, Children: []widget.View{
-		widget.Text{Content: "Count", Style: widget.Style{TextStyle: widget.Caption, Color: widget.Secondary}},
-		widget.Text{Content: strconv.Itoa(n), Style: widget.Style{FontSize: 44, FontWeight: core.FontWeightBold}},
-	}},
-})
-```
-
-`build` and `dev` compile a widget extension into the macOS and iOS packages with Xcode's Swift compiler. It draws the views with SwiftUI and runs none of the app's code, so a widget shows the timeline the app wrote last, whether the app runs or not: call `Update` whenever what it shows changes. `widget.Date` with `Relative` or `Timer` keeps counting by itself. `Entry.URL` and `Style.Link` open URLs when a widget is tapped. On iOS the app and its widgets share an app group: `-run` on an iPhone has Xcode sign both and register the group; for an IPA, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. The repository's `examples/widgets` is a counter with widgets, and the gallery's Widgets demo fills every family.
-
-### Live Activities
-
-A Live Activity follows something as it happens, a delivery or a timer, on the Lock Screen and in the Dynamic Island of iPhones from iOS 16.1, and as a Live Update on Android 16, at the top of the shade and in a chip of the status bar; earlier Androids show an ongoing notification. Turn them on in `nsgo.yaml`, then start, update and end them with package `widget`:
-
-```yaml
-live_activities:
-  enabled: true
-  # frequent_updates: true   # iOS: more updates than the system's budget, as the user allows
-```
-
-```go
-func main() {
-	// Before nsgo.Run: iOS starts the app in the background for a press.
-	widget.OnAction(func(p widget.ActivityPress) {
-		if p.Action == "pause" {
-			p.Activity.Update(paused)
-		}
-	})
-	nsgo.Run(Root)
-}
-
-a, err := widget.StartActivity("delivery", widget.ActivityContent{
-	Title: "Your order", Body: "On its way", Symbol: "box.truck.fill",
-	Timer: arrival, ShowProgress: true, Progress: 0.4,
-	Actions: []widget.ActivityAction{{ID: "pause", Title: "Pause", Symbol: "pause.fill"}},
-})
-```
-
-Both platforms show the title, body, status or timer, bar and actions; iOS draws them with the widget extension, and takes views of `widget`'s in their place for the Lock Screen and each part of the Dynamic Island (`LockScreen`, `Leading`, `CompactTrailing`, `Minimal` and the others), whose `widget.Button` runs `OnAction` too. A press of an action runs the handler without opening the app on iOS 17 and later, which holds the activity until it returns, and opens the app on Android. Android asks for `POST_NOTIFICATIONS` and `POST_PROMOTED_NOTIFICATIONS` itself; ask the user with `RequestNotificationPermission` first.
-
-An app in the background updates its activities only while it runs, and the system ends them after eight hours. To follow what happens elsewhere, start one with `widget.ActivityOptions{Push: true}`, send the token `OnPushToken` hears to your server, and have it push APNs `liveactivity` updates whose `content-state` is `widget.ActivityState`; iOS 17.2 gives a token to start them by push too, with the attributes type `widget.ActivityAttributesType`. Pushes need the push notifications entitlement in the app's profile. The gallery's Widgets demo walks the widgets' steps in a Live Activity, and `examples/widgets` counts in one.
+`build` and `dev` compile the extension that draws the app's widgets and Live Activities into the macOS and iOS packages with Xcode's Swift compiler, with no separate step. On iOS the app and its widgets share an app group: `-run` on an iPhone has Xcode sign both and register the group; for an IPA, enable it for both `<id>` and `<id>.widgets`, and sign the extension with `sign.widgets_profile`. Android 16 shows Live Activities as Live Updates, which need no extension. [Widgets](widgets.md) and [Live Activities](live-activities.md) cover their configuration and API.
 
 ## App Clips
 
