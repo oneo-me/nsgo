@@ -13,15 +13,26 @@ import (
 	"github.com/nsgo-dev/nsgo/ui"
 )
 
-// A simulated market: fictional companies whose prices walk every 50 ms.
-// The clock runs 20× real time (a 50 ms tick is one market second), so a
-// one-minute candle closes every three seconds.
+// A simulated market: fictional companies whose prices walk every tick,
+// at the refresh rate chosen, once a second by default. A tick is one
+// market second, so the clock runs in real time at 1 s and 20× at 50 ms,
+// where a one-minute candle closes every three seconds.
+
+// tickRates are the refresh rates to choose from, the slowest first: the
+// default, then down to 8 ms, faster than most screens draw, to put the
+// engine under load.
+var tickRates = []time.Duration{time.Second, 500 * time.Millisecond, 250 * time.Millisecond, 100 * time.Millisecond,
+	50 * time.Millisecond, 16 * time.Millisecond, 8 * time.Millisecond}
+
+// rateLabel is a refresh rate as "1 s" or "50 ms".
+func rateLabel(d time.Duration) string {
+	if d >= time.Second {
+		return fmt.Sprintf("%g s", d.Seconds())
+	}
+	return fmt.Sprintf("%d ms", d.Milliseconds())
+}
 
 const (
-	// tickEvery is the time between ticks; perSecond ticks make a real
-	// second.
-	tickEvery = 50 * time.Millisecond
-	perSecond = 20
 	// marketOpen and marketClose are 09:30 and 16:00, marketStart the
 	// market time the demo starts at, in seconds after midnight.
 	marketOpen  = 9.5 * 3600
@@ -229,6 +240,8 @@ type market struct {
 	// summaries.
 	clock, ticks, pulse *core.Signal[int]
 	running             *core.Signal[bool]
+	// rate is the time between ticks.
+	rate *core.Signal[time.Duration]
 	// composite is the composite now, index one value per minute of
 	// today, changed in place.
 	composite *core.Signal[float64]
@@ -251,6 +264,8 @@ type market struct {
 	stop           func()
 	spent          time.Duration
 	updates        int
+	// second is the ticks since the last pulse.
+	second         int
 	lastMean       float64
 	changes        []float64
 }
@@ -262,6 +277,7 @@ func newMarket(cx *core.Scope) *market {
 	}
 	m.clock, m.ticks, m.pulse = core.NewSignal(cx, marketStart), core.NewSignal(cx, 0), core.NewSignal(cx, 0)
 	m.running = core.NewSignal(cx, false)
+	m.rate = core.NewSignal(cx, tickRates[0])
 	m.book = core.NewSignalFunc(cx, orderBook{}, func(a, b orderBook) bool { return false })
 	m.trades = core.NewSignalFunc(cx, []trade(nil), func(a, b []trade) bool { return false })
 	m.flow = core.NewSignalFunc(cx, flow{}, func(a, b flow) bool { return false })
@@ -380,6 +396,11 @@ func (m *market) step() {
 	began := time.Now()
 	n := m.ticks.GetUntracked() + 1
 	now := m.clock.GetUntracked() + 1
+	// perSecond ticks make a real second at the rate; second is whether
+	// this one ends it.
+	perSecond := max(1, int(time.Second/m.rate.GetUntracked()))
+	m.second++
+	second := m.second >= perSecond
 	var tape []trade
 	f := m.flow.GetUntracked()
 	m.cx.Batch(func() {
@@ -490,8 +511,9 @@ func (m *market) step() {
 		} else {
 			points[len(points)-1] = lvl
 		}
-		// The chart redraws five times a second, not on every tick.
-		if added || n%4 == 0 {
+		// The chart redraws at most five times a second, not on every
+		// tick.
+		if added || n%max(1, perSecond/5) == 0 {
 			m.index.Set(points)
 		}
 
@@ -501,7 +523,7 @@ func (m *market) step() {
 			m.trades.Set(all[:min(len(all), tapeLength)])
 		}
 
-		if n%perSecond == 0 {
+		if second {
 			moved := (mean - m.lastMean) * 100
 			m.lastMean = mean
 			for i := range m.others {
@@ -515,9 +537,9 @@ func (m *market) step() {
 		}
 	})
 	m.spent += time.Since(began)
-	if n%perSecond == 0 {
-		m.stats.Set([2]float64{float64(m.spent.Microseconds()) / 1000 / perSecond, float64(m.updates)})
-		m.spent, m.updates = 0, 0
+	if second {
+		m.stats.Set([2]float64{float64(m.spent.Microseconds()) / 1000 / float64(m.second), float64(m.updates)})
+		m.spent, m.updates, m.second = 0, 0, 0
 	}
 }
 
@@ -525,8 +547,17 @@ func (m *market) start() {
 	if m.stop != nil {
 		return
 	}
-	m.stop = every(m.cx, tickEvery, m.step)
+	m.stop = every(m.cx, m.rate.GetUntracked(), m.step)
 	m.running.Set(true)
+}
+
+// setRate ticks every d from now on.
+func (m *market) setRate(d time.Duration) {
+	m.rate.Set(d)
+	if m.stop != nil {
+		m.stop()
+		m.stop = every(m.cx, d, m.step)
+	}
 }
 
 func (m *market) halt() {

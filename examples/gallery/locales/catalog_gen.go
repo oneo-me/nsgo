@@ -93,7 +93,7 @@ var Parameters = map[string][]string{
 	"StocksDaysAgo":             {"days"},
 	"StocksFlatIssues":          {"flat", "issues"},
 	"StocksDownCount":           {"count"},
-	"StocksSimulatedFooter":     {"engine", "quotes"},
+	"StocksSimulatedFooter":     {"tick", "engine", "quotes"},
 	"StocksTicksCumulative":     {"ticks"},
 	"StocksBidShare":            {"share"},
 	"StocksAskShare":            {"share"},
@@ -220,7 +220,7 @@ type Translation struct {
 	StocksDaysAgo             func(days int) string
 	StocksFlatIssues          func(flat int, issues int) string
 	StocksDownCount           func(count int) string
-	StocksSimulatedFooter     func(engine string, quotes string) string
+	StocksSimulatedFooter     func(tick string, engine string, quotes string) string
 	StocksTicksCumulative     func(ticks int) string
 	StocksBidShare            func(share float64) string
 	StocksAskShare            func(share float64) string
@@ -1634,6 +1634,7 @@ const (
 	textStocksPriceRanges
 	textStocksResumeTheMarket
 	textStocksPauseTheMarket
+	textStocksRefreshRate
 	textStocksOrderTicket
 	textStocksPrice2
 	textStocksAvg
@@ -3701,6 +3702,7 @@ var keyOfText = [numTexts]string{
 	"stocksPriceRanges",
 	"stocksResumeTheMarket",
 	"stocksPauseTheMarket",
+	"stocksRefreshRate",
 	"stocksOrderTicket",
 	"stocksPrice2",
 	"stocksAvg",
@@ -4471,7 +4473,7 @@ var textsEn = i18n.NewTexts(""+
 	"Popups"+
 	"Navigation"+
 	"Stocks"+
-	"A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms"+
+	"A live watchlist and a stock: candles, depth, the tape, ticking down to every 8 ms"+
 	"AI Chat"+
 	"Streaming replies with reasoning, tools and attachments"+
 	"Conversation"+
@@ -5766,6 +5768,7 @@ var textsEn = i18n.NewTexts(""+
 	"Price ranges"+
 	"Resume the market"+
 	"Pause the market"+
+	"Refresh rate"+
 	"Order ticket"+
 	"Price"+
 	"Avg"+
@@ -6533,7 +6536,7 @@ var textsEn = i18n.NewTexts(""+
 		6,
 		10,
 		6,
-		74,
+		82,
 		7,
 		55,
 		12,
@@ -7829,6 +7832,7 @@ var textsEn = i18n.NewTexts(""+
 		17,
 		16,
 		12,
+		12,
 		5,
 		3,
 		3,
@@ -8598,7 +8602,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"浮层"+
 	"导航"+
 	"股票"+
-	"实时自选股和个股：K 线、深度、成交明细，每 50 毫秒更新一次"+
+	"实时自选股和个股：K 线、深度、成交明细，最快每 8 毫秒更新一次"+
 	"AI 聊天"+
 	"流式回复，带推理、工具和附件"+
 	"对话"+
@@ -9893,6 +9897,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"价格区间"+
 	"恢复行情"+
 	"暂停行情"+
+	"刷新频率"+
 	"下单"+
 	"价格"+
 	"均价"+
@@ -10660,7 +10665,7 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
-		84,
+		89,
 		9,
 		42,
 		6,
@@ -11952,6 +11957,7 @@ var textsZhHans = i18n.NewTexts(""+
 		7,
 		6,
 		21,
+		12,
 		12,
 		12,
 		12,
@@ -13423,7 +13429,7 @@ func DemoStocks(cx *core.Scope) string { return For(cx).DemoStocks() }
 // DemoStocks is the package's DemoStocks in the language of msgs.
 func (msgs Messages) DemoStocks() string { return msgs.text(textDemoStocks) }
 
-// DemoStocksDetail says "A live watchlist and a stock: candles, depth, the tape, a tick every 50 ms"
+// DemoStocksDetail says "A live watchlist and a stock: candles, depth, the tape, ticking down to every 8 ms"
 // in the language the app shows under cx.
 func DemoStocksDetail(cx *core.Scope) string { return For(cx).DemoStocksDetail() }
 
@@ -24304,6 +24310,13 @@ func StocksPauseTheMarket(cx *core.Scope) string { return For(cx).StocksPauseThe
 // StocksPauseTheMarket is the package's StocksPauseTheMarket in the language of msgs.
 func (msgs Messages) StocksPauseTheMarket() string { return msgs.text(textStocksPauseTheMarket) }
 
+// StocksRefreshRate says "Refresh rate"
+// in the language the app shows under cx.
+func StocksRefreshRate(cx *core.Scope) string { return For(cx).StocksRefreshRate() }
+
+// StocksRefreshRate is the package's StocksRefreshRate in the language of msgs.
+func (msgs Messages) StocksRefreshRate() string { return msgs.text(textStocksRefreshRate) }
+
 // StocksOrderTicket says "Order ticket"
 // in the language the app shows under cx.
 func StocksOrderTicket(cx *core.Scope) string { return For(cx).StocksOrderTicket() }
@@ -24491,26 +24504,26 @@ func (msgs Messages) StocksDownCount(count int) string {
 	}
 }
 
-// StocksSimulatedFooter says "Simulated, fictional companies · tick 50 ms · {engine} ms engine/tick · {quotes} quotes/s"
+// StocksSimulatedFooter says "Simulated, fictional companies · tick {tick} · {engine} ms engine/tick · {quotes} quotes/s"
 // in the language the app shows under cx.
-func StocksSimulatedFooter(cx *core.Scope, engine string, quotes string) string {
-	return For(cx).StocksSimulatedFooter(engine, quotes)
+func StocksSimulatedFooter(cx *core.Scope, tick string, engine string, quotes string) string {
+	return For(cx).StocksSimulatedFooter(tick, engine, quotes)
 }
 
 // StocksSimulatedFooter is the package's StocksSimulatedFooter in the language of msgs.
-func (msgs Messages) StocksSimulatedFooter(engine string, quotes string) string {
+func (msgs Messages) StocksSimulatedFooter(tick string, engine string, quotes string) string {
 	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksSimulatedFooter(engine, quotes))
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.StocksSimulatedFooter(tick, engine, quotes))
 	}
 	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
 		if f := supplied[lang].StocksSimulatedFooter; f != nil {
-			return f(engine, quotes)
+			return f(tick, engine, quotes)
 		}
 		switch lang {
 		case "", "en":
-			return "Simulated, fictional companies · tick 50 ms · " + msgs.arg(engine) + " ms engine/tick · " + msgs.arg(quotes) + " quotes/s"
+			return "Simulated, fictional companies · tick " + msgs.arg(tick) + " · " + msgs.arg(engine) + " ms engine/tick · " + msgs.arg(quotes) + " quotes/s"
 		case "zh-Hans":
-			return "模拟数据，虚构公司 · 每 50 毫秒跳动 · 引擎每次 " + engine + " 毫秒 · 每秒 " + quotes + " 条行情"
+			return "模拟数据，虚构公司 · 每 " + tick + " 跳动 · 引擎每次 " + engine + " 毫秒 · 每秒 " + quotes + " 条行情"
 		}
 	}
 }

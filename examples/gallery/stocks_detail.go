@@ -206,26 +206,15 @@ func rangesBlock(cx *core.Scope, m *market, s *stock) core.Node {
 		core.Canvas{Style: core.Style{Height: core.Pt(core.Points(len(horizons)*34 + 16))}, Draw: draw, Label: tr.StocksPriceRanges()})
 }
 
-// pauseButton pauses and resumes the market.
-func pauseButton(cx *core.Scope, m *market) core.Node {
+// marketControl runs the market: a pill of the button that pauses and
+// resumes it and the menu of its refresh rates.
+func marketControl(cx *core.Scope, m *market) core.Node {
 	tr := locales.For(cx)
 	colors := ui.ColorsOf(cx)
 	fin := ui.FinOf(cx)
-	return core.Dynamic(func(*core.Scope) core.Node {
-		run := m.running.Get()
-		face := func() core.Style {
-			s := core.Style{Width: core.Pt(32), Height: core.Pt(32), CornerRadius: 16, AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter}
-			if run {
-				s = fin.Pill().Over(s)
-				s.BorderWidth = 1
-			} else {
-				s = fin.Accent().Over(s)
-				s.Background = colors.AccentFill()
-			}
-			return s
-		}
-		name, tint, lbl := lucide.Play, colors.OnAccent, tr.StocksResumeTheMarket()
-		if run {
+	toggle := core.Dynamic(func(*core.Scope) core.Node {
+		name, tint, lbl := lucide.Play, colors.Accent, tr.StocksResumeTheMarket()
+		if m.running.Get() {
 			name, tint, lbl = lucide.Pause, colors.Muted, tr.StocksPauseTheMarket()
 		}
 		return ui.Press{OnPress: func() {
@@ -234,15 +223,38 @@ func pauseButton(cx *core.Scope, m *market) core.Node {
 			} else {
 				m.start()
 			}
-		}, HitSlop: 6, Label: lbl, Children: []core.Node{core.View{StyleFunc: face, Children: []core.Node{ui.Icon(name, 13, tint)}}}}
+		}, HitSlop: 6, Label: lbl, Style: core.Style{Width: core.Pt(30), Height: core.Pt(30), CornerRadius: 15,
+			AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter},
+			StyleFunc: func() core.Style { return core.Style{Active: &core.Style{Background: colors.Pressed()}} },
+			Children:  []core.Node{ui.Icon(name, 13, tint)}}
 	})
+	var rates []core.Node
+	for _, d := range tickRates {
+		rates = append(rates, ui.MenuItem{Text: rateLabel(d), Checked: func() bool { return m.rate.Get() == d },
+			OnSelect: func() { m.setRate(d) }, TestID: "rate-" + rateLabel(d)})
+	}
+	rate := ui.Menu{Align: core.AlignEnd, Label: tr.StocksRefreshRate(), TestID: "refresh-rate",
+		Trigger: ui.Button{Variant: ui.ButtonGhost, Size: ui.SizeSmall},
+		Face: ui.HStack{Gap: 3, Children: []core.Node{
+			ui.Tabular(ui.Textf(func() string { return rateLabel(m.rate.Get()) }, 12, ui.Medium, colors.Text)),
+			ui.Icon(lucide.ChevronDown, 12, colors.Faint),
+		}},
+		Children: append([]core.Node{ui.MenuLabel{Text: tr.StocksRefreshRate()}}, rates...)}
+	return core.View{StyleFunc: func() core.Style {
+		return fin.Pill().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Height: core.Pt(32), Padding: core.Symmetric(0, 1),
+			CornerRadius: 16, BorderWidth: 1})
+	}, Children: []core.Node{
+		toggle,
+		core.View{Style: core.Style{Width: core.Pt(1), Height: core.Pt(16)}, StyleFunc: ui.Filled(colors.Line)},
+		core.View{Style: core.Style{Padding: core.Edges{Left: 1, Right: 1}}, Children: []core.Node{rate}},
+	}}
 }
 
 // stockScreen is a stock, pushed: its view under a header with the
-// pause button.
+// market's control.
 func stockScreen(m *market, s *stock) func(cx *core.Scope) base.NavPage {
 	return func(cx *core.Scope) base.NavPage {
-		return screen(cx, s.code, pauseButton(cx, m), stockView(cx, m, s, false, nil))
+		return screen(cx, s.code, marketControl(cx, m), stockView(cx, m, s, false, nil))
 	}
 }
 

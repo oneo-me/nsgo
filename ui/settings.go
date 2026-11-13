@@ -35,7 +35,7 @@ type SettingsGroup struct {
 
 // SettingsItem is a row: Title and Description with an optional Leading
 // before them and the Control after, or below them when Stacked (wide
-// controls) or Settings is Narrow. Content, when set, replaces the row
+// controls). Content, when set, replaces the row
 // with the app's own; Title, Description and Keywords are what search
 // matches either way.
 type SettingsItem struct {
@@ -285,11 +285,19 @@ func (s Settings) chips(cx *core.Scope) core.Node {
 }
 
 // rows are the page: the selected category's rows, every category's
-// without navigation, or the results while searching.
+// without navigation, or the results while searching. Narrow, each
+// group's rows sit on a FormSection's card under its title.
 func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, selected int, searching bool) core.Node {
 	colors := ColorsOf(cx)
 	all := searching || s.HideSidebar
-	var nodes []core.Node
+	var nodes, section []core.Node
+	var sectionTitle string
+	flush := func() {
+		if section != nil {
+			nodes = append(nodes, FormSection{Title: sectionTitle, Children: section})
+		}
+		section, sectionTitle = nil, ""
+	}
 	lastCategory, lastGroup := -1, -1
 	for _, r := range results {
 		if !all && r.Category != selected {
@@ -298,6 +306,10 @@ func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, se
 		category := s.Categories[r.Category]
 		group := category.Groups[r.Group]
 		item := group.Items[r.Item]
+		newGroup := r.Category != lastCategory || r.Group != lastGroup
+		if newGroup {
+			flush()
+		}
 		if r.Category != lastCategory {
 			if searching || all && len(s.Categories) > 1 {
 				title := Text(category.Title, 13, Bold, colors.Text)
@@ -308,22 +320,39 @@ func (s Settings) rows(cx *core.Scope, narrow bool, results []SettingsResult, se
 				nodes = append(nodes, Text(category.Description, 13, Regular, colors.Muted))
 			}
 		}
-		if (r.Category != lastCategory || r.Group != lastGroup) && (group.Title != "" || group.Actions != nil) {
+		switch {
+		case !newGroup:
+		case narrow && group.Actions == nil:
+			sectionTitle = group.Title
+		case group.Title != "" || group.Actions != nil:
 			title := Text(group.Title, 13, Regular, colors.Text)
 			title.Style.FlexGrow, title.Style.FlexShrink = 1, 1
-			nodes = append(nodes, core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12,
-				Padding: core.Edges{Bottom: 12}, Borders: core.Edges{Bottom: 1}},
-				StyleFunc: func() core.Style { return core.Style{BorderColors: core.EdgeColors{Bottom: colors.Border()}} },
-				Children:  append([]core.Node{title}, group.Actions...)})
+			heading := core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12},
+				Children: append([]core.Node{title}, group.Actions...)}
+			if !narrow {
+				heading.Style.Padding, heading.Style.Borders = core.Edges{Bottom: 12}, core.Edges{Bottom: 1}
+				heading.StyleFunc = func() core.Style { return core.Style{BorderColors: core.EdgeColors{Bottom: colors.Border()}} }
+			}
+			nodes = append(nodes, heading)
 		}
 		lastCategory, lastGroup = r.Category, r.Group
 		testID := "settings-" + category.ID + "-" + item.ID
-		if item.Content != nil {
-			nodes = append(nodes, core.View{TestID: testID, Children: []core.Node{item.Content}})
-			continue
+		var row core.Node
+		switch {
+		case item.Content != nil:
+			row = core.View{TestID: testID, Children: []core.Node{item.Content}}
+		case narrow:
+			row = s.formRow(cx, item, testID)
+		default:
+			row = s.row(cx, item, item.Stacked, testID)
 		}
-		nodes = append(nodes, s.row(cx, item, narrow || item.Stacked, testID))
+		if narrow {
+			section = append(section, row)
+		} else {
+			nodes = append(nodes, row)
+		}
 	}
+	flush()
 	if len(nodes) == 0 {
 		nodes = append(nodes, Text(s.EmptyText, 13, Regular, colors.Muted))
 	}
@@ -357,6 +386,18 @@ func (s Settings) row(cx *core.Scope, item SettingsItem, stacked bool, testID st
 		style.Direction, style.AlignItems = core.Row, core.AlignCenter
 	}
 	return core.View{TestID: testID, Style: style, Children: children}
+}
+
+// formRow is an item as a FormSection's row: a FormRow, or for a Leading
+// or a Stacked control the row padded as one.
+func (s Settings) formRow(cx *core.Scope, item SettingsItem, testID string) core.Node {
+	if item.Leading == nil && !item.Stacked {
+		return FormRow{Title: item.Title, Detail: item.Description, Control: item.Control, TestID: testID}
+	}
+	row := s.row(cx, item, item.Stacked, testID).(core.View)
+	row.Style.MinHeight, row.Style.Padding = core.Pt(formRowHeight), core.Symmetric(8, formRowPad)
+	row.Style.JustifyContent = core.JustifyCenter
+	return row
 }
 
 // SettingsDialog is Settings in a Dialog, hosted so: the surface

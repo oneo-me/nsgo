@@ -91,7 +91,7 @@ func breadthPanel(cx *core.Scope, m *market) core.Node {
 }
 
 // marketStrip is the market in one line, on the 16 pt gutters: the
-// composite and its change, the clock and pause. A press opens breadth
+// composite and its change, the clock and the market's control. A press opens breadth
 // and sectors with a layout animation; the chevron turns on the platform.
 func marketStrip(cx *core.Scope, m *market) core.Node {
 	tr := locales.For(cx)
@@ -120,7 +120,7 @@ func marketStrip(cx *core.Scope, m *market) core.Node {
 					core.View{Style: core.Style{Animated: &core.AnimatedStyle{Rotate: ui.Lerp(turn, 90, -90)}}, Children: []core.Node{ui.Icon(lucide.ChevronRight, 12, colors.Faint)}},
 				}},
 			ui.Tabular(ui.Textf(func() string { return marketTime(float64(m.clock.Get()), true) }, 12, ui.Regular, colors.Faint)),
-			pauseButton(cx, m),
+			marketControl(cx, m),
 		}},
 		core.Show{When: opened.Get, Then: func(cx *core.Scope) core.Node { return breadthPanel(cx, m) }},
 	}}
@@ -244,27 +244,28 @@ func sparkline(cx *core.Scope, s *stock) core.Node {
 }
 
 // stockRow is a watchlist row: code and name, today's sparkline, the
-// price and its change. In the desktop layout the row shown beside the
-// list is active, and the others light up under the pointer.
+// price and its change. In the desktop layout the rows are a sidebar's,
+// the one shown beside the list on a rounded fill; on phones hairlines
+// divide them.
 func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide bool, active func() bool) core.Node {
 	colors := ui.ColorsOf(cx)
 	q := s.quote.Get
 	change := func() float64 { return percentOf(q()) }
 	st := core.Style{Height: core.Pt(64), Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.Symmetric(0, 16)}
-	states := func() core.Style {
-		if wide {
-			return core.Style{Selected: &core.Style{Background: colors.Pressed()}}
-		}
-		return core.Style{}
+	var states func() core.Style
+	var divider core.Node
+	if wide {
+		st.Height, st.Margin, st.Padding = core.Pt(60), core.Symmetric(1, 8), core.Symmetric(0, 8)
+		st.CornerRadius, st.BorderCurve = 10, core.BorderCurveContinuous
+		states = func() core.Style { return core.Style{Selected: &core.Style{Background: ui.Alpha(colors.Text(), 0.1)}} }
+	} else {
+		divider = core.Show{When: func() bool { return !first() }, Then: func(*core.Scope) core.Node {
+			return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(16), Right: core.Pt(0), Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
+		}}
 	}
 	return core.View{OnPress: func(core.PressEvent) { onPress() }, Role: core.RoleButton, Label: s.name, Selected: active, TestID: "stock-" + s.code,
 		Style: st, StyleFunc: states, Children: []core.Node{
-			core.Show{When: active, Then: func(*core.Scope) core.Node {
-				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(14), Bottom: core.Pt(14), Left: core.Pt(0), Width: core.Pt(3), CornerRadius: 1.5}, StyleFunc: ui.Filled(colors.Accent)}
-			}},
-			core.Show{When: func() bool { return !first() }, Then: func(*core.Scope) core.Node {
-				return core.View{Style: core.Style{Position: core.Absolute, Top: core.Pt(0), Left: core.Pt(16), Right: core.Pt(0), Height: core.Pt(1)}, StyleFunc: ui.Filled(colors.Line)}
-			}},
+			divider,
 			core.View{Style: core.Style{FlexGrow: 1, FlexShrink: 1, Gap: 3}, Children: []core.Node{
 				core.Text{Content: s.code, MaxLines: 1, Style: core.Style{FontSize: 16, FontWeight: ui.Semibold}, StyleFunc: ui.Colored(colors.Text)},
 				core.Text{Content: s.name, MaxLines: 1, Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
@@ -283,9 +284,9 @@ func stockRow(cx *core.Scope, s *stock, first func() bool, onPress func(), wide 
 // desktop layout.
 const watchlistWidth = 380
 
-// stocksDemo is the watchlist: quotes that change every 50 ms under a
-// one-line market strip; sorted filters sort again once a second with a
-// layout animation. A stock opens its details, pushed on phones, beside
+// stocksDemo is the watchlist: quotes that change every tick under a
+// one-line market strip; sorted filters sort again once a second, the
+// rows gliding to their places. A stock opens its details, pushed on phones, beside
 // the list on desktops; leaving the demo stops the market.
 func stocksDemo(cx *core.Scope) core.Node {
 	tr := locales.For(cx)
@@ -332,7 +333,7 @@ func stocksDemo(cx *core.Scope) core.Node {
 			if slices.Equal(next, rows.GetUntracked()) {
 				return
 			}
-			cx.AnimateLayout(core.LayoutSpringPreset)
+			cx.AnimateLayout(core.LayoutEaseInEaseOutPreset)
 			rows.Set(next)
 		})
 	})
@@ -380,7 +381,7 @@ func stocksDemo(cx *core.Scope) core.Node {
 			}},
 			core.Text{ContentFunc: func() string {
 				st := m.stats.Get()
-				return tr.StocksSimulatedFooter(fmt.Sprintf("%.2f", st[0]), fmt.Sprintf("%.0f", st[1]))
+				return tr.StocksSimulatedFooter(rateLabel(m.rate.Get()), fmt.Sprintf("%.2f", st[0]), fmt.Sprintf("%.0f", st[1]))
 			}, Style: core.Style{Padding: core.Edges{Top: 16, Right: 16, Bottom: 40, Left: 16}, FontSize: 12, LineHeight: 17, FontVariant: core.FontTabularNums}, StyleFunc: ui.Colored(colors.Faint)},
 		}},
 	}}

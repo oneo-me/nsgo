@@ -528,10 +528,15 @@ func (g *gallery) phone(cx *core.Scope) core.Node {
 func demoScreen(cx *core.Scope, name string) base.NavPage {
 	tr := locales.For(cx)
 	d, _ := findDemo(name)
+	style := pageStyle(cx)
+	// The app's own header draws its hairline; the system's does not.
+	if os := cx.Env().OS(); isApp(d.name) && (os == core.OSIOS || os == core.OSAndroid) {
+		style = underHeader(cx)
+	}
 	p := base.NavPage{Title: d.title(tr), TestID: "screen-" + d.name, HeaderStyleFunc: headerStyle(cx),
 		Header:    pageHeader(cx, pageHeaderProps{title: d.title(tr)}),
 		StyleFunc: pageStyle(cx),
-		Children: []core.Node{core.View{Style: fillPage, StyleFunc: pageStyle(cx),
+		Children: []core.Node{core.View{Style: fillPage, StyleFunc: style,
 			Children: []core.Node{core.Func(func(cx *core.Scope) core.Node { return d.screen(cx) })}}}}
 	if fixedDemos[d.name] {
 		return p
@@ -553,6 +558,26 @@ func (g *gallery) section(cx *core.Scope, i int) base.NavPage {
 		Header:    pageHeader(cx, pageHeaderProps{title: title, root: true}),
 		StyleFunc: pageStyle(cx),
 		Children:  []core.Node{g.home(cx, i)}})
+}
+
+// isApp is whether the demo named name is one of the apps built on
+// NSGo, which a hairline divides from the header above them.
+func isApp(name string) bool {
+	for _, d := range tabs[0].groups[0].demos {
+		if d.name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// underHeader is the page's background with a hairline along its top,
+// for an app under a header that draws none.
+func underHeader(cx *core.Scope) func() core.Style {
+	colors := ui.ColorsOf(cx)
+	return func() core.Style {
+		return core.Style{Background: colors.Background(), Borders: core.Edges{Top: 1}, BorderColors: core.EdgeColors{Top: colors.Line()}}
+	}
 }
 
 // fixedDemos are the demos that fill the page rather than scroll under a
@@ -727,7 +752,11 @@ func (g *gallery) demoPane() core.Node {
 	return core.Dynamic(func(cx *core.Scope) core.Node {
 		d, _ := findDemo(g.selected.Get())
 		return core.Func(func(cx *core.Scope) core.Node {
-			return core.View{TestID: "demo-" + d.name, Style: fillPage, StyleFunc: pageStyle(cx), Children: []core.Node{d.screen(cx)}}
+			style := pageStyle(cx)
+			if isApp(d.name) {
+				style = underHeader(cx)
+			}
+			return core.View{TestID: "demo-" + d.name, Style: fillPage, StyleFunc: style, Children: []core.Node{d.screen(cx)}}
 		})
 	})
 }
