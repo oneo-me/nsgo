@@ -13,8 +13,12 @@ func TestActionsCopy(t *testing.T) {
 		app := start(t, e, func(cx *core.Scope) core.Node {
 			return Actions{Text: func() string { return "the message" }, TestID: "acts"}
 		})
+		before := app.Find("label:Copy").ID
 		app.Press("label:Copy")
-		app.WaitFor("label:Copied", time.Second)
+		// The same button says the receipt, so focus stays where it was.
+		if after := app.WaitFor("label:Copied", time.Second).ID; after != before {
+			t.Fatalf("the receipt built button %d in place of %d", after, before)
+		}
 		// The receipt hides by itself.
 		app.Advance(2 * time.Second)
 		app.WaitFor("label:Copy", 2*time.Second)

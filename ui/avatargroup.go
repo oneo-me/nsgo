@@ -68,7 +68,7 @@ func (g AvatarGroup) Render(cx *core.Scope) core.Node {
 	for i, m := range g.Members {
 		node := Avatar{Name: m.Name, Image: m.Image, Status: m.Status, Size: d, Label: m.Label}.render(cx, 2, fan)
 		if onDesktop {
-			node = core.View{Tooltip: tooltipBubble(cx, m.Name), Children: []core.Node{node}}
+			node = core.View{Tooltip: tooltipBubble(cx, m.Name, nil), Children: []core.Node{node}}
 		}
 		children = append(children, core.View{Style: slot(i), Children: []core.Node{node}})
 	}

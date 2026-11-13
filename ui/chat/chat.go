@@ -64,7 +64,10 @@ type Turn struct {
 	// Working the live indicator ("Working for 12s").
 	Summary, Working func() string
 	Prompt           View
-	Steps            func() []Step
+	// Reasoning shows after the prompt and does not fold with the steps,
+	// usually a Reasoning.
+	Reasoning View
+	Steps     func() []Step
 	// Final is the response, shown once HasFinal is true: the last step
 	// is never taken for the answer.
 	Final    View
@@ -115,6 +118,9 @@ func (t Turn) Render(cx *core.Scope) core.Node {
 	var children []core.Node
 	if t.Prompt != nil {
 		children = append(children, Message{Outgoing: true, Children: []core.Node{Bubble{Children: []core.Node{core.Func(t.Prompt)}}}})
+	}
+	if t.Reasoning != nil {
+		children = append(children, core.Func(t.Reasoning))
 	}
 	toggle := func() {
 		o := open.GetUntracked()

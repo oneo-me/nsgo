@@ -16,3 +16,9 @@ thinking:
 thoughtFor:
   message: "Thought for {seconds, number} s"
   description: What a reasoning block reads once it ends, with what it cost.
+thinkingUntimed:
+  message: "Thinking…"
+  description: What a reasoning block reads while it streams, when the app does not say what it costs.
+thoughts:
+  message: "Thoughts"
+  description: What a reasoning block reads once it ends, when the app does not say what it cost.

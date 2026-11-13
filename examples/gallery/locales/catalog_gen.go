@@ -105,7 +105,6 @@ var Parameters = map[string][]string{
 	"StocksPlacedDetail":        {"quantity", "code", "price"},
 	"ChatFilesWritten":          {"count"},
 	"ChatInstallCli":            {"provider", "why", "command"},
-	"ChatThinking":              {"seconds"},
 	"ChatThoughtFor":            {"seconds"},
 	"ChatWorked":                {"minutes", "seconds"},
 	"ChatWorking":               {"status", "minutes", "seconds"},
@@ -233,7 +232,6 @@ type Translation struct {
 	StocksPlacedDetail        func(quantity string, code string, price string) string
 	ChatFilesWritten          func(count int) string
 	ChatInstallCli            func(provider string, why string, command string) string
-	ChatThinking              func(seconds int) string
 	ChatThoughtFor            func(seconds int) string
 	ChatWorked                func(minutes int, seconds int) string
 	ChatWorking               func(status string, minutes int, seconds int) string
@@ -12919,9 +12917,6 @@ func Supply(lang string, t Translation) {
 	if t.ChatInstallCli != nil {
 		s.ChatInstallCli = t.ChatInstallCli
 	}
-	if t.ChatThinking != nil {
-		s.ChatThinking = t.ChatThinking
-	}
 	if t.ChatThoughtFor != nil {
 		s.ChatThoughtFor = t.ChatThoughtFor
 	}
@@ -25117,28 +25112,6 @@ func (msgs Messages) ChatInstallCli(provider string, why string, command string)
 			return msgs.arg(provider) + ": " + msgs.arg(why) + ". Install " + msgs.arg(command) + " on PATH and sign in with " + msgs.arg(command) + " in a terminal, then retry."
 		case "zh-Hans":
 			return provider + "：" + why + "。请在 PATH 中安装 " + command + "，并在终端中用 " + command + " 登录，然后重试。"
-		}
-	}
-}
-
-// ChatThinking says "Thinking… {seconds, number} s"
-// in the language the app shows under cx.
-func ChatThinking(cx *core.Scope, seconds int) string { return For(cx).ChatThinking(seconds) }
-
-// ChatThinking is the package's ChatThinking in the language of msgs.
-func (msgs Messages) ChatThinking(seconds int) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChatThinking(seconds))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ChatThinking; f != nil {
-			return f(seconds)
-		}
-		switch lang {
-		case "", "en":
-			return "Thinking… " + msgs.arg(i18n.FormatNumber("en", float64(seconds))) + " s"
-		case "zh-Hans":
-			return "思考中… " + i18n.FormatNumber("zh-Hans", float64(seconds)) + " 秒"
 		}
 	}
 }

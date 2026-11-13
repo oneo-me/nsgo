@@ -551,10 +551,10 @@ func TestChatStreamsAScript(t *testing.T) {
 	app.Advance(20 * time.Second)
 	app.Find("text:The ball costs")
 	app.Find("role:button Retry")
-	// Reasoning folds itself above the answer, apart from the turn's steps.
-	app.Find("role:button Thought for")
+	// Reasoning folds itself when it ends, apart from the turn's steps.
+	app.WaitForGone("text:/The quick answer is 0.10/", time.Second)
 	app.Press("role:button Thought for")
-	app.Find("text:/ball costs/")
+	app.Find("text:/The quick answer is 0.10/")
 	app.Press("role:button Copy")
 	if !strings.Contains(app.Clipboard, "0.05") {
 		t.Fatalf("copied %q", app.Clipboard)
