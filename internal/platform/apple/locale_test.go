@@ -21,3 +21,18 @@ func TestLocaleSettingsReadTheSystems(t *testing.T) {
 		t.Errorf("measurement system %q", s.MeasurementSystem)
 	}
 }
+
+// A preferred language takes the user's region in place of its own.
+func TestLocaleTagTakesTheUsersRegion(t *testing.T) {
+	for _, c := range []struct{ lang, region, want string }{
+		{"zh-Hans-CN", "CN", "zh-Hans-CN"},
+		{"en-US", "CN", "en-CN"},
+		{"en", "GB", "en-GB"},
+		{"es-419", "", "es-419"},
+		{"de", "", "de"},
+	} {
+		if got := localeTag(c.lang, c.region); got != c.want {
+			t.Errorf("localeTag(%q, %q) = %q, want %q", c.lang, c.region, got, c.want)
+		}
+	}
+}

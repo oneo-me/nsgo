@@ -166,20 +166,81 @@ var (
 
 // Locale returns the user's locale as a BCP 47 tag, and whether their
 // first preferred language is written right to left.
+//
+// NSLocale says the languages the process launched with, which a language
+// PinLanguage kept replaces until the next launch; the user's languages
+// are read from their defaults instead, so following them again takes
+// effect at once. A language the user chose for the app in System
+// Settings stays theirs.
 func Locale() (tag string, rtl bool) {
 	nsLocale := objc.ID(Class("NSLocale"))
-	id := GoString(nsLocale.Send(sel("currentLocale")).Send(sel("localeIdentifier")))
+	current := nsLocale.Send(sel("currentLocale"))
+	id := GoString(current.Send(sel("localeIdentifier")))
 	if i := strings.IndexByte(id, '@'); i >= 0 {
 		id = id[:i]
 	}
 	tag = strings.ReplaceAll(id, "_", "-")
-	langs := nsLocale.Send(sel("preferredLanguages"))
-	if objc.Send[uint](langs, selCount) > 0 {
+	var first objc.ID
+	if lang := userLanguage(); lang != "" {
+		tag = localeTag(lang, GoString(current.Send(sel("countryCode"))))
+		first = NSString(lang)
+	} else if langs := nsLocale.Send(sel("preferredLanguages")); objc.Send[uint](langs, selCount) > 0 {
+		first = langs.Send(selObjectAtIndex, uint(0))
+	}
+	if first != 0 {
 		const rightToLeft = 2
-		first := langs.Send(selObjectAtIndex, uint(0))
 		rtl = objc.Send[int](nsLocale, sel("characterDirectionForLanguage:"), first) == rightToLeft
 	}
 	return tag, rtl
+}
+
+// userLanguage returns the user's first preferred language from their
+// global defaults, when the app's own AppleLanguages is unset or the one
+// PinLanguage wrote; "" otherwise, or outside a bundle.
+func userLanguage() string {
+	id := objc.ID(Class("NSBundle")).Send(sel("mainBundle")).Send(sel("bundleIdentifier"))
+	if id == 0 {
+		return ""
+	}
+	defaults := objc.ID(Class("NSUserDefaults")).Send(sel("standardUserDefaults"))
+	if domain := defaults.Send(sel("persistentDomainForName:"), id); domain != 0 {
+		if langs := domain.Send(selObjectForKey, NSString(appleLanguagesKey)); langs != 0 && objc.Send[uint](langs, selCount) > 0 {
+			pinned := GoString(domain.Send(selObjectForKey, NSString(pinnedLanguageKey)))
+			if GoString(langs.Send(selObjectAtIndex, uint(0))) != pinned {
+				return ""
+			}
+		}
+	}
+	global := defaults.Send(sel("persistentDomainForName:"), NSString("NSGlobalDomain"))
+	if global == 0 {
+		return ""
+	}
+	langs := global.Send(selObjectForKey, NSString(appleLanguagesKey))
+	if langs == 0 || objc.Send[uint](langs, selCount) == 0 {
+		return ""
+	}
+	return GoString(langs.Send(selObjectAtIndex, uint(0)))
+}
+
+// localeTag returns the locale of lang, a preferred language such as
+// zh-Hans-CN, in region, the user's region, as NSLocale forms it: the
+// language's own region gives way to the user's.
+func localeTag(lang, region string) string {
+	parts := strings.Split(strings.ReplaceAll(lang, "_", "-"), "-")
+	out := parts[:1]
+	for _, p := range parts[1:] {
+		if len(p) == 2 || len(p) == 3 && p[0] >= '0' && p[0] <= '9' {
+			if region == "" {
+				region = p
+			}
+			continue
+		}
+		out = append(out, p)
+	}
+	if region != "" {
+		out = append(out, region)
+	}
+	return strings.Join(out, "-")
 }
 
 // LocaleSettings returns the regional preferences the user set in
