@@ -16,14 +16,28 @@ import (
 // runs out.
 
 var (
-	ownClasses    = map[objc.Class]bool{}
-	msgSendSuper2 uintptr
+	ownClasses     = map[objc.Class]bool{}
+	msgSendSuper2  uintptr
+	objectGetClass uintptr
+	superPoint     func(super *objcSuper, cmd objc.SEL, x, y float64) objc.ID
 )
 
 type objcSuper struct {
 	_        structs.HostLayout
 	receiver objc.ID
 	class    objc.Class
+}
+
+// loadSuper loads what a send to a superclass needs, at the first one.
+func loadSuper() {
+	if msgSendSuper2 != 0 {
+		return
+	}
+	lib := load("/usr/lib/libobjc.A.dylib")
+	objectGetClass = symbol(lib, "object_getClass")
+	send := symbol(lib, "objc_msgSendSuper2")
+	purego.RegisterFunc(&superPoint, send)
+	msgSendSuper2 = send
 }
 
 // RegisterClass registers an Objective-C class whose methods may call
@@ -42,30 +56,35 @@ func RegisterClass(name string, super objc.Class, protocols []*objc.Protocol, me
 
 // ownClass returns the nearest class of self's that NSGo registered.
 func ownClass(self objc.ID) objc.Class {
-	c := self.Class()
-	for k := c; k != 0; k = k.SuperClass() {
+	loadSuper()
+	c, _, _ := purego.SyscallN(objectGetClass, uintptr(self))
+	for k := objc.Class(c); k != 0; k = k.SuperClass() {
 		if ownClasses[k] {
 			return k
 		}
 	}
-	return c
+	return objc.Class(c)
 }
 
 // SendSuper sends cmd to the superclass of the NSGo class self is an
 // instance of, whatever subclass the runtime gave self since.
 func SendSuper[T any](self objc.ID, cmd objc.SEL, args ...any) T {
-	if msgSendSuper2 == 0 {
-		lib, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL|purego.RTLD_NOW)
-		if err != nil {
-			panic(err)
-		}
-		if msgSendSuper2, err = purego.Dlsym(lib, "objc_msgSendSuper2"); err != nil {
-			panic(err)
-		}
-	}
+	loadSuper()
 	var fn func(super *objcSuper, cmd objc.SEL, args ...any) T
 	purego.RegisterFunc(&fn, msgSendSuper2)
 	return fn(&objcSuper{receiver: self, class: ownClass(self)}, cmd, args...)
+}
+
+// SendSuperPoint is SendSuper for a method that takes one point and
+// returns an object, as hitTest: does. SendSuper registers a function and
+// works the point's layout out with reflection at every call, several
+// times what the method costs, and a hit test calls it for every view
+// under the pointer. This sends through one function registered once,
+// with the point as the two doubles every 64-bit Apple target passes it
+// as.
+func SendSuperPoint(self objc.ID, cmd objc.SEL, p CGPoint) objc.ID {
+	loadSuper()
+	return superPoint(&objcSuper{receiver: self, class: ownClass(self)}, cmd, p.X, p.Y)
 }
 
 // Super sends cmd to self's NSGo superclass, discarding the result.

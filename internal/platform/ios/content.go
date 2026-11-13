@@ -88,7 +88,7 @@ func (v *view) newContent() {
 	layer.Send(sel("setZPosition:"), apple.Z(contentZ))
 	v.native.Send(selLayer).Send(sel("addSublayer:"), layer)
 	layer.Send(selRelease)
-	v.contentLayer = layer
+	v.contentLayer, v.laidFrame = layer, apple.CGRect{}
 	drawers[layer] = v
 }
 
@@ -115,11 +115,17 @@ func (v *view) redraw() {
 	}
 }
 
-// sizeContent fits v's content layer to its frame and its text's ink.
+// sizeContent fits v's content layer to its frame and its text's ink. A
+// frame as before is not sent: a table's cells keep theirs as their texts
+// change, and the CGRect costs purego a reflected call each time.
 func (v *view) sizeContent() {
-	if v.contentLayer != 0 {
+	if v.contentLayer == 0 {
+		return
+	}
+	if f := v.contentFrame(); f != v.laidFrame {
+		v.laidFrame = f
 		apple.WithoutAnimation(func() {
-			v.contentLayer.Send(selSetFrame, v.contentFrame())
+			v.contentLayer.Send(selSetFrame, f)
 		})
 	}
 }

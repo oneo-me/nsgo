@@ -229,6 +229,57 @@ func TestFramesFollowThePlatform(t *testing.T) {
 	}
 }
 
+// An event a backend reports before the frame it is stepping waits for
+// that frame: the engine handles the event, runs the frame and commits
+// once.
+func TestAnEventBeforeAFrameSharesItsPass(t *testing.T) {
+	p := &recorder{mounted: make(chan struct{}, 1), frames: make(chan struct{}, 4)}
+	var order []string
+	e := Start(p, func(cx *core.Scope) core.Node {
+		pressed, framed := core.NewSignal(cx, 0), core.NewSignal(cx, 0)
+		cx.RequestAnimationFrame(func(time.Time) {
+			order = append(order, "frame")
+			framed.Set(1)
+		})
+		return core.View{Children: []core.Node{
+			core.View{OnPress: func(core.PressEvent) {
+				order = append(order, "press")
+				pressed.Set(1)
+			}, TestID: "button"},
+			core.Text{ContentFunc: func() string { return strconv.Itoa(pressed.Get()) + strconv.Itoa(framed.Get()) }},
+		}}
+	}, Options{Size: driver.Size{Width: 100, Height: 100}})
+	defer e.Close()
+	<-p.mounted
+	// settle returns once the passes begun so far have committed: Sync
+	// returns from inside a pass, and a second one runs in a later pass.
+	settle := func() int {
+		e.Sync()
+		e.Sync()
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		return len(p.batches)
+	}
+	before := settle()
+	var button driver.NodeID
+	p.mu.Lock()
+	for _, b := range p.batches {
+		for _, it := range b.Items {
+			if it.Kind == driver.ItemViewProps && it.ViewProps.TestID == "button" {
+				button = it.ID
+			}
+		}
+	}
+	p.mu.Unlock()
+
+	e.DispatchBeforeFrame(driver.Event{Kind: driver.EventPress, ID: button})
+	e.Frame()
+	commits := settle() - before
+	if !slices.Equal(order, []string{"press", "frame"}) || commits != 1 {
+		t.Errorf("the engine ran %v in %d commits, want the press, then the frame, in one", order, commits)
+	}
+}
+
 // TestATestsClipboardIsItsOwn sets and reads the clipboard of an app a
 // test observes: its own memory answers, and the platform sees nothing.
 func TestATestsClipboardIsItsOwn(t *testing.T) {

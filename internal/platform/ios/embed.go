@@ -273,7 +273,7 @@ func embedMoved(self objc.ID, cmd objc.SEL) {
 		return
 	}
 	s.refresh()
-	if s.frameWanted || len(s.motions) > 0 {
+	if s.frameWanted.Load() || len(s.motions) > 0 {
 		s.startTicking()
 	}
 }
@@ -286,6 +286,7 @@ func (s *surface) dropLink() {
 		s.link = 0
 	}
 	s.ticking = false
+	s.publishPace()
 }
 
 // close stops the surface's frame clock, its observations and its

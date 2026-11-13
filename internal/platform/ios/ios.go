@@ -44,6 +44,8 @@ type view struct {
 	events  driver.EventMask
 	// contentLayer draws a text's or a canvas's content.
 	contentLayer objc.ID
+	// laidFrame is the frame contentLayer was last given.
+	laidFrame apple.CGRect
 	// rasterStep is how many times its pixels the content inside v draws
 	// at, as v's scale has it (rasterscale.go); 0 is 1.
 	rasterStep float64
@@ -227,8 +229,11 @@ type surface struct {
 	ticking  bool
 	// pace is the rate the link is slowed to, 0 for the screen's highest.
 	pace float64
-	// frameWanted is set while the app waits for a display frame.
-	frameWanted bool
+	// frameWanted is set while the app waits for a display frame, by the
+	// engine goroutine; fullRate while the clock ticks at the display's
+	// full rate, which serves it without a hop to the main thread.
+	frameWanted atomic.Bool
+	fullRate    atomic.Bool
 	motions     map[*view]*motion
 	ghosts      []*ghost
 	components  driver.NativeComponents
@@ -827,13 +832,15 @@ func (s *surface) Mount(b *driver.MountBatch) {
 }
 
 // RequestFrame implements engine.Platform: the app waits for the next
-// display frame. Called from the engine goroutine, so it hops to the main
-// thread, where the display link lives.
+// display frame. Called from the engine goroutine, it hops to the main
+// thread, where the display link lives, only to start the clock or bring
+// it to the full rate: an app asking every frame keeps the clock running,
+// and its next tick serves the frame.
 func (s *surface) RequestFrame() {
-	apple.OnMain(func() {
-		s.frameWanted = true
-		s.startTicking()
-	})
+	s.frameWanted.Store(true)
+	if !s.fullRate.Load() {
+		apple.OnMain(s.startTicking)
+	}
 }
 
 func (s *surface) apply(b *driver.MountBatch) {
@@ -1679,7 +1686,7 @@ func surfaceApply(self objc.ID, _ objc.SEL, _ objc.ID) {
 	}
 	// A frame requested before the view was in a window starts the clock
 	// here: a display link needs the view mounted.
-	if s.frameWanted && !s.ticking {
+	if s.frameWanted.Load() && !s.ticking {
 		s.startTicking()
 	}
 }

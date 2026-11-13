@@ -103,6 +103,8 @@ type view struct {
 	// contentLayer is what a text or canvas draws into (content.go);
 	// stale says its content changed while it could not be seen.
 	contentLayer objc.ID
+	// laidFrame is the frame contentLayer was last given.
+	laidFrame apple.CGRect
 	// rasterStep is how many times its pixels the content inside v draws
 	// at, as v's scale has it (rasterscale.go); 0 is 1.
 	rasterStep float64
@@ -268,8 +270,12 @@ type surface struct {
 	// resized is the commit at a new size the main thread stopped waiting
 	// for, until it lands.
 	resized <-chan struct{}
-	// frameWanted is set while the app waits for a display frame.
-	frameWanted bool
+	// frameWanted is set while the app waits for a display frame, by the
+	// engine goroutine; fullRate while the clock ticks at the display's
+	// full rate, which serves it without a hop to the main thread.
+	frameWanted atomic.Bool
+	fullRate    atomic.Bool
+	stepping    bool // while tick steps a frame, up to the frame it reports
 	motions     map[*view]*motion
 	ghosts      []*ghost
 	components  driver.NativeComponents
@@ -277,8 +283,11 @@ type surface struct {
 	dragTarget  *view           // the view files are dragged over
 	dragFiles   bool            // whether the drag carries files
 	applying    bool            // whether batches are applying
-	// repick says a batch may have changed what is under the mouse.
-	repick bool
+	// repick says a batch may have changed what is under the mouse;
+	// repicking that a scroll put the pick off, until repickAt.
+	repick    bool
+	repicking bool
+	repickAt  time.Duration
 
 	// The gestures in progress.
 	pan             *panTrack
@@ -467,6 +476,7 @@ func loadAppKit() {
 		{Cmd: sel("clipsToBounds"), Fn: func(objc.ID, objc.SEL) bool { return true }},
 		{Cmd: sel("acceptsFirstMouse:"), Fn: func(objc.ID, objc.SEL, objc.ID) bool { return true }},
 		{Cmd: sel("mouseDownCanMoveWindow"), Fn: func(objc.ID, objc.SEL) bool { return false }},
+		{Cmd: sel("hitTest:"), Fn: containerHitTest},
 	})
 	classOverlay = register("NsgoScrollOverlay", nsView, nil, []objc.MethodDef{flipped,
 		{Cmd: sel("hitTest:"), Fn: func(objc.ID, objc.SEL, apple.CGPoint) objc.ID { return 0 }},
@@ -1345,13 +1355,15 @@ func (s *surface) Mount(b *driver.MountBatch) {
 }
 
 // RequestFrame implements engine.Platform: the app waits for the next
-// display frame. Called from the engine goroutine, so it hops to the main
-// thread, where the display link lives.
+// display frame. Called from the engine goroutine, it hops to the main
+// thread, where the display link lives, only to start the clock or bring
+// it to the full rate: an app asking every frame keeps the clock running,
+// and its next tick serves the frame.
 func (s *surface) RequestFrame() {
-	apple.OnMain(func() {
-		s.frameWanted = true
-		s.startTicking()
-	})
+	s.frameWanted.Store(true)
+	if !s.fullRate.Load() {
+		apple.OnMain(s.startTicking)
+	}
 }
 
 func (s *surface) apply(b *driver.MountBatch) {
@@ -1687,7 +1699,7 @@ func (s *surface) apply(b *driver.MountBatch) {
 	s.refreshSelection()
 	if s.repick {
 		s.repick = false
-		s.pick(objc.Send[apple.CGPoint](s.window, sel("mouseLocationOutsideOfEventStream")), false)
+		s.contentMoved(false)
 	}
 	apple.WithoutAnimation(func() {
 		if lb != nil {
@@ -1979,19 +1991,17 @@ func hitTest(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
 func reach(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
 	v := views[self]
 	if v == nil || v.native != self {
-		return apple.SendSuper[objc.ID](self, cmd, p)
+		return apple.SendSuperPoint(self, cmd, p)
 	}
-	f := objc.Send[apple.CGRect](self, sel("frame"))
-	frame := driver.Bounds{Origin: driver.Point{X: driver.Points(f.Origin.X), Y: driver.Points(f.Origin.Y)},
-		Size: driver.Size{Width: driver.Points(f.Size.Width), Height: driver.Points(f.Size.Height)}}
+	frame := v.nativeFrame()
 	at := driver.Point{X: driver.Points(p.X), Y: driver.Points(p.Y)}
 	own, children := driver.Reach(frame, &v.props, v.overflow, at)
 	if !frame.Contains(at) {
 		if children {
-			local := objc.Send[apple.CGPoint](self, selConvertPoint, p, self.Send(selSuperview))
-			subs := self.Send(sel("subviews"))
-			for i := objc.Send[int](subs, sel("count")) - 1; i >= 0; i-- {
-				if hit := subs.Send(sel("objectAtIndex:"), i).Send(cmd, local); hit != 0 {
+			local := objc.Send[apple.CGPoint](self, selConvertPoint, p, objc.ID(apple.Msg(self, selSuperview)))
+			subs := objc.ID(apple.Msg(self, selSubviews))
+			for i := apple.Msg(subs, selCount); i > 0; i-- {
+				if hit := objc.ID(apple.Msg(subs, selObjectAtIndex, i-1)).Send(cmd, local); hit != 0 {
 					return hit
 				}
 			}
@@ -2001,7 +2011,7 @@ func reach(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
 		}
 		return 0
 	}
-	hit := apple.SendSuper[objc.ID](self, cmd, p)
+	hit := apple.SendSuperPoint(self, cmd, p)
 	switch {
 	case !own && !children:
 		return 0
@@ -2011,6 +2021,69 @@ func reach(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
 		return 0
 	}
 	return hit
+}
+
+var (
+	selFrame, selIsHidden      = sel("frame"), sel("isHidden")
+	selCount, selObjectAtIndex = sel("count"), sel("objectAtIndex:")
+)
+
+// containerHitTest is AppKit's hit test of a scroll view's container at
+// p, in the scroll view's coordinates, asking only the children p may
+// reach. AppKit asks every child, and each cell of a long list answers
+// from Go, a call in and one back for its frame, for every hit test of
+// the surface.
+func containerHitTest(self objc.ID, cmd objc.SEL, p apple.CGPoint) objc.ID {
+	if apple.MsgBool(self, selIsHidden) {
+		return 0
+	}
+	f := objc.Send[apple.CGRect](self, selFrame)
+	if p.X < f.Origin.X || p.Y < f.Origin.Y || p.X >= f.Origin.X+f.Size.Width || p.Y >= f.Origin.Y+f.Size.Height {
+		return 0
+	}
+	local := objc.Send[apple.CGPoint](self, selConvertPoint, p, objc.ID(apple.Msg(self, selSuperview)))
+	at := driver.Point{X: driver.Points(local.X), Y: driver.Points(local.Y)}
+	subs := objc.ID(apple.Msg(self, selSubviews))
+	for i := apple.Msg(subs, selCount); i > 0; i-- {
+		sub := objc.ID(apple.Msg(subs, selObjectAtIndex, i-1))
+		if v := views[sub]; v != nil && v.native == sub && v.misses(at) {
+			continue
+		}
+		if hit := sub.Send(cmd, local); hit != 0 {
+			return hit
+		}
+	}
+	return self
+}
+
+// misses reports whether at, in the coordinates of v's parent, reaches
+// neither v nor its children: where reach answers nothing. It goes by
+// the frame place gave v, which is the native view's.
+func (v *view) misses(at driver.Point) bool {
+	if !v.framed {
+		return false
+	}
+	frame := v.nativeFrame()
+	if frame.Contains(at) {
+		return false
+	}
+	own, children := driver.Reach(frame, &v.props, v.overflow, at)
+	return !own && !children
+}
+
+// nativeFrame returns the frame of v's native view in its superview's
+// coordinates: the one place gave it, which costs no call and is what
+// AppKit holds, or AppKit's before any.
+func (v *view) nativeFrame() driver.Bounds {
+	if v.framed {
+		f := v.frame
+		f.Origin.X += v.shift.X
+		f.Origin.Y += v.shift.Y
+		return f
+	}
+	f := objc.Send[apple.CGRect](v.native, selFrame)
+	return driver.Bounds{Origin: driver.Point{X: driver.Points(f.Origin.X), Y: driver.Points(f.Origin.Y)},
+		Size: driver.Size{Width: driver.Points(f.Size.Width), Height: driver.Points(f.Size.Height)}}
 }
 
 // within reports whether p, in v's coordinates, is on v of bounds b or
@@ -2179,12 +2252,14 @@ func (s *surface) contextView(event objc.ID) *view {
 // cursorUpdate sets the cursor of the view under the mouse, which
 // AppKit's default, the arrow, would replace as it asks for the cursor
 // after views move or come. It goes to self or the nearest view around
-// it NSGo knows: a field editor is no view of a surface.
+// it NSGo knows: a field editor is no view of a surface. While a scroll's
+// pick waits (contentMoved) the cursor stays as it is, and that pick sets
+// it.
 func cursorUpdate(self objc.ID, _ objc.SEL, _ objc.ID) {
 	for n := self; n != 0; n = n.Send(selSuperview) {
 		if v := views[n]; v != nil {
-			if v.surface.window != 0 {
-				v.surface.pick(objc.Send[apple.CGPoint](v.surface.window, sel("mouseLocationOutsideOfEventStream")), false)
+			if !v.surface.repicking {
+				v.surface.pickHere()
 			}
 			return
 		}
@@ -2213,6 +2288,71 @@ func (s *surface) pick(loc apple.CGPoint, always bool) {
 		v.over = !v.over
 	}
 	s.updateCursor(hit, up, always)
+}
+
+// repickDelay is how long after a scroll's last step the views hovered
+// and the cursor follow the content, as NSH's: a pick is a hit test of the
+// surface, and a scroll moves content every frame.
+const repickDelay = 120 * time.Millisecond
+
+// contentMoved follows what came under a mouse that did not move: the
+// views hovered and the cursor. A batch picks at once. A scroll step
+// (scrolled) puts the pick off until repickDelay after the last one, and
+// batches and AppKit's cursor updates wait with it: a scroll under way
+// picks once, when it settles.
+func (s *surface) contentMoved(scrolled bool) {
+	switch {
+	case scrolled:
+		s.repickAt = mediaTime() + repickDelay
+		if !s.repicking {
+			s.repicking = true
+			s.later(repickDelay, s.repickWhenDue)
+		}
+	case !s.repicking:
+		s.pickHere()
+	}
+}
+
+// repickWhenDue makes the pick a scroll put off, with the offsets
+// committed first so that AppKit finds views where they show.
+func (s *surface) repickWhenDue() {
+	if wait := repickIn(mediaTime(), s.repickAt, s.applying); wait > 0 {
+		s.later(wait, s.repickWhenDue)
+		return
+	}
+	s.repicking = false
+	s.commitPending()
+	s.pickHere()
+}
+
+// repickIn returns how long the pick a scroll put off still waits at t,
+// 0 when it lands: at at, and not while a batch applies.
+func repickIn(t, at time.Duration, applying bool) time.Duration {
+	switch wait := at - t; {
+	case wait > time.Millisecond:
+		return wait
+	case applying:
+		return 20 * time.Millisecond
+	}
+	return 0
+}
+
+// pickHere is pick where the mouse is now.
+func (s *surface) pickHere() {
+	if s.window != 0 {
+		s.pick(objc.Send[apple.CGPoint](s.window, sel("mouseLocationOutsideOfEventStream")), false)
+	}
+}
+
+// later runs fn on the main thread after d, unless the surface closed.
+func (s *surface) later(d time.Duration, fn func()) {
+	time.AfterFunc(d, func() {
+		apple.OnMain(func() {
+			if !s.closed {
+				fn()
+			}
+		})
+	})
 }
 
 // hitAt returns the deepest view at loc, a point of the window, that
@@ -2596,7 +2736,7 @@ func (s *surface) applyBatches(budget time.Duration, alone bool) {
 	// A frame requested before the view was in a window starts the clock
 	// here, a display link needs the view mounted; the next frame applies
 	// what is left.
-	if s.frameWanted && !s.ticking || len(s.waiting) > 0 {
+	if s.frameWanted.Load() && !s.ticking || len(s.waiting) > 0 {
 		s.startTicking()
 	}
 }

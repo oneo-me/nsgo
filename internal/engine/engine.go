@@ -524,11 +524,20 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 	}
 }
 
-// push queues m and wakes the engine. A mergeable event replaces one of
-// the same kind for the same view still queued, a resize the last resize
-// of the same surface, and a frame request the one still queued, so
-// bursts cost one update each. A wheel's turns add up into the one queued.
+// push queues m and wakes the engine.
 func (e *Engine) push(m message) {
+	e.enqueue(m)
+	select {
+	case e.wake <- struct{}{}:
+	default:
+	}
+}
+
+// enqueue queues m for the engine's next pass. A mergeable event replaces
+// one of the same kind for the same view still queued, a resize the last
+// resize of the same surface, and a frame request the one still queued, so
+// bursts cost one update each. A wheel's turns add up into the one queued.
+func (e *Engine) enqueue(m message) {
 	e.mu.Lock()
 	merged := false
 	for i := range e.queue {
@@ -564,10 +573,6 @@ func (e *Engine) push(m message) {
 		e.queue = append(e.queue, m)
 	}
 	e.mu.Unlock()
-	select {
-	case e.wake <- struct{}{}:
-	default:
-	}
 }
 
 func (e *Engine) take() []message {
@@ -584,6 +589,17 @@ func (e *Engine) Dispatch(ev driver.Event) {
 		e.event(ev)
 	}
 	e.push(message{surface: e.surface, event: ev})
+}
+
+// DispatchBeforeFrame reports a platform event from a backend that is
+// stepping a display frame and ends the step with Frame: the event waits
+// for that call to wake the engine, which then handles it and runs the
+// frame in one pass, with one commit, instead of two.
+func (e *Engine) DispatchBeforeFrame(ev driver.Event) {
+	if e.event != nil && e.surface == 0 {
+		e.event(ev)
+	}
+	e.enqueue(message{surface: e.surface, event: ev})
 }
 
 // InputModality reports what the user gives the surface input with

@@ -51,6 +51,7 @@ func (s *surface) layoutStart(tr *driver.LayoutTransition) time.Duration {
 }
 
 func (s *surface) startTicking() {
+	defer s.publishPace()
 	if s.ticking {
 		s.setPace()
 		return
@@ -90,7 +91,7 @@ func (s *surface) framesPerSecond() int {
 // animations' own when they are all it steps, else the screen's highest.
 // Batches apply as they land, so none waits for a slowed frame.
 func (s *surface) wantedPace() float64 {
-	if len(s.motions) > 0 || len(s.ghosts) > 0 || s.frameWanted || s.selecting != nil || s.perf != nil {
+	if len(s.motions) > 0 || len(s.ghosts) > 0 || s.frameWanted.Load() || s.selecting != nil || s.perf != nil {
 		return 0
 	}
 	return s.animator.FrameRate()
@@ -98,17 +99,30 @@ func (s *surface) wantedPace() float64 {
 
 // setPace moves the running link to the rate wanted now.
 func (s *surface) setPace() {
-	if pace := s.wantedPace(); pace != s.pace {
+	pace := s.wantedPace()
+	if pace != s.pace {
 		s.pace = pace
 		if s.link != 0 {
 			s.link.Send(sel("setPreferredFramesPerSecond:"), s.framesPerSecond())
 		}
 	}
+	s.publishPace()
+	// The app asked for a frame as the clock slowed, seeing it still at
+	// the full rate.
+	if pace != 0 && s.frameWanted.Load() {
+		s.setPace()
+	}
 }
+
+// publishPace tells the engine goroutine whether the clock ticks at the
+// display's full rate, so that a frame the app asks for needs no hop to
+// the main thread (RequestFrame).
+func (s *surface) publishPace() { s.fullRate.Store(s.ticking && s.pace == 0) }
 
 func (s *surface) stopTicking() {
 	if s.ticking {
 		s.ticking = false
+		s.publishPace()
 		s.link.Send(sel("setPaused:"), true)
 	}
 }
@@ -122,7 +136,7 @@ func surfaceTick(self objc.ID, _ objc.SEL, _ objc.ID) {
 func (s *surface) tick() {
 	if s.perf != nil {
 		s.perf.Vsync(time.Now(), time.Duration(objc.Send[float64](s.link, sel("duration"))*float64(time.Second)))
-		defer s.measuring(s.animator.Running() || len(s.motions) > 0 || len(s.ghosts) > 0 || s.frameWanted)()
+		defer s.measuring(s.animator.Running() || len(s.motions) > 0 || len(s.ghosts) > 0 || s.frameWanted.Load())()
 	}
 	now := s.clock()
 	if s.animator.Running() {
@@ -137,15 +151,18 @@ func (s *surface) tick() {
 	}
 	s.drawShaders()
 	s.startImages()
-	if s.frameWanted {
-		s.frameWanted = false
-		if s.engine != nil {
-			s.engine.Frame()
-		}
+	if s.frameWanted.Swap(false) && s.engine != nil {
+		s.engine.Frame()
 	}
+	apple.YieldFrame()
 	// A monitor closes a frame at every refresh.
-	if !s.animator.Running() && len(s.motions) == 0 && len(s.ghosts) == 0 && !s.frameWanted && s.perf == nil {
+	if !s.animator.Running() && len(s.motions) == 0 && len(s.ghosts) == 0 && !s.frameWanted.Load() && s.perf == nil {
 		s.stopTicking()
+		// The app asked for a frame as the clock stopped, seeing it still
+		// ticking.
+		if s.frameWanted.Load() {
+			s.startTicking()
+		}
 		return
 	}
 	s.setPace()
