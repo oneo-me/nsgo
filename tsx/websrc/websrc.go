@@ -68,12 +68,14 @@ func Runtime() string {
 func Bundle(name, source string) string {
 	source, comment := splitMap(source)
 	var b strings.Builder
-	fmt.Fprintf(&b, "// Written by nsgo: %s, for the page's realm.\n", name)
-	fmt.Fprintf(&b, "((p) => { p[%s] = function () {\n", strconv.Quote(name))
+	// The script starts on the file's first line, so its source map's
+	// lines hold.
+	fmt.Fprintf(&b, "((p) => { p[%s] = function () {", strconv.Quote(name))
 	b.WriteString(source)
 	b.WriteString("\n}; })(globalThis[")
 	b.WriteString(strconv.Quote(ScriptsGlobal))
 	b.WriteString("] ??= Object.create(null));\n")
+	fmt.Fprintf(&b, "// Written by nsgo: %s, for the page's realm.\n", name)
 	// A browser reads a source map from a file's last line alone.
 	b.WriteString(comment)
 	return b.String()

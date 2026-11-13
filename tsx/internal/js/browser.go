@@ -25,6 +25,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	sjs "syscall/js"
 	"time"
 
@@ -249,12 +250,16 @@ func (r *Runtime) program(registry, name string) sjs.Value {
 	return reg.Get(name)
 }
 
+// realmTaken is whether a runtime took the realm the page made.
+var realmTaken atomic.Bool
+
 // New returns a runtime in a realm of its own: the page's, when it made
 // one for the app (nsgo.js, the loader, names it in NSGO_REALM), else one
-// this makes.
+// this makes. The first runtime alone takes the page's: a sandbox's, as
+// tsx.View runs a package in, is a realm apart from the app's.
 func New() *Runtime {
 	frame := sjs.Undefined()
-	if name := os.Getenv("NSGO_REALM"); name != "" {
+	if name := os.Getenv("NSGO_REALM"); name != "" && !realmTaken.Swap(true) {
 		frame = sjs.Global().Get(name)
 	}
 	if !frame.Truthy() {
