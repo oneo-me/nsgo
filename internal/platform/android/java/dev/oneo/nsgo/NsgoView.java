@@ -284,14 +284,19 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        boolean first = engine == null || engine.isDestroyed() || !engine.isAlive();
+        boolean first = false;
         if (!attached) {
-            if (engine == null || engine.isDestroyed()) {
+            if (engine == null) {
                 engine = new NsgoEngine(getContext());
                 ownsEngine = true;
             }
-            if (!engine.isAlive()) start();
-            else attachRunningEngine();
+            // An engine whose process ended stays ended: a host decides whether to make another.
+            if (engine.canStart()) {
+                start();
+                first = true;
+            } else if (engine.isAlive()) {
+                attachRunningEngine();
+            }
         }
         environment();
         send(first ? Protocol.START : Protocol.RESIZE, w / density, h / density);
@@ -317,7 +322,9 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
         accessibility.addTouchExplorationStateChangeListener(screenReader);
         getContext().getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, motion);
-        if (Build.VERSION.SDK_INT >= 33) registerBack();
+        // Back goes to the app only while it can answer, so not on a detached view or an ended engine.
+        boolean answers = attached || engine == null || engine.canStart();
+        if (Build.VERSION.SDK_INT >= 33 && answers) registerBack();
         systemBars();
     }
 
@@ -344,35 +351,35 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     }
 
     /**
-     * Attaches this surface to a host-owned engine. Call on the UI thread.
-     * The current pipe supports one surface and does not resync a fresh view;
-     * use the same view for a detach/attach until the surface protocol lands.
+     * Shows a host-owned engine's app in this view, starting its process as the view first gets a size, or attaches this view again after detachFromEngine. Call on the UI thread.
+     *
+     * Until the surface protocol lands, an engine serves the one view that first attaches to it and a view shows one engine: this throws IllegalStateException for another view's engine, for a second engine, and for an engine whose process ended or was destroyed, which a host replaces with a new engine and a new view.
      */
     public void attachToEngine(NsgoEngine next) {
         if (next == null) throw new NullPointerException("engine");
-        if (engine == next) {
-            if (next.isAlive() && !attached) attachRunningEngine();
-            return;
+        if (!next.isAlive() && !next.canStart()) throw new IllegalStateException("the engine's process has ended: make a new engine");
+        if (engine != next) {
+            if (engine != null) throw new IllegalStateException("this view already shows another engine's app");
+            next.attach(this);
+            engine = next;
+            ownsEngine = false;
         }
-        if (attached) detachFromEngine();
-        if (ownsEngine && engine != null) engine.destroy();
-        engine = next;
-        ownsEngine = false;
-        if (next.isAlive()) attachRunningEngine();
+        if (!attached && next.isAlive()) attachRunningEngine();
     }
 
-    /** Detaches this surface without stopping a host-owned engine. */
+    /**
+     * Takes this view off a host-owned engine's screen: back goes to the system again. The engine keeps the view, and through it its context, as the one it serves: the view still answers the app's text and applies its batches off screen, so the app runs on and the view shows it current when attached again. The view detaches itself as it leaves its window.
+     */
     public void detachFromEngine() {
         if (!attached) return;
-        engine.detach(this);
         attached = false;
         unregisterBack();
-        destroyComponents();
     }
 
     private void attachRunningEngine() {
         engine.attach(this);
         attached = true;
+        if (Build.VERSION.SDK_INT >= 33 && isAttachedToWindow() && backCallback == null) registerBack();
         host.start();
     }
 
@@ -497,10 +504,6 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
 
     private void start() {
         File exe = new File(getContext().getApplicationInfo().nativeLibraryDir, "libnsgo.so");
-        if (engine == null || engine.isDestroyed()) {
-            engine = new NsgoEngine(getContext());
-            ownsEngine = true;
-        }
         ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
         builder.command().addAll(flags);
         File data = storage != null ? storage : getContext().getFilesDir();
@@ -526,26 +529,34 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
         watchNetwork();
     }
 
-    /** Ends the app's process and destroys its native components. */
+    /**
+     * Ends the app's process and destroys its native components. On a view showing a host-owned engine it only detaches the view, as NsgoEngine.destroy ends that engine.
+     */
     public void stop() {
+        if (engine != null && !ownsEngine) {
+            detachFromEngine();
+            return;
+        }
+        if (engine != null) engine.destroy();
+        release();
+    }
+
+    /**
+     * Lets go of what serves the app's process once it ends or the view stops, on the UI thread: the network callback, the decoders, back and the native components, as an ended app sends no deletes. It runs again harmlessly.
+     */
+    private void release() {
         if (network != null) {
             getContext().getSystemService(ConnectivityManager.class).unregisterNetworkCallback(network);
             network = null;
         }
         decoder.shutdownNow();
         folders.shutdownNow();
-        if (engine != null) {
-            if (ownsEngine) engine.destroy();
-            else engine.detach(this);
-        }
         attached = false;
+        unregisterBack();
         destroyComponents();
     }
 
-    /**
-     * Destroys the native components still showing: a stopped app sends no
-     * deletes, so this runs as its process ends, on the UI thread.
-     */
+    /** Destroys the native components still showing, on the UI thread. */
     private void destroyComponents() {
         for (int i = 0; i < nodes.size(); i++) {
             Node n = nodes.valueAt(i);
@@ -611,10 +622,8 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     @Override
     public void onProcessEnded(IOException error) {
         if (error != null) Log.i(TAG, "app process ended: " + error);
-        // Leave back to the system from now on; the app's components go
-        // with it.
-        ui.post(this::unregisterBack);
-        ui.post(this::destroyComponents);
+        // Leave back to the system from now on; the app's components, network callback and decoders go with it. The reader has passed on its last message, so nothing decodes after this.
+        ui.post(this::release);
     }
 
     @Override
@@ -1413,12 +1422,10 @@ public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     }
 
     /**
-     * Reports back to the engine, which routes it to the topmost overlay,
-     * modal or stack. While the app runs it takes back even when nothing
-     * there does, for the engine cannot answer; false once the app ended.
+     * Reports back to the engine, which routes it to the topmost overlay, modal or stack. While the app runs it takes back even when nothing there does, for the engine cannot answer; false once the app ended or while the view is detached from its engine.
      */
     public boolean back() {
-        if (engine == null || !engine.isAlive()) return false;
+        if (!attached || engine == null || !engine.isAlive()) return false;
         event(Protocol.EVENT_BACK, 0, 0, 0, 0, "");
         return true;
     }
