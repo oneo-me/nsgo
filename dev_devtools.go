@@ -55,7 +55,7 @@ type devCommit struct {
 	Causes *driver.Causes `json:"causes,omitempty"`
 }
 
-// startDevTools has core record what DevTools show, sends the page each commit, and follows the page's commands from the server's events. It runs before any graph starts.
+// startDevTools has core record what DevTools show, sends the page each commit, and follows the page's commands from the server's events. It runs once, before any graph starts (startDevClient).
 func startDevTools(server string) {
 	devtools.Enabled = true
 	driver.TraceCauses = true

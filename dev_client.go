@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
@@ -23,21 +24,23 @@ var devServer = ""
 // devHighlight is "1" in nsgo dev -highlight's builds, set with -ldflags -X.
 var devHighlight = ""
 
-// devApp runs app under nsgo dev: build failures the server reports and
-// the app's own render failures show in an overlay over it, and with
-// -trace the server prints each commit. On the web the page is served from the server and shows build
-// failures itself.
-func devApp(app App) App {
-	server := devServer
+// devServerURL is nsgo dev's server, "" when none runs the app, and whether the app runs in a web page the server served.
+func devServerURL() (server string, page bool) {
+	server = devServer
 	if s := os.Getenv("NSGO_DEV_SERVER"); s != "" {
 		server = s
 	}
-	page := server == ""
-	if page {
-		server = pageOrigin()
-	}
 	if server == "" {
-		return app
+		return pageOrigin(), true
+	}
+	return server, false
+}
+
+// startDevClient has the server print each commit under -trace and starts DevTools under -devtools. Run calls it before any graph starts, for an app's function as for a root view, as both read what it sets; it starts them once, however many views SetMainView shows.
+var startDevClient = sync.OnceFunc(func() {
+	server, _ := devServerURL()
+	if server == "" {
+		return
 	}
 	if devTrace == "1" {
 		traceTo(server)
@@ -45,6 +48,18 @@ func devApp(app App) App {
 	if devDevtools == "1" {
 		startDevTools(server)
 	}
+})
+
+// devApp runs app under nsgo dev: build failures the server reports and
+// the app's own render failures show in an overlay over it, and with
+// -trace the server prints each commit. On the web the page is served from the server and shows build
+// failures itself.
+func devApp(app App) App {
+	server, page := devServerURL()
+	if server == "" {
+		return app
+	}
+	startDevClient()
 	if devHighlight == "1" || devDevtools == "1" {
 		app = withDevOverlay(app, devHighlight == "1")
 	}
