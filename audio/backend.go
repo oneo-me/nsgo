@@ -22,8 +22,10 @@ type soundBackend interface {
 	close() error
 }
 
+// playerCallbacks are how a backend reports what the native player does on its own. A backend calls paused when the native player stops without the app asking, such as on an audio-session interruption, a lost audio focus or an unplugged headset.
 type playerCallbacks struct {
 	progress func(position, duration time.Duration)
+	paused   func()
 	end      func()
 	err      func(error)
 }
@@ -101,6 +103,7 @@ func openPlayer(src source, options Options) (*Player, error) {
 	player := &Player{}
 	handle, err := targetBackend.openPlayer(src, options, playerCallbacks{
 		progress: player.progressed,
+		paused:   player.pausedByBackend,
 		end:      player.endedByBackend,
 		err:      player.failed,
 	})

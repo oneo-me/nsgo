@@ -231,6 +231,12 @@ func (player *Player) progressed(position, duration time.Duration) {
 	})
 }
 
+func (player *Player) pausedByBackend() {
+	player.mu.Lock()
+	player.playing = false
+	player.mu.Unlock()
+}
+
 func (player *Player) endedByBackend() {
 	player.mu.Lock()
 	if player.closed {

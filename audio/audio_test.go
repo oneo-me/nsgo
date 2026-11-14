@@ -154,11 +154,40 @@ func TestPlayerPositionFollowsALoop(t *testing.T) {
 	}
 }
 
+func TestPlayerPausedByTheSystem(t *testing.T) {
+	backend := &fakeBackend{}
+	previous := targetBackend
+	targetBackend = backend
+	t.Cleanup(func() { targetBackend = previous })
+
+	player, err := Open("song.mp3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := player.Play(); err != nil {
+		t.Fatal(err)
+	}
+	if !player.Playing() {
+		t.Fatal("Playing is false after Play")
+	}
+	backend.player.mu.Lock()
+	backend.player.active = false
+	backend.player.mu.Unlock()
+	backend.playerPaused()
+	if player.Playing() {
+		t.Error("Playing is true after the system paused the player")
+	}
+	if err := player.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 type fakeBackend struct {
 	soundOptions   Options
 	playerOptions  Options
 	soundEnd       func()
 	playerProgress func(time.Duration, time.Duration)
+	playerPaused   func()
 	playerEnd      func()
 	sound          fakeSound
 	player         fakePlayer
@@ -182,6 +211,7 @@ func (backend *fakeBackend) openSound(_ source, options Options, end func()) (so
 func (backend *fakeBackend) openPlayer(_ source, options Options, callbacks playerCallbacks) (playerBackend, error) {
 	backend.playerOptions = options
 	backend.playerProgress = callbacks.progress
+	backend.playerPaused = callbacks.paused
 	backend.playerEnd = callbacks.end
 	return &backend.player, nil
 }
