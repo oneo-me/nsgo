@@ -289,6 +289,7 @@ func start(app engine.App, opts Options) (*window, error) {
 		return nil, fmt.Errorf("the Linux backend needs GTK 4: %w", err)
 	}
 	w := newWindow(opts, false)
+	w.app, w.opts = app, opts
 	w.createWindow(opts)
 	w.env = w.environment()
 
