@@ -23,6 +23,7 @@ const (
 	instancePipeTypeMessage     = 0x00000004
 	instancePipeReadmodeMessage = 0x00000002
 	instancePipeWait            = 0x00000000
+	instanceFirstPipeInstance   = 0x00080000
 )
 
 var (
@@ -35,14 +36,12 @@ var (
 	writeFile           = kernel32.NewProc("WriteFile")
 	closeHandle         = kernel32.NewProc("CloseHandle")
 	sleep               = kernel32.NewProc("Sleep")
+	processIDToSession  = kernel32.NewProc("ProcessIdToSessionId")
 )
 
-// instance is a named mutex and its message pipe. The mutex prevents a
-// second engine even while the first window is still being created; pending
-// pipe messages wait until Run installs the delivery function.
+// instance is a named mutex and its message pipe. The mutex prevents a second engine even while the first window is still being created; pending pipe messages wait until Run installs the delivery function.
 type instance struct {
 	mutex uintptr
-	pipe  uintptr
 	name  *uint16
 	done  chan struct{}
 	once  sync.Once
@@ -71,10 +70,13 @@ func claimInstance(id string, args []string) (*instance, bool) {
 	return i, false
 }
 
+// instanceNames are the mutex and pipe of app id in this logon session. Local\ mutexes are per session already; pipe names are machine-wide, so the pipe's carries the session too, or a second user's launch would reach the first user's app.
 func instanceNames(id string) (*uint16, *uint16) {
 	digest := sha256.Sum256([]byte(id))
+	var session uint32
+	processIDToSession.Call(uintptr(syscall.Getpid()), uintptr(unsafe.Pointer(&session)))
 	key := fmt.Sprintf("NSGo-%x", digest[:12])
-	return wide("Local\\" + key), wide("\\\\.\\pipe\\" + key)
+	return wide("Local\\" + key), wide(fmt.Sprintf("\\\\.\\pipe\\%s-%d", key, session))
 }
 
 func sendInstance(name *uint16, args []string) bool {
@@ -100,43 +102,32 @@ func sendInstance(name *uint16, args []string) bool {
 
 func (i *instance) serve() {
 	for {
-		select {
-		case <-i.done:
-			return
-		default:
-		}
+		// FILE_FLAG_FIRST_PIPE_INSTANCE: only the mutex's owner may serve this name.
 		pipe, _, err := createNamedPipeW.Call(uintptr(unsafe.Pointer(i.name)),
-			instancePipeAccessInbound, instancePipeTypeMessage|instancePipeReadmodeMessage|instancePipeWait,
+			instancePipeAccessInbound|instanceFirstPipeInstance, instancePipeTypeMessage|instancePipeReadmodeMessage|instancePipeWait,
 			1, 64<<10, 64<<10, 0, 0)
 		if pipe == instanceInvalidHandle {
 			log.Printf("nsgo: single-instance pipe: %v", err)
 			return
 		}
-		i.mu.Lock()
-		i.pipe = pipe
-		i.mu.Unlock()
 		connected, _, err := connectNamedPipe.Call(pipe, 0)
-		if connected == 0 && err != syscall.Errno(instancePipeConnected) {
-			closeHandle.Call(pipe)
-			if err != nil {
-				select {
-				case <-i.done:
-					return
-				default:
-				}
-			}
-			continue
-		}
-		var data [64 << 10]byte
-		var read uint32
-		_, _, _ = readFile.Call(pipe, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), uintptr(unsafe.Pointer(&read)), 0)
-		i.mu.Lock()
-		i.pipe = 0
-		i.mu.Unlock()
-		disconnectNamedPipe.Call(pipe)
-		closeHandle.Call(pipe)
 		var args []string
-		if json.Unmarshal(data[:read], &args) == nil {
+		received := false
+		if connected != 0 || err == syscall.Errno(instancePipeConnected) {
+			var data [64 << 10]byte
+			var read uint32
+			if ok, _, _ := readFile.Call(pipe, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), uintptr(unsafe.Pointer(&read)), 0); ok != 0 {
+				received = json.Unmarshal(data[:read], &args) == nil
+			}
+			disconnectNamedPipe.Call(pipe)
+		}
+		closeHandle.Call(pipe)
+		select {
+		case <-i.done:
+			return
+		default:
+		}
+		if received {
 			i.enqueue(args)
 		}
 	}
@@ -165,18 +156,16 @@ func (i *instance) setDelivery(deliver func([]string)) {
 	}
 }
 
+// close gives up the mutex and ends serve: it connects to the pipe once, so the ConnectNamedPipe serve waits in returns and serve closes its own handle.
 func (i *instance) close() {
 	if i == nil {
 		return
 	}
 	i.once.Do(func() {
 		close(i.done)
-		i.mu.Lock()
-		pipe := i.pipe
-		i.pipe = 0
-		i.mu.Unlock()
-		if pipe != 0 {
-			closeHandle.Call(pipe)
+		if h, _, _ := createFileW.Call(uintptr(unsafe.Pointer(i.name)), instanceGenericWrite, 0, 0,
+			instanceOpenExisting, 0, 0); h != instanceInvalidHandle {
+			closeHandle.Call(h)
 		}
 		closeHandle.Call(i.mutex)
 	})

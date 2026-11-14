@@ -12,15 +12,15 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
-// instance is the Unix socket owned by the first copy of an app. Messages
-// received before the GTK window exists wait in pending until Run installs the
-// delivery function.
+// instance is what the first copy of an app holds: an exclusive lock on instance.lock, which ends with the process however it ends, and the Unix socket later launches hand their files to. Messages received before the GTK window exists wait in pending until Run installs the delivery function.
 type instance struct {
+	lock     *os.File
 	listener *net.UnixListener
 	path     string
 	done     chan struct{}
@@ -31,35 +31,39 @@ type instance struct {
 	pending [][]string
 }
 
-// claimInstance makes this process the owner, or hands its launch to the
-// owner and reports that the caller should exit. A failed handoff keeps the
-// caller alive only when the old socket is stale; an owner that is listening
-// always wins, so two engines are never started for one app ID.
+// claimInstance makes this process the owner, or hands its launch to the owner and reports that the caller should exit. The lock decides, as Windows' mutex does: whoever holds it owns the app ID, so two launches at once never both start an engine, and a socket a dead process left behind is replaced without asking it.
 func claimInstance(id string, args []string) (*instance, bool) {
 	path, err := instancePath(id)
 	if err != nil {
 		log.Printf("nsgo: single-instance setup: %v", err)
 		return nil, false
 	}
-	if sendInstance(path, args) {
+	lock, err := os.OpenFile(path+".lock", os.O_RDWR|os.O_CREATE, 0o600)
+	if err != nil {
+		log.Printf("nsgo: single-instance lock: %v", err)
+		return nil, false
+	}
+	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		lock.Close()
+		if !errors.Is(err, syscall.EWOULDBLOCK) {
+			log.Printf("nsgo: single-instance lock: %v", err)
+			return nil, false
+		}
+		if !sendInstance(path, args) {
+			log.Printf("nsgo: could not hand the launch to the running instance")
+		}
 		return nil, true
 	}
-	// A dead process can leave the socket pathname behind. Remove it only
-	// after all connection attempts failed, then claim it atomically with
-	// ListenUnix.
+	i := &instance{lock: lock, path: path, done: make(chan struct{})}
 	_ = os.Remove(path)
 	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: path, Net: "unix"})
 	if err != nil {
-		// Another process may have won the race between the failed handoff and
-		// our listen. Give that owner one last chance before running a copy.
-		if sendInstance(path, args) {
-			return nil, true
-		}
+		// The lock stays held, so later launches still find this owner, which hears none of them.
 		log.Printf("nsgo: single-instance listener: %v", err)
-		return nil, false
+		return i, false
 	}
 	_ = os.Chmod(path, 0o600)
-	i := &instance{listener: listener, path: path, done: make(chan struct{})}
+	i.listener = listener
 	go i.serve()
 	return i, false
 }
@@ -83,8 +87,9 @@ func instancePath(id string) (string, error) {
 	return filepath.Join(os.TempDir(), fmt.Sprintf("nsgo-%d-%x.sock", os.Getuid(), digest[:8])), nil
 }
 
+// sendInstance hands args to the owner, retrying while the owner, which already holds the lock, may not be listening yet.
 func sendInstance(path string, args []string) bool {
-	for range 8 {
+	for range 20 {
 		conn, err := net.DialTimeout("unix", path, 150*time.Millisecond)
 		if err == nil {
 			_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
@@ -146,7 +151,10 @@ func (i *instance) close() {
 	}
 	i.once.Do(func() {
 		close(i.done)
-		_ = i.listener.Close()
-		_ = os.Remove(i.path)
+		if i.listener != nil {
+			_ = i.listener.Close()
+			_ = os.Remove(i.path)
+		}
+		_ = i.lock.Close()
 	})
 }

@@ -503,11 +503,15 @@ func wide(s string) *uint16 {
 // Run opens a window showing app and runs the message loop. Call it from
 // main; it does not return until the window closes.
 func Run(app engine.App, opts Options) {
-	single, alreadyRunning := claimInstance(opts.ID, engine.LaunchFiles())
-	if alreadyRunning {
-		return
+	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.
+	var single *instance
+	if opts.ID != "" && opts.test == nil {
+		var alreadyRunning bool
+		if single, alreadyRunning = claimInstance(opts.ID, engine.LaunchFiles()); alreadyRunning {
+			return
+		}
+		defer single.close()
 	}
-	defer single.close()
 	if opts.Width == 0 {
 		opts.Width, opts.Height = 480, 640
 	}

@@ -234,11 +234,15 @@ type menuBuild struct {
 // Run opens a window showing app and runs GTK's main loop. Call it from
 // main; it returns when the window closes.
 func Run(app engine.App, opts Options) {
-	instance, alreadyRunning := claimInstance(opts.ID, engine.LaunchFiles())
-	if alreadyRunning {
-		return
+	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.
+	var instance *instance
+	if opts.ID != "" && opts.test == nil {
+		var alreadyRunning bool
+		if instance, alreadyRunning = claimInstance(opts.ID, engine.LaunchFiles()); alreadyRunning {
+			return
+		}
+		defer instance.close()
 	}
-	defer instance.close()
 	updateConfig = opts.Updates
 	w, err := start(app, opts)
 	if err != nil {
