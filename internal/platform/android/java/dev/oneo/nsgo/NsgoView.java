@@ -28,6 +28,7 @@ import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.os.Build;
+import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -2926,7 +2927,7 @@ public class NsgoView extends FrameLayout {
             return;
         }
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        BiometricPrompt prompt = new BiometricPrompt(activity, executor, new BiometricPrompt.AuthenticationCallback() {
+        BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
             @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                 executor.shutdown();
                 event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, Protocol.BIOMETRIC_SUCCESS);
@@ -2934,18 +2935,18 @@ public class NsgoView extends FrameLayout {
             @Override public void onAuthenticationError(int errorCode, CharSequence message) {
                 executor.shutdown();
                 int result = errorCode == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED
-                        || errorCode == BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON
+                        || errorCode == 10 // BIOMETRIC_ERROR_NEGATIVE_BUTTON
                         || errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED
                         ? Protocol.BIOMETRIC_CANCELLED : Protocol.BIOMETRIC_FAILURE;
                 event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, result);
             }
-        });
-        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+        };
+        BiometricPrompt prompt = new BiometricPrompt.Builder(activity)
                 .setTitle(getContext().getApplicationInfo().loadLabel(getContext().getPackageManager()))
                 .setDescription(reason)
-                .setNegativeButtonText("Cancel")
+                .setNegativeButton("Cancel", executor, (dialog, which) -> { })
                 .build();
-        prompt.authenticate(info);
+        prompt.authenticate(new CancellationSignal(), executor, callback);
     }
 
     /** The notification permission requests waiting for the system's prompt. */
