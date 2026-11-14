@@ -60,7 +60,7 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | Windows and Linux attach opened window surfaces; the remaining work is tray-anchored panels on both backends that take the keyboard and hide as they lose it |
+| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | Windows and Linux attach opened window surfaces; Linux panels take focus and hide on blur, with tray anchoring and the remaining Windows panel behavior still open |
 | Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
 | Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
 | Tray icons on Linux | StatusNotifierItem over D-Bus; #988, #1209 | KDE and GNOME with its AppIndicator extension show the icon, its menu and clicks; the current backend registers the icon and reports clicks, while the menu and no-watcher fallback remain |

@@ -94,6 +94,9 @@ type window struct {
 	primary    bool
 	kind       driver.SurfaceKind
 	destroying bool
+	hideOnBlur bool
+	visible    bool
+	focused    bool
 	// embedded is set for a host's widget (NewView): the host owns the
 	// window, its chrome and the main loop. app and opts start its engine
 	// once GTK first allocates it.
@@ -351,8 +354,8 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 }
 
 // openSurface creates a window on GTK's existing main loop and attaches its
-// tree to the root engine. Panels currently use the same native window path;
-// tray anchoring and focus hiding are separate backend work.
+// tree to the root engine. Panels use a borderless GTK window and can hide on
+// blur; tray anchoring and non-activating behavior remain separate work.
 func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	opts := w.opts
 	if cfg.Title != "" {
@@ -373,9 +376,15 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 		opts.Hidden = true
 	}
 	child := newWindow(opts, false)
-	child.kind, child.opts = cfg.Kind, opts
+	child.kind, child.hideOnBlur, child.opts = cfg.Kind, cfg.HideOnBlur, opts
 	child.createWindow(opts)
 	child.setupSettings()
+	child.visible = !opts.Hidden
+	if cfg.Kind == driver.SurfacePanel {
+		// GTK has no non-activating panel equivalent. A borderless window
+		// still gives the panel its own keyboard focus and native surface.
+		gtkWindowSetDecorated(child.win, 0)
+	}
 	if cfg.Frame.Width > 0 || cfg.Frame.Height > 0 {
 		child.setFrame(cfg.Frame)
 	}
@@ -669,6 +678,7 @@ func (w *window) close() {
 		return
 	}
 	w.closing = true
+	w.visible = false
 	w.removeTrays()
 	if w.tickID != 0 {
 		gSourceRemove(w.tickID)
@@ -1107,6 +1117,7 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 	switch c.Action {
 	case driver.WindowDestroy:
 		w.destroying = true
+		w.visible = false
 		if !w.primary && !w.embedded {
 			w.close()
 			w.closeNatives()
@@ -1139,16 +1150,24 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 			w.close()
 		} else {
 			w.destroying = true
+			w.visible = false
 			gtkWindowClose(w.win)
 		}
 	case driver.WindowShow:
+		w.visible = true
+		w.focused = false
 		gtkWidgetSetVisible(w.win, 1)
+		// Anchor placement is not available through GTK's portable API;
+		// presenting still gives a panel keyboard focus.
 		gtkWindowPresent(w.win)
 	case driver.WindowHide:
+		w.visible = false
 		gtkWidgetSetVisible(w.win, 0)
 	case driver.WindowSetFrame:
 		w.setFrame(c.Frame)
 	case driver.WindowOrderFront:
+		w.visible = true
+		w.focused = false
 		gtkWindowPresent(w.win)
 	case driver.WindowSetMenuBar:
 		w.chrome.menuBar, w.chrome.revealed = c.MenuBar, false

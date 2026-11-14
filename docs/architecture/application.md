@@ -63,7 +63,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 
 ## Linux
 
-The Linux backend attaches opened window surfaces to GTK's main loop and registers StatusNotifierItem icons on the session bus when a compatible watcher is present, reporting primary and secondary activation. Tray-anchored panels, panel focus behavior, drawn tray views and tray menus remain in the surfaces slice of the roadmap.
+The Linux backend attaches opened window surfaces to GTK's main loop and registers StatusNotifierItem icons on the session bus when a compatible watcher is present, reporting primary and secondary activation. Panels use borderless GTK windows, take keyboard focus and honor `HideOnBlur`; tray anchoring, non-activating behavior, drawn tray views and tray menus remain in the surfaces slice of the roadmap.
 
 ## Configuration
 
