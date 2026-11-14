@@ -51,7 +51,7 @@ An edge-adaptable tab bar, `mobile.TabBar` taking a leading or trailing edge whe
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These decisions need confirmation before an implementation chooses them, and [ARCHITECTURE.md](../../ARCHITECTURE.md#open-questions) lists them with its open questions:
 
 1. Is the public value a list of usable regions plus obstructions, or a higher-level fold posture with derived regions?
 2. Are reserved regions only geometry, or should core also offer an opt-in layout constraint that avoids them?
