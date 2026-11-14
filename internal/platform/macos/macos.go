@@ -976,7 +976,7 @@ func (s *surface) refresh() {
 		return
 	}
 	s.layoutTrafficLights()
-	if env := s.environment(); env != s.env {
+	if env := s.environment(); !env.Equal(s.env) {
 		rescale := env.PixelRatio != s.env.PixelRatio
 		s.env = env
 		s.engine.SetEnvironment(env)

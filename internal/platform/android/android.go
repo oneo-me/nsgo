@@ -346,7 +346,7 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 			s.carets <- readCarets(&r)
 		case msgEnvironment:
 			env := readEnvironment(&r)
-			if env == s.env {
+			if env.Equal(s.env) {
 				break
 			}
 			s.env = env

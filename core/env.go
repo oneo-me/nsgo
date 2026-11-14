@@ -4,12 +4,16 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // Env is the environment as signals, one per part, so a binding runs
 // again only when a part it read changes.
 type Env struct {
 	window               *Signal[Size]
+	displayFeatures      *Signal[[]DisplayFeature]
+	reservedRegions      *Signal[[]Bounds]
 	safe, titleBar       *Signal[Edges]
 	maximized            *Signal[bool]
 	fullScreen           *Signal[bool]
@@ -48,6 +52,8 @@ type Env struct {
 func newEnv(cx *Scope, app *Env) *Env {
 	e := &Env{
 		window:           NewSignal(cx, Size{}),
+		displayFeatures:  NewSignalFunc[[]DisplayFeature](cx, nil, func(a, b []DisplayFeature) bool { return false }),
+		reservedRegions:  NewSignalFunc[[]Bounds](cx, nil, func(a, b []Bounds) bool { return false }),
 		safe:             NewSignal(cx, Edges{}),
 		titleBar:         NewSignal(cx, Edges{}),
 		maximized:        NewSignal(cx, false),
@@ -134,6 +140,8 @@ func (e *Env) set(v Environment) {
 		v.KeyboardDuration = 250 * time.Millisecond
 	}
 	e.safe.Set(v.SafeArea)
+	e.displayFeatures.Set(v.DisplayFeatures)
+	e.reservedRegions.Set(v.ReservedRegions)
 	e.titleBar.Set(v.TitleBar)
 	e.maximized.Set(v.Maximized)
 	e.fullScreen.Set(v.FullScreen)
@@ -165,6 +173,39 @@ func (e *Env) set(v Environment) {
 
 // Window returns the surface's size.
 func (e *Env) Window() Size { return e.window.Get() }
+
+// DisplayFeatureKind describes a fold, hinge, cutout or system bar.
+type DisplayFeatureKind = driver.DisplayFeatureKind
+
+const (
+	DisplayFeatureFold       = driver.DisplayFeatureFold
+	DisplayFeatureHinge      = driver.DisplayFeatureHinge
+	DisplayFeatureCutout     = driver.DisplayFeatureCutout
+	DisplayFeatureBar        = driver.DisplayFeatureBar
+	DisplayFeatureFlat       = driver.DisplayFeatureFlat
+	DisplayFeatureHalfFolded = driver.DisplayFeatureHalfFolded
+	DisplayFeatureFolded     = driver.DisplayFeatureFolded
+)
+
+// DisplayFeature is a display feature in window coordinates.
+type DisplayFeature = driver.DisplayFeature
+
+// DisplayFeatures reports folds, hinges, cutouts and system bars.
+func (e *Env) DisplayFeatures() []DisplayFeature { return e.displayFeatures.Get() }
+
+// Hinge reports the first fold or hinge's band, or an empty bounds when none
+// exists. It is a convenience for two-pane layouts.
+func (e *Env) Hinge() Bounds {
+	for _, f := range e.displayFeatures.Get() {
+		if f.Kind == DisplayFeatureFold || f.Kind == DisplayFeatureHinge {
+			return f.Bounds
+		}
+	}
+	return Bounds{}
+}
+
+// ReservedRegions reports areas occupied by system display features.
+func (e *Env) ReservedRegions() []Bounds { return e.reservedRegions.Get() }
 
 // SafeArea returns the insets system UI covers on each edge.
 func (e *Env) SafeArea() Edges { return e.safe.Get() }

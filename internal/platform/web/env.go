@@ -111,7 +111,7 @@ func (s *surface) updateEnv() {
 	if ratio := js.Global().Get("devicePixelRatio").Float(); ratio != s.watch.ratio {
 		s.watchRatio(ratio)
 	}
-	if env := s.environment(); env != s.env {
+	if env := s.environment(); !env.Equal(s.env) {
 		repaint := env.PixelRatio != s.env.PixelRatio
 		s.env = env
 		s.engine.SetEnvironment(env)
