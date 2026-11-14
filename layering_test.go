@@ -21,6 +21,7 @@ var layers = []struct {
 }{
 	{"internal/layout", nil},
 	{"microphone", nil},
+	{"audio", nil},
 	// Widgets take core's colors, edges and fonts, and reach WidgetKit
 	// through the files and the library the tool's extension shares, and
 	// Android's runtime through the driver's Live Updates.
@@ -105,10 +106,11 @@ var platformShared = []string{
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shader/wgsl", "internal/shaderir/", "internal/engine",
 	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx", "tsx/websrc", "updater", "updater/locales"}
 
-// unportable are the packages among portable's that reach the system: the
-// terminal loads libghostty-vt and runs programs, on macOS, Linux and
-// Windows, and builds elsewhere to report that it cannot.
-var unportable = []string{"base/terminal/"}
+// unportable are the packages among portable's that reach the system: audio
+// loads AVFoundation on Apple targets, while the terminal loads libghostty-vt
+// and runs programs on macOS, Linux and Windows; both build elsewhere to
+// report that they cannot.
+var unportable = []string{"audio", "base/terminal/"}
 
 // layerTargets are the GOOS/GOARCH pairs the nsgo tool builds for.
 var layerTargets = [][2]string{
