@@ -1088,6 +1088,10 @@ func PaintColor(c Color) Paint { return driver.PaintColor(c) }
 // UTF16Len is the length of s in UTF-16 units.
 func UTF16Len(s string) int { return driver.UTF16Len(s) }
 
+// UTF16Offset returns the UTF-8 byte offset at units in s, clamped to a
+// complete UTF-16 code point.
+func UTF16Offset(s string, units int) int { return driver.UTF16Offset(s, units) }
+
 // All returns edges of the same length on every side.
 func All(p Points) Edges { return driver.All(p) }
 

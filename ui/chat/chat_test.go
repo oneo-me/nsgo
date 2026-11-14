@@ -2,6 +2,7 @@ package chat
 
 import (
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -138,6 +139,34 @@ func TestComposer(t *testing.T) {
 			t.Fatalf("sends = %d", s.sends)
 		}
 	})
+}
+
+// TestComposerSuggestions filters rows at the caret and accepts the selected
+// row without submitting the message.
+func TestComposerSuggestions(t *testing.T) {
+	var draft string
+	app := start(t, desktopEnv, func(cx *core.Scope) core.Node {
+		value := core.NewSignal(cx, "")
+		return Composer{Draft: func() string { draft = value.Get(); return draft }, OnDraftChange: value.Set, Label: "Message", SendLabel: "Send", Suggest: func(query string) []Suggestion {
+			all := []Suggestion{{ID: "readme", Label: "README.md", Insert: "README.md"}, {ID: "release", Label: "release.md", Insert: "release.md"}}
+			var out []Suggestion
+			for _, row := range all {
+				if strings.HasPrefix(strings.ToLower(row.Label), strings.ToLower(query)) {
+					out = append(out, row)
+				}
+			}
+			return out
+		}}
+	})
+	app.Type("id:composer", "@re")
+	app.Find("text:README.md")
+	app.Find("text:release.md")
+	app.Key("down")
+	app.Key("enter")
+	if draft != "release.md" || app.Exists("id:composer-suggestions") {
+		t.Fatal("suggestion popup stayed open")
+	}
+	app.Find("id:composer")
 }
 
 // TestComposerFooterHidesWithKeyboard leaves the footer out while the
