@@ -1,12 +1,12 @@
 # Foldable and dual-screen displays
 
-This is the design for issue [#49](https://github.com/nsgo-dev/nsgo/issues/49). It is not an implemented API. Fold and hinge geometry belongs in the shared driver environment so an app can reason about the usable regions of a surface without importing Android or vendor types.
+This is the design for issue [#49](https://github.com/nsgo-dev/nsgo/issues/49). It is not an implemented API. Fold and hinge geometry belongs in the shared driver model, reported with each surface's size, so an app can reason about the usable regions of a surface without importing Android or vendor types.
 
 ## Environment model
 
-The proposed driver value adds a list of display regions to a surface environment. Each region has a frame in surface points, a safe area, and an optional reserved rectangle that the app must not place content across. A fold or hinge is an obstruction: a frame, an orientation (vertical or horizontal) and three properties that vary independently, as they do in both platforms' models. `Occluding` says the pixels under it are not shown or touched (Android's `occlusionType` `FULL`, UIKit's occlusion region kind). `Separating` says the regions on either side read as logically apart (Android's `isSeparating`, UIKit's division region kind). `State` is the hinge's `Unknown`, `Closed`, `HalfOpen` or `Open`, open as far as the device goes, which Android calls flat (Android's `FLAT` and `HALF_OPENED`, `UIHingeStatus`), with an angle where the platform reports one. A hinge between two panels lying open is occluding, separating and open at once; a flexible screen half folded is separating and half open but not occluding; the same screen opened flat is neither. The model describes geometry; it does not choose a two-pane layout.
+The proposed driver value adds a list of display regions to what a surface reports. Each region has a frame in surface points, a safe area, and an optional reserved rectangle that the app must not place content across. A fold or hinge is an obstruction: a frame, an orientation (vertical or horizontal) and three properties that vary independently, as they do in both platforms' models. `Occluding` says the pixels under it are not shown or touched (Android's `occlusionType` `FULL`, UIKit's occlusion region kind). `Separating` says the regions on either side read as logically apart (Android's `isSeparating`, UIKit's division region kind). `State` is the hinge's `Unknown`, `Closed`, `HalfOpen` or `Open`, open as far as the device goes, which Android calls flat (Android's `FLAT` and `HALF_OPENED`, `UIHingeStatus`), with an angle where the platform reports one. A hinge between two panels lying open is occluding, separating and open at once; a flexible screen half folded is separating and half open but not occluding; the same screen opened flat is neither. The model describes geometry; it does not choose a two-pane layout.
 
-Non-foldable targets report one region and no obstructions. A region list is ordered in reading direction only when the platform provides one; otherwise it is stable by frame position. Frames are in the same coordinate space as `Tree.Resize`, and the backend reports a new environment before the resize that follows a posture or display change.
+Non-foldable targets report one region and no obstructions. A region list is ordered in reading direction only when the platform provides one; otherwise it is stable by frame position. Frames are in the same coordinate space as `Tree.Resize`, measured at the surface size the geometry travels with ([updates](#updates)).
 
 Because the properties are separate, an app can tell an occluding hinge, where pixels cannot be shown, from a separating fold, where both sides remain visible but a continuous layout is undesirable, and a backend never has to drop one property to report another. The model must also distinguish the hinge from a system bar or cutout, which continues to use `SafeArea`. Apps can therefore choose a split, a spanning layout with a gap, or a single-region layout explicitly.
 
@@ -16,7 +16,11 @@ Because the properties are separate, an app can tell an occluding hinge, where p
 
 The backend translates platform geometry into the shared model. Android uses Jetpack WindowManager's `FoldingFeature` and window metrics, including display changes while an activity is resized. Other targets report the one-region form until they have an equivalent system concept. Vendor-specific labels and hinge sensors remain backend metadata unless they affect usable geometry.
 
-An environment update is atomic: regions, obstructions, safe areas, posture and surface size describe one observation. A backend drops an observation that cannot be reconciled with the current surface, rather than sending a hinge frame in a previous coordinate space. A surface that detaches keeps its last observation but reports no new posture events until it attaches again.
+## Updates
+
+The geometry and the surface size change together, so they travel together. `driver.Environment` keeps the size out (`Tree.Resize` reports it), and the engine merges a queued resize into the slot of an older one, which can move it ahead of an environment pushed before it; geometry sent through `SetEnvironment` could therefore be applied at a size it was not measured at. The geometry is instead part of the resize: the message `Engine.Resize` and `ResizeAndWait` push gains it, and a change of state at the same size, such as a fold half closing, is a resize to the same size with a new geometry. Merging queued resizes then keeps the newest size and geometry as one, and `Tree.Resize` sets `Env().window` and the geometry in one batch, where today it sets the size outside the batch `SetEnvironment` uses and ignores a size it already has, so what reads either sees both new and a new geometry at the same size still applies.
+
+When the backend reports a size its latest platform observation was not measured at, it sends the one-region form for the new size until the platform reports for it, rather than frames in the previous coordinate space. Safe areas and the rest of the environment keep arriving through `SetEnvironment`. A surface that detaches keeps its last geometry but reports no new state until it attaches again.
 
 ## Layout and input
 
@@ -28,7 +32,8 @@ Pointer and touch coordinates remain surface coordinates. The backend does not r
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover one-region defaults, atomic environment updates, region ordering, reserved and occluding obstructions, surface detachment and signals that change only when geometry changes;
+- headless `core` tests cover one-region defaults, the size and geometry changing in one batch, region ordering, reserved and occluding obstructions, surface detachment and signals that change only when geometry changes;
+- `internal/engine` tests cover queued resizes merging with their geometry, including a resize merged ahead of an environment pushed before it;
 - `internal/driver` tests cover serialization, empty lists, posture transitions, points conversion and frames outside the surface;
 - Android tests use recorded WindowManager observations for an open fold, a half-open fold, an open hinge between two panels (occluding and separating together), rotation and multi-window states; and
 - a target test verifies an app can place two explicit panes and an edge-adaptable tab bar without any implicit device-specific behavior from core or base.
