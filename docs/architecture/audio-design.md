@@ -116,9 +116,9 @@ errors; the fake and native backends remain subsequent stages.
 
 The implementation is staged so each change remains reviewable:
 
-1. Add the portable API, errors, session values and `nsgotest` fake.
-2. Add the Apple cue and player plus audio-session sharing, with a macOS
-   fixture and an iOS simulator check.
+1. Add the portable API, errors and session values, with lifecycle tests.
+2. Add the `nsgotest` fake, and the Apple cue and player plus audio-session
+   sharing, with a macOS fixture and an iOS simulator check.
 3. Add Windows and Linux workers and their format/error tests.
 4. Add the Android runtime protocol and rebuild the committed runtime.
 5. Add the web and mini-program host paths, then a gallery cue and player
