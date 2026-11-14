@@ -124,11 +124,13 @@ var (
 )
 
 func trayObjectPath(id uint32) string {
-	return fmt.Sprintf("/StatusNotifierItem/%d", id)
+	_ = id
+	return "/StatusNotifierItem"
 }
 
 func trayMenuPath(id uint32) string {
-	return trayObjectPath(id) + "/Menu"
+	_ = id
+	return "/Menu"
 }
 
 func init() {
@@ -310,17 +312,13 @@ func methodString(p uintptr) string {
 
 func trayID(w *window, path uintptr) uint32 {
 	p := goString(path)
-	const prefix = "/StatusNotifierItem/"
-	if !strings.HasPrefix(p, prefix) {
+	if p != "/StatusNotifierItem" && p != "/Menu" {
 		return 0
 	}
-	value := strings.TrimPrefix(p, prefix)
-	value = strings.TrimSuffix(value, "/Menu")
-	id, err := strconv.ParseUint(value, 10, 32)
-	if err != nil {
-		return 0
+	for id := range w.trays {
+		return id
 	}
-	return uint32(id)
+	return 0
 }
 
 func trayProperty(w *window, id uint32, property string) uintptr {
