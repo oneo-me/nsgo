@@ -71,6 +71,14 @@ The host's theme overrides are `core.Tokens`: CSS colors by role name, `Values` 
 
 Each `NsgoView` starts a process of the app, so views are apart by nature. The parameters go in `NSGO_HOST_PARAMS`, the data directory in `NSGO_DATA_DIR` and the cache in `NSGO_CACHE_DIR`, which Go also makes `TMPDIR`, as Android gives an app's process none. Tokens, events, the host's handled names, replies and the URL handler's answers cross as `msgHost`; calls, posts, URLs and failures come back as `msgHostCall`, queued in Java until the process starts. A component name Go does not know goes to Java as `host:<name>`, which the view's registered `NsgoComponent.Factory` makes; its events carry one JSON value. A host package holds one app, since the runtime starts `libnsgo.so`. The host's activity passes its `onActivityResult` to each view's `activityResult`, which the photo and file pickers, the camera and the save dialog answer through, and its `onRequestPermissionsResult` to `permissionResult`, which a photo waits on where the host's manifest asks for `CAMERA`.
 
+The Android embedding lifecycle is a planned change. The current process-per-view
+behavior remains the compatibility baseline; it does not keep a Go process alive
+when an Activity calls `NsgoView.stop`. The `NsgoEngine`/`NsgoView` ownership,
+attach and detach states, and the protocol work needed for multiple surfaces are
+specified in [Android engine and view lifetime](android-lifecycle.md). Until that
+design lands, a host that needs a background process must keep its one view in a
+service and must not call `stop` when an Activity goes away.
+
 ## Departures from NSH
 
 | NSH | NSGo | Why |

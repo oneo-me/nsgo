@@ -146,6 +146,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Icons](docs/architecture/icons.md) | SVG parsing, `core.Icon` or the Lucide pack |
 | [Performance](docs/architecture/performance.md) | The performance monitor, a frame clock or a per-frame path |
 | [Embedding](docs/architecture/embedding.md) | `nsgo.NewView`, the host channel or `-embed` packages |
+| [Android engine and view lifetime](docs/architecture/android-lifecycle.md) | The planned `NsgoEngine`/`NsgoView` split for Android embedding, services and multiple Activities |
 | [Mini programs](docs/architecture/miniprogram.md) | The mini program backend, its runtime or the `miniprogram_*` targets |
 | [Testing](docs/architecture/testing.md) | `nsgotest`, its steps or a backend's test host |
 | [Tool](docs/architecture/tool.md) | `nsgo`: the dev server, tests on targets, packages or signing |
