@@ -419,6 +419,7 @@ type window struct {
 	// an embedding host sets in place of the system's.
 	appearance, host driver.Appearance
 	keys             []driver.KeyBinding // the keyboard shortcuts
+	hotKeys          map[uint32]struct{} // the registered global shortcuts
 	animating        []*view
 	ticking          bool
 	clock            *frameClock // made as it first ticks
@@ -1114,6 +1115,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
+			continue
+		case driver.ItemHotKeys:
+			w.hotKeysApply(it.Keys)
 			continue
 		case driver.ItemCheckForUpdates:
 			w.checkForUpdates(it.On, it.Count)
@@ -2041,6 +2045,12 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmRun:
 		w.runTasks()
 		return 0
+	case wmHotKey:
+		id := uint32(wParam)
+		if _, registered := w.hotKeys[id]; registered && w.engine != nil {
+			w.engine.Dispatch(driver.Event{Kind: driver.EventHotKey, Count: id})
+		}
+		return 0
 	case wmFrame:
 		w.startClock()
 		return 0
@@ -2348,6 +2358,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		}
 	case wmDestroy:
 		w.removeTrays()
+		w.unregisterHotKeys()
 		// Clients let the window's providers go.
 		if uiaReturnRawElementProvider.Find() == nil {
 			uiaReturnRawElementProvider.Call(hwnd, 0, 0, 0)

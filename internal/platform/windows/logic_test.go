@@ -97,6 +97,26 @@ func TestKeyNamesMatchOnKeys(t *testing.T) {
 	}
 }
 
+func TestGlobalHotKey(t *testing.T) {
+	for _, test := range []struct {
+		key        string
+		mods, want uintptr
+		ok         bool
+	}{
+		{"mod+shift+s", modControl | modShift, 'S', true},
+		{"meta+alt+f12", modWin | modAlt, 0x7B, true},
+		{"ctrl+plus", modControl, 0xBB, true},
+		{"pageup", 0, 0x21, true},
+		{"unknown+a", 0, 0, false},
+		{"shift", 0, 0, false},
+	} {
+		mods, vk, ok := globalHotKey(test.key)
+		if mods != uint32(test.mods) || vk != test.want || ok != test.ok {
+			t.Errorf("globalHotKey(%q) = (%#x, %#x, %v), want (%#x, %#x, %v)", test.key, mods, vk, ok, test.mods, test.want, test.ok)
+		}
+	}
+}
+
 func TestShortcutLabelsUseWindowsNames(t *testing.T) {
 	for _, c := range []struct{ key, want string }{
 		{"mod+shift+n", "Ctrl+Shift+N"},
