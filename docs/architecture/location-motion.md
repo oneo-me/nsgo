@@ -49,7 +49,7 @@ The app requests a bounded sample interval and a set of sensors. The backend cla
 
 Apple keeps Core Motion's axes but not its unit or sign for acceleration: `CMAccelerometerData`, `CMDeviceMotion.gravity` and `userAcceleration` are in g and point the other way (a face-up device reads −1 on z), so the backend multiplies them by −9.80665. Rotation rates and magnetic fields map as they are. Core Motion's north-referenced attitude frames (`CMAttitudeReferenceFrameXMagneticNorthZVertical`, `XTrueNorthZVertical`) put x toward north, so the backend turns them a quarter turn about the vertical into east-north-up; an attitude from an arbitrary-x frame says its heading has no reference. Android maps `SensorManager` events as they are and documents its event timestamps. Device orientation is metadata, not a hidden transform. The API does not promise identical noise, calibration or rate across platforms.
 
-Most motion sensors need no user prompt, while activity recognition, body sensors and target-specific sensors may. The backend reports each required authorization separately. An app can stop a high-rate stream without changing location or notification permission.
+Android's raw motion sensors need no user prompt, while activity recognition, body sensors and target-specific sensors may. iOS, watchOS and visionOS 27.2 add `CMMotionManager.authorizationStatus`, the authorization for access to motion sensor data, so the user can deny or restrict the accelerometer, gyroscope and device motion there: the backend reads it before starting a stream and reports a denied or restricted motion grant as such rather than starting a stream that delivers nothing. The backend reports each required authorization separately. An app can stop a high-rate stream without changing location or notification permission.
 
 ## Power, privacy and capabilities
 
@@ -63,7 +63,7 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover authorization, one-shot versus stream ownership, cancellation, pausing in the background and resuming with a gap, sample ordering, missing fields, rate clamping and bounded back-pressure;
 - `internal/driver` tests cover coordinate encoding, timestamps, empty sensor sets and large batches;
-- Apple tests use fake location and motion managers for permission changes, reduced accuracy, unavailable sensors, a face-up device reading +9.81 m/s² on z and stop-on-disposal;
+- Apple tests use fake location and motion managers for permission changes, reduced accuracy, denied motion access, unavailable sensors, a face-up device reading +9.81 m/s² on z and stop-on-disposal;
 - Android tests use fake location and sensor providers for coarse/fine permission, provider changes, sensor accuracy and API-level differences;
 - `nsgotest` keeps a location and motion model, as it keeps `NotificationPermission` and `NotificationAnswer`: the permission the platform reports, the answer a prompt gets, and fixes and samples a test feeds, so apps test location headless;
 - `examples/gallery`'s System page shows a fix and live motion samples and checks them with that model; and
