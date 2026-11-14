@@ -50,6 +50,26 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", co
 ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }}
 ```
 
+整个切片放在一个 signal 里时，读它的每一行都会更新。`core.NewCollection` 按 key 保存条目，每个条目有自己的 signal，所以每一行只跟随自己的条目，改一个条目只会重算一行：
+
+```go
+todos := core.NewCollection(cx, func(t Todo) int { return t.ID }, nil)
+
+core.List{Count: todos.Len, Key: func(i int) any { return todos.KeyAt(i) },
+	Row: func(cx *core.Scope, row core.ListRow) core.Node {
+		return core.Text{ContentFunc: func() string { t, _ := todos.Get(todos.KeyAt(row.Index())); return t.Title }}
+	}}
+
+todos.Update(id, func(t Todo) Todo { t.Done = true; return t })
+```
+
+其他状态也同样建立在 signal 之上：
+
+- `core.NewSelector` 判断某个 key 是否被选中，选中项变化时只重算离开和到达的那两行。
+- `core.NewHistory` 保存一个可撤销、重做的值，它的 `CanUndo` 和 `CanRedo` 是 signal，可以直接用于编辑菜单。
+- `core.NewPersisted` 把带类型的值以带版本号的 JSON 保存在应用的存储里，并迁移旧版本写下的数据。
+- `core.From` 跟随响应式图之外的数据源，例如在其他 goroutine 上推送数据的订阅。
+
 ## 样式
 
 `core.Style` 遵循 CSS：flexbox 与 grid、内外边距、圆角、边框、阴影、渐变、变换，以及 `Active` 等状态样式。元素也可以通过 `Class` 使用 Tailwind 类名：

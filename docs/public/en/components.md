@@ -50,6 +50,26 @@ core.Text{ContentFunc: func() string { return fmt.Sprintf("Pressed %d times", co
 ui.Button{Text: "Press me", OnPress: func() { count.Update(func(n int) int { return n + 1 }) }}
 ```
 
+A signal of a whole slice updates every row that reads it. `core.NewCollection` holds items by key, each in a signal of its own, so a row follows its own item and changing one item runs one row:
+
+```go
+todos := core.NewCollection(cx, func(t Todo) int { return t.ID }, nil)
+
+core.List{Count: todos.Len, Key: func(i int) any { return todos.KeyAt(i) },
+	Row: func(cx *core.Scope, row core.ListRow) core.Node {
+		return core.Text{ContentFunc: func() string { t, _ := todos.Get(todos.KeyAt(row.Index())); return t.Title }}
+	}}
+
+todos.Update(id, func(t Todo) Todo { t.Done = true; return t })
+```
+
+Other state is built on signals the same way:
+
+- `core.NewSelector` tells whether a key is the selected one, and runs only the rows a selection leaves and reaches.
+- `core.NewHistory` keeps a value with undo and redo, its `CanUndo` and `CanRedo` signals for an Edit menu.
+- `core.NewPersisted` keeps a typed value in the app's storage as versioned JSON, migrating what older versions wrote.
+- `core.From` follows a source outside the graph, such as a subscription that delivers on another goroutine.
+
 ## Styles
 
 `core.Style` follows CSS: flexbox and grid, paddings and margins, corners, borders, shadows, gradients, transforms and states such as `Active`. Elements also take Tailwind classes through `Class`:
