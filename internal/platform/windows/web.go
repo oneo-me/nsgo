@@ -47,8 +47,6 @@ package windows
 // once the document scripts asked for are added.
 
 import (
-	"mime"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -793,13 +791,7 @@ func (wv *webView) respondResource(args *comObject, body []byte, contentType str
 }
 
 func webMIME(path string, body []byte) string {
-	if typ := mime.TypeByExtension(filepath.Ext(path)); typ != "" {
-		return typ
-	}
-	if len(body) > 0 {
-		return http.DetectContentType(body)
-	}
-	return "application/octet-stream"
+	return driver.WebMIME(path, body)
 }
 
 // serveHeaders adds the app's configured headers to WebView2 requests.

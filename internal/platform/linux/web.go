@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"maps"
-	"mime"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -442,13 +440,7 @@ func webSchemeCallback(request, data uintptr) {
 	}
 	stream := gMemoryInputStreamNewFromBytes(bytes)
 	gBytesUnref(bytes)
-	contentType := mime.TypeByExtension(filepath.Ext(u.Path))
-	if contentType == "" && len(body) > 0 {
-		contentType = http.DetectContentType(body)
-	}
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
+	contentType := driver.WebMIME(u.Path, body)
 	webkitURISchemeRequestFinish(request, stream, int64(len(body)), cstr(contentType))
 	gObjectUnref(stream)
 }

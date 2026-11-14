@@ -4,8 +4,6 @@ package apple
 
 import (
 	"maps"
-	"mime"
-	"net/http"
 	neturl "net/url"
 	"os"
 	"path/filepath"
@@ -110,13 +108,7 @@ func loadWebKit() {
 					return
 				}
 				body := handler(raw)
-				mimeType := mime.TypeByExtension(filepath.Ext(GoString(u.Send(sel("path")))))
-				if mimeType == "" && len(body) > 0 {
-					mimeType = http.DetectContentType(body)
-				}
-				if mimeType == "" {
-					mimeType = "application/octet-stream"
-				}
+				mimeType := driver.WebMIME(GoString(u.Send(sel("path"))), body)
 				response := objc.ID(Class("NSURLResponse")).Send(sel("alloc")).Send(
 					sel("initWithURL:MIMEType:expectedContentLength:textEncodingName:"), u,
 					NSString(mimeType), int64(len(body)), objc.ID(0))
