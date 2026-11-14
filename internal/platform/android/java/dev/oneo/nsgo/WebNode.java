@@ -59,12 +59,19 @@ final class WebNode {
 
     /**
      * Notes the name a page gives each link it downloads (the download attribute), by URL, as android.webkit reports a download without it: links the user clicks, and links scripts click or dispatch a click to, which are often never in the document. It runs as each page starts, before the page's own scripts as far as android.webkit allows.
+     *
+     * It also keeps the Blob behind a blob: link it notes, until saveBlob reads it: android.webkit reports the download only after the click returns, and pages commonly revoke the URL right after clicking it (URL.revokeObjectURL in the same task or a short timeout), after which the URL can no longer be fetched. So it remembers which Blob each object URL the page makes stands for, forgetting it when the page revokes the URL unless a download link already took it.
      */
     private static final String DOWNLOAD_NAMES = "(function () {"
             + " if (window.__nsgoDownloadNames) return;"
-            + " var names = new Map();"
+            + " var names = new Map(), made = new Map(), kept = new Map();"
             + " Object.defineProperty(window, '__nsgoDownloadNames', {value: names});"
-            + " var note = function (a) { if (a && a.href && a.hasAttribute('download')) names.set(a.href, a.getAttribute('download')); };"
+            + " Object.defineProperty(window, '__nsgoDownloadBlobs', {value: kept});"
+            + " var create = URL.createObjectURL, revoke = URL.revokeObjectURL;"
+            + " URL.createObjectURL = function (o) { var u = create.apply(URL, arguments); if (o instanceof Blob) made.set(u, o); return u; };"
+            + " URL.revokeObjectURL = function (u) { made.delete(String(u)); return revoke.apply(URL, arguments); };"
+            + " var note = function (a) { if (!a || !a.href || !a.hasAttribute('download')) return;"
+            + "  names.set(a.href, a.getAttribute('download')); if (made.has(a.href)) kept.set(a.href, made.get(a.href)); };"
             + " var click = HTMLAnchorElement.prototype.click;"
             + " HTMLAnchorElement.prototype.click = function () { note(this); return click.apply(this, arguments); };"
             + " var dispatch = HTMLAnchorElement.prototype.dispatchEvent;"
@@ -317,7 +324,7 @@ final class WebNode {
     }
 
     /**
-     * Asks the page for a blob: URL's bytes, which only the document that made it can read: it fetches the blob and hands it back base64 through the Blobs interface, under a token pages cannot guess. A page that leaves first fails the download.
+     * Asks the page for a blob: URL's bytes, which only the document that made it can read: it reads the Blob DOWNLOAD_NAMES kept for the link, so a URL the page revoked right after the click still saves, else fetches the URL, and hands the bytes back base64 through the Blobs interface, under a token pages cannot guess. A page that leaves first fails the download.
      */
     private void saveBlob(String id, String url, String mimetype) {
         String token = UUID.randomUUID().toString();
@@ -340,7 +347,9 @@ final class WebNode {
         String script = "(function (url, token) {"
                 + " var names = window.__nsgoDownloadNames, name = (names && names.get(url)) || '';"
                 + " var answer = function (data, blob, error) { window." + BLOBS + ".answer(token, data, name || (blob && blob.name) || '', (blob && blob.type) || '', error); };"
-                + " fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {"
+                + " var kept = window.__nsgoDownloadBlobs, held = kept && kept.get(url);"
+                + " if (kept) kept.delete(url);"
+                + " (held ? Promise.resolve(held) : fetch(url).then(function (r) { return r.blob(); })).then(function (blob) {"
                 + "  var reader = new FileReader();"
                 + "  reader.onload = function () { var s = String(reader.result); answer(s.slice(s.indexOf(',') + 1), blob, ''); };"
                 + "  reader.onerror = function () { answer(null, blob, String(reader.error)); };"
