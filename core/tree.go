@@ -168,6 +168,8 @@ type Tree struct {
 	// whether its batch was these items (CommitShared).
 	lastItems  int
 	lastShared bool
+	// highlights, while an UpdateHighlights is mounted, outlines what each commit changed.
+	highlights *highlights
 }
 
 // report is a handler to run under owner after the commit.

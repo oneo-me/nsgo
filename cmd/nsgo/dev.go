@@ -38,17 +38,18 @@ type app struct {
 // The rest of the flags have replaced nsgo.yaml's values already, and apply
 // replaces them again after each reload.
 type devOptions struct {
-	apply   func(*project)
-	port    int    // the dev server's, which the web target is served from
-	open    bool   // whether to open the web target in the browser
-	device  string // the iPhone, simulator or Android device to run on
-	team    string // the Apple developer team the iOS target signs with
-	release bool   // build as nsgo build does, for measuring
-	trace   bool   // print the running app's commits
-	fps     bool   // show the performance monitor: --nsgo-fps
-	lang    string // the locale to run the app in: --nsgo-lang
-	clip    string // the URL the App Clip opens from, run in the app's place
-	server  *devServer
+	apply     func(*project)
+	port      int    // the dev server's, which the web target is served from
+	open      bool   // whether to open the web target in the browser
+	device    string // the iPhone, simulator or Android device to run on
+	team      string // the Apple developer team the iOS target signs with
+	release   bool   // build as nsgo build does, for measuring
+	trace     bool   // print the running app's commits
+	highlight bool   // outline what the running app's commits changed
+	fps       bool   // show the performance monitor: --nsgo-fps
+	lang      string // the locale to run the app in: --nsgo-lang
+	clip      string // the URL the App Clip opens from, run in the app's place
+	server    *devServer
 }
 
 // dev builds and runs the app, with a dev server its builds connect to:
@@ -170,9 +171,9 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 }
 
 // prepareDev sets what dev's builds carry: the dev client, -trace's
-// commits and the dev icons; -release strips them as nsgo build does.
+// commits, -highlight's outlines and the dev icons; -release strips them as nsgo build does.
 func (p *project) prepareDev(opts devOptions) {
-	p.Release, p.Dev.Client, p.Dev.Trace = opts.release, true, opts.trace
+	p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Highlight = opts.release, true, opts.trace, opts.highlight
 	p.useDevIcons()
 }
 

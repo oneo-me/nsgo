@@ -14,10 +14,51 @@ import (
 func WriteTrace(w io.Writer, label string, b *MountBatch, took time.Duration) {
 	var s strings.Builder
 	fmt.Fprintf(&s, "── %s: %d items, commit %.2f ms\n", label, len(b.Items), float64(took.Microseconds())/1000)
+	if c := b.Causes; c != nil {
+		c.write(&s)
+	}
 	for i := range b.Items {
 		fmt.Fprintf(&s, "   %s\n", b.Items[i].TraceLine())
 	}
 	io.WriteString(w, s.String())
+}
+
+// TraceCauses has commits record what they followed from in MountBatch.Causes: nsgo dev -trace and nsgo test -trace set it. While it is unset, a signal's write and a computation's run cost one check of it.
+var TraceCauses bool
+
+// Causes are what a commit followed from: the signal writes since the graph's last commit, grouped by the line that made them, and the computations that ran.
+type Causes struct {
+	Writes                  []Write
+	Memos, Renders, Effects int
+}
+
+// Write is the signal writes one line made: the app's line, as dir/file.go:line, or for writes NSGo made of its own, as an animation's, NSGo's function that made them.
+type Write struct {
+	Site  string
+	Count int
+}
+
+// traceSites is how many of a commit's write sites a trace names, the most writing first.
+const traceSites = 8
+
+func (c *Causes) write(s *strings.Builder) {
+	if len(c.Writes) > 0 {
+		s.WriteString("   after")
+		for i, w := range c.Writes[:min(len(c.Writes), traceSites)] {
+			if i > 0 {
+				s.WriteString(",")
+			}
+			fmt.Fprintf(s, " %s", w.Site)
+			if w.Count > 1 {
+				fmt.Fprintf(s, " ×%d", w.Count)
+			}
+		}
+		if more := len(c.Writes) - traceSites; more > 0 {
+			fmt.Fprintf(s, " and %d more", more)
+		}
+		s.WriteString("\n")
+	}
+	fmt.Fprintf(s, "   ran %d bindings, %d effects, %d memos\n", c.Renders, c.Effects, c.Memos)
 }
 
 var itemNames = map[ItemKind]string{

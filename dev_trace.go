@@ -21,6 +21,7 @@ var devTrace = ""
 // One goroutine posts what gathered while the last post was on its way,
 // so the engine never waits for the network.
 func traceTo(server string) {
+	driver.TraceCauses = true
 	var (
 		mu      sync.Mutex
 		pending bytes.Buffer

@@ -20,6 +20,9 @@ const devBuild = true
 // pass the app no environment; NSGO_DEV_SERVER overrides it.
 var devServer = ""
 
+// devHighlight is "1" in nsgo dev -highlight's builds, set with -ldflags -X.
+var devHighlight = ""
+
 // devApp runs app under nsgo dev: build failures the server reports and
 // the app's own render failures show in an overlay over it, and with
 // -trace the server prints each commit. On the web the page is served from the server and shows build
@@ -38,6 +41,10 @@ func devApp(app App) App {
 	}
 	if devTrace == "1" {
 		traceTo(server)
+	}
+	if devHighlight == "1" {
+		inner := app
+		app = func(cx *core.Scope) core.Node { return core.Group{core.Func(inner), core.UpdateHighlights{}} }
 	}
 	if page {
 		return app

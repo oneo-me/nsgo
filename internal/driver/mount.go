@@ -484,6 +484,8 @@ type MountBatch struct {
 	// performance monitor's latency reading; the zero time when no monitor
 	// measures.
 	Sent time.Time
+	// Causes are what the commit followed from, recorded while TraceCauses is set; nil otherwise.
+	Causes *Causes
 }
 
 // ViewStyle is everything a platform draws for a view itself.

@@ -342,6 +342,7 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 	}
 	if os.Getenv("NSGO_TEST_TRACE") != "" {
 		a.trace = os.Stdout
+		driver.TraceCauses = true
 	}
 	a.stepName = "start"
 	if onTarget() && a.manualFrames {

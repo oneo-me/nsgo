@@ -70,8 +70,16 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	if driver.CheckCommits && !t.changed {
 		t.checkCommit()
 	}
+	var causes *driver.Causes
+	if driver.TraceCauses {
+		// What ran since the graph last committed is this commit's, sent or not, so a later commit does not claim it. Writes that changed no tree wait for the next tree that changes.
+		causes = t.rt.takeCauses()
+	}
 	if len(t.items) == 0 {
 		return nil
+	}
+	if t.highlights != nil {
+		t.noteChanges(t.items)
 	}
 	t.lastItems, t.lastShared = len(t.items), shared
 	items := t.items
@@ -79,7 +87,7 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 		items = append([]driver.MountItem(nil), t.items...)
 		t.shrinkItems(len(t.items))
 	}
-	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim}
+	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim, Causes: causes}
 	t.layoutAnim = nil
 	return b
 }

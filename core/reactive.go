@@ -6,6 +6,8 @@ import (
 	"runtime/debug"
 	"sync/atomic"
 	"time"
+
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 // The reactive graph, scheduled as Solid's: signals hold values, memos
@@ -127,6 +129,8 @@ type runtime struct {
 	refusals map[string]bool
 	// speech is the speech session running, one per engine.
 	speech *SpeechSession
+	// causes are what ran since a tree last committed, while driver.TraceCauses is set.
+	causes causes
 	// quits are the OnQuit handlers, oldest first.
 	quits []*quitHandler
 	// notificationPresses hear notifications pressed, and pressesPending
@@ -568,6 +572,9 @@ func (c *computation) update() {
 // run recomputes c. Writes during the run are batched, and a write to
 // something c already read makes it run again.
 func (c *computation) run() {
+	if driver.TraceCauses {
+		c.rt.noteRun(c.kind)
+	}
 	c.disposeOwned()
 	c.unlink()
 	c.state = clean
@@ -740,6 +747,9 @@ func (s *Signal[T]) Set(v T) {
 	}
 	s.value = v
 	rt := s.rt
+	if driver.TraceCauses {
+		rt.noteWrite()
+	}
 	rt.batch++
 	for _, r := range s.subs.list {
 		r.c.mark(dirty)
