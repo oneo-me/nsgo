@@ -56,11 +56,13 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 
 ## Application and windows
 
-What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
+What Windows and Linux still lack of what macOS opens for an app, and Android of the overlays it floats over other apps ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
 | Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Android's process apart from its views | NSGo's [#12](https://github.com/nsgo-dev/nsgo/issues/12) | The Go process and its pipe outlive the activity's `NsgoView`, which attaches to them and detaches without ending them, and the pipe names the surface each message is for, so one process drives several views |
+| Floating windows on Android | NSGo's [#53](https://github.com/nsgo-dev/nsgo/issues/53) and its [design](architecture/android-floating-windows.md); [#38](https://github.com/nsgo-dev/nsgo/issues/38) for the foreground service | Once its [open decisions](../ARCHITECTURE.md#open-questions) are answered, `mobile.OpenOverlay` opens a surface over other apps after the user grants `SYSTEM_ALERT_WINDOW`, which takes touches, is dragged and closes cleanly, and stays up in the background and with the screen off through a foreground service started after its window shows |
 | Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
 | Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
 | Tray icons on Linux | StatusNotifierItem over D-Bus; #988, #1209 | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
