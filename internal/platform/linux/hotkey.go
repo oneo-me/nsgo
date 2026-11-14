@@ -59,9 +59,7 @@ var (
 	})
 )
 
-// Linux global shortcuts use the XDG GlobalShortcuts portal. The portal is
-// the compositor-owned path on Wayland and also works on desktops that expose
-// it on X11; it asks the user before the shortcuts become active.
+// Without X11 grabs, Linux global shortcuts use the XDG GlobalShortcuts portal. The portal is the compositor-owned path on Wayland and also works on desktops that expose it on X11; it asks the user before the shortcuts become active.
 const (
 	globalShortcutName  = "org.freedesktop.portal.Desktop"
 	globalShortcutPath  = "/org/freedesktop/portal/desktop"
@@ -75,6 +73,8 @@ var (
 	gVariantParse                    func(typ uintptr, text, limit, end *byte, err *uintptr) uintptr
 	gVariantNewObjectPath            func(path *byte) uintptr
 	gVariantLookupValue              func(value uintptr, key *byte, expectedType uintptr) uintptr
+	gVariantTakeRef                  func(value uintptr) uintptr
+	gDBusAddressGetForBusSync        func(busType int32, cancellable uintptr, err *uintptr) uintptr
 	gDBusConnectionGetUniqueName     func(conn uintptr) uintptr
 	gDBusConnectionSignalUnsubscribe func(conn uintptr, subscription uint32)
 	bindGlobalHotKeys                = sync.OnceFunc(func() {
@@ -82,6 +82,8 @@ var (
 		purego.RegisterLibFunc(&gVariantParse, glibLib, "g_variant_parse")
 		purego.RegisterLibFunc(&gVariantNewObjectPath, glibLib, "g_variant_new_object_path")
 		purego.RegisterLibFunc(&gVariantLookupValue, glibLib, "g_variant_lookup_value")
+		purego.RegisterLibFunc(&gVariantTakeRef, glibLib, "g_variant_take_ref")
+		purego.RegisterLibFunc(&gDBusAddressGetForBusSync, gioLib, "g_dbus_address_get_for_bus_sync")
 		purego.RegisterLibFunc(&gDBusConnectionGetUniqueName, gioLib, "g_dbus_connection_get_unique_name")
 		purego.RegisterLibFunc(&gDBusConnectionSignalUnsubscribe, gioLib, "g_dbus_connection_signal_unsubscribe")
 	})
@@ -119,8 +121,7 @@ type x11HotKeys struct {
 	bindings map[x11HotKey]uint32
 }
 
-// globalHotKeys is owned by the GTK main thread. Portal response and
-// activation signals are dispatched on that same thread by GLib.
+// globalHotKeys is owned by the GTK main thread. Portal response and activation signals are dispatched on that same thread by GLib; the portal's methods are called on portalQueue's thread, which posts what follows back.
 type globalHotKeys struct {
 	bus          uintptr
 	session      string
@@ -274,9 +275,82 @@ func (x *x11HotKeys) match(ev unsafe.Pointer) (uint32, bool) {
 	return id, ok
 }
 
-// applyHotKeys replaces the app's global shortcuts. A portal request may
-// show a compositor-owned permission or configuration prompt; activation is
-// reported later by the portal's Activated signal.
+// portalQueue runs the portal's calls in order, off the main thread: the bus starts the portal as the first call reaches it, which can take seconds.
+var portalQueue = sync.OnceValue(func() chan func() {
+	ch := make(chan func(), 16)
+	go func() {
+		for fn := range ch {
+			fn()
+		}
+	}()
+	return ch
+})
+
+var (
+	portalBusOnce sync.Once
+	portalBusConn uintptr
+)
+
+// portalBus is a session bus connection of the shortcuts' own, 0 without one, on portalQueue's thread. The portal knows an unsandboxed app by the ID it registers (Registry.Register), and takes it only before the connection's first portal call; GTK calls the portal's Settings on the shared connection as it starts on Wayland, so the shortcuts use a connection that has made no other call.
+func portalBus(appID string) uintptr {
+	portalBusOnce.Do(func() {
+		const busSession, authClient, messageBus = 2, 1 << 0, 1 << 3
+		var err uintptr
+		address := gDBusAddressGetForBusSync(busSession, 0, &err)
+		if err != 0 {
+			gErrorFree(err)
+			return
+		}
+		bus := gDBusConnectionNewForAddressSync(cstr(goString(address)), authClient|messageBus, 0, 0, &err)
+		gFree(address)
+		if err != 0 {
+			gErrorFree(err)
+			return
+		}
+		// A sandboxed app, or a portal without the registry, refuses the registration; the portal then finds the app's ID itself, as it does for a Flatpak.
+		if appID != "" {
+			gVariantUnrefNonZero(portalCall(bus, globalShortcutPath, globalRegistryIface, "Register",
+				gVariantNewString(cstr(appID)), portalVariant("a{sv}", "{}")))
+		}
+		portalBusConn = bus
+	})
+	return portalBusConn
+}
+
+// portalCall calls a method of the portal and returns its reply, 0 when it failed. It takes args, floating or not, and waits as long as GDBus does by default, as the portal may be starting.
+func portalCall(bus uintptr, path, iface, method string, args ...uintptr) uintptr {
+	ok := true
+	for i, arg := range args {
+		if arg == 0 {
+			ok = false
+			continue
+		}
+		args[i] = gVariantTakeRef(arg)
+	}
+	defer func() {
+		for _, arg := range args {
+			gVariantUnrefNonZero(arg)
+		}
+	}()
+	if !ok {
+		return 0
+	}
+	var params uintptr
+	if len(args) > 0 {
+		params = gVariantNewTuple(&args[0], uintptr(len(args)))
+	} else {
+		params = gVariantNewTuple(nil, 0)
+	}
+	var err uintptr
+	reply := gDBusConnectionCallSync(bus, cstr(globalShortcutName), cstr(path), cstr(iface), cstr(method), params, 0, 0, -1, 0, &err)
+	if err != 0 {
+		gErrorFree(err)
+		return 0
+	}
+	return reply
+}
+
+// applyHotKeys replaces the app's global shortcuts. A portal request may show a compositor-owned permission or configuration prompt; activation is reported later by the portal's Activated signal.
 func (w *window) applyHotKeys(keys []driver.KeyBinding) {
 	w.closeHotKeys()
 	if len(keys) == 0 || w.engine == nil {
@@ -285,18 +359,7 @@ func (w *window) applyHotKeys(keys []driver.KeyBinding) {
 	if w.applyX11HotKeys(keys) {
 		return
 	}
-	bindGlobalHotKeys()
-	bus := sessionBus()
-	if bus == 0 {
-		return
-	}
-	// Recent xdg-desktop-portal versions require an application ID before
-	// creating a global-shortcuts session. Sandboxed apps are already known
-	// to the portal, so an unavailable registry or a rejected registration
-	// does not prevent the normal session attempt below.
-	registerPortalApp(bus, w.appID)
-
-	state := &globalHotKeys{bus: bus, ids: map[string]uint32{}}
+	state := &globalHotKeys{ids: map[string]uint32{}}
 	for _, key := range keys {
 		trigger, ok := portalTrigger(key.Key)
 		if !ok {
@@ -310,34 +373,68 @@ func (w *window) applyHotKeys(keys []driver.KeyBinding) {
 		return
 	}
 	w.hotKeys = state
-
-	token := portalToken("nsgo_create")
-	state.stage, state.request = globalHotKeyCreating, portalRequestPath(bus, token)
-	if state.request != "" {
-		state.requestSub = subscribeGlobalHotKeyResponse(state, w)
-		if state.requestSub == 0 {
-			w.closeHotKeys()
+	bindGlobalHotKeys()
+	appID := w.appID
+	portalQueue() <- func() {
+		bus := portalBus(appID)
+		if bus == 0 {
 			return
 		}
+		w.post(func() {
+			if w.hotKeys != state {
+				return
+			}
+			state.bus = bus
+			token := portalToken("nsgo_create")
+			if !w.awaitHotKeyResponse(state, globalHotKeyCreating, token) {
+				w.closeHotKeys()
+				return
+			}
+			w.callHotKeyPortal(state, "CreateSession", func() []uintptr { return []uintptr{portalCreateOptions(token)} })
+		})
 	}
-	request := dbusCall(bus, globalShortcutName, globalShortcutPath, globalShortcutIface, "CreateSession",
-		portalCreateOptions(token))
-	if request == 0 {
-		w.closeHotKeys()
-		return
-	}
-	requestPath := portalTupleText(request, 0)
-	gVariantUnref(request)
-	if requestPath == "" {
-		w.closeHotKeys()
-		return
-	}
+}
+
+// awaitHotKeyResponse subscribes to the Response of the request token names before the call that makes it, so the subscription wins a fast reply.
+func (w *window) awaitHotKeyResponse(state *globalHotKeys, stage globalHotKeyStage, token string) bool {
+	state.stage, state.request = stage, portalRequestPath(state.bus, token)
 	if state.request == "" {
-		state.stage, state.request = globalHotKeyCreating, requestPath
-		state.requestSub = subscribeGlobalHotKeyResponse(state, w)
-		if state.requestSub == 0 {
-			w.closeHotKeys()
+		return false
+	}
+	state.requestSub = subscribeGlobalHotKeyResponse(state, w)
+	return state.requestSub != 0
+}
+
+// callHotKeyPortal calls a GlobalShortcuts method for state on portalQueue's thread, with the arguments args makes there. A call that fails ends state's shortcuts, and a request at a path other than the one awaited is awaited instead.
+func (w *window) callHotKeyPortal(state *globalHotKeys, method string, args func() []uintptr) {
+	bus, awaited := state.bus, state.request
+	portalQueue() <- func() {
+		reply := portalCall(bus, globalShortcutPath, globalShortcutIface, method, args()...)
+		request := ""
+		if reply != 0 {
+			request = portalTupleText(reply, 0)
+			gVariantUnref(reply)
 		}
+		if request == awaited {
+			return
+		}
+		w.post(func() {
+			if w.hotKeys != state || state.request != awaited {
+				return
+			}
+			if state.requestSub != 0 {
+				gDBusConnectionSignalUnsubscribe(state.bus, state.requestSub)
+				state.requestSub = 0
+			}
+			if request == "" {
+				w.closeHotKeys()
+				return
+			}
+			state.request = request
+			if state.requestSub = subscribeGlobalHotKeyResponse(state, w); state.requestSub == 0 {
+				w.closeHotKeys()
+			}
+		})
 	}
 }
 
@@ -346,38 +443,30 @@ func subscribeGlobalHotKeyResponse(state *globalHotKeys, w *window) uint32 {
 		cstr(state.request), nil, 0, cbGlobalHotKeyResponse, w.handle, 0)
 }
 
-func registerPortalApp(bus uintptr, appID string) {
-	if appID == "" {
-		return
-	}
-	options := portalVariant("a{sv}", "{}")
-	if options == 0 {
-		return
-	}
-	gVariantUnrefNonZero(dbusCall(bus, globalShortcutName, globalShortcutPath, globalRegistryIface, "Register",
-		gVariantNewString(cstr(appID)), options))
-}
-
 func (w *window) closeHotKeys() {
 	state := w.hotKeys
 	if state == nil {
 		return
 	}
 	w.hotKeys = nil
+	if state.x11 != nil {
+		closeX11HotKeys(state.x11)
+		return
+	}
 	if state.requestSub != 0 {
 		gDBusConnectionSignalUnsubscribe(state.bus, state.requestSub)
 	}
 	if state.activatedSub != 0 {
 		gDBusConnectionSignalUnsubscribe(state.bus, state.activatedSub)
 	}
-	if state.x11 != nil {
-		closeX11HotKeys(state.x11)
+	bus, path, iface := state.bus, state.session, globalSessionIface
+	if path == "" {
+		path, iface = state.request, globalRequestIface
 	}
-	if state.session != "" {
-		gVariantUnrefNonZero(dbusCall(state.bus, globalShortcutName, state.session, globalSessionIface, "Close"))
-	} else if state.request != "" {
-		gVariantUnrefNonZero(dbusCall(state.bus, globalShortcutName, state.request, globalRequestIface, "Close"))
+	if bus == 0 || path == "" {
+		return
 	}
+	portalQueue() <- func() { gVariantUnrefNonZero(portalCall(bus, path, iface, "Close")) }
 }
 
 func globalHotKeyResponse(conn, sender, path, iface, signal, params, data uintptr) {
@@ -417,37 +506,16 @@ func globalHotKeyResponse(conn, sender, path, iface, signal, params, data uintpt
 			return
 		}
 		token := portalToken("nsgo_bind")
-		state.stage, state.request = globalHotKeyBinding, portalRequestPath(state.bus, token)
-		if state.request != "" {
-			state.requestSub = subscribeGlobalHotKeyResponse(state, w)
-			if state.requestSub == 0 {
-				w.closeHotKeys()
-				return
-			}
-		}
-		request := dbusCall(state.bus, globalShortcutName, globalShortcutPath, globalShortcutIface, "BindShortcuts",
-			gVariantNewObjectPath(cstr(session)), portalShortcuts(state.specs), gVariantNewString(cstr("")),
-			portalOptions(token))
-		if request == 0 {
+		if !w.awaitHotKeyResponse(state, globalHotKeyBinding, token) {
 			w.closeHotKeys()
 			return
 		}
-		requestPath := portalTupleText(request, 0)
-		gVariantUnref(request)
-		if requestPath == "" {
-			w.closeHotKeys()
-			return
-		}
-		if state.request == "" {
-			state.stage, state.request = globalHotKeyBinding, requestPath
-			state.requestSub = subscribeGlobalHotKeyResponse(state, w)
-			if state.requestSub == 0 {
-				w.closeHotKeys()
-			}
-		}
+		specs := state.specs
+		w.callHotKeyPortal(state, "BindShortcuts", func() []uintptr {
+			return []uintptr{gVariantNewObjectPath(cstr(session)), portalShortcuts(specs), gVariantNewString(cstr("")), portalOptions(token)}
+		})
 	case globalHotKeyBinding:
-		// The portal's successful response means the session is active. The
-		// Activated signal carries each shortcut ID from here on.
+		// The portal's successful response means the session is active. The Activated signal carries each shortcut ID from here on.
 	}
 }
 
@@ -478,9 +546,7 @@ func portalToken(prefix string) string {
 	return prefix + "_" + strconv.FormatUint(portalTokenID.Add(1), 10)
 }
 
-// portalRequestPath is the object path xdg-desktop-portal derives from the
-// connection's unique name and the request's handle token. Knowing it before
-// the method call lets the response subscription win a fast portal reply.
+// portalRequestPath is the object path xdg-desktop-portal derives from the connection's unique name and the request's handle token. Knowing it before the method call lets the response subscription win a fast portal reply.
 func portalRequestPath(bus uintptr, token string) string {
 	name := goString(gDBusConnectionGetUniqueName(bus))
 	if name == "" {
@@ -507,6 +573,7 @@ func portalShortcuts(specs []globalHotKeySpec) uintptr {
 	return portalVariant("a(sa{sv})", b.String())
 }
 
+// portalVariant parses text as a value of typeName, 0 when it is not one. g_variant_parse returns a reference the caller owns, never a floating one, which portalCall takes.
 func portalVariant(typeName, text string) uintptr {
 	typ := gVariantTypeNew(cstr(typeName))
 	defer gVariantTypeFree(typ)
