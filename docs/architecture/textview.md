@@ -2,6 +2,8 @@
 
 `base/textview` is NSH's `TextView` (`nsh/docs/dev/text-view.md`): a document of Markdown, HTML or the app's own blocks, shown with `Text`, `View`, `Scroll` and `Image`. Read this before changing the document model, the parser, the parts or highlighting.
 
+The shared find design for this document and `ui/chat` is in [Text-level search](text-search.md); it is not implemented yet.
+
 ## Layers
 
 | Package | What |

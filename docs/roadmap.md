@@ -52,6 +52,7 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Context menus from any input | `elements.md`, #978, #1098, #1544, #1555, #1610 | The menu key, Shift+F10 and a screen reader's menu action open a view's context menu; a held finger or pen opens a `ContextMenu` on any device and a mouse never; a secondary click outside closes overlays; a second one on the trigger opens it again where it lands; and `ContextMenuEvent` names its pointer |
+| Text-level search | #47, [text-level search design](architecture/text-search.md) | `base/textview` finds and highlights matches across document views, and `ui/chat` adds a transcript find bar without owning matching rules |
 
 ## Application and windows
 

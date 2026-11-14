@@ -139,6 +139,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Components](docs/architecture/components.md) | A component in `base`: controls, popups, resizable panels or the dock |
 | [Device differences](docs/architecture/device-differences.md) | A component that changes by device, input or width |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
+| [Text-level search](docs/architecture/text-search.md) | Document matches, search highlights or shared find state |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
 | [Rich editor](docs/architecture/richeditor.md) | `RichEditor`, its kernel, extensions or formats |
 | [Terminal](docs/architecture/terminal.md) | `base/terminal`, its emulator binding or pseudo-terminals |
