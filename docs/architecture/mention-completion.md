@@ -34,7 +34,20 @@ A press on a row accepts it, as a listbox row's does: desktops accept as the but
 
 The rows take the option role, and the field takes the combobox role with `Expanded` following the state, as `base.Combobox`'s field does. The keyboard focus stays in the field and `core` has no active-descendant attribute, so a highlight the keyboard moves is announced with `Scope.Announce` while a screen reader runs, as the listbox does beside a search field.
 
-`Composer` maps its existing suggestion hook to the list and places `ui`'s form of it beside its editor. It does not own token rules, rows' behavior or key capture, so another input can use the same completion behavior. The gallery's chat demo remains an example rather than a dependency of the component.
+`Composer` has no suggestion hook yet; it gains the `Suggest` field #46 asks for, maps it to the list's `Items` and places `ui`'s form of the list beside its editor:
+
+```go
+// Suggest offers rows at the caret after "@": the query is the text after it, and choosing one replaces it.
+Suggest func(query string) []Suggestion
+
+// Suggestion is a Composer's row: a SuggestItem and the icon drawn before it.
+type Suggestion struct {
+	base.SuggestItem
+	Icon func() *core.SVG
+}
+```
+
+It does not own token rules, rows' behavior or key capture, so another input can use the same completion behavior. The gallery's chat demo remains an example rather than a dependency of the component.
 
 ## Query timing and results
 
