@@ -433,11 +433,14 @@ func (player *applePlayer) progressLoop(stop <-chan struct{}, done chan<- struct
 			}
 			position := time.Duration(objc.Send[float64](player.player, appleSel("currentTime")) * float64(time.Second))
 			duration := time.Duration(objc.Send[float64](player.player, appleSel("duration")) * float64(time.Second))
-			callback := player.callbacks.progress
-			player.mu.Unlock()
-			if callback != nil {
+			// Reported under the lock, so a seek cannot slip in between
+			// reading the position and Player recording it. Player only
+			// queues app callbacks and never calls the backend while it
+			// holds its own lock.
+			if callback := player.callbacks.progress; callback != nil {
 				callback(position, duration)
 			}
+			player.mu.Unlock()
 		case <-stop:
 			return
 		}

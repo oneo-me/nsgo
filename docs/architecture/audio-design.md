@@ -40,13 +40,7 @@ entry points return `ErrUnsupported` after validating their source and options.
 again may use a new native player, so an old end callback cannot end the new
 one.
 
-`Player` is long-form playback. It has `Play`, `Pause`, `Stop`, `Seek`,
-`SetVolume`, `SetRate`, `SetLoop`, `Position`, `Duration`, `Playing`, `Ended`,
-`OnProgress`, `OnEnd`, `Err` and `Close`. `Open` returns after the source has
-been accepted, not after all bytes have decoded. `Duration` can be zero until
-metadata is ready; `OnProgress` reports a monotonic position and the final
-duration once it is known. Seeking before metadata is ready is queued and
-applied when the decoder can seek.
+`Player` is long-form playback. It has `Play`, `Pause`, `Stop`, `Seek`, `SetVolume`, `SetRate`, `SetLoop`, `Position`, `Duration`, `Playing`, `Ended`, `OnProgress`, `OnEnd`, `Err` and `Close`. `Open` returns after the source has been accepted, not after all bytes have decoded. `Duration` can be zero until metadata is ready; `OnProgress` reports the position, which moves forward while playing and goes back only when a loop restarts or a seek moves it, and the final duration once it is known. `Position` asks the backend, and after the end keeps the last position reported. Seeking before metadata is ready is queued and applied when the decoder can seek; until then the backend reports the queued position.
 
 Callbacks are serialized on the package's callback queue. They never run on a platform audio thread and never hold a platform lock while calling app code. `Close` prevents later callbacks, waits only for the callback queue to forget the player, and does not block on a decoder or device teardown from the app's engine goroutine. On macOS and iOS, `AVAudioPlayer` reports the end of playback and decoding errors only to its delegate, on the main thread's run loop, which an app runs; the backend hands them off that thread at once.
 

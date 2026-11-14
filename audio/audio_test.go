@@ -91,6 +91,7 @@ func TestPlayerCallbacksAndState(t *testing.T) {
 	if err := player.OnEnd(func() { close(ended) }); err != nil {
 		t.Fatal(err)
 	}
+	backend.player.pos = 2 * time.Second
 	backend.playerProgress(2*time.Second, 10*time.Second)
 	select {
 	case got := <-progress:

@@ -101,3 +101,32 @@ func TestApplePlayerEnds(t *testing.T) {
 	case <-time.After(200 * time.Millisecond):
 	}
 }
+
+func TestApplePlayerLoopsAndSeeksBack(t *testing.T) {
+	player, err := OpenBytes(tone(300*time.Millisecond), "audio/wav", WithVolume(0), WithLoop(true), WithProgressInterval(50*time.Millisecond))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer player.Close()
+	needOutput(t, player.Play())
+	// Over three loops the position must come back towards the start.
+	var highest time.Duration
+	wrapped := false
+	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline) && !wrapped; time.Sleep(20 * time.Millisecond) {
+		position := player.Position()
+		wrapped = position < highest-100*time.Millisecond
+		highest = max(highest, position)
+	}
+	if !wrapped {
+		t.Errorf("the position never went back as the player looped; highest %s", highest)
+	}
+	if err := player.Pause(); err != nil {
+		t.Fatal(err)
+	}
+	if err := player.Seek(50 * time.Millisecond); err != nil {
+		t.Fatal(err)
+	}
+	if got := player.Position(); got < 40*time.Millisecond || got > 60*time.Millisecond {
+		t.Errorf("position %s after seeking back to 50ms", got)
+	}
+}
