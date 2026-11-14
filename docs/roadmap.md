@@ -22,7 +22,6 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Contacts and calendar | #57, [contacts and calendar design](architecture/contacts-calendar.md) | Provider-neutral picker, read and optional write APIs cover Apple's stores and Android's providers with separate permission and privacy semantics |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
@@ -193,6 +192,14 @@ What updates ([updates](architecture/updates.md)) still lack, on the direct chan
 | Store updates in the app | Play In-App Updates, `iTunes lookup` | An app from Google Play offers Play's update flow, and one from the Mac App Store its page there, as iOS offers the App Store's |
 | Package manager manifests | `brew` casks, `winget-pkgs` | Each direct release writes a Homebrew cask saying `auto_updates true` and a winget manifest for its setup, checked by `brew audit` and `winget validate` |
 | Mini programs and the web | `wx.getUpdateManager`, service workers | A mini program answers `updater.Check` from its platform's `UpdateManager` and restarts into the new version, and a web app offers to reload once a newer build is deployed |
+
+## Contacts and calendar
+
+What NSGo's own [#57](https://github.com/nsgo-dev/nsgo/issues/57) asks for, which NSH has not; [its design](architecture/contacts-calendar.md) waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Contacts and calendar | [Contacts and calendar](architecture/contacts-calendar.md) | On an iPhone with iOS 18 and an Android phone, the picker returns the contacts the user chose and the system's editor adds an event, neither asking for a permission; with the permission, a query reads the contacts, all of them or the ones iOS's limited access shares, and a week's occurrences, and the same queries work in a notarized and a Mac App Store build on a Mac; each permission reads without asking, `Env` says where none exists, and `nsgotest` and the gallery's System page check each service |
 
 ## Finish the existing platforms
 
