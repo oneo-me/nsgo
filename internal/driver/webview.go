@@ -52,9 +52,18 @@ type WebConfig struct {
 	InjectedJavaScript              string
 	InjectedJavaScriptBeforeContent string
 	UserAgent                       string
-	NoScroll                        bool
-	NoJavaScript                    bool
-	BackForwardGestures             bool
+	// Headers are sent with the initial URL request where the platform
+	// supports custom request headers. HTML sources do not make one.
+	Headers map[string]string
+	// Incognito keeps website data in memory for this view. Platforms read
+	// this when the native view is first made.
+	Incognito bool
+	// SchemeHandlers are app-owned URL schemes and their response bodies.
+	// Platforms read them when the native view is first made.
+	SchemeHandlers      map[string]func(string) []byte
+	NoScroll            bool
+	NoJavaScript        bool
+	BackForwardGestures bool
 	// DownloadDir is where the view saves what its pages download, a
 	// directory of its own for each (<id>/<file name>); "" saves nothing.
 	DownloadDir string
@@ -83,6 +92,9 @@ func (c *WebConfig) Navigable(rawURL string) bool {
 		return true
 	case "http", "https":
 		return AllowsHost(strings.Fields(c.Hosts), u.Hostname())
+	}
+	if _, ok := c.SchemeHandlers[strings.ToLower(u.Scheme)]; ok {
+		return true
 	}
 	return false
 }

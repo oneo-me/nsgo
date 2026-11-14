@@ -5,7 +5,10 @@ package linux
 import (
 	"encoding/binary"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -355,6 +358,153 @@ func TestWebViewTalksToThePage(t *testing.T) {
 	// The page fills the web view's frame, hosted in its widget.
 	waitHosted(t, w, func(v *view) bool { return v.web != nil && v.web.widget != 0 },
 		driver.Bounds{Origin: driver.Point{X: 10, Y: 10}, Size: driver.Size{Width: 300, Height: 200}})
+}
+
+// TestWebViewsOutliveEachOther opens an Incognito web view and one in the app's session, both serving an app-owned scheme, and one that serves none. Each page keeps its scheme and downloads as the others unmount and mount again, the page without a handler gets an error rather than a load that never ends, and a view that unmounts mid-download cancels it. It skips where WebKitGTK 6.0 is missing. WebKit takes the thread that first uses it for its main one, and each test runs GTK on a thread of its own, so the test runs in a process of its own.
+func TestWebViewsOutliveEachOther(t *testing.T) {
+	if testing.Short() {
+		t.Skip("opens a window")
+	}
+	if os.Getenv("NSGO_TEST_WEBKIT_PROCESS") != t.Name() {
+		cmd := exec.Command(os.Args[0], "-test.run=^"+t.Name()+"$", "-test.v")
+		// The app's website data and downloads go to a directory of the test's.
+		dir := t.TempDir()
+		cmd.Env = append(os.Environ(), "NSGO_TEST_WEBKIT_PROCESS="+t.Name(),
+			"XDG_DATA_HOME="+filepath.Join(dir, "data"), "XDG_CACHE_HOME="+filepath.Join(dir, "cache"))
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		if strings.Contains(string(out), "--- SKIP") {
+			t.Skipf("%s", out)
+		}
+		return
+	}
+	if err := openWebKit(); err != nil {
+		t.Skip(err)
+	}
+	// B's page downloads a file as it loads, which its view saves. WebKit's network process cannot fetch app-owned schemes, so the file is a data: URL.
+	const page = `<!doctype html><html><body><script>
+		window.nsgo.postMessage(location.host);
+		if (location.host === 'b' && location.pathname === '/') {
+			const a = document.createElement('a');
+			a.href = 'data:text/plain,saved';
+			a.download = 'saved.txt';
+			document.body.append(a);
+			a.click();
+		}
+	</script></body></html>`
+	// D's page downloads a file that never ends.
+	cancelled := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/slow" {
+			rw.Header().Set("Content-Type", "text/html")
+			fmt.Fprint(rw, `<a id="a" href="/slow" download="slow.bin"></a><script>document.getElementById('a').click()</script>`)
+			return
+		}
+		rw.Header().Set("Content-Type", "application/octet-stream")
+		rw.Header().Set("Content-Length", "1048576")
+		rw.Write(make([]byte, 1024))
+		rw.(http.Flusher).Flush()
+		select {
+		case <-r.Context().Done():
+			close(cancelled)
+		case <-time.After(20 * time.Second):
+		}
+	}))
+	defer server.Close()
+	title := "nsgo-native-" + t.Name()
+	var root *core.Scope
+	var showA, showB, showD *core.Signal[bool]
+	app := func(cx *core.Scope) core.Node {
+		root = cx
+		showA, showB, showD = core.NewSignal(cx, true), core.NewSignal(cx, true), core.NewSignal(cx, false)
+		started := core.NewSignal(cx, 0)
+		a, b := core.NewSignal(cx, 0), core.NewSignal(cx, 0)
+		failed := core.NewSignal(cx, false)
+		saved := core.NewSignal(cx, 0)
+		cx.Effect(func() {
+			cx.SetTitle(fmt.Sprintf("%s|a%d|b%d|%t|d%d|s%d", title, a.Get(), b.Get(), failed.Get(), saved.Get(), started.Get()))
+		})
+		frame := core.Style{Width: driver.Pt(100), Height: driver.Pt(100)}
+		served := func(name string, incognito bool, count *core.Signal[int]) core.Node {
+			return core.Func(func(cx *core.Scope) core.Node {
+				if err := cx.ServeScheme("app", func(string) []byte { return []byte(page) }); err != nil {
+					t.Error(err)
+				}
+				web := core.WebView{Source: core.WebSrc("app://" + name + "/"), Incognito: incognito, Style: frame,
+					OnMessage: func(data string) {
+						if data == name {
+							count.Update(func(n int) int { return n + 1 })
+						}
+					}}
+				if name == "b" {
+					web.OnDownload = func(d core.WebDownload) {
+						if d.State != core.WebDownloadFinished {
+							return
+						}
+						if body, err := os.ReadFile(d.Path); err != nil || string(body) != "saved" || d.Filename != "saved.txt" {
+							t.Errorf("download %+v saved %q, %v", d, body, err)
+						}
+						saved.Update(func(n int) int { return n + 1 })
+					}
+				}
+				return web
+			})
+		}
+		return core.View{Style: core.Style{Width: driver.Pt(360), Height: driver.Pt(240), Direction: core.Row}, Children: []core.Node{
+			core.Show{When: showA.Get, Then: func(*core.Scope) core.Node { return served("a", true, a) }},
+			core.Show{When: showB.Get, Then: func(*core.Scope) core.Node { return served("b", false, b) }},
+			core.WebView{Source: core.WebSrc("app://c/"), Style: frame, OnError: func(error) { failed.Set(true) }},
+			core.Show{When: showD.Get, Then: func(*core.Scope) core.Node {
+				return core.WebView{Source: core.WebSrc(server.URL + "/"), Style: frame, OnDownload: func(d core.WebDownload) {
+					if d.State == core.WebDownloadStarted {
+						started.Update(func(n int) int { return n + 1 })
+					}
+				}}
+			}},
+		}}
+	}
+	w := startTestWindow(t, app, Options{ID: "nsgo-test-webviews", Title: title, Width: 360, Height: 240})
+	waitForTitle(t, w, title+"|a1|b1|true|d1|s0")
+
+	// The app's session outlives its view: B mounts again into it, and A still serves its scheme.
+	root.Post(func() { showB.Set(false) })
+	waitTitle(t, w, func(s string) bool { return webPagesOf(t, w) == 2 })
+	root.Post(func() { showB.Set(true) })
+	waitForTitle(t, w, title+"|a1|b2|true|d2|s0")
+
+	// An Incognito view's own session goes with it, and the view mounts again with a new one, while B keeps serving.
+	root.Post(func() { showA.Set(false) })
+	waitTitle(t, w, func(s string) bool { return webPagesOf(t, w) == 2 })
+	root.Post(func() { showA.Set(true) })
+	waitForTitle(t, w, title+"|a2|b2|true|d2|s0")
+
+	// A view that unmounts cancels the download it was saving.
+	root.Post(func() { showD.Set(true) })
+	waitForTitle(t, w, title+"|a2|b2|true|d2|s1")
+	root.Post(func() { showD.Set(false) })
+	select {
+	case <-cancelled:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the download went on after its view unmounted")
+	}
+	// D's page is gone; the others stay.
+	waitTitle(t, w, func(s string) bool { return webPagesOf(t, w) == 3 })
+}
+
+// webPagesOf returns how many pages w shows.
+func webPagesOf(t *testing.T, w *window) int {
+	t.Helper()
+	n := 0
+	w.onLoop(t, func() {
+		for _, v := range w.views {
+			if v != nil && !v.deleted && v.web != nil && v.web.widget != 0 {
+				n++
+			}
+		}
+	})
+	return n
 }
 
 // waitHosted waits until the native widget of the view that is matches

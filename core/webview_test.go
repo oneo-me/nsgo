@@ -16,6 +16,8 @@ func TestWebViewConfiguresLoadsAndReports(t *testing.T) {
 		return WebView{
 			SourceFunc:         src.Get,
 			InjectedJavaScript: "1",
+			Headers:            map[string]string{"X-Test": "one"},
+			Incognito:          true,
 			Ref:                &ref,
 			TestID:             "web",
 			Style:              Style{Width: Pt(300), Height: Pt(200)},
@@ -39,7 +41,7 @@ func TestWebViewConfiguresLoadsAndReports(t *testing.T) {
 	if n := h.find("web"); n.kind != driver.KindWeb {
 		t.Fatalf("kind %v, want KindWeb", n.kind)
 	}
-	if cfg == nil || cfg.Source.Src != "https://example.com" || cfg.InjectedJavaScript != "1" {
+	if cfg == nil || cfg.Source.Src != "https://example.com" || cfg.InjectedJavaScript != "1" || cfg.Headers["X-Test"] != "one" || !cfg.Incognito {
 		t.Fatalf("config %+v", cfg)
 	}
 	if !mask.Has(driver.EventLoad) || !mask.Has(driver.EventMessage) || mask.Has(driver.EventLoadStart) {
@@ -76,6 +78,38 @@ func TestWebViewConfiguresLoadsAndReports(t *testing.T) {
 	h.tree.Dispatch(driver.Event{Kind: driver.EventMessage, ID: id, Text: "pong"})
 	if len(loaded) != 1 || !loaded[0].CanGoBack || len(messages) != 1 || messages[0] != "pong" {
 		t.Fatalf("loaded %v, messages %v", loaded, messages)
+	}
+}
+
+func TestSendInputUsesEnvironmentCapability(t *testing.T) {
+	var ref Ref
+	h := newHost(t, Size{Width: 100, Height: 100}, func(*Scope) Node {
+		return WebView{Ref: &ref, Source: WebHTML("<button>go</button>", "")}
+	})
+	h.commit()
+	ref.SendInput(WebClick(10, 10))
+	if b := h.commit(); len(b.Items) != 0 {
+		t.Fatalf("unsupported input sent %v", b.Items)
+	}
+	h.tree.SetEnvironment(Environment{CanSendInput: true})
+	ref.SendInput(WebClick(10, 10))
+	b := h.commit()
+	if len(b.Items) != 1 || b.Items[0].Kind != driver.ItemWebCommand || b.Items[0].WebCommand != driver.WebSendInput {
+		t.Fatalf("supported input sent %v", b.Items)
+	}
+}
+
+func TestEnvironmentWebViewCapability(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		if cx.Env().HasWebView() || cx.Env().CanSendInput() {
+			t.Fatal("test environment unexpectedly has web capabilities")
+		}
+		return View{}
+	})
+	h.commit()
+	h.tree.SetEnvironment(Environment{HasWebView: true, CanSendInput: true})
+	if !h.root.Env().HasWebView() || !h.root.Env().CanSendInput() {
+		t.Fatalf("environment capabilities: web=%v input=%v", h.root.Env().HasWebView(), h.root.Env().CanSendInput())
 	}
 }
 

@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -9,6 +10,15 @@ import (
 	"github.com/nsgo-dev/nsgo/internal/driver"
 	"github.com/nsgo-dev/nsgo/internal/layout"
 )
+
+func sameWebConfig(a, b driver.WebConfig) bool {
+	return a.Source == b.Source && a.InjectedJavaScript == b.InjectedJavaScript &&
+		a.InjectedJavaScriptBeforeContent == b.InjectedJavaScriptBeforeContent &&
+		a.UserAgent == b.UserAgent && maps.Equal(a.Headers, b.Headers) && a.Incognito == b.Incognito &&
+		a.NoScroll == b.NoScroll && a.NoJavaScript == b.NoJavaScript &&
+		a.BackForwardGestures == b.BackForwardGestures && a.DownloadDir == b.DownloadDir &&
+		a.Restricted == b.Restricted && a.Hosts == b.Hosts
+}
 
 // maxRounds bounds the commits OnLayout handlers may cause in one batch.
 const maxRounds = 8
@@ -772,10 +782,11 @@ func (t *Tree) emitParts(n *node) bool {
 	case n.web != nil:
 		wn := n.web
 		c := wn.config
+		c.Headers = cloneWebHeaders(c.Headers)
 		if t.rt.restricted {
 			t.restrictWeb(n, &c)
 		}
-		if first || c != wn.sent {
+		if first || !sameWebConfig(c, wn.sent) {
 			wn.sent = c
 			add(driver.MountItem{Kind: driver.ItemWeb, ID: n.id, Web: &c})
 		}

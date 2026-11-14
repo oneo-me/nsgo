@@ -27,6 +27,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -206,7 +207,7 @@ func connect(opts Options) *surface {
 		lines:    make(chan []driver.TextLine, 1),
 		carets:   make(chan driver.CaretLayout, 1),
 		started:  make(chan struct{}),
-		env:      driver.Environment{OS: driver.OSAndroid},
+		env:      driver.Environment{OS: driver.OSAndroid, HasWebView: true},
 		images:   map[driver.NodeID]*imageView{},
 
 		components: opts.Components,
@@ -303,6 +304,11 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 					ev.Data = readFiles(data)
 				}
 				s.unstage(ev.Count)
+			case driver.EventDownload:
+				var download driver.WebDownload
+				if json.Unmarshal([]byte(data), &download) == nil {
+					ev.Data = &download
+				}
 			}
 			if ev.Kind == driver.EventWheel {
 				// A wheel's delta comes as the velocity, and whether a
@@ -535,6 +541,7 @@ func (s *surface) unstage(save uint32) {
 func readEnvironment(r *reader) driver.Environment {
 	env := driver.Environment{
 		OS:             driver.OSAndroid,
+		HasWebView:     true,
 		SafeArea:       driver.Edges{Top: r.points(), Right: r.points(), Bottom: r.points(), Left: r.points()},
 		KeyboardHeight: r.points(),
 		FontScale:      r.float(),
@@ -1327,8 +1334,14 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			// The bridge comes first, so the app's script can post.
 			w.str(webBridge + "\n" + c.InjectedJavaScriptBeforeContent)
 			w.str(c.UserAgent)
-			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted) // Android has no back and forward swipes
+			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted, c.Incognito) // Android has no back and forward swipes
 			w.str(c.Hosts)
+			w.str(c.DownloadDir)
+			w.u32(uint32(len(c.Headers)))
+			for name, value := range c.Headers {
+				w.str(name)
+				w.str(value)
+			}
 		case driver.ItemVideo:
 			c := it.Video
 			w.str(c.Source)

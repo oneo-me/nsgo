@@ -1144,7 +1144,7 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemWeb:
 			if v.kind == driver.KindWeb && it.Web != nil {
 				if v.web == nil {
-					v.web = w.newWeb(v)
+					v.web = w.newWeb(v, it.Web)
 				}
 				v.web.configure(it.Web)
 			}
@@ -1205,6 +1205,8 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.load(v, &v.source, true)
 		}
 	}
+	// The batch's web views asked for their environments' app schemes.
+	startWebEnvironments()
 	// Focus once the batch placed the fields.
 	for _, f := range focus {
 		switch {

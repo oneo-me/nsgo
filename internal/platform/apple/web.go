@@ -3,12 +3,16 @@
 package apple
 
 import (
+	"log"
+	"maps"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -27,12 +31,14 @@ type Web struct {
 	web     objc.ID
 	handler objc.ID
 	config  driver.WebConfig
+	fileDir string // the directory a file: page, or HTML with a file: base URL, may navigate in; "" for other sources
 	made    bool
 }
 
 var (
 	classWebHandler objc.Class
 	webHandlers     = map[objc.ID]*Web{}
+	schemeHandlers  = map[objc.ID]*Web{}
 )
 
 // messageHandler is the name pages post to, as window.webkit.messageHandlers.nsgo.
@@ -72,7 +78,7 @@ func loadWebKit() {
 		}
 	}
 	var protocols []*objc.Protocol
-	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler", "WKDownloadDelegate"} {
+	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler", "WKDownloadDelegate", "WKURLSchemeHandler"} {
 		if p := objc.GetProtocol(name); p != nil {
 			protocols = append(protocols, p)
 		}
@@ -89,6 +95,35 @@ func loadWebKit() {
 					w.Dispatch(driver.Event{Kind: driver.EventMessage, Text: GoString(body.Send(sel("description")))})
 				}
 			}},
+			{Cmd: sel("webView:startURLSchemeTask:"), Fn: func(self objc.ID, _ objc.SEL, _, task objc.ID) {
+				w := schemeHandlers[self]
+				if w == nil || task == 0 {
+					return
+				}
+				u := task.Send(sel("request")).Send(sel("URL"))
+				raw := GoString(u.Send(sel("absoluteString")))
+				name := strings.ToLower(GoString(u.Send(sel("scheme"))))
+				handler := w.config.SchemeHandlers[name]
+				if handler == nil {
+					task.Send(sel("didFinish"))
+					return
+				}
+				body := handler(raw)
+				mimeType := driver.WebMIME(GoString(u.Send(sel("path"))), body)
+				response := objc.ID(Class("NSURLResponse")).Send(sel("alloc")).Send(
+					sel("initWithURL:MIMEType:expectedContentLength:textEncodingName:"), u,
+					NSString(mimeType), int64(len(body)), objc.ID(0))
+				task.Send(sel("didReceiveResponse:"), response)
+				response.Send(sel("release"))
+				var ptr unsafe.Pointer
+				if len(body) > 0 {
+					ptr = unsafe.Pointer(&body[0])
+				}
+				data := objc.ID(Class("NSData")).Send(sel("dataWithBytes:length:"), ptr, uintptr(len(body)))
+				task.Send(sel("didReceiveData:"), data)
+				task.Send(sel("didFinish"))
+			}},
+			{Cmd: sel("webView:stopURLSchemeTask:"), Fn: func(objc.ID, objc.SEL, objc.ID, objc.ID) {}},
 			// Downloads (WKDownload, macOS 11.3 and iOS 14.5), only for a
 			// view that saves them.
 			{Cmd: sel("webView:decidePolicyForNavigationAction:decisionHandler:"), Fn: func(self objc.ID, _ objc.SEL, _, action, decide objc.ID) {
@@ -96,11 +131,15 @@ func loadWebKit() {
 				policy := uintptr(allow)
 				// A restricted view's page goes only where its config
 				// allows at the top level; a new window's has no frame.
-				if w := webHandlers[self]; w != nil && w.config.Restricted {
+				if w := webHandlers[self]; w != nil {
 					frame := action.Send(sel("targetFrame"))
 					if frame == 0 || objc.Send[bool](frame, sel("isMainFrame")) {
 						url := GoString(action.Send(sel("request")).Send(sel("URL")).Send(sel("absoluteString")))
-						if !w.config.Navigable(url) {
+						allowed := fileNavigable(url, w.fileDir, w.config.Restricted)
+						if allowed && w.config.Restricted {
+							allowed = w.config.Navigable(url)
+						}
+						if !allowed {
 							CallBlock(decide, cancel)
 							w.Dispatch(driver.Event{Kind: driver.EventError, Text: driver.RefusedNavigation(url),
 								Navigation: &driver.WebNavigation{URL: url}})
@@ -241,7 +280,7 @@ func (w *Web) Configure(c *driver.WebConfig) {
 	if runtime.GOOS == "ios" {
 		w.web.Send(sel("scrollView")).Send(sel("setScrollEnabled:"), !c.NoScroll)
 	}
-	if first || scripts || c.Source != old.Source {
+	if first || scripts || c.Source != old.Source || !maps.Equal(c.Headers, old.Headers) {
 		w.load()
 	}
 }
@@ -249,9 +288,22 @@ func (w *Web) Configure(c *driver.WebConfig) {
 func (w *Web) make() {
 	loadWebKit()
 	config := objc.ID(Class("WKWebViewConfiguration")).Send(sel("new"))
+	if w.config.Incognito {
+		store := objc.ID(Class("WKWebsiteDataStore")).Send(sel("nonPersistentDataStore"))
+		config.Send(sel("setWebsiteDataStore:"), store)
+	}
 	w.handler = objc.ID(classWebHandler).Send(sel("new"))
 	webHandlers[w.handler] = w
 	config.Send(sel("userContentController")).Send(sel("addScriptMessageHandler:name:"), w.handler, NSString(messageHandler))
+	for name := range w.config.SchemeHandlers {
+		// WebKit raises NSInvalidArgumentException, which ends the app, for a scheme it handles itself: core refuses those, and this keeps a later WebKit's own from ending it.
+		if objc.Send[bool](objc.ID(Class("WKWebView")), sel("handlesURLScheme:"), NSString(name)) {
+			log.Printf("nsgo: WebKit handles the %q scheme itself: the web view does not serve it", name)
+			continue
+		}
+		schemeHandlers[w.handler] = w
+		config.Send(sel("setURLSchemeHandler:forURLScheme:"), w.handler, NSString(name))
+	}
 	bounds := objc.Send[CGRect](w.holder, sel("bounds"))
 	w.web = objc.ID(Class("WKWebView")).Send(sel("alloc")).Send(sel("initWithFrame:configuration:"), bounds, config)
 	config.Send(sel("release"))
@@ -292,20 +344,72 @@ func (w *Web) addScripts() {
 
 func (w *Web) load() {
 	src := w.config.Source
+	w.fileDir = ""
 	switch {
 	case src.HTML != "":
 		base := objc.ID(0)
 		if src.BaseURL != "" {
 			base = nsURL(src.BaseURL)
+			w.fileDir, _ = fileBaseDir(src.BaseURL)
 		}
 		w.web.Send(sel("loadHTMLString:baseURL:"), NSString(src.HTML), base)
 	case src.Src != "":
 		// A URL NSURL cannot parse loads nothing.
 		if url := nsURL(src.Src); url != 0 {
-			request := objc.ID(Class("NSURLRequest")).Send(sel("requestWithURL:"), url)
+			if path, ok := fileURLPath(src.Src); ok {
+				w.fileDir = filepath.Dir(path)
+				access := url.Send(sel("URLByDeletingLastPathComponent"))
+				w.web.Send(sel("loadFileURL:allowingReadAccessToURL:"), url, access)
+				return
+			}
+			request := objc.ID(Class("NSMutableURLRequest")).Send(sel("requestWithURL:"), url)
+			for name, value := range w.config.Headers {
+				request.Send(sel("setValue:forHTTPHeaderField:"), NSString(value), NSString(name))
+			}
 			w.web.Send(sel("loadRequest:"), request)
 		}
 	}
+}
+
+func fileURLPath(raw string) (string, bool) {
+	u, err := neturl.Parse(raw)
+	if err != nil || !strings.EqualFold(u.Scheme, "file") || (u.Host != "" && !strings.EqualFold(u.Host, "localhost")) || u.Path == "" {
+		return "", false
+	}
+	p, err := neturl.PathUnescape(u.EscapedPath())
+	if err != nil || p == "" {
+		return "", false
+	}
+	return filepath.Clean(p), true
+}
+
+// fileBaseDir returns the directory a file: base URL names: itself when it ends in a slash, else the one holding it.
+func fileBaseDir(raw string) (string, bool) {
+	path, ok := fileURLPath(raw)
+	if !ok {
+		return "", false
+	}
+	if u, err := neturl.Parse(raw); err == nil && strings.HasSuffix(u.Path, "/") {
+		return path, true
+	}
+	return filepath.Dir(path), true
+}
+
+// fileNavigable reports whether a page may go to url as far as file: URLs go: a page from a file, or HTML with a file: base URL, only within fileDir, and a restricted view's page to no other file. Other views leave file: URLs to WebKit, which keeps web pages from them.
+func fileNavigable(url, fileDir string, restricted bool) bool {
+	if !strings.EqualFold(strings.SplitN(url, ":", 2)[0], "file") || fileDir == "" && !restricted {
+		return true
+	}
+	return fileDir != "" && fileURLInDir(url, fileDir)
+}
+
+func fileURLInDir(raw, dir string) bool {
+	path, ok := fileURLPath(raw)
+	if !ok {
+		return false
+	}
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func nsURL(s string) objc.ID {
@@ -372,6 +476,7 @@ func (w *Web) close() {
 	w.web.Send(sel("removeFromSuperview"))
 	w.web.Send(sel("release"))
 	delete(webHandlers, w.handler)
+	delete(schemeHandlers, w.handler)
 	w.handler.Send(sel("release"))
 	w.web, w.handler = 0, 0
 }

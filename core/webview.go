@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,11 @@ type WebView struct {
 	InjectedJavaScriptBeforeContent string
 	// UserAgent replaces the platform's.
 	UserAgent string
+	// Headers are sent with the initial URL request where the platform
+	// supports custom request headers. HTML sources do not make one.
+	Headers map[string]string
+	// Incognito keeps website data in memory for this view, apart from the app's other web views, on Apple platforms, Windows and Linux. Android has one cookie store and one set of website data per app, so there it only keeps the view from the HTTP cache, DOM storage and saved form data. It is read when the native view is first made; changing it afterwards has no effect.
+	Incognito bool
 	// NoScroll keeps the user from scrolling the page; NoJavaScript keeps
 	// pages from running scripts.
 	NoScroll     bool
@@ -49,7 +55,7 @@ type WebView struct {
 	// OnDownload follows what the page downloads, which only a web view
 	// with one saves, to downloads/<id>/ in the app's data directory:
 	// files WebKit cannot show and links that ask for a download, on
-	// macOS and iOS.
+	// Apple platforms, Linux, Windows and Android.
 	OnDownload func(WebDownload)
 	OnLayout   func(Bounds)
 	Ref        *Ref
@@ -92,6 +98,13 @@ type webNode struct {
 	evals map[string]func(string, error)
 }
 
+func cloneWebHeaders(headers map[string]string) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+	return maps.Clone(headers)
+}
+
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n := t.newNode(driver.KindWeb, parent, cx)
 	t.setClasses(n, w.Class)
@@ -102,7 +115,9 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n.web = &webNode{
 		config: driver.WebConfig{Source: w.Source, InjectedJavaScript: w.InjectedJavaScript,
 			InjectedJavaScriptBeforeContent: w.InjectedJavaScriptBeforeContent, UserAgent: w.UserAgent,
-			NoScroll: w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
+			Headers: cloneWebHeaders(w.Headers), Incognito: w.Incognito,
+			SchemeHandlers: webSchemesOf(cx),
+			NoScroll:       w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
 		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,
 	}
@@ -234,13 +249,16 @@ func (r *Ref) InjectJavaScript(script string) { r.webCommand(driver.WebInjectJav
 // SendInput gives the web view's page input as the user's own, whose
 // events are trusted and carry user activation, which no script the page
 // runs can make: a click, typed text or a key. It takes the keyboard focus
-// first; macOS has it, other platforms drop it.
+// first. It does nothing where Env.CanSendInput is false.
 func (r *Ref) SendInput(in WebInput) {
 	if r.n == nil || r.n.deleted || r.n.web == nil {
 		return
 	}
 	if r.t.rt.restricted && refusal(accessOf(r.n.owner), AccessRequest{Permission: AccessWebView, Method: AccessInput}) != nil {
 		log.Printf("nsgo: a web view's trusted input needs the %q capability's input", AccessWebView)
+		return
+	}
+	if !Untracked(r.n.owner, r.n.owner.Env().CanSendInput) {
 		return
 	}
 	r.t.commands = append(r.t.commands, driver.MountItem{Kind: driver.ItemWebCommand, ID: r.n.id, WebCommand: driver.WebSendInput, Data: &in})

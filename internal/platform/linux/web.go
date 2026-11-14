@@ -5,9 +5,15 @@ package linux
 import (
 	"fmt"
 	"log"
+	"maps"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 
@@ -22,14 +28,31 @@ var (
 	webkitErr  error
 
 	webkitWebViewGetType                 func() uintptr
+	webkitWebViewGetContext              func(uintptr) uintptr
+	webkitWebContextRegisterURIScheme    func(uintptr, *byte, uintptr, uintptr, uintptr)
+	webkitURISchemeRequestGetURI         func(uintptr) uintptr
+	webkitURISchemeRequestGetWebView     func(uintptr) uintptr
+	webkitURISchemeRequestFinish         func(uintptr, uintptr, int64, *byte)
+	webkitURISchemeRequestFinishError    func(uintptr, uintptr)
+	gErrorNewLiteral                     func(uint32, int32, *byte) uintptr
+	gObjectRef                           func(uintptr) uintptr
+	gMemoryInputStreamNewFromBytes       func(uintptr) uintptr
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
+	webkitNetworkSessionNewEphemeral     func() uintptr
 	webkitNetworkSessionGetCookieManager func(uintptr) uintptr
+	webkitDownloadGetWebView             func(uintptr) uintptr
+	webkitDownloadGetRequest             func(uintptr) uintptr
+	webkitDownloadSetDestination         func(uintptr, *byte)
+	webkitDownloadGetDestination         func(uintptr) uintptr
+	webkitDownloadGetReceivedDataLength  func(uintptr) uint64
+	webkitDownloadCancel                 func(uintptr)
 	webkitCookieManagerSetPersistent     func(uintptr, *byte, int32)
 	webkitWebViewGetUserContentManager   func(uintptr) uintptr
 	webkitWebViewGetSettings             func(uintptr) uintptr
 	webkitWebViewSetBackgroundColor      func(uintptr, *[4]float32)
 	webkitWebViewLoadURI                 func(uintptr, *byte)
+	webkitWebViewLoadRequest             func(uintptr, uintptr)
 	webkitWebViewLoadHTML                func(uintptr, *byte, *byte)
 	webkitWebViewReload                  func(uintptr)
 	webkitWebViewGoBack                  func(uintptr)
@@ -58,8 +81,11 @@ var (
 	webkitPolicyErrorQuark               func() uint32
 	webkitNavigationDecisionGetAction    func(uintptr) uintptr
 	webkitNavigationActionGetRequest     func(uintptr) uintptr
+	webkitURIRequestNew                  func(*byte) uintptr
+	webkitURIRequestGetHTTPHeaders       func(uintptr) uintptr
 	webkitURIRequestGetURI               func(uintptr) uintptr
 	webkitPolicyDecisionIgnore           func(uintptr)
+	webkitMessageHeadersAppend           func(uintptr, *byte, *byte)
 	jscValueToString                     func(uintptr) uintptr
 )
 
@@ -77,27 +103,49 @@ func openWebKit() error {
 			webkitErr = fmt.Errorf("web views need JavaScriptCore 6.0 (libjavascriptcoregtk-6.0.so.1): %w", err)
 			return
 		}
+		soup, err := purego.Dlopen("libsoup-3.0.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			webkitErr = fmt.Errorf("web views need libsoup 3 (libsoup-3.0.so.0): %w", err)
+			return
+		}
 		defer func() {
 			if r := recover(); r != nil {
 				webkitErr = fmt.Errorf("web views need WebKitGTK 6.0: %v", r)
 			}
 		}()
-		bindWebKit(webkit, jsc)
+		bindWebKit(webkit, jsc, soup)
 	})
 	return webkitErr
 }
 
-func bindWebKit(webkit, jsc uintptr) {
+func bindWebKit(webkit, jsc, soup uintptr) {
 	reg := func(fn any, name string) { purego.RegisterLibFunc(fn, webkit, name) }
 	reg(&webkitWebViewGetType, "webkit_web_view_get_type")
+	reg(&webkitWebViewGetContext, "webkit_web_view_get_context")
+	reg(&webkitWebContextRegisterURIScheme, "webkit_web_context_register_uri_scheme")
+	reg(&webkitURISchemeRequestGetURI, "webkit_uri_scheme_request_get_uri")
+	reg(&webkitURISchemeRequestGetWebView, "webkit_uri_scheme_request_get_web_view")
+	reg(&webkitURISchemeRequestFinish, "webkit_uri_scheme_request_finish")
+	reg(&webkitURISchemeRequestFinishError, "webkit_uri_scheme_request_finish_error")
+	purego.RegisterLibFunc(&gErrorNewLiteral, glibLib, "g_error_new_literal")
+	purego.RegisterLibFunc(&gObjectRef, gobjectLib, "g_object_ref")
+	purego.RegisterLibFunc(&gMemoryInputStreamNewFromBytes, gioLib, "g_memory_input_stream_new_from_bytes")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
+	reg(&webkitNetworkSessionNewEphemeral, "webkit_network_session_new_ephemeral")
 	reg(&webkitNetworkSessionGetCookieManager, "webkit_network_session_get_cookie_manager")
+	reg(&webkitDownloadGetWebView, "webkit_download_get_web_view")
+	reg(&webkitDownloadGetRequest, "webkit_download_get_request")
+	reg(&webkitDownloadSetDestination, "webkit_download_set_destination")
+	reg(&webkitDownloadGetDestination, "webkit_download_get_destination")
+	reg(&webkitDownloadGetReceivedDataLength, "webkit_download_get_received_data_length")
+	reg(&webkitDownloadCancel, "webkit_download_cancel")
 	reg(&webkitCookieManagerSetPersistent, "webkit_cookie_manager_set_persistent_storage")
 	reg(&webkitWebViewGetUserContentManager, "webkit_web_view_get_user_content_manager")
 	reg(&webkitWebViewGetSettings, "webkit_web_view_get_settings")
 	reg(&webkitWebViewSetBackgroundColor, "webkit_web_view_set_background_color")
 	reg(&webkitWebViewLoadURI, "webkit_web_view_load_uri")
+	reg(&webkitWebViewLoadRequest, "webkit_web_view_load_request")
 	reg(&webkitWebViewLoadHTML, "webkit_web_view_load_html")
 	reg(&webkitWebViewReload, "webkit_web_view_reload")
 	reg(&webkitWebViewGoBack, "webkit_web_view_go_back")
@@ -126,8 +174,11 @@ func bindWebKit(webkit, jsc uintptr) {
 	reg(&webkitPolicyErrorQuark, "webkit_policy_error_quark")
 	reg(&webkitNavigationDecisionGetAction, "webkit_navigation_policy_decision_get_navigation_action")
 	reg(&webkitNavigationActionGetRequest, "webkit_navigation_action_get_request")
+	reg(&webkitURIRequestNew, "webkit_uri_request_new")
+	reg(&webkitURIRequestGetHTTPHeaders, "webkit_uri_request_get_http_headers")
 	reg(&webkitURIRequestGetURI, "webkit_uri_request_get_uri")
 	reg(&webkitPolicyDecisionIgnore, "webkit_policy_decision_ignore")
+	purego.RegisterLibFunc(&webkitMessageHeadersAppend, soup, "soup_message_headers_append")
 	purego.RegisterLibFunc(&jscValueToString, jsc, "jsc_value_to_string")
 }
 
@@ -140,6 +191,8 @@ const (
 	webkitLoadStarted      = 0
 	webkitLoadFinished     = 3
 	webkitNetworkCancelled = 302 // WEBKIT_NETWORK_ERROR_CANCELLED
+	webkitNetworkUnknown   = 301 // WEBKIT_NETWORK_ERROR_UNKNOWN_PROTOCOL
+	webkitNetworkFailed    = 399 // WEBKIT_NETWORK_ERROR_FAILED
 	webkitPolicyInterrupt  = 102 // WEBKIT_POLICY_ERROR_FRAME_LOAD_INTERRUPTED_BY_POLICY_CHANGE
 	webkitNewWindowAction  = 1   // WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION
 	webkitCookieSQLite     = 1   // WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
@@ -161,6 +214,7 @@ const webNoScroll = "html, body { overflow: hidden !important; }"
 type web struct {
 	hosted
 	widget     uintptr // WebKitWebView
+	session    uintptr // the ephemeral network session an Incognito page owns, released with it; 0 for the app's
 	content    uintptr // its WebKitUserContentManager
 	config     driver.WebConfig
 	made       bool
@@ -168,6 +222,45 @@ type web struct {
 	pending    bool         // a load waits for the page to be mapped
 	background [4]float32   // WebKit's own, for views without an opaque one
 	pointer    driver.Point // where the pointer is in the page
+}
+
+// webPage is the window and view a WebKitWebView belongs to.
+type webPage struct {
+	window *window
+	view   *view
+}
+
+// webPages are the live pages by WebKitWebView, whatever their window and network session, so that what WebKit hands over with only a page (scheme requests, downloads) finds its view.
+var webPages = map[uintptr]webPage{}
+
+// webPageOf returns the live view showing page, or nils.
+func webPageOf(page uintptr) (*window, *view) {
+	p, ok := webPages[page]
+	if !ok || p.window.closing || p.view.deleted || p.view.web == nil || p.view.web.widget != page {
+		return nil, nil
+	}
+	return p.window, p.view
+}
+
+// webSchemes are the schemes registered on each WebKitWebContext. A context keeps a scheme for its life, so each is registered once, and its requests find their view by page (webSchemeCallback).
+var webSchemes = map[uintptr]map[string]bool{}
+
+// webDownload is a download a view saves, which holds a reference to its WebKitDownload until it ends or the view closes.
+type webDownload struct {
+	window *window
+	view   *view
+	item   driver.WebDownload
+}
+
+var (
+	webDownloads      = map[uintptr]*webDownload{}
+	webDownloadSerial uint64
+)
+
+// report reports dl as it is now. The engine reads the event after the backend has gone on, so it gets a copy rather than the item later signals change.
+func (dl *webDownload) report() {
+	item := dl.item
+	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &item})
 }
 
 // webWarned is the warning, once, that web views show a placeholder.
@@ -178,7 +271,7 @@ var webWarned sync.Once
 // changed; the rest applies to the page as it is.
 func (w *window) configureWeb(v *view, c *driver.WebConfig) {
 	if v.web == nil {
-		v.web = &web{}
+		v.web = &web{config: *c}
 		if err := openWebKit(); err != nil {
 			webWarned.Do(func() { log.Printf("nsgo: WebView is not available: %v; it shows a placeholder", err) })
 			w.host(v, &v.web.hosted, webPlaceholder(), false)
@@ -222,7 +315,7 @@ func (w *window) configureWeb(v *view, c *driver.WebConfig) {
 	webkitSettingsSetBackForwardGestures(settings, boolInt(c.BackForwardGestures))
 	w.webBackground(v)
 	// Scripts apply to pages loaded from now on: load again.
-	if first || scripts || c.Source != old.Source {
+	if first || scripts || c.Source != old.Source || !maps.Equal(c.Headers, old.Headers) {
 		w.loadWeb(v)
 	}
 }
@@ -265,11 +358,22 @@ func addScript(content uintptr, source string, at int32) {
 	webkitUserScriptUnref(script)
 }
 
-// makeWeb makes v's page in the app's network session and hosts it.
+// makeWeb makes v's page in the app's network session, or an ephemeral one of its own for Incognito, and hosts it.
 func (w *window) makeWeb(v *view) {
 	wv := v.web
-	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), w.webSession(), uintptr(0))
+	var session uintptr
+	if wv.config.Incognito {
+		// The page holds its own reference; wv.session is released when the view closes.
+		wv.session = webkitNetworkSessionNewEphemeral()
+		gSignalConnect(wv.session, "download-started", cbWebDownloadStarted, 0)
+		session = wv.session
+	} else {
+		session = w.webSession()
+	}
+	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), session, uintptr(0))
 	wv.content = webkitWebViewGetUserContentManager(wv.widget)
+	webPages[wv.widget] = webPage{window: w, view: v}
+	registerWebSchemes(wv)
 	webkitContentRegisterHandler(wv.content, cstr(webHandler), nil)
 	webkitWebViewGetBackgroundColor(wv.widget, &wv.background)
 	w.host(v, &wv.hosted, wv.widget, true)
@@ -301,8 +405,29 @@ func (w *window) makeWeb(v *view) {
 	gtkWidgetAddController(wv.widget, scroll)
 }
 
-// webSessions are the network sessions by app ID: one network process,
-// and one set of cookies and storage, serves every web view of an app.
+// registerWebSchemes registers the schemes wv's app serves on its page's WebKitWebContext, which every page of the process shares, so a scheme is registered once for every view that serves it.
+func registerWebSchemes(wv *web) {
+	if len(wv.config.SchemeHandlers) == 0 {
+		return
+	}
+	context := webkitWebViewGetContext(wv.widget)
+	if context == 0 {
+		return
+	}
+	registered := webSchemes[context]
+	if registered == nil {
+		registered = map[string]bool{}
+		webSchemes[context] = registered
+	}
+	for name := range wv.config.SchemeHandlers {
+		if !registered[name] {
+			webkitWebContextRegisterURIScheme(context, cstr(name), cbWebScheme, 0, 0)
+			registered[name] = true
+		}
+	}
+}
+
+// webSessions are the network sessions by app ID: one network process, and one set of cookies and storage, serves every web view of an app that is not Incognito. A session lives as long as the process, so views mounted again find it.
 var webSessions = map[string]uintptr{}
 
 // webSession returns the network session of w's app, which keeps
@@ -317,12 +442,160 @@ func (w *window) webSession() uintptr {
 		log.Printf("nsgo: web view: %v", err)
 	}
 	s := webkitNetworkSessionNew(cstr(data), cstr(cache))
+	gSignalConnect(s, "download-started", cbWebDownloadStarted, 0)
 	// Cookies outlive the app, as other website data does.
 	if cookies := webkitNetworkSessionGetCookieManager(s); cookies != 0 {
 		webkitCookieManagerSetPersistent(cookies, cstr(filepath.Join(data, "cookies.sqlite")), webkitCookieSQLite)
 	}
 	webSessions[w.appID] = s
 	return s
+}
+
+// webSchemeCallback answers a request for an app-owned scheme from the handler of the view whose page made it. Every request is finished, with an error when no live view serves its scheme, so no page waits on one.
+func webSchemeCallback(request, _ uintptr) {
+	_, v := webPageOf(webkitURISchemeRequestGetWebView(request))
+	raw := goString(webkitURISchemeRequestGetURI(request))
+	u, err := url.Parse(raw)
+	if err != nil {
+		finishWebSchemeError(request, webkitNetworkFailed, err.Error())
+		return
+	}
+	var handler func(string) []byte
+	if v != nil {
+		handler = v.web.config.SchemeHandlers[strings.ToLower(u.Scheme)]
+	}
+	if handler == nil {
+		finishWebSchemeError(request, webkitNetworkUnknown, "nsgo: no handler serves "+u.Scheme+": URLs in this web view")
+		return
+	}
+	body := handler(raw)
+	bytes := gBytesNew(unsafe.Pointer(nil), 0)
+	if len(body) > 0 {
+		bytes = gBytesNew(unsafe.Pointer(&body[0]), uintptr(len(body)))
+	}
+	stream := gMemoryInputStreamNewFromBytes(bytes)
+	gBytesUnref(bytes)
+	contentType := driver.WebMIME(u.Path, body)
+	webkitURISchemeRequestFinish(request, stream, int64(len(body)), cstr(contentType))
+	gObjectUnref(stream)
+}
+
+// finishWebSchemeError ends request with a WebKit network error of code and message.
+func finishWebSchemeError(request uintptr, code int32, message string) {
+	err := gErrorNewLiteral(webkitNetworkErrorQuark(), code, cstr(message))
+	webkitURISchemeRequestFinishError(request, err)
+	gErrorFree(err)
+}
+
+// webDownloadStartedCallback takes a download a network session started for the view whose page asked for it, when the view saves downloads, and cancels it otherwise.
+func webDownloadStartedCallback(_, download, _ uintptr) {
+	w, v := webPageOf(webkitDownloadGetWebView(download))
+	if v == nil || v.web.config.DownloadDir == "" {
+		webkitDownloadCancel(download)
+		return
+	}
+	webDownloadSerial++
+	id := strconv.FormatInt(time.Now().UnixMilli(), 36) + "-" + strconv.FormatUint(webDownloadSerial, 36)
+	urlText := ""
+	if request := webkitDownloadGetRequest(download); request != 0 {
+		urlText = goString(webkitURIRequestGetURI(request))
+	}
+	dl := &webDownload{window: w, view: v, item: driver.WebDownload{State: driver.WebDownloadStarted, ID: id, URL: urlText}}
+	webDownloads[gObjectRef(download)] = dl
+	// Downloads own these temporary signal connections; attaching them to the view's hosted-signal list would leave stale object pointers after WebKit releases a completed download. The handlers find the download in webDownloads, which a closing view leaves.
+	gSignalConnect(download, "decide-destination", cbWebDownloadDestination, 0)
+	gSignalConnect(download, "received-data", cbWebDownloadReceived, 0)
+	gSignalConnect(download, "finished", cbWebDownloadFinished, 0)
+	gSignalConnect(download, "failed", cbWebDownloadFailed, 0)
+}
+
+// forgetDownload stops following download and releases the reference webDownloads held.
+func forgetDownload(download uintptr) {
+	if _, ok := webDownloads[download]; ok {
+		delete(webDownloads, download)
+		gObjectUnref(download)
+	}
+}
+
+// cancelDownload cancels download and forgets it first, so the failed signal the cancellation emits finds nothing to report.
+func cancelDownload(download uintptr) {
+	_, followed := webDownloads[download]
+	delete(webDownloads, download)
+	webkitDownloadCancel(download)
+	if followed {
+		gObjectUnref(download)
+	}
+}
+
+// cancelDownloads cancels and forgets the downloads v saves, as its page closes.
+func cancelDownloads(v *view) {
+	for download, dl := range webDownloads {
+		if dl.view == v {
+			cancelDownload(download)
+		}
+	}
+}
+
+func webDownloadDestinationCallback(download, suggested, _ uintptr) int32 {
+	dl := webDownloads[download]
+	if dl == nil || dl.view.web == nil {
+		// A download no view saves any more is cancelled, never left to WebKit's default folder.
+		cancelDownload(download)
+		return 1
+	}
+	name := webDownloadFilename(goString(suggested))
+	dir := filepath.Join(dl.view.web.config.DownloadDir, dl.item.ID)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		dl.item.State, dl.item.Message = driver.WebDownloadFailed, err.Error()
+		dl.report()
+		cancelDownload(download)
+		return 1
+	}
+	dl.item.Filename = name
+	dl.item.Path = filepath.Join(dir, name)
+	webkitDownloadSetDestination(download, cstr(dl.item.Path))
+	dl.report()
+	return 1
+}
+
+func webDownloadFilename(suggested string) string {
+	name := filepath.Base(suggested)
+	if name == "." || name == ".." || name == string(filepath.Separator) || name == "" {
+		return "download"
+	}
+	return name
+}
+
+func webDownloadReceivedCallback(download, _ uint64, _ uintptr) {
+	// WebKit reports progress through received-data; the public event model
+	// reports only started, finished and failed, as the Apple backend does.
+}
+
+func webDownloadFinishedCallback(download, _ uintptr) {
+	dl := webDownloads[download]
+	if dl == nil {
+		return
+	}
+	dl.item.State = driver.WebDownloadFinished
+	dl.item.Bytes = int64(webkitDownloadGetReceivedDataLength(download))
+	if dest := webkitDownloadGetDestination(download); dest != 0 {
+		dl.item.Path = goString(dest)
+	}
+	dl.report()
+	forgetDownload(download)
+}
+
+func webDownloadFailedCallback(download, gerr, _ uintptr) {
+	dl := webDownloads[download]
+	if dl == nil {
+		return
+	}
+	dl.item.State = driver.WebDownloadFailed
+	if gerr != 0 {
+		dl.item.Message = goString((*gError)(cPointer(gerr)).message)
+	}
+	dl.report()
+	forgetDownload(download)
 }
 
 // webFolders are where web views of app id keep their data and cache.
@@ -351,7 +624,23 @@ func (w *window) loadWeb(v *view) {
 		}
 		webkitWebViewLoadHTML(wv.widget, cstr(src.HTML), base)
 	case src.Src != "":
-		webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+		if len(wv.config.Headers) == 0 {
+			webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+			return
+		}
+		request := webkitURIRequestNew(cstr(src.Src))
+		if request == 0 {
+			webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+			return
+		}
+		headers := webkitURIRequestGetHTTPHeaders(request)
+		if headers != 0 {
+			for name, value := range wv.config.Headers {
+				webkitMessageHeadersAppend(headers, cstr(name), cstr(value))
+			}
+		}
+		webkitWebViewLoadRequest(wv.widget, request)
+		gObjectUnref(request)
 	}
 }
 
@@ -381,16 +670,22 @@ func evaluate(page uintptr, script string) {
 	webkitWebViewEvaluateJavascript(page, cstr(script), -1, nil, nil, 0, 0, 0)
 }
 
-// closeWeb stops v's page and lets it go.
+// closeWeb stops v's page, cancels its downloads and lets it go.
 func (w *window) closeWeb(v *view) {
 	wv := v.web
 	v.web = nil
+	cancelDownloads(v)
 	if wv.widget != 0 {
+		delete(webPages, wv.widget)
 		webkitWebViewStopLoading(wv.widget)
 		// Before unhosting, which lets the page and its content manager go.
 		webkitContentUnregisterHandler(wv.content, cstr(webHandler), nil)
 	}
 	w.unhost(v, &wv.hosted)
+	if wv.session != 0 {
+		// The Incognito page's own session, whose website data goes with its last reference.
+		gObjectUnref(wv.session)
+	}
 }
 
 // focusedWeb returns the web view whose page has keyboard focus, or nil.

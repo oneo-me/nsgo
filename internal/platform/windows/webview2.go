@@ -12,9 +12,11 @@ package windows
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -42,7 +44,10 @@ var (
 	iidUnknown                        = parseGUID("00000000-0000-0000-c000-000000000046")
 	iidAgileObject                    = parseGUID("94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90")
 	iidEnvironment                    = parseGUID("b96d755e-0319-4e92-a296-23436f46a1fc")
+	iidEnvironment2                   = parseGUID("41f3632b-5ef4-404f-ad82-2d606c5a9a21")
 	iidEnvironment3                   = parseGUID("80a22ae3-be7c-4ce2-afe1-5a50056cdeeb")
+	iidEnvironment10                  = parseGUID("ee0eb9df-6f12-46ce-b53f-3f47b9c928e0")
+	iidControllerOptions              = parseGUID("12aae616-8ccb-44ec-bcb3-eb1831881635")
 	iidController                     = parseGUID("4d00c0d1-9434-4eb6-8078-8697a560334f")
 	iidController2                    = parseGUID("c979903e-d4ca-4228-92eb-47ee3fa96eab")
 	iidController3                    = parseGUID("f9614724-5d2b-41dc-aef7-73d62b51543b")
@@ -54,6 +59,11 @@ var (
 	iidNavigationCompleted            = parseGUID("d33a35bf-1c49-4f98-93ab-006e0533fe1c")
 	iidWebMessageReceived             = parseGUID("57213f19-00e6-49fa-8e07-898ea01ecbd2")
 	iidWebResourceRequested           = parseGUID("ab00b74c-15f1-4646-80e8-e76341d25d71")
+	iidWeb2                           = parseGUID("9e8f0cf8-e670-4b5e-b2bc-73e061e3184c")
+	iidWeb4                           = parseGUID("20d02d59-6df2-42dc-bd06-f98a694b1302")
+	iidDownloadStarting               = parseGUID("efedc989-c396-41ca-83f7-07f845a55724")
+	iidBytesReceivedChanged           = parseGUID("828e8ab6-d94c-4264-9cef-5217170d6251")
+	iidDownloadStateChanged           = parseGUID("81336594-7ede-4ba9-bf71-acf0a95b58dd")
 	iidCursorChanged                  = parseGUID("9da43ccc-26e1-4dad-b56c-d8961c94c571")
 	iidFocusChanged                   = parseGUID("05ea24bd-6452-4926-9014-4b82b498135d")
 	iidMoveFocusRequested             = parseGUID("69035451-6dc7-4cb8-9bce-b2bd70ad289f")
@@ -67,10 +77,13 @@ const (
 	comAddRef         = 1
 	comRelease        = 2
 
-	// ICoreWebView2Environment, then ICoreWebView2Environment3
+	// ICoreWebView2Environment, then ICoreWebView2Environment2, 3 and 10
 	envCreateWebResourceResponse   = 4
+	env2CreateWebResourceRequest   = 8
 	envCreateCompositionController = 9
 	envCreatePointerInfo           = 10
+	env10CreateControllerOptions   = 20
+	env10CreateCompositionWithOpts = 22
 
 	// ICoreWebView2CompositionController
 	compPutRootVisualTarget = 4
@@ -93,6 +106,9 @@ const (
 	controllerPutRasterizationScale              = 29
 	controllerPutShouldDetectMonitorScaleChanges = 31
 
+	// ICoreWebView2ControllerOptions.
+	controllerOptionsPutIsInPrivateModeEnabled = 6
+
 	// ICoreWebView2
 	webGetSettings                   = 3
 	webGetSource                     = 4
@@ -113,6 +129,25 @@ const (
 	webGetDocumentTitle              = 48
 	webAddWebResourceRequested       = 55
 	webAddWebResourceRequestedFilter = 57
+	// ICoreWebView2_2, then ICoreWebView2_4 (after ICoreWebView2_3).
+	web2NavigateWithWebResourceRequest = 63
+	webAddDownloadStarting             = 75
+
+	// ICoreWebView2DownloadStartingEventArgs.
+	downloadArgsGetOperation  = 3
+	downloadArgsPutCancel     = 5
+	downloadArgsGetResultPath = 6
+	downloadArgsPutResultPath = 7
+	downloadArgsPutHandled    = 9
+
+	// ICoreWebView2DownloadOperation.
+	downloadAddBytesChanged = 3
+	downloadAddStateChanged = 7
+	downloadGetURI          = 9
+	downloadGetBytes        = 13
+	downloadGetState        = 16
+	downloadGetInterrupt    = 17
+	downloadCancel          = 18
 
 	// ICoreWebView2Settings, then ICoreWebView2Settings2 and 6
 	settingsPutIsScriptEnabled          = 4
@@ -225,6 +260,7 @@ type pointerPenInfo struct {
 const (
 	sOK             = 0
 	eNoInterface    = 0x80004002
+	eFail           = 0x80004005
 	rpcEChangedMode = 0x80010106
 )
 
@@ -444,12 +480,23 @@ type webEnvironment struct {
 	err     error
 	done    bool
 	waiting []func(*comObject, error)
+
+	// It starts once the batch that made its first web view is applied (startWebEnvironments), so that it registers the app schemes of all the batch's web views; w reports a failure to start.
+	started    bool
+	w          *window
+	folder     string
+	schemes    []string // asked for until it starts
+	registered []string
 }
 
 // webEnvironments are the UI threads', by thread and profile folder.
 var (
 	webEnvironmentsMu sync.Mutex
 	webEnvironments   = map[webEnvironmentKey]*webEnvironment{}
+	// webFolderSchemes are the app schemes each profile folder's environments register, those of the first to start: WebView2 takes registrations only as it makes an environment, and refuses environments of one folder whose options differ.
+	webFolderSchemes = map[string][]string{}
+	// webSchemesLogged are the schemes reported as served too late.
+	webSchemesLogged = map[string]bool{}
 )
 
 type webEnvironmentKey struct {
@@ -459,34 +506,71 @@ type webEnvironmentKey struct {
 
 var getCurrentThreadID = kernel32.NewProc("GetCurrentThreadId")
 
-// withWebEnvironment calls fn on the calling UI thread once its
-// environment of profile folder is made, or cannot be; w posts the
-// failure to start.
-func withWebEnvironment(w *window, folder string, fn func(*comObject, error)) {
+// withWebEnvironment calls fn on the calling UI thread once its environment of profile folder is made, or cannot be; w posts the failure to start. schemes are the app schemes the web view serves.
+func withWebEnvironment(w *window, folder string, schemes []string, fn func(*comObject, error)) {
 	thread, _, _ := getCurrentThreadID.Call()
 	key := webEnvironmentKey{thread, folder}
 	webEnvironmentsMu.Lock()
 	e := webEnvironments[key]
-	fresh := e == nil
-	if fresh {
-		e = &webEnvironment{}
+	if e == nil {
+		e = &webEnvironment{w: w, folder: folder}
 		webEnvironments[key] = e
 	}
 	webEnvironmentsMu.Unlock()
-	if fresh {
-		e.waiting = append(e.waiting, fn)
-		if err := startWebEnvironment(e, folder); err != nil {
-			// Reported from a message of its own: the view's events may come
-			// later in the batch being applied.
-			w.post(func() { e.finish(nil, err) })
+	if !e.started {
+		for _, name := range schemes {
+			if !slices.Contains(e.schemes, name) {
+				e.schemes = append(e.schemes, name)
+			}
 		}
-		return
+	} else {
+		e.unregistered(schemes)
 	}
 	if e.done {
 		fn(e.env, e.err)
 		return
 	}
 	e.waiting = append(e.waiting, fn)
+}
+
+// startWebEnvironments starts the calling UI thread's environments that wait to, once a batch made their web views.
+func startWebEnvironments() {
+	thread, _, _ := getCurrentThreadID.Call()
+	var start []*webEnvironment
+	webEnvironmentsMu.Lock()
+	for key, e := range webEnvironments {
+		if key.thread == thread && !e.started {
+			e.started = true
+			registered, known := webFolderSchemes[e.folder]
+			if !known {
+				registered = slices.Sorted(slices.Values(e.schemes))
+				webFolderSchemes[e.folder] = registered
+			}
+			e.registered = registered
+			start = append(start, e)
+		}
+	}
+	webEnvironmentsMu.Unlock()
+	for _, e := range start {
+		e.unregistered(e.schemes)
+		e.schemes = nil
+		if err := startWebEnvironment(e, e.folder, e.registered); err != nil {
+			// Reported from a message of its own, as the environment's callbacks come.
+			e.w.post(func() { e.finish(nil, err) })
+		}
+	}
+}
+
+// unregistered logs, once each, the schemes the environment did not register, which its web views cannot load.
+func (e *webEnvironment) unregistered(schemes []string) {
+	webEnvironmentsMu.Lock()
+	defer webEnvironmentsMu.Unlock()
+	for _, name := range schemes {
+		if !slices.Contains(e.registered, name) && !webSchemesLogged[name] {
+			webSchemesLogged[name] = true
+			log.Printf("nsgo: WebView2 cannot load the %q scheme: it registers app schemes only as it starts, and it started before this scheme was served", name)
+		}
+	}
 }
 
 func (e *webEnvironment) finish(env *comObject, err error) {
@@ -508,7 +592,8 @@ func initCOM() error {
 	return nil
 }
 
-func startWebEnvironment(e *webEnvironment, folder string) error {
+// startWebEnvironment starts making the environment of profile folder, registering app schemes.
+func startWebEnvironment(e *webEnvironment, folder string, schemes []string) error {
 	if err := initCOM(); err != nil {
 		return err
 	}
@@ -524,9 +609,19 @@ func startWebEnvironment(e *webEnvironment, folder string) error {
 	if err != nil {
 		return err
 	}
+	var options *webEnvironmentOptions
+	var optionsPtr uintptr
+	if len(schemes) > 0 {
+		options = newWebEnvironmentOptions(schemes)
+		optionsPtr = options.ptr()
+	}
 	var h *comHandler
 	h = newHandler(&iidEnvironmentCompleted, func(hr uintptr, result unsafe.Pointer) {
 		defer h.release()
+		if options != nil {
+			// Held until the environment is made, in case the runtime reads it on the way.
+			options.release()
+		}
 		env := (*comObject)(result)
 		if failed(hr) || env == nil {
 			e.finish(nil, hresultError("WebView2 could not start", hr))
@@ -541,9 +636,12 @@ func startWebEnvironment(e *webEnvironment, folder string) error {
 		e.finish(env, nil)
 	})
 	const checkRunningInstance, installedRuntime = 1, 0
-	hr, _, _ := create.Call(checkRunningInstance, installedRuntime, uintptr(unsafe.Pointer(wide(folder))), 0, h.ptr())
+	hr, _, _ := create.Call(checkRunningInstance, installedRuntime, uintptr(unsafe.Pointer(wide(folder))), optionsPtr, h.ptr())
 	if failed(hr) {
 		h.release()
+		if options != nil {
+			options.release()
+		}
 		return hresultError("WebView2 could not start", hr)
 	}
 	return nil

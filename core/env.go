@@ -20,6 +20,8 @@ type Env struct {
 	dark, reduce, reader *Signal[bool]
 	screenColor, speech  *Signal[bool]
 	camera               *Signal[bool]
+	canSendInput         *Signal[bool]
+	hasWebView           *Signal[bool]
 	fontScale, ratio     *Signal[float32]
 	// locale and systemRTL are the platform's or the host's; forced is
 	// the locale Scope.SetLocale forces.
@@ -66,6 +68,8 @@ func newEnv(cx *Scope, app *Env) *Env {
 		screenColor:      NewSignal(cx, false),
 		speech:           NewSignal(cx, false),
 		camera:           NewSignal(cx, false),
+		canSendInput:     NewSignal(cx, false),
+		hasWebView:       NewSignal(cx, false),
 		fontScale:        NewSignal(cx, float32(1)),
 		ratio:            NewSignal(cx, float32(1)),
 		locale:           NewSignal(cx, ""),
@@ -153,6 +157,8 @@ func (e *Env) set(v Environment) {
 	e.screenColor.Set(v.ScreenColor)
 	e.speech.Set(v.Speech)
 	e.camera.Set(v.Camera)
+	e.canSendInput.Set(v.CanSendInput)
+	e.hasWebView.Set(v.HasWebView)
 	e.fontScale.Set(v.FontScale)
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
@@ -239,6 +245,15 @@ func (e *Env) CanRecognizeSpeech() bool { return e.speech.Get() }
 // CanTakePhoto reports whether Scope.TakePhoto shows a camera here: iOS
 // and Android devices with one, and browsers on touch screens.
 func (e *Env) CanTakePhoto() bool { return e.camera.Get() }
+
+// CanSendInput reports whether Ref.SendInput can give a web view's page
+// trusted input here. macOS supports this through AppKit; other backends
+// currently drop it.
+func (e *Env) CanSendInput() bool { return e.canSendInput.Get() }
+
+// HasWebView reports whether this target provides the native or browser web
+// view host used by WebView.
+func (e *Env) HasWebView() bool { return e.hasWebView.Get() }
 
 // RTL reports whether the app lays out right to left: as the language it
 // shows is written (Language), else the locale it forces, else as the

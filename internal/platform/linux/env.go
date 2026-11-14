@@ -69,6 +69,7 @@ func (w *window) environment() driver.Environment {
 		LocaleSettings: localeSettings(),
 		Displays:       displays(),
 		OS:             driver.OSLinux,
+		HasWebView:     true,
 		OSVersion:      osVersion(),
 		Idiom:          driver.IdiomDesktop,
 		TitleBar:       w.titleBarArea(),
