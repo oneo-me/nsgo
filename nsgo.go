@@ -82,6 +82,7 @@ func Run[M Main](main M, opts ...Option) {
 	}
 	size := o.constraints.Clamp(core.Size{Width: o.width, Height: o.height})
 	o.width, o.height = size.Width, size.Height
+	startDevClient()
 	switch m := any(main).(type) {
 	case func(cx *core.Scope) core.Node:
 		run(devApp(launch.localized(m)), nil, o)

@@ -457,21 +457,7 @@ func (v *View) textWithin() string {
 	return b.String()
 }
 
-var roles = map[driver.Role]string{
-	driver.RoleButton: "button", driver.RoleLink: "link", driver.RoleHeader: "header", driver.RoleImage: "image",
-	driver.RoleCheckbox: "checkbox", driver.RoleSwitch: "switch", driver.RoleRadio: "radio", driver.RoleTab: "tab",
-	driver.RoleText: "text", driver.RoleTextField: "textbox", driver.RoleAdjustable: "adjustable",
-	driver.RoleProgressBar: "progressbar", driver.RoleRadioGroup: "radiogroup", driver.RoleTabList: "tablist",
-	driver.RoleMenu: "menu", driver.RoleMenuItem: "menuitem", driver.RoleDialog: "dialog", driver.RoleAlertDialog: "alertdialog", driver.RoleAlert: "alert",
-	driver.RoleTable: "table", driver.RoleGrid: "grid", driver.RoleRowGroup: "rowgroup", driver.RoleRow: "row",
-	driver.RoleColumnHeader: "columnheader", driver.RoleCell: "cell", driver.RoleListbox: "listbox",
-	driver.RoleOption: "option", driver.RoleGroup: "group", driver.RoleRegion: "region",
-	driver.RoleNavigation: "navigation", driver.RoleTree: "tree", driver.RoleTreeItem: "treeitem",
-	driver.RoleToolbar: "toolbar", driver.RoleMenuItemCheckbox: "menuitemcheckbox",
-	driver.RoleMenuItemRadio: "menuitemradio", driver.RoleCombobox: "combobox",
-}
-
-func roleName(r driver.Role) string { return roles[r] }
+func roleName(r driver.Role) string { return driver.RoleName(r) }
 
 // disabled reports whether v, or a view around it up to until (the root
 // when nil), takes no input.

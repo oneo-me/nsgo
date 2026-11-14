@@ -735,3 +735,19 @@ func numberString(f float64) string {
 	exp = strings.TrimLeft(exp[1:], "0")
 	return mant + "e" + string(sign) + exp
 }
+
+// Caller is the line of JS code r runs now, through the source maps the code carries, as file and line; ok is false while r runs none.
+func Caller(r *Runtime) (file string, line int, ok bool) {
+	stack := r.mapStack(r.global.Get("Error").New().Get("stack").String())
+	for _, l := range strings.Split(stack, "\n") {
+		m := position.FindStringSubmatch(l)
+		if m == nil || strings.Contains(m[1], "wasm") {
+			continue
+		}
+		n, err := strconv.Atoi(m[2])
+		if err == nil {
+			return m[1], n, true
+		}
+	}
+	return "", 0, false
+}

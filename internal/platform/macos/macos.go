@@ -2731,7 +2731,7 @@ func (s *surface) applyBatches(budget time.Duration, alone bool) {
 		if s.perf != nil && !b.Sent.IsZero() {
 			s.perf.RecordLatency(time.Since(b.Sent))
 		}
-		s.apply(b)
+		driver.Apply(b, s.apply)
 		if budget > 0 && time.Since(start) >= budget {
 			break
 		}

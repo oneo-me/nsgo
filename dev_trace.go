@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 	"github.com/nsgo-dev/nsgo/internal/engine"
 )
@@ -21,6 +22,8 @@ var devTrace = ""
 // One goroutine posts what gathered while the last post was on its way,
 // so the engine never waits for the network.
 func traceTo(server string) {
+	// Sites name the computations each commit ran, so DevTools' recording is on too.
+	driver.TraceCauses, devtools.Enabled = true, true
 	var (
 		mu      sync.Mutex
 		pending bytes.Buffer

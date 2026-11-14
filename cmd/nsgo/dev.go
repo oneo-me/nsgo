@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,17 +39,19 @@ type app struct {
 // The rest of the flags have replaced nsgo.yaml's values already, and apply
 // replaces them again after each reload.
 type devOptions struct {
-	apply   func(*project)
-	port    int    // the dev server's, which the web target is served from
-	open    bool   // whether to open the web target in the browser
-	device  string // the iPhone, simulator or Android device to run on
-	team    string // the Apple developer team the iOS target signs with
-	release bool   // build as nsgo build does, for measuring
-	trace   bool   // print the running app's commits
-	fps     bool   // show the performance monitor: --nsgo-fps
-	lang    string // the locale to run the app in: --nsgo-lang
-	clip    string // the URL the App Clip opens from, run in the app's place
-	server  *devServer
+	apply     func(*project)
+	port      int    // the dev server's, which the web target is served from
+	open      bool   // whether to open the web target in the browser
+	device    string // the iPhone, simulator or Android device to run on
+	team      string // the Apple developer team the iOS target signs with
+	release   bool   // build as nsgo build does, for measuring
+	trace     bool   // print the running app's commits
+	highlight bool   // outline what the running app's commits changed
+	devtools  bool   // open DevTools for the running app
+	fps       bool   // show the performance monitor: --nsgo-fps
+	lang      string // the locale to run the app in: --nsgo-lang
+	clip      string // the URL the App Clip opens from, run in the app's place
+	server    *devServer
 }
 
 // dev builds and runs the app, with a dev server its builds connect to:
@@ -65,6 +68,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		return err
 	}
 	defer srv.close()
+	srv.dir = p.Dir
 	opts.server = srv
 	s, err := sessionFor(p, opts)
 	if err != nil {
@@ -74,6 +78,14 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	stop := func() {}
 	defer func() { stop() }()
 	header(p.Name, p.Version, "dev "+p.Dev.Target)
+	if opts.devtools {
+		url := srv.url() + "/_nsgo/devtools/"
+		note("DevTools %s", link(url))
+		if opts.open {
+			name, args := openCommand(url)
+			exec.Command(name, args...).Start()
+		}
+	}
 	var exited chan error
 	first, hinted := true, false
 	for {
@@ -170,9 +182,9 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 }
 
 // prepareDev sets what dev's builds carry: the dev client, -trace's
-// commits and the dev icons; -release strips them as nsgo build does.
+// commits, -highlight's outlines and the dev icons; -release strips them as nsgo build does.
 func (p *project) prepareDev(opts devOptions) {
-	p.Release, p.Dev.Client, p.Dev.Trace = opts.release, true, opts.trace
+	p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Highlight, p.Dev.Devtools = opts.release, true, opts.trace, opts.highlight, opts.devtools
 	p.useDevIcons()
 }
 
@@ -300,6 +312,9 @@ type devServer struct {
 
 	mu      sync.Mutex
 	clients map[chan string]bool
+	// pages are the DevTools pages following the app's messages, and dir the app's directory, which their relative sites (a TSX file's) are in.
+	pages   map[chan string]bool
+	dir     string
 	last    string // the last error event, for apps that connect later
 	files   string
 	bundles map[string]string // the latest TSX bundles, by entry
@@ -326,8 +341,9 @@ func startDevServer(port int) (*devServer, error) {
 		return nil, fmt.Errorf("no free port from %d: %w", port, err)
 	}
 	s := &devServer{port: ln.Addr().(*net.TCPAddr).Port, mux: http.NewServeMux(), reloads: make(chan struct{}, 1),
-		clients: map[chan string]bool{}}
+		clients: map[chan string]bool{}, pages: map[chan string]bool{}}
 	s.mux.HandleFunc("/_nsgo/events", s.events)
+	s.serveDevTools()
 	s.mux.HandleFunc("/_nsgo/bundle", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		code, ok := s.bundles[r.URL.Query().Get("entry")]
@@ -390,27 +406,50 @@ func (s *devServer) serve(dir string) {
 // url is the server's address on this machine.
 func (s *devServer) url() string { return fmt.Sprintf("http://127.0.0.1:%d", s.port) }
 
-// lanURLs are the server's addresses on the machine's networks.
+// lanURLs are the server's addresses on the machine's networks, the one the machine reaches other hosts through first: a phone is told the first, and a virtual network's (a VPN's, a container's) comes before the Wi-Fi's in the interfaces' order.
 func (s *devServer) lanURLs() []string {
-	var out []string
+	var ips []net.IP
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
 		if ip, ok := a.(*net.IPNet); ok && !ip.IP.IsLoopback() && ip.IP.To4() != nil && ip.IP.IsPrivate() {
-			out = append(out, fmt.Sprintf("http://%s:%d", ip.IP, s.port))
+			ips = append(ips, ip.IP)
 		}
+	}
+	if out := outboundIP(); out != nil {
+		if i := slices.IndexFunc(ips, out.Equal); i > 0 {
+			ips = append(append([]net.IP{ips[i]}, ips[:i]...), ips[i+1:]...)
+		}
+	}
+	out := make([]string, len(ips))
+	for i, ip := range ips {
+		out[i] = fmt.Sprintf("http://%s:%d", ip, s.port)
 	}
 	return out
 }
 
+// outboundIP is the address the machine sends from to other hosts, as its default route goes; a UDP socket connects without sending anything. Nil without a route.
+func outboundIP() net.IP {
+	c, err := net.Dial("udp4", "192.0.2.1:9")
+	if err != nil {
+		return nil
+	}
+	defer c.Close()
+	if a, ok := c.LocalAddr().(*net.UDPAddr); ok {
+		return a.IP
+	}
+	return nil
+}
+
 // send tells every client kind: "error" with a failed build's output,
-// "ok" once a build succeeds, "reload" for web pages to load it, and
-// "bundle" with a TSX entry whose new bundle /_nsgo/bundle serves.
+// "ok" once a build succeeds, "reload" for web pages to load it,
+// "bundle" with a TSX entry whose new bundle /_nsgo/bundle serves, and
+// "devtools" with a DevTools page's command for the app.
 func (s *devServer) send(kind, text string) {
 	msg := kind
 	switch kind {
 	case "error":
 		msg += " " + strconv.Quote(text)
-	case "bundle":
+	case "bundle", "devtools":
 		msg += " " + text
 	}
 	s.mu.Lock()

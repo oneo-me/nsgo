@@ -331,7 +331,7 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	if s.batches.Push(b) {
 		apple.OnMain(func() {
 			for _, b := range s.batches.Drain() {
-				s.apply(b)
+				driver.Apply(b, s.apply)
 			}
 			s.flush()
 		})

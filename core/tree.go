@@ -10,6 +10,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 	"github.com/nsgo-dev/nsgo/internal/layout"
 )
@@ -168,6 +169,11 @@ type Tree struct {
 	// whether its batch was these items (CommitShared).
 	lastItems  int
 	lastShared bool
+	// highlights, while an UpdateHighlights is mounted, outlines what each commit changed.
+	highlights *highlights
+	// record, while DevTools record a test, hears what the user does; devScrolls holds each scroll view's offset until the scroll is a step (devFlushScrolls).
+	record     func(devtools.Step)
+	devScrolls map[*node]Point
 }
 
 // report is a handler to run under owner after the commit.
@@ -665,6 +671,12 @@ func newTree(root *Scope, text driver.TextEngine) *Tree {
 	}
 	t.view = t.newNode(driver.KindView, nil, root)
 	t.view.style = Style{Direction: Column}
+	// An app that opens windows has a first tree of its own that shows no view (RootOptions.Windows): DevTools leave it out.
+	if root.rt.dev != nil && (root.rt.windows == nil || root.rt.tree != nil) {
+		s := &devSurface{t}
+		devtools.Register(s)
+		root.addCleanup(func() { devtools.Unregister(s) })
+	}
 	return t
 }
 
@@ -953,6 +965,9 @@ func (t *Tree) mount(cx *Scope, parent *node, el Node) {
 		el.mount(t, t.newRegion(parent, cx), cx)
 	default:
 		child := cx.Child()
+		if t.rt.dev != nil {
+			t.rt.dev.component(child, el)
+		}
 		t.within(child, func() { t.mount(child, parent, el.Render(child)) })
 	}
 }
@@ -2031,6 +2046,10 @@ func (t *Tree) Dispatch(ev driver.Event) {
 				break
 			}
 		}
+		if t.record != nil && h.press != nil {
+			t.devFlushScrolls()
+			t.devRecordPress(n)
+		}
 		press(h.press)
 	case driver.EventLongPress:
 		if n.props.Disabled {
@@ -2082,6 +2101,10 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		in := n.input
 		if in == nil {
 			return
+		}
+		if t.record != nil && ev.Text != in.value {
+			t.devFlushScrolls()
+			t.devRecordEdit(n, in.value, ev.Text)
 		}
 		in.shown, in.value, in.count = ev.Text, ev.Text, ev.Count
 		if h.change != nil {
@@ -2194,11 +2217,17 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		}
 	case driver.EventScrollDragStart, driver.EventScrollDragEnd, driver.EventMomentumStart, driver.EventMomentumEnd,
 		driver.EventScrollEnd, driver.EventRefresh:
+		if t.record != nil && ev.Kind == driver.EventScrollEnd {
+			t.devFlushScrolls()
+		}
 		if n.scroll != nil {
 			t.scrolled(n, ev)
 			t.dispatchScroll(n, ev)
 		}
 	case driver.EventScroll:
+		if t.record != nil && n.scroll != nil {
+			t.devRecordScroll(n, ev.Point)
+		}
 		if n.scroll != nil {
 			t.scrolled(n, ev)
 			if ev.Value > 0 {

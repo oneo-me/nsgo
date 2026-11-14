@@ -1684,7 +1684,7 @@ func surfaceApply(self objc.ID, _ objc.SEL, _ objc.ID) {
 		if s.perf != nil && !b.Sent.IsZero() {
 			s.perf.RecordLatency(time.Since(b.Sent))
 		}
-		s.apply(b)
+		driver.Apply(b, s.apply)
 	}
 	done()
 	if s.hud != nil {

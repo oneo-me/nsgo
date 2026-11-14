@@ -430,3 +430,24 @@ func TestWheelTurnsAddUp(t *testing.T) {
 		t.Fatalf("queued %+v", q)
 	}
 }
+
+// A traced commit's causes say how long the app's code ran before it, while traces record them.
+func TestTraceHearsTheAppsTimeBeforeACommit(t *testing.T) {
+	driver.TraceCauses = true
+	defer func() { driver.TraceCauses = false }()
+	p := &recorder{mounted: make(chan struct{}, 1)}
+	traced := make(chan *driver.Causes, 4)
+	Trace = func(b *driver.MountBatch, took time.Duration) { traced <- b.Causes }
+	defer func() { Trace = nil }()
+	e := Start(p, func(cx *core.Scope) core.Node {
+		// The app's code takes a moment before the first commit.
+		time.Sleep(5 * time.Millisecond)
+		return core.Text{Content: "hi"}
+	}, Options{})
+	defer e.Close()
+	c := <-traced
+	// Bounded above too: a wake-up's start left unset reads as a time past any real one.
+	if c == nil || c.App < 5*time.Millisecond || c.App > time.Second || c.Layout <= 0 {
+		t.Fatalf("causes = %+v, want the app's 5 ms and some layout", c)
+	}
+}

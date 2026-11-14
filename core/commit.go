@@ -70,8 +70,16 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	if driver.CheckCommits && !t.changed {
 		t.checkCommit()
 	}
+	var causes *driver.Causes
+	if driver.TraceCauses {
+		// What ran since the graph last committed is this commit's, sent or not, so a later commit does not claim it. Writes that changed no tree wait for the next tree that changes.
+		causes = t.rt.takeCauses()
+	}
 	if len(t.items) == 0 {
 		return nil
+	}
+	if t.highlights != nil {
+		t.noteChanges(t.items)
 	}
 	t.lastItems, t.lastShared = len(t.items), shared
 	items := t.items
@@ -79,9 +87,20 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 		items = append([]driver.MountItem(nil), t.items...)
 		t.shrinkItems(len(t.items))
 	}
-	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim}
+	b := &driver.MountBatch{Root: t.view.id, Items: items, LayoutAnimation: t.layoutAnim, Causes: causes}
 	t.layoutAnim = nil
 	return b
+}
+
+// timeLayout lays the tree out, adding the time to the commit's causes while traces record them.
+func (t *Tree) timeLayout() {
+	if !driver.TraceCauses {
+		t.layout()
+		return
+	}
+	began := time.Now()
+	t.layout()
+	t.rt.causes.layout += time.Since(began)
 }
 
 // timeTransitionEnds runs each restyled node's OnTransitionEnd once its
@@ -189,21 +208,21 @@ func (t *Tree) commitRound() {
 	}
 	t.stacks = live
 	t.resolve(t.view, textFields{}, false)
-	t.layout()
+	t.timeLayout()
 	// Lists fill their windows from the layout, which may need another.
 	for range 4 {
 		if !t.updateLists() {
 			break
 		}
 		t.resolve(t.view, textFields{}, false)
-		t.layout()
+		t.timeLayout()
 	}
 	// System headers cover what the stacks' places decide.
 	for range 2 {
 		if !t.sizeHeaders() {
 			break
 		}
-		t.layout()
+		t.timeLayout()
 	}
 	t.markHeaderScrolls()
 	t.markEdgeScrolls()

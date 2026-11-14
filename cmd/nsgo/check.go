@@ -37,6 +37,15 @@ func check(ctx context.Context, p *project, target string) error {
 		return err
 	}
 	s.done("vetted", "")
+	// The dev client builds only into nsgo dev's builds, which take the nsgodev tag, so NSGo's own repository vets it as they build it.
+	if path, err := importPathOf(p.Dir); err == nil && path == nsgoModule {
+		s = begin("vetting the dev client")
+		if err := goTool(ctx, p.Dir, []string{"GOFLAGS=-tags=nsgodev"}, "vet", "."); err != nil {
+			s.fail()
+			return err
+		}
+		s.done("vetted the dev client", "")
+	}
 	if target != "" {
 		names, err := expandTargets(strings.Split(target, ","))
 		if err != nil {

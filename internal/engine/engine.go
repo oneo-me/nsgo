@@ -408,6 +408,10 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		b := s.commit()
 		core := time.Since(coreStart)
 		if b != nil && trace != nil {
+			if b.Causes != nil && !start.IsZero() {
+				// The app's code ran from the wake-up to the commit.
+				b.Causes.App = max(coreStart.Sub(start), 0)
+			}
 			trace(b, core)
 		}
 		if perf == nil {
@@ -447,8 +451,9 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 			perf.RecordBusy(time.Since(start))
 		}
 	}
+	// start is when a wake-up began, for the app's time before its commit: measured while a monitor or a trace hears it.
 	var start time.Time
-	if perf != nil {
+	if perf != nil || trace != nil {
 		start = time.Now()
 	}
 	tree.Mount(app)
@@ -467,7 +472,7 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		if len(taken) == 0 {
 			continue
 		}
-		if perf != nil {
+		if perf != nil || trace != nil {
 			start = time.Now()
 		}
 		var resized []chan struct{}

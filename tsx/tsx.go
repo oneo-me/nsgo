@@ -12,11 +12,14 @@ package tsx
 import (
 	"fmt"
 	"log"
+	"slices"
+	"sync"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/tsx/internal/js"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 )
 
 // App returns the app of a bundle, for nsgo.Run and nsgotest.Start: it
@@ -161,7 +164,45 @@ func newRuntime(cx *core.Scope) *runtime {
 	r.installCanvas()
 	r.base = "asset:/"
 	r.installWeb()
+	if devtools.Enabled {
+		scripts.add(r)
+		cx.Cleanup(func() { scripts.remove(r) })
+	}
 	return r
+}
+
+// scripts are the runtimes DevTools ask which TSX line runs now (devtools.ScriptSite).
+var scripts devScripts
+
+type devScripts struct {
+	mu   sync.Mutex
+	runs []*runtime
+}
+
+func (d *devScripts) add(r *runtime) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.runs = append(d.runs, r)
+	devtools.ScriptSite = d.site
+}
+
+func (d *devScripts) remove(r *runtime) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.runs = slices.DeleteFunc(d.runs, func(x *runtime) bool { return x == r })
+}
+
+// site is the line the runtime running JS now is at; a runtime that runs none has no stack.
+func (d *devScripts) site() (string, int, bool) {
+	d.mu.Lock()
+	runs := slices.Clone(d.runs)
+	d.mu.Unlock()
+	for _, r := range runs {
+		if file, line, ok := js.Caller(r.vm); ok {
+			return file, line, true
+		}
+	}
+	return "", 0, false
 }
 
 // require returns a module's exports, made on first use.

@@ -76,6 +76,7 @@ nsgo
 ├── Protocol
 │   ├── internal/woff                    WOFF and WOFF2 fonts unpacked, for the bundler
 │   ├── internal/driver                  Mount items, events, TextEngine, shared values
+│   ├── internal/devtools                What DevTools read from core's trees, and send them
 │   └── internal/shaderir                Shader IR, written as MSL, GLSL or HLSL
 │
 └── Build time, outside the layers
