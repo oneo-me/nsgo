@@ -16,7 +16,11 @@ The video path takes a `core.Video` or an explicit video handle, and what starts
 
 The player must be configured for PiP before the view appears, and the app must declare the playback/background intent that the system requires. The backend reports whether PiP is supported (`isPictureInPictureSupported`), possible (`pictureInPicturePossible`, which changes as the player becomes ready), started, stopped or failed with the delegate's error; calling start while it is already active is idempotent, and a start while it is not possible reports a failure rather than waiting.
 
-The player remains the owner of timing, buffering, subtitles, controls and audio focus. PiP does not copy frames into Go. When the app's view is detached, the player and its audio session remain alive while the PiP controller owns them; closing the video or its scope ends PiP and releases the player. A notification press or app relaunch may restore the app's own model, but NSGo does not persist a video URL or playback position for it.
+The player remains the owner of timing, buffering, subtitles, controls and audio focus. PiP does not copy frames into Go. When the app's view is detached, the player and its audio session remain alive while the PiP controller owns them; closing the video or its scope ends PiP and releases the player.
+
+PiP starts on its own only where the app asks for it. An app setting maps to `canStartPictureInPictureAutomaticallyFromInline` (iOS 14.2, on both controllers), so a playing inline video enters PiP as the app goes to the background. A video with `Controls` also enters PiP by itself when the user leaves the app during full-screen playback while `allowsPictureInPicturePlayback` is set, so the backend sets that property from the app's choice rather than leaving AVKit's default.
+
+When the user returns to the app from the PiP window, AVKit calls `restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:` on the controller's delegate. The backend reports it as an event on the engine goroutine, so the app can show its player page again, and calls the completion handler with true once that event's handler and the commit it leads to are done; it never leaves the handler uncalled. NSGo does not persist a video URL or playback position for the restore.
 
 ## Custom content PiP
 
@@ -28,7 +32,7 @@ Custom content is therefore a product surface with its own size, color space, cl
 
 ## Lifecycle and ownership
 
-Entering PiP is an explicit user action or an app action permitted by the current iOS policy. The backend never starts PiP merely because a video is playing. PiP callbacks are delivered on the engine goroutine, while AVKit delegate methods are acknowledged promptly on their required queue.
+Entering PiP is an explicit user action, an app action permitted by the current iOS policy, or the automatic start the app chose above. The backend never starts PiP merely because a video is playing. PiP callbacks are delivered on the engine goroutine, while AVKit delegate methods are acknowledged promptly on their required queue.
 
 The PiP session owns the native resources after the originating view leaves the screen. A session has one owner scope and a stable ID; owner disposal ends it after the final stop callback. A backgrounded app can receive lifecycle callbacks, but it cannot assume the engine will run continuously. Custom content must keep enough state in the session adapter to answer AVKit while the engine is suspended, or declare that PiP ends when the app backgrounds.
 
@@ -46,7 +50,7 @@ The implementation is complete only when these checks exist:
 
 - headless core tests cover support checks, session ownership, idempotent start/stop, lifecycle callbacks and owner cleanup;
 - iOS tests use fake AVKit delegates for video and sample-buffer paths, including pause, resume, seek, stale-frame dropping and an app background transition;
-- simulator tests verify a video enters and exits PiP and that the originating view may disappear without leaking its player; and
+- simulator tests verify a video enters and exits PiP, enters it on its own as the app goes to the background when the app chose so, and delivers the restore event as the user returns, and that the originating view may disappear without leaking its player; and
 - a device test verifies custom content with a controlled frame source and confirms that no callback blocks an AVKit delegate queue.
 
 ## Open decisions
