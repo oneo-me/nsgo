@@ -234,10 +234,25 @@ type menuBuild struct {
 // Run opens a window showing app and runs GTK's main loop. Call it from
 // main; it returns when the window closes.
 func Run(app engine.App, opts Options) {
+	instance, alreadyRunning := claimInstance(opts.ID, engine.LaunchFiles())
+	if alreadyRunning {
+		return
+	}
+	defer instance.close()
 	updateConfig = opts.Updates
 	w, err := start(app, opts)
 	if err != nil {
 		panic("nsgo: " + err.Error())
+	}
+	if instance != nil {
+		instance.setDelivery(func(paths []string) {
+			w.post(func() {
+				w.engine.Dispatch(driver.Event{Kind: driver.EventReopen})
+				if len(paths) > 0 {
+					w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
+				}
+			})
+		})
 	}
 	if paths := engine.LaunchFiles(); len(paths) > 0 {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
