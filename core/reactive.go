@@ -38,8 +38,29 @@ type Scope struct {
 	comp     *computation // set when the scope is a computation's
 	// surf is the tree of the window the scope is in, inherited by what
 	// it owns; nil leaves it the graph's first.
-	surf     *Tree
+	surf *Tree
+	// park, set on a list cell's scope, holds back what runs under it while the cell is spare.
+	park     *parking
 	disposed bool
+}
+
+// parking holds back the computations under a list cell's scope while the cell is spare, as its index may name a row that is gone or another row's, and runs them when the cell shows a row again. guard, the list's computation that frees and binds its cells, is brought up to date before anything under the scope runs, so a row's binding never runs with an index its list has not settled.
+type parking struct {
+	guard    *computation
+	parked   bool
+	deferred []*computation
+}
+
+// unpark lets what p held back run, in the running batch or the next.
+func (rt *runtime) unpark(p *parking) {
+	p.parked = false
+	for _, c := range p.deferred {
+		if !c.disposed && c.state != clean {
+			rt.enqueue(c)
+		}
+	}
+	clear(p.deferred)
+	p.deferred = p.deferred[:0]
 }
 
 // RootOptions connect a graph to its host, an engine or a test driver.
@@ -645,14 +666,37 @@ func (rt *runtime) flush() {
 // runTop brings c's stale owners up to date first, outermost first, so a
 // branch about to be disposed does not run.
 func (c *computation) runTop() {
-	var chain []*computation
+	slow := false
+	for s := c.parent; s != nil && !slow; s = s.parent {
+		slow = s.comp != nil && s.comp.state != clean || s.park != nil && (s.park.parked || s.park.guard != nil && s.park.guard.state != clean)
+	}
+	if !slow {
+		c.update()
+		return
+	}
+	// Outermost first: stale owners run before what they own, and a list's guard before its cells. A computation in a cell the guard leaves spare waits with the cell.
+	var path []*Scope
 	for s := c.parent; s != nil; s = s.parent {
-		if s.comp != nil && s.comp.state != clean {
-			chain = append(chain, s.comp)
+		if s.comp != nil && s.comp.state != clean || s.park != nil {
+			path = append(path, s)
 		}
 	}
-	for i := len(chain) - 1; i >= 0; i-- {
-		chain[i].update()
+	for i := len(path) - 1; i >= 0; i-- {
+		s := path[i]
+		if p := s.park; p != nil {
+			if p.guard != nil && p.guard.state != clean {
+				p.guard.update()
+			}
+			if p.parked {
+				if !c.disposed && c.state != clean {
+					p.deferred = append(p.deferred, c)
+				}
+				return
+			}
+		}
+		if s.comp != nil && s.comp.state != clean {
+			s.comp.update()
+		}
 	}
 	c.update()
 }
