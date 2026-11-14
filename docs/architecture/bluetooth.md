@@ -40,9 +40,9 @@ Provider-specific limits stay in the backend: maximum write length, prepare-writ
 
 ## Permissions and lifecycle
 
-The API reports Bluetooth availability and authorization separately from a scan or connection error. A denied request does not open a system prompt implicitly; the app asks through an explicit permission method or the tool's declared capability, following the existing service rule that user prompts happen in response to user action.
+The API reports Bluetooth availability and authorization separately from a scan or connection error, and reading them never asks the user, as `NotificationPermission` reads the notification permission. As the other services do, the first scan or connection asks with the system's prompt when the permission is not determined yet, as `TakePhoto` asks for the camera and a speech session for the microphone, and an explicit request asks without scanning, as `RequestNotificationPermission` does. A denied permission fails the scan or connection with a permission error and asks no more.
 
-Apple packages that use the service declare `NSBluetoothAlwaysUsageDescription` in their Info.plist. Background central activity needs the `bluetooth-central` background mode and remains subject to Apple's restoration and scheduling rules. The backend may restore a connection, but it cannot promise a scan or notification at an exact time while the app is suspended.
+Apple packages that use the service declare `NSBluetoothAlwaysUsageDescription` in their Info.plist; without it a request fails, since the system would end the app as it asks. Background central activity needs the `bluetooth-central` background mode and remains subject to Apple's restoration and scheduling rules. The backend may restore a connection, but it cannot promise a scan or notification at an exact time while the app is suspended.
 
 Android 12 and later require `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` runtime permissions; advertising would additionally require `BLUETOOTH_ADVERTISE`. Earlier Android versions may require location permission for scans, subject to their platform setting. `neverForLocation` is a package policy choice, not something the core can add silently. Permission declarations belong in YAML and the generated manifest, while the user prompt belongs to the Android host.
 
