@@ -33,11 +33,11 @@ The final API must decide whether a one-shot request can use the last cached fix
 
 ## Motion
 
-Motion samples use SI units and a documented right-handed coordinate frame relative to the device. The core distinguishes raw accelerometer and gyroscope readings from a fused device-motion estimate. Every stream carries a provider timestamp, sampling interval and an accuracy or calibration state where the platform supplies one.
+Motion samples use SI units in the right-handed device frame Android and Core Motion share: x toward the screen's right, y toward its top and z out of its face, in the device's natural orientation. Accelerometer, gravity and user-acceleration vectors are in m/s² with Android's sign, so a device lying face up at rest reads +9.81 on z; rotation rates are in rad/s, positive by the right-hand rule, and magnetic fields in µT. A fused attitude rotates the device frame into an east-north-up world frame, as Android's rotation vector does. The core distinguishes raw accelerometer and gyroscope readings from a fused device-motion estimate. Every stream carries a provider timestamp, sampling interval and an accuracy or calibration state where the platform supplies one.
 
 The app requests a bounded sample interval and a set of sensors. The backend clamps an interval the platform cannot provide and reports the effective interval once. It may drop samples under back-pressure, but it must preserve the latest sample and report whether a stream is throttled; it must not silently allocate an unbounded queue.
 
-Apple maps `CMMotionManager` and `CMDeviceMotion` data without changing axes. Android maps `SensorManager` events and documents its sensor coordinate system and event timestamps. Device orientation is metadata, not a hidden transform. The API does not promise identical noise, calibration or rate across platforms.
+Apple keeps Core Motion's axes but not its unit or sign for acceleration: `CMAccelerometerData`, `CMDeviceMotion.gravity` and `userAcceleration` are in g and point the other way (a face-up device reads −1 on z), so the backend multiplies them by −9.80665. Rotation rates and magnetic fields map as they are. Core Motion's north-referenced attitude frames (`CMAttitudeReferenceFrameXMagneticNorthZVertical`, `XTrueNorthZVertical`) put x toward north, so the backend turns them a quarter turn about the vertical into east-north-up; an attitude from an arbitrary-x frame says its heading has no reference. Android maps `SensorManager` events as they are and documents its event timestamps. Device orientation is metadata, not a hidden transform. The API does not promise identical noise, calibration or rate across platforms.
 
 Most motion sensors need no user prompt, while activity recognition, body sensors and target-specific sensors may. The backend reports each required authorization separately. An app can stop a high-rate stream without changing location or notification permission.
 
@@ -53,7 +53,7 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover authorization, one-shot versus stream ownership, cancellation, sample ordering, missing fields, rate clamping and bounded back-pressure;
 - `internal/driver` tests cover coordinate encoding, timestamps, empty sensor sets and large batches;
-- Apple tests use fake location and motion managers for permission changes, reduced accuracy, unavailable sensors and stop-on-disposal;
+- Apple tests use fake location and motion managers for permission changes, reduced accuracy, unavailable sensors, a face-up device reading +9.81 m/s² on z and stop-on-disposal;
 - Android tests use fake location and sensor providers for coarse/fine permission, provider changes, sensor accuracy and API-level differences; and
 - target tests use recorded fixtures or simulator providers, never a user's live location, and verify no sample reaches a disposed scope.
 
@@ -63,6 +63,6 @@ These decisions need confirmation before an implementation chooses them:
 
 1. Can a one-shot location use a cached fix, and what maximum age is acceptable?
 2. Which location authorization modes and background guarantees are in the first release?
-3. Is the public motion API raw sensors only, or does it include fused device motion from the start?
+3. Is the public motion API raw sensors only, or does it include fused device motion, with its east-north-up attitude and gravity split, from the start?
 4. Does the capability model separate location from motion and foreground from background access?
 5. Are dropped high-rate samples reported as an explicit event, a counter, or only through effective-rate metadata?
