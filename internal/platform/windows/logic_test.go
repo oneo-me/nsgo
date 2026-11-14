@@ -1059,3 +1059,58 @@ func TestTextLayoutsHitTestTheirCharacters(t *testing.T) {
 		t.Fatalf("a range from b into the Hebrew covers %v, want two boxes", r)
 	}
 }
+
+// TestMonitorLayoutKeepsMixedScalesApart lays out a 100% primary monitor with a 200% one on its right and a 150% one on its left: their frames must not overlap, so a frame on any of them picks that one, and a window's frame read through its monitor must come back as the same pixels.
+func TestMonitorLayoutKeepsMixedScalesApart(t *testing.T) {
+	monitor := func(id uintptr, r rect, primary bool) foundMonitor {
+		m := foundMonitor{monitor: id, info: monitorInfoEx{Monitor: r, Work: r}}
+		if primary {
+			m.info.Flags = 1
+		}
+		m.info.Work.Bottom -= 40
+		return m
+	}
+	all := []foundMonitor{
+		monitor(1, rect{0, 0, 1920, 1080}, true),
+		monitor(2, rect{1920, 0, 1920 + 3840, 2160}, false),
+		monitor(3, rect{-2880, 0, 0, 1620}, false),
+	}
+	placements := layoutMonitors(all, []float64{1, 2, 1.5})
+	if len(placements) != len(all) {
+		t.Fatalf("%d placements; want %d", len(placements), len(all))
+	}
+	if f := placements[0].display.Frame; f.Origin != (driver.Point{}) || f.Size != (driver.Size{Width: 1920, Height: 1080}) {
+		t.Fatalf("primary frame %+v; want 0,0 1920x1080", f)
+	}
+	for i, a := range placements {
+		for _, b := range placements[i+1:] {
+			fa, fb := a.display.Frame, b.display.Frame
+			if fa.Origin.X < fb.Origin.X+fb.Size.Width && fb.Origin.X < fa.Origin.X+fa.Size.Width &&
+				fa.Origin.Y < fb.Origin.Y+fb.Size.Height && fb.Origin.Y < fa.Origin.Y+fa.Size.Height {
+				t.Fatalf("frames %+v and %+v overlap", fa, fb)
+			}
+		}
+	}
+	// Windows on each monitor, in pixels: one near the 200% monitor's left edge, whose center in per-monitor points fell inside the primary.
+	for _, c := range []struct {
+		on  int
+		win rect
+	}{
+		{1, rect{2000, 100, 3600, 1300}},
+		{0, rect{1500, 100, 1900, 400}},
+		{2, rect{-2800, 50, -1600, 950}},
+	} {
+		p := placements[c.on]
+		corner := p.point(c.win.Left, c.win.Top)
+		f := driver.WindowFrame{X: corner.X, Y: corner.Y, Move: true,
+			Width: driver.Points(float64(c.win.Right-c.win.Left) / p.scale), Height: driver.Points(float64(c.win.Bottom-c.win.Top) / p.scale)}
+		got, ok := choosePlacement(placements, f)
+		if !ok || got.monitor != p.monitor {
+			t.Fatalf("frame %+v of a window on monitor %d chose monitor %d", f, p.monitor, got.monitor)
+		}
+		x, y := got.pixel(f.X, f.Y)
+		if back := (rect{x, y, x + got.px(f.Width), y + got.px(f.Height)}); back != c.win {
+			t.Fatalf("window %+v came back as %+v", c.win, back)
+		}
+	}
+}
