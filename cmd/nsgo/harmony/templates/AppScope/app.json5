@@ -1,0 +1,10 @@
+{
+  "app": {
+    "bundleName": "{{bundle}}",
+    "vendor": "nsgo",
+    "versionCode": {{code}},
+    "versionName": "{{version}}",
+    "icon": "$media:app_icon",
+    "label": "$string:app_name"
+  }
+}

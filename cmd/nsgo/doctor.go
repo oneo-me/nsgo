@@ -32,8 +32,10 @@ type machine struct {
 	simulators   map[string]int // available simulators by OS, "iOS"
 	appleDevices map[string]int // paired devices by OS
 	adb          string
+	hdc          string // the HarmonyOS device tool, which installs HAPs
 	android      []androidDevice
 	ndk          string
+	harmonySDK   bool // hvigorw and OHOS_BASE_SDK_HOME are here
 	browser      string
 	linuxLibs    []string // what of GTK 4, Pango and Cairo is missing
 	makensis     string
@@ -156,6 +158,16 @@ func (m *machine) tools() []verdict {
 	} else {
 		out = append(out, elsewhere("no Android NDK: only android_x64 needs one (sdkmanager \"ndk;27.2.12479018\")"))
 	}
+	if m.harmonySDK {
+		out = append(out, yes().with("OpenHarmony SDK: harmonyos names the app's own bundle"))
+	} else {
+		out = append(out, elsewhere("no OpenHarmony SDK: harmonyos pads the bundle name (hvigorw and OHOS_BASE_SDK_HOME)"))
+	}
+	if m.hdc != "" {
+		out = append(out, yes().with("hdc "+dim(m.hdc)))
+	} else {
+		out = append(out, elsewhere("no hdc: running on HarmonyOS needs the OpenHarmony SDK's toolchains"))
+	}
 	if m.browser != "" {
 		out = append(out, yes().with("browser "+dim(m.browser)))
 	} else {
@@ -252,6 +264,9 @@ func (m *machine) run(target string) verdict {
 		}
 		return when(m.miniTools[mp.name], "needs "+mp.title+"'s developer tool: "+mp.download)
 	}
+	if target == "harmonyos" {
+		return when(m.hdc != "", "needs hdc to install the HAP")
+	}
 	return no("unknown target")
 }
 
@@ -277,6 +292,12 @@ func probe(ctx context.Context) *machine {
 	}
 	if path, err := exec.LookPath("makensis"); err == nil {
 		m.makensis = path
+	}
+	if _, err := exec.LookPath("hvigorw"); err == nil && os.Getenv("OHOS_BASE_SDK_HOME") != "" {
+		m.harmonySDK = true
+	}
+	if path, err := exec.LookPath("hdc"); err == nil {
+		m.hdc = path
 	}
 	if m.goos == "linux" {
 		m.linuxLibs = missingLinuxLibs()

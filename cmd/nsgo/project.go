@@ -15,6 +15,11 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+// widget is an app's home-screen card: what its 2x2 card says.
+type widget struct {
+	Title string `yaml:"title"`
+}
+
 // project is an app's nsgo.yaml and where it lives.
 type project struct {
 	Dir string `yaml:"-"`
@@ -58,6 +63,8 @@ type project struct {
 	Appearance string `yaml:"appearance"`
 	// Window is no longer nsgo.yaml's: Go code sizes windows.
 	Window any `yaml:"window"`
+	// Widget is the app's home-screen card on HarmonyOS: the title it shows.
+	Widget *widget `yaml:"widget"`
 	// Icon names the app's icons; resolveIcons fills in the defaults
 	// under assets.
 	Icon icons `yaml:"icon"`
@@ -217,6 +224,11 @@ type project struct {
 		// Jobs is how many targets build at once; 0, the default, is
 		// half the CPUs.
 		Jobs int `yaml:"jobs"`
+		// HarmonyosBundles says how the harmonyos target names the bundle:
+		// auto, the default, uses the app's id when the machine has the
+		// OpenHarmony SDK and pads it otherwise; exact needs the SDK;
+		// padded always pads.
+		HarmonyosBundles string `yaml:"harmonyos_bundles"`
 		// run starts the package built for this machine afterwards (-run),
 		// on device (-device), an iPhone signed for team (-team);
 		// embed packages the app for host apps of their own (-embed).

@@ -385,8 +385,10 @@ func targetFor(ctx context.Context, p *project, opts testOptions) (targetRunner,
 		return iosTestRunner(ctx, p, watchOS, dir, opts)
 	case "android":
 		return androidTestRunner(ctx, p, dir, opts)
+	case "harmonyos":
+		return harmonyTestRunner(ctx, p, dir, opts)
 	}
-	return targetRunner{}, fmt.Errorf("unknown test target %q; use macos, windows, linux, web, ios_simulator, tvos_simulator, watchos_simulator or android", opts.target)
+	return targetRunner{}, fmt.Errorf("unknown test target %q; use macos, windows, linux, web, ios_simulator, tvos_simulator, watchos_simulator, android or harmonyos", opts.target)
 }
 
 // runLocal runs bin on this machine.

@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -18,6 +19,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/nsgo-dev/nsgo/cmd/nsgo/harmony"
 	"github.com/nsgo-dev/nsgo/tsx/websrc"
 )
 
@@ -233,6 +235,7 @@ var targets = []string{
 	"tvos", "tvos_simulator",
 	"watchos", "watchos_simulator",
 	"android_arm64", "android_x64",
+	"harmonyos",
 	"web",
 	"miniprogram_wechat", "miniprogram_qq", "miniprogram_alipay", "miniprogram_douyin",
 }
@@ -273,11 +276,12 @@ func expandTargets(names []string) ([]string, error) {
 
 // goAndXcodeTargets are the packages a Mac with Go and Xcode can build.
 // android_x64 is omitted: Go links android/amd64 only with cgo, so it needs
-// an NDK; and the mini programs, which only some apps fit.
+// an NDK; harmonyos, whose packages are unsigned previews, and the mini
+// programs, which only some apps fit.
 func goAndXcodeTargets() []string {
 	var out []string
 	for _, target := range targets {
-		if target != "android_x64" && !strings.HasPrefix(target, "miniprogram_") {
+		if target != "android_x64" && target != "harmonyos" && !strings.HasPrefix(target, "miniprogram_") {
 			out = append(out, target)
 		}
 	}
@@ -371,6 +375,23 @@ func buildTarget(ctx context.Context, p *project, target, dir string) error {
 			return err
 		}
 		return p.releaseZip(dir, p.releaseName(target, ".zip"))
+	case "harmonyos":
+		// The engine runs in WebAssembly in ArkWeb under an ArkTS host,
+		// which draws what it mounts with ArkUI
+		// (docs/architecture/harmonyos.md).
+		site := filepath.Join(dir, "web")
+		if err := buildHarmony(ctx, p, site); err != nil {
+			return err
+		}
+		code := p.BuildNumber
+		if code == 0 {
+			code = 1
+		}
+		hap, err := buildHarmonyHAP(ctx, p, dir, site, code)
+		if err != nil {
+			return err
+		}
+		return p.releaseCopy(hap, p.releaseName(target, ".hap"))
 	case "linux_arm64", "linux_x64":
 		if err := buildLinux(ctx, p, dir, goArch(arch)); err != nil || !p.installers() {
 			return err
@@ -648,6 +669,142 @@ func buildLinux(ctx context.Context, p *project, dir, arch string) error {
 		return err
 	}
 	return writeLinuxIcon(p, dir)
+}
+
+// buildFPS is -fps: the site starts its app with --nsgo-fps, which a page
+// can only carry from the build.
+var buildFPS bool
+
+// harmonyFlags are the engine's flags -run passes to the HAP's ability as
+// Want parameters, so the same HAP can start with the monitor on or off.
+// The site still writes perf.json for a launch that carries no parameters.
+func harmonyFlags() []string {
+	if buildFPS {
+		return []string{"--nsgo-fps"}
+	}
+	return nil
+}
+
+// buildHarmony writes the site the HAP carries to dir: the engine compiled
+// for ArkWeb with the harmonyos backend, the Go runtime's wasm_exec.js, and
+// the page that starts them under the host's bridge.
+func buildHarmony(ctx context.Context, p *project, dir string) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	if err := goBuildWith(ctx, p, filepath.Join(dir, "app.wasm"),
+		[]string{"GOOS=js", "GOARCH=wasm"}, buildExtra{tags: []string{"nsgoharmony"}}); err != nil {
+		return err
+	}
+	goroot, err := output(ctx, "go", "env", "GOROOT")
+	if err != nil {
+		return err
+	}
+	js, err := os.ReadFile(filepath.Join(goroot, "lib", "wasm", "wasm_exec.js"))
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "wasm_exec.js"), js, 0o644); err != nil {
+		return err
+	}
+	// The site is reused between builds, so an earlier -fps build's flag
+	// would start the monitor in a later build that did not ask for it.
+	// A Want's parameters are the runtime way to ask (runHarmony); this
+	// file is only the fallback for a launch that carries none.
+	if err := os.Remove(filepath.Join(dir, "perf.json")); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if buildFPS {
+		if err := os.WriteFile(filepath.Join(dir, "perf.json"), []byte("{}"), 0o644); err != nil {
+			return err
+		}
+	}
+	// The card's page reads this from the HAP's rawfile directory: its data
+	// comes from the app, since a card has no Web view for the engine.
+	title := p.Name
+	if p.Widget != nil && p.Widget.Title != "" {
+		title = p.Widget.Title
+	}
+	widget, err := json.Marshal(map[string]string{"title": title})
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "widget.json"), widget, 0o644); err != nil {
+		return err
+	}
+	// The app's resources travel beside the page, so an "asset:" image
+	// reads its bytes from the HAP's rawfile directory: the page cannot
+	// open a file, and ArkUI's Image cannot name a path inside the HAP.
+	res := filepath.Join(dir, "resources")
+	if err := os.RemoveAll(res); err != nil {
+		return err
+	}
+	if err := copyMobileResources(p, res); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, "index.html"), harmony.Boot(), 0o644)
+}
+
+// buildHarmonyHAP assembles the HAP, naming the installed bundle from the
+// app's id when the machine can build a host for it (harmony.CompileHost)
+// and the configuration asks for it. Without the SDK it falls back to the
+// committed host's padded name, which harmony.Package swaps in the bytecode.
+// Exact mode fails when the SDK cannot build a host; auto keeps the app
+// building and says why.
+func buildHarmonyHAP(ctx context.Context, p *project, dir, site string, code int) (string, error) {
+	mode := p.Build.HarmonyosBundles
+	if mode == "" {
+		mode = "auto"
+	}
+	exact := func() (string, error) {
+		hostDir, err := harmony.CompileHost(ctx, p.ID)
+		if err != nil {
+			return "", err
+		}
+		return harmony.PackageWithHost(dir, site, hostDir, p.Name, p.ID, p.Version, code)
+	}
+	padded := func() (string, error) {
+		return harmony.Package(dir, site, p.Name, p.ID, p.Version, code)
+	}
+	report := func(name string) {
+		if name != "" {
+			stage(ctx, "harmonyos: bundle %s", name)
+		}
+	}
+	switch mode {
+	case "exact":
+		hap, err := exact()
+		if err != nil {
+			return "", fmt.Errorf("build.harmonyos_bundles is exact: %w", err)
+		}
+		report(p.ID)
+		return hap, nil
+	case "padded":
+		hap, err := padded()
+		if err != nil {
+			return "", err
+		}
+		name, _ := harmony.BundleName(p.ID)
+		report(name)
+		return hap, nil
+	case "auto":
+		hap, err := exact()
+		if err == nil {
+			report(p.ID)
+			return hap, nil
+		}
+		if !errors.Is(err, harmony.ErrNoSDK) {
+			stage(ctx, "harmonyos: %v; using a padded bundle name", err)
+		}
+		hap, err = padded()
+		if err != nil {
+			return "", err
+		}
+		name, _ := harmony.BundleName(p.ID)
+		report(name)
+		return hap, nil
+	}
+	return "", fmt.Errorf("harmonyos: unknown build.harmonyos_bundles %q: use auto, exact or padded", mode)
 }
 
 // buildWeb writes the site to dir: index.html, nsgo.json, nsgo.js (the

@@ -34,8 +34,8 @@ func TestExpandTargetsDropsDuplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := len(targets) - len(miniProgramPlatforms); len(got) != want {
-		t.Fatalf("expandTargets = %v, want %d targets: all but the mini programs", got, want)
+	if want := len(goAndXcodeTargets()) + 1; len(got) != want {
+		t.Fatalf("expandTargets = %v, want %d targets: all, web and android_x64", got, want)
 	}
 	if got[0] != "macos_arm64" || got[len(got)-1] != "android_x64" {
 		t.Errorf("order: got %v, want macos_arm64 first and android_x64 last", got)

@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>nsgo</title>
+<script src="wasm_exec.js"></script>
+<script>
+// The engine's module, started in the host's Web view: the ArkTS side
+// provides nsgoHarmony, and draws what the module mounts. A test build
+// carries test.json: its arguments go to the test binary, whose output
+// reaches hilog through this page's console. A Want's nsgo- parameters
+// are the app's flags; perf.json is the fallback for a build with -fps.
+(async function () {
+  try {
+    const resp = await fetch('app.wasm');
+    const buf = await resp.arrayBuffer();
+    const test = await fetch('test.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    const perf = await fetch('perf.json').then(r => r.ok).catch(() => false);
+    let launch = { args: [], url: '' };
+    try {
+      launch = JSON.parse(nsgoHarmony.launch());
+    } catch (e) {
+      console.log('nsgo: no launch parameters: ' + e);
+    }
+    const go = new Go();
+    if (test) {
+      go.argv = ['test'].concat(test.args || []);
+      go.env = test.env || {};
+    } else if (launch.args && launch.args.length > 0) {
+      go.argv = ['app'].concat(launch.args);
+    } else if (perf) {
+      go.argv = ['app', '--nsgo-fps'];
+    }
+    const res = await WebAssembly.instantiate(buf, go.importObject);
+    go.run(res.instance);
+  } catch (e) {
+    console.log('nsgo: ' + e);
+  }
+})();
+</script>
