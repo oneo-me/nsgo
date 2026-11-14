@@ -67,7 +67,7 @@ The implementation is complete only when these checks exist:
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These decisions need confirmation before an implementation chooses them, and [Open questions](../../ARCHITECTURE.md#open-questions) lists them:
 
 1. Should `Items` run synchronously on every query change, or should the stable API be an app-owned async resource?
 2. Should an empty result keep the overlay open for an app-provided empty state, or close it?
