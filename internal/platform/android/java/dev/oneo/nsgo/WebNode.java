@@ -15,10 +15,26 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.CookieManager;
+import android.webkit.URLUtil;
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A web view node's android.webkit.WebView, filling the node's view, as
@@ -36,6 +52,8 @@ final class WebNode {
     /** Receives a web view's events; navigation is null for messages and has only the URL for errors. UI thread. */
     interface Reporter {
         void report(int kind, String text, Navigation navigation);
+
+        void download(String data);
     }
 
     /** A page and its history, as core.WebNavigation. */
@@ -59,6 +77,14 @@ final class WebNode {
     private String src = "", html = "", baseURL = "";
     private String injected = "", injectedBefore = "", userAgent = "";
     private boolean noScroll;
+    private String downloadDir = "";
+    private volatile boolean destroyed;
+    private static final AtomicLong DOWNLOAD_SERIAL = new AtomicLong();
+    private static final ExecutorService DOWNLOADS = Executors.newFixedThreadPool(3, r -> {
+        Thread t = new Thread(r, "nsgo-web-downloads");
+        t.setDaemon(true);
+        return t;
+    });
     /** Whether top-level navigations go only to hosts, space-separated patterns (WebConfig.Navigable). */
     private boolean restricted;
     private String[] hosts = new String[0];
@@ -73,6 +99,7 @@ final class WebNode {
         view.getSettings().setDomStorageEnabled(true);
         view.addJavascriptInterface(new Bridge(), INTERFACE);
         view.setWebViewClient(new Client());
+        view.setDownloadListener(this::download);
         view.setOnTouchListener((v, e) -> {
             if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
                 // The page scrolls itself: keep enclosing scroll views out.
@@ -165,6 +192,92 @@ final class WebNode {
         }
     }
 
+    /** Starts a page download into the app-owned directory. */
+    private void download(String url, String userAgent, String contentDisposition, String mimetype,
+            long contentLength) {
+        if (downloadDir.isEmpty() || destroyed) return;
+        String name = downloadName(url, contentDisposition, mimetype);
+        String id = Long.toString(System.currentTimeMillis(), 36) + "-"
+                + Long.toString(DOWNLOAD_SERIAL.incrementAndGet(), 36);
+        File directory = new File(downloadDir, id);
+        if ((!directory.exists() && !directory.mkdirs()) || !directory.isDirectory()) {
+            reportDownload(id, url, name, new File(directory, name).getPath(), 2, 0,
+                    "Cannot create the download directory.");
+            return;
+        }
+        File path = new File(directory, name);
+        reportDownload(id, url, name, path.getPath(), 0, 0, "");
+        String cookies = CookieManager.getInstance().getCookie(url);
+        DOWNLOADS.execute(() -> fetchDownload(id, url, userAgent, cookies, path));
+    }
+
+    private static String downloadName(String url, String contentDisposition, String mimetype) {
+        String name = URLUtil.guessFileName(url, contentDisposition, mimetype);
+        name = new File(name == null ? "" : name).getName();
+        if (name.isEmpty() || ".".equals(name) || "..".equals(name)) return "download";
+        return name;
+    }
+
+    private void fetchDownload(String id, String url, String userAgent, String cookies, File path) {
+        File partial = new File(path.getParentFile(), "." + path.getName() + ".part");
+        URLConnection connection = null;
+        long bytes = 0;
+        try {
+            connection = new URL(url).openConnection();
+            connection.setUseCaches(false);
+            if (userAgent != null && !userAgent.isEmpty()) connection.setRequestProperty("User-Agent", userAgent);
+            if (cookies != null && !cookies.isEmpty()) connection.setRequestProperty("Cookie", cookies);
+            if (connection instanceof HttpURLConnection) {
+                HttpURLConnection http = (HttpURLConnection) connection;
+                int status = http.getResponseCode();
+                if (status < 200 || status >= 300) throw new IOException("HTTP " + status);
+            }
+            try (InputStream input = new BufferedInputStream(connection.getInputStream());
+                    OutputStream output = new BufferedOutputStream(new FileOutputStream(partial))) {
+                byte[] buffer = new byte[64 << 10];
+                for (int n; (n = input.read(buffer)) >= 0; ) {
+                    if (n == 0) continue;
+                    output.write(buffer, 0, n);
+                    bytes += n;
+                }
+            }
+            if (destroyed) {
+                partial.delete();
+                return;
+            }
+            if (!partial.renameTo(path)) throw new IOException("Cannot finish the download.");
+            reportDownload(id, url, path.getName(), path.getPath(), 1, bytes, "");
+        } catch (IOException | RuntimeException e) {
+            if (!destroyed) {
+                partial.delete();
+                reportDownload(id, url, path.getName(), path.getPath(), 2, bytes, String.valueOf(e.getMessage()));
+            } else {
+                partial.delete();
+            }
+        } finally {
+            if (connection instanceof HttpURLConnection) ((HttpURLConnection) connection).disconnect();
+        }
+    }
+
+    private void reportDownload(String id, String url, String name, String path, int state, long bytes, String message) {
+        if (destroyed) return;
+        try {
+            JSONObject data = new JSONObject();
+            data.put("state", state);
+            data.put("id", id);
+            data.put("url", url);
+            data.put("filename", name);
+            data.put("path", path);
+            data.put("bytes", bytes);
+            data.put("message", message);
+            ui.post(() -> {
+                if (!destroyed) reporter.download(data.toString());
+            });
+        } catch (JSONException impossible) {
+            throw new AssertionError(impossible);
+        }
+    }
+
     /** Reports the page's state as kind and as a navigation state change. */
     private void state(int kind, String url, boolean loading) {
         Navigation nav = new Navigation(url != null ? url : "", Objects.toString(view.getTitle(), ""),
@@ -183,6 +296,7 @@ final class WebNode {
         restricted = Protocol.flag(flags, 2);
         String hosts = Protocol.readString(in).trim();
         this.hosts = hosts.isEmpty() ? new String[0] : hosts.split(" +");
+        this.downloadDir = Protocol.readString(in);
 
         boolean reload = !configured || !src.equals(this.src) || !html.equals(this.html)
                 || !baseURL.equals(this.baseURL) || !injected.equals(this.injected)
@@ -236,6 +350,7 @@ final class WebNode {
 
     /** Stops the page and frees the WebView. */
     void destroy() {
+        destroyed = true;
         view.stopLoading();
         // A WebView is destroyed out of the view hierarchy.
         if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);

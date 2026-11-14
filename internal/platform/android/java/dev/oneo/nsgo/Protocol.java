@@ -216,6 +216,7 @@ final class Protocol {
     static final int EVENT_COMPOSITION_CHANGE = 45;
     static final int EVENT_ACCESSIBILITY_ACTION = 46;
     static final int EVENT_HOVER_MOVE = 49;
+    static final int EVENT_DOWNLOAD = 50;
     static final int EVENT_TOUCH = 51;
     static final int EVENT_CARET_MOVE = 52;
     static final int EVENT_PASTE = 53;

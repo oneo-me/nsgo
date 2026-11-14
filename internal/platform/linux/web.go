@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/ebitengine/purego"
 
@@ -374,7 +375,7 @@ func webDownloadStartedCallback(session, download, _ uintptr) {
 		return
 	}
 	webDownloadSerial++
-	id := strconv.FormatUint(webDownloadSerial, 36)
+	id := strconv.FormatInt(time.Now().UnixMilli(), 36) + "-" + strconv.FormatUint(webDownloadSerial, 36)
 	urlText := ""
 	if request := webkitDownloadGetRequest(download); request != 0 {
 		urlText = goString(webkitURIRequestGetURI(request))

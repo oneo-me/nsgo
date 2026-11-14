@@ -52,6 +52,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
@@ -286,7 +287,8 @@ func (wv *webView) downloadStarted(args *comObject) {
 	if defaultPath := args.getString(downloadArgsGetResultPath); defaultPath != "" {
 		name = webDownloadFilename(defaultPath)
 	}
-	id := strconv.FormatUint(webDownloadSerial.Add(1), 36)
+	id := strconv.FormatInt(time.Now().UnixMilli(), 36) + "-" +
+		strconv.FormatUint(webDownloadSerial.Add(1), 36)
 	dir := filepath.Join(wv.config.DownloadDir, id)
 	path := filepath.Join(dir, name)
 	if err := os.MkdirAll(dir, 0o755); err != nil {

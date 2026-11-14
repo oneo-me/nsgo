@@ -3261,8 +3261,16 @@ public class NsgoView extends FrameLayout {
                 break;
             case Protocol.KIND_WEB:
                 // The WebView fills the node's view, which draws its style.
-                n.web = new WebNode(context, (k, text, nav) -> {
-                    if (n.has(k)) event(k, n.id, 0, 0, 0, text, 0, 0, 0, 0, 0, 0, 0, nav);
+                n.web = new WebNode(context, new WebNode.Reporter() {
+                    @Override public void report(int k, String text, WebNode.Navigation nav) {
+                        if (n.has(k)) event(k, n.id, 0, 0, 0, text, 0, 0, 0, 0, 0, 0, 0, nav);
+                    }
+
+                    @Override public void download(String data) {
+                        if (n.has(Protocol.EVENT_DOWNLOAD))
+                            event(Protocol.EVENT_DOWNLOAD, n.id, 0, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null,
+                                    0, 0, false, data, false);
+                    }
                 });
                 n.web.appearance(dark(), appearance != 0 || hostAppearance != 0);
                 n.children = (ViewGroup) view;

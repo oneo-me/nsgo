@@ -27,6 +27,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -303,6 +304,11 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 					ev.Data = readFiles(data)
 				}
 				s.unstage(ev.Count)
+			case driver.EventDownload:
+				var download driver.WebDownload
+				if json.Unmarshal([]byte(data), &download) == nil {
+					ev.Data = &download
+				}
 			}
 			if ev.Kind == driver.EventWheel {
 				// A wheel's delta comes as the velocity, and whether a
@@ -1329,6 +1335,7 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.str(c.UserAgent)
 			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted) // Android has no back and forward swipes
 			w.str(c.Hosts)
+			w.str(c.DownloadDir)
 		case driver.ItemVideo:
 			c := it.Video
 			w.str(c.Source)
