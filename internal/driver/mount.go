@@ -323,6 +323,28 @@ const (
 	ItemCloseNotification
 	// ItemBadge shows Count on the app's icon; 0 clears it.
 	ItemBadge
+	// ItemBiometricAvailability asks whether an enrolled biometric can be
+	// used; the platform answers with EventBiometric and its kind in Index.
+	ItemBiometricAvailability
+	// ItemBiometricAuthenticate asks the user to authenticate with the
+	// reason in Value; the platform answers with EventBiometric and its
+	// result in Index.
+	ItemBiometricAuthenticate
+)
+
+// Biometric kinds, as reported by an availability request.
+const (
+	BiometricNone = iota
+	BiometricFace
+	BiometricFingerprint
+)
+
+// Biometric results, as reported by an authentication request.
+const (
+	BiometricSuccess = iota + 1
+	BiometricFailure
+	BiometricCancelled
+	BiometricUnavailable
 )
 
 // Notification is a system notification (ItemShowNotification), as

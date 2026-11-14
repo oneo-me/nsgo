@@ -22,6 +22,8 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.BiometricManager;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
@@ -2143,6 +2145,16 @@ public class NsgoView extends FrameLayout {
             case Protocol.ITEM_BADGE:
                 Notifications.badge = in.readInt();
                 break;
+            case Protocol.ITEM_BIOMETRIC_AVAILABILITY: {
+                long count = in.readInt() & 0xffffffffL;
+                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, biometricAvailability());
+                break;
+            }
+            case Protocol.ITEM_BIOMETRIC_AUTHENTICATE: {
+                long count = in.readInt() & 0xffffffffL;
+                authenticateBiometric(count, Protocol.readString(in));
+                break;
+            }
             case Protocol.ITEM_PICK_IMAGES: {
                 Services.Pick p = new Services.Pick(in.readInt() & 0xffffffffL, in.readInt(), in.readInt(), in.readFloat(),
                         Protocol.flag(in.readUnsignedByte(), 0));
@@ -2879,6 +2891,61 @@ public class NsgoView extends FrameLayout {
             default: return;
         }
         performHapticFeedback(feedback);
+    }
+
+    /** Returns the enrolled biometric kind, without showing a prompt. */
+    private int biometricAvailability() {
+        if (Build.VERSION.SDK_INT < 28
+                || getContext().checkSelfPermission("android.permission.USE_BIOMETRIC") != PackageManager.PERMISSION_GRANTED) {
+            return Protocol.BIOMETRIC_NONE;
+        }
+        PackageManager pm = getContext().getPackageManager();
+        if (Build.VERSION.SDK_INT >= 29) {
+            BiometricManager manager = (BiometricManager) getContext().getSystemService(Context.BIOMETRIC_SERVICE);
+            if (manager == null) return Protocol.BIOMETRIC_NONE;
+            int state = Build.VERSION.SDK_INT >= 30
+                    ? manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                    : manager.canAuthenticate();
+            if (state != BiometricManager.BIOMETRIC_SUCCESS) return Protocol.BIOMETRIC_NONE;
+            if (Build.VERSION.SDK_INT >= 29 && pm.hasSystemFeature(PackageManager.FEATURE_FACE)) return Protocol.BIOMETRIC_FACE;
+            if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) return Protocol.BIOMETRIC_FINGERPRINT;
+            return Protocol.BIOMETRIC_NONE;
+        }
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) return Protocol.BIOMETRIC_NONE;
+        android.hardware.fingerprint.FingerprintManager manager =
+                (android.hardware.fingerprint.FingerprintManager) getContext().getSystemService(Context.FINGERPRINT_SERVICE);
+        return manager != null && manager.isHardwareDetected() && manager.hasEnrolledFingerprints()
+                ? Protocol.BIOMETRIC_FINGERPRINT : Protocol.BIOMETRIC_NONE;
+    }
+
+    /** Shows Android's biometric prompt and reports its terminal result. */
+    private void authenticateBiometric(long count, String reason) {
+        Activity activity = activity();
+        if (activity == null || biometricAvailability() == Protocol.BIOMETRIC_NONE) {
+            event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, Protocol.BIOMETRIC_UNAVAILABLE);
+            return;
+        }
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        BiometricPrompt prompt = new BiometricPrompt(activity, executor, new BiometricPrompt.AuthenticationCallback() {
+            @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                executor.shutdown();
+                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, Protocol.BIOMETRIC_SUCCESS);
+            }
+            @Override public void onAuthenticationError(int errorCode, CharSequence message) {
+                executor.shutdown();
+                int result = errorCode == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED
+                        || errorCode == BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON
+                        || errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED
+                        ? Protocol.BIOMETRIC_CANCELLED : Protocol.BIOMETRIC_FAILURE;
+                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, result);
+            }
+        });
+        BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle(getContext().getApplicationInfo().loadLabel(getContext().getPackageManager()))
+                .setDescription(reason)
+                .setNegativeButtonText("Cancel")
+                .build();
+        prompt.authenticate(info);
     }
 
     /** The notification permission requests waiting for the system's prompt. */

@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, biometrics, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -125,6 +125,18 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 - macOS and iOS (`apple/speech.go`) feed the Speech framework's recognizer from `AVAudioEngine`'s input, asking for speech recognition and the microphone once each. The app's Info.plist declares `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` (`nsgo.yaml`'s `apple.info`): without them a session ends `not-allowed`, since the system would end the app as it asks. iOS holds the audio session in the record category while it listens.
 - `Env.CanRecognizeSpeech` says the platform recognizes speech; elsewhere a session ends `unavailable` without asking it ([roadmap](../roadmap.md#finish-the-existing-platforms)).
+
+## Biometrics
+
+`BiometricAvailability` answers with the enrolled kind (`BiometricFace`, `BiometricFingerprint` or `BiometricNone`) without prompting. `AuthenticateBiometric` shows the system's biometric prompt with the app's reason and answers `BiometricSuccess`, `BiometricFailure`, `BiometricCancelled` or `BiometricUnavailable`; it never falls back to a device passcode. Code whose `Access` does not grant `AccessBiometrics` gets unavailable.
+
+| Target | Availability and authentication | App configuration |
+| --- | --- | --- |
+| macOS, iOS | `LAContext` from `LocalAuthentication` (`apple/biometric.go`) | Face ID needs `NSFaceIDUsageDescription` in `nsgo.yaml`'s `apple.info` |
+| Android | `BiometricManager`/`BiometricPrompt` from API 28 | The app lists `USE_BIOMETRIC` in `android.permissions` |
+| Other targets | Unavailable | None |
+
+`nsgotest` exposes `BiometricAvailability`, `BiometricAnswer` and `AuthenticationReasons` so tests can fake enrollment and prompt results.
 
 ## Notifications and the badge
 

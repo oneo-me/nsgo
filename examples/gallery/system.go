@@ -918,7 +918,7 @@ func filesCard(cx *core.Scope) core.Node {
 // window, the clipboard, links, photos, the appearance, dictation, the
 // lifecycle, notifications, the badge, haptics and files.
 func systemDemo(cx *core.Scope) core.Node {
-	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, speechCard, notificationsCard, filesCard)
+	return demoPage(cx, pageProps{}, environmentCard, statusBarCard, dialogsCard, framesAndTimers, shortcuts, networkCard, windowCard, clipboardCard, servicesCard, speechCard, notificationsCard, biometricsCard, filesCard)
 }
 
 // yesNo says whether in tr's language.
@@ -988,4 +988,45 @@ func notificationsCard(cx *core.Scope) core.Node {
 				}}
 			}),
 		}}
+}
+
+// biometricsCard is the system's enrolled biometric and authentication prompt.
+func biometricsCard(cx *core.Scope) core.Node {
+	tr := locales.For(cx)
+	colors := ui.ColorsOf(cx)
+	kind := core.NewSignal(cx, tr.SystemNone())
+	result := core.NewSignal(cx, tr.SystemNoneYet())
+	availability := func() {
+		cx.BiometricAvailability(func(k core.BiometricKind) {
+			switch k {
+			case core.BiometricFace:
+				kind.Set(tr.SystemFaceId())
+			case core.BiometricFingerprint:
+				kind.Set(tr.SystemFingerprint())
+			default:
+				kind.Set(tr.SystemNone())
+			}
+		})
+	}
+	return Card{Title: tr.SystemConfirm(), Description: tr.SystemCancelAndDestructiveButtons(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+		Caption{Label: tr.SystemBiometric(), Note: kind.Get},
+		ui.Wrap{Children: []core.Node{
+			ui.Button{Text: tr.SystemPreview(), Size: ui.SizeSmall, TestID: "biometric-availability", OnPress: availability},
+			ui.Button{Text: tr.SystemAuthenticate(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, TestID: "biometric-authenticate", OnPress: func() {
+				cx.AuthenticateBiometric(tr.SystemConfirm(), func(r core.BiometricResult) {
+					switch r {
+					case core.BiometricSuccess:
+						result.Set(tr.SystemSuccess())
+					case core.BiometricCancelled:
+						result.Set(tr.SystemCancel())
+					case core.BiometricFailure:
+						result.Set(tr.SystemDelete())
+					default:
+						result.Set(tr.SystemNone())
+					}
+				})
+			}},
+		}},
+		core.Text{ContentFunc: result.Get, TestID: "biometric-result", Style: core.Style{FontSize: 13}, StyleFunc: ui.Colored(colors.Muted)},
+	}}
 }

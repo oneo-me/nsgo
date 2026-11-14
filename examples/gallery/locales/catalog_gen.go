@@ -559,6 +559,10 @@ const (
 	textSystemYourChangesWereSaved
 	textSystemOk
 	textSystemConfirm
+	textSystemBiometric
+	textSystemAuthenticate
+	textSystemFaceId
+	textSystemFingerprint
 	textSystemCancelAndDestructiveButtons
 	textSystemDeleteThePhoto
 	textSystemThisCannotBeUndone
@@ -2627,6 +2631,10 @@ var keyOfText = [numTexts]string{
 	"systemYourChangesWereSaved",
 	"systemOk",
 	"systemConfirm",
+	"systemBiometric",
+	"systemAuthenticate",
+	"systemFaceId",
+	"systemFingerprint",
 	"systemCancelAndDestructiveButtons",
 	"systemDeleteThePhoto",
 	"systemThisCannotBeUndone",
@@ -4693,6 +4701,10 @@ var textsEn = i18n.NewTexts(""+
 	"Your changes were saved."+
 	"OK"+
 	"Confirm"+
+	"Biometric"+
+	"Authenticate"+
+	"Face ID"+
+	"Fingerprint"+
 	"Cancel and destructive buttons"+
 	"Delete the photo?"+
 	"This cannot be undone."+
@@ -6756,6 +6768,10 @@ var textsEn = i18n.NewTexts(""+
 		24,
 		2,
 		7,
+		9,
+		12,
+		7,
+		11,
 		30,
 		17,
 		22,
@@ -8822,6 +8838,10 @@ var textsZhHans = i18n.NewTexts(""+
 	"你的更改已保存。"+
 	"好"+
 	"确认"+
+	"生物识别"+
+	"验证身份"+
+	"面容 ID"+
+	"指纹"+
 	"取消和破坏性按钮"+
 	"删除这张照片？"+
 	"此操作无法撤销。"+
@@ -10884,6 +10904,10 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		24,
 		3,
+		6,
+		12,
+		12,
+		9,
 		6,
 		24,
 		21,
@@ -15036,6 +15060,34 @@ func SystemConfirm(cx *core.Scope) string { return For(cx).SystemConfirm() }
 
 // SystemConfirm is the package's SystemConfirm in the language of msgs.
 func (msgs Messages) SystemConfirm() string { return msgs.text(textSystemConfirm) }
+
+// SystemBiometric says "Biometric"
+// in the language the app shows under cx.
+func SystemBiometric(cx *core.Scope) string { return For(cx).SystemBiometric() }
+
+// SystemBiometric is the package's SystemBiometric in the language of msgs.
+func (msgs Messages) SystemBiometric() string { return msgs.text(textSystemBiometric) }
+
+// SystemAuthenticate says "Authenticate"
+// in the language the app shows under cx.
+func SystemAuthenticate(cx *core.Scope) string { return For(cx).SystemAuthenticate() }
+
+// SystemAuthenticate is the package's SystemAuthenticate in the language of msgs.
+func (msgs Messages) SystemAuthenticate() string { return msgs.text(textSystemAuthenticate) }
+
+// SystemFaceId says "Face ID"
+// in the language the app shows under cx.
+func SystemFaceId(cx *core.Scope) string { return For(cx).SystemFaceId() }
+
+// SystemFaceId is the package's SystemFaceId in the language of msgs.
+func (msgs Messages) SystemFaceId() string { return msgs.text(textSystemFaceId) }
+
+// SystemFingerprint says "Fingerprint"
+// in the language the app shows under cx.
+func SystemFingerprint(cx *core.Scope) string { return For(cx).SystemFingerprint() }
+
+// SystemFingerprint is the package's SystemFingerprint in the language of msgs.
+func (msgs Messages) SystemFingerprint() string { return msgs.text(textSystemFingerprint) }
 
 // SystemCancelAndDestructiveButtons says "Cancel and destructive buttons"
 // in the language the app shows under cx.
