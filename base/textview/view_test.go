@@ -64,6 +64,32 @@ func TestTextViewBuildsBlocks(t *testing.T) {
 	}
 }
 
+func TestTextViewSearchHighlightsAndSteps(t *testing.T) {
+	var search *textview.Search
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		search = textview.NewSearch(cx)
+		search.SetQuery("readme")
+		return textview.TextView{Markdown: "README one\n\nREADME two\n\nother", Search: search,
+			Styles: textview.Styles{textview.PartSearch: {Background: core.RGB(0xffee88)}, textview.PartSearchSelected: {Background: core.RGB(0xffaa00)}}}
+	})
+	if search.Count() != 2 || search.Selected() != 1 {
+		t.Fatalf("search = %d, %d; want 2, 1", search.Count(), search.Selected())
+	}
+	if got := len(app.Query("text:README")); got != 2 {
+		t.Fatalf("README views = %d, want 2", got)
+	}
+	search.Next()
+	app.Settle()
+	if search.Selected() != 2 {
+		t.Fatalf("selected = %d, want 2", search.Selected())
+	}
+	search.Close()
+	app.Settle()
+	if search.Open() || search.Count() != 0 {
+		t.Fatalf("closed search = open %v count %d", search.Open(), search.Count())
+	}
+}
+
 func TestTextViewStreamsWithACaret(t *testing.T) {
 	var md *core.Signal[string]
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {

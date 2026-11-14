@@ -52,6 +52,10 @@ type TextView struct {
 	Selectable bool
 	// Highlighter colors code blocks; without one their code is plain.
 	Highlighter Highlighter
+	// Search highlights matches from a shared text-level search. SearchKey
+	// identifies this view among the views registered with Search.
+	Search    *Search
+	SearchKey string
 
 	// OnLinkPress receives a pressed link's URL: a heading's anchor is
 	// "#<anchor>", a footnote reference "#footnote-<label>". Nothing opens
@@ -161,6 +165,9 @@ func (tv TextView) Render(cx *core.Scope) core.Node {
 		tv.HTMLFunc = core.NewMemo(cx, tv.HTMLFunc).Get
 	}
 	doc := core.NewMemoFunc(cx, tv.document, nil)
+	if tv.Search != nil {
+		r.searchMatches = tv.Search.register(tv.SearchKey, doc.Get().Find(tv.Search.Query(), FindOptions{}))
+	}
 	rows := func() []row {
 		blocks := doc.Get().Blocks
 		out := make([]row, len(blocks))
@@ -184,6 +191,7 @@ func (tv TextView) Render(cx *core.Scope) core.Node {
 					// once is made again when another follows it.
 					last := core.NewMemo(cx, func() bool { return tv.StreamingCaret != nil && index() == count.Get()-1 })
 					return core.Dynamic(func(cx *core.Scope) core.Node {
+						r.searchBlock = index()
 						return r.blockAt(cx, block.Get(), index() == 0, 0, last.Get())
 					})
 				}),
@@ -249,7 +257,9 @@ type renderer struct {
 	tv      TextView
 	plugins []Plugin
 	// cx opens the links that leave the document.
-	cx *core.Scope
+	cx            *core.Scope
+	searchMatches []Match
+	searchBlock   int
 }
 
 // style merges the parts' styles: StyleOf's for each, then Styles'.
@@ -332,7 +342,8 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 			}
 			return after(core.Group(nodes))
 		}
-		return r.selectable(core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartParagraph), StyleFunc: func() core.Style { return r.style(PartParagraph) }})
+		spans := r.searchDecorate(r.spans(nil, b.Content, noStyle, "", nil), r.searchBlock)
+		return r.selectable(core.Text{Spans: r.caretSpans(spans, caret), Class: r.class(PartParagraph), StyleFunc: func() core.Style { return r.style(PartParagraph) }})
 	case Heading:
 		level := min(max(b.Level, 1), 6)
 		heading := func() core.Style {
@@ -342,7 +353,8 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 			}
 			return s
 		}
-		return r.selectable(core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartHeading, PartHeading1+Part(level-1)),
+		spans := r.searchDecorate(r.spans(nil, b.Content, noStyle, "", nil), r.searchBlock)
+		return r.selectable(core.Text{Spans: r.caretSpans(spans, caret), Class: r.class(PartHeading, PartHeading1+Part(level-1)),
 			StyleFunc: heading, Role: core.RoleHeader})
 	case Blockquote:
 		children := r.blocksAt(cx, b.Children, depth, caret)
@@ -385,7 +397,8 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 		case len(b.Children) > 0:
 			return core.View{Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }, Children: r.blocksAt(cx, b.Children, depth, caret)}
 		case len(b.Content) > 0:
-			return r.selectable(core.Text{Spans: r.caretSpans(r.spans(nil, b.Content, noStyle, "", nil), caret), Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }})
+			spans := r.searchDecorate(r.spans(nil, b.Content, noStyle, "", nil), r.searchBlock)
+			return r.selectable(core.Text{Spans: r.caretSpans(spans, caret), Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }})
 		}
 		if caret {
 			return r.selectable(core.Text{Spans: r.caretSpans([]core.Span{{Content: b.Text}}, true), Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }})
@@ -393,6 +406,74 @@ func (r *renderer) blockAt(cx *core.Scope, b Block, first bool, depth int, caret
 		return r.selectable(core.Text{Content: b.Text, Class: r.class(PartCustom), StyleFunc: func() core.Style { return r.style(PartCustom) }})
 	}
 	return nil
+}
+
+// searchDecorate splits text spans at find ranges and merges the search part
+// style over each hit. Attachments remain untouched because they have no text
+// range in the document.
+func (r *renderer) searchDecorate(spans []core.Span, block int) []core.Span {
+	if r.tv.Search == nil || len(r.searchMatches) == 0 {
+		return spans
+	}
+	var matches []Match
+	for _, m := range r.searchMatches {
+		if m.Text.Footnote == -1 && len(m.Text.Block) == 1 && m.Text.Block[0] == block {
+			matches = append(matches, m)
+		}
+	}
+	if len(matches) == 0 {
+		return spans
+	}
+	out := make([]core.Span, 0, len(spans)+len(matches)*2)
+	offset := 0
+	for _, span := range spans {
+		if span.Attachment != nil || span.Content == "" {
+			out = append(out, span)
+			continue
+		}
+		start := offset
+		end := offset + len(span.Content)
+		cursor := start
+		added := false
+		for _, m := range matches {
+			if m.To <= start || m.From >= end {
+				continue
+			}
+			from, to := max(m.From, start), min(m.To, end)
+			if from > cursor {
+				out = append(out, spanPart(span, span.Content[cursor-start:from-start], false, r))
+			}
+			out = append(out, spanPart(span, span.Content[from-start:to-start], r.tv.Search.isSelected(r.tv.SearchKey, m), r))
+			cursor, added = to, true
+		}
+		if added {
+			if cursor < end {
+				out = append(out, spanPart(span, span.Content[cursor-start:], false, r))
+			}
+		} else {
+			out = append(out, span)
+		}
+		offset = end
+	}
+	return out
+}
+
+func spanPart(span core.Span, content string, selected bool, r *renderer) core.Span {
+	part := PartSearch
+	if selected {
+		part = PartSearchSelected
+	}
+	base := span.StyleFunc
+	return core.Span{Content: content, Class: joinClasses(span.Class, r.class(part)), Style: span.Style, StyleFunc: func() core.Style {
+		var s core.Style
+		if base != nil {
+			s = base()
+		}
+		if !r.tv.Search.Open() {
+			return s
+		}
+		return s.Merge(r.style(part))
+	}, OnPress: span.OnPress}
 }
 
 // renders reports whether a plugin renders custom nodes named name.

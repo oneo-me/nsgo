@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add document-level text search with case and whole-word matching, shared `TextView` search state and selected-hit styling (#47).
 - Add a reactive Go engine with owners, memos, effects, resources loaded off the engine's goroutine, selectors, keyed collections, values with undo and redo or kept in storage, sources on other goroutines and regions that lays out and sends only what each update changed, to native views in one batch, with a performance monitor over the app on macOS, iOS, Windows and Linux that any build shows when started with `--nsgo-fps`, as `--nsgo-lang` and `--nsgo-appearance` start it in a locale and an appearance.
 - Add native backends for macOS, iOS, tvOS, watchOS, Windows, Linux, Android, the web and, experimentally, WeChat, QQ, Alipay and Douyin mini programs, every one built from a Mac with Go and Xcode, linking only what an app uses and downloading its images with the system's HTTP client.
 - Add block, flexbox and grid layout with static, sticky and fixed positions, intrinsic sizes, stacking order, right-to-left subtrees and paddings and margins that follow the safe area and the software keyboard.
