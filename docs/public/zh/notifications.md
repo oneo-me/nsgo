@@ -28,7 +28,7 @@ cx.CloseNotification("sync")
 
 ## 点按
 
-`cx.OnNotificationPress` 在设置它的组件存活期间，以用户点按的通知的 `ID` 调用函数，并把应用带到前台。启动应用的那一次点按会交给第一个注册的处理函数。把点按要打开的内容记在 `ID` 里（如 `"chat:42"`），因为点按也可能重新启动应用。
+`cx.OnNotificationPress` 在设置它的组件存活期间，以用户点按的通知的 `ID` 调用函数，并把应用带到前台。启动应用的那一次点按会交给第一个注册的处理函数。把点按要打开的内容记在 `ID` 里（如 `"chat:42"`），因为点按也可能重新启动应用。在 Windows 上，只有由安装程序放进开始菜单的应用才会被点按重新启动；以其他方式运行的应用只在运行期间收到点按。
 
 ```go
 cx.OnNotificationPress(func(id string) { openChat(strings.TrimPrefix(id, "chat:")) })
