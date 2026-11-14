@@ -66,10 +66,16 @@ func TestAndroidArchitectures(t *testing.T) {
 	if _, err := androidABI("386"); err == nil {
 		t.Error("androidABI(386) succeeded")
 	}
-	if _, err := goarchForABI("armeabi-v7a"); err == nil {
-		t.Error("goarchForABI(armeabi-v7a) succeeded")
-	} else if !strings.Contains(err.Error(), "/issues/41") {
-		t.Errorf("goarchForABI(armeabi-v7a) error = %v, want issue link", err)
+	// 32-bit ARM says why and where it is discussed; other ABIs do not claim to be 32-bit ARM.
+	for abi, arm := range map[string]bool{"armeabi-v7a": true, "armeabi": true, "x86": false, "riscv64": false} {
+		_, err := goarchForABI(abi)
+		if err == nil {
+			t.Errorf("goarchForABI(%q) succeeded", abi)
+			continue
+		}
+		if says := strings.Contains(err.Error(), "/issues/41") && strings.Contains(err.Error(), "NDK"); says != arm {
+			t.Errorf("goarchForABI(%q) error = %v; names 32-bit ARM's limit: %v, want %v", abi, err, says, arm)
+		}
 	}
 }
 
