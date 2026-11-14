@@ -10,9 +10,21 @@ The service has three layers:
 
 1. `core` owns a provider-neutral session and the app-visible state machine. It exposes stable handles for a scan, connection, service, characteristic and subscription, runs callbacks on the engine goroutine and closes handles with their scope.
 2. `internal/driver` carries commands and events with numeric handles, UUIDs and byte payloads. It does not expose CoreBluetooth objects, Android `BluetoothGatt` instances or platform addresses.
-3. A backend owns the platform queue and translates state and errors into driver events. Apple uses `CBCentralManager` and `CBPeripheral`; Android uses `BluetoothLeScanner` and `BluetoothGatt`.
+3. A backend owns the platform queue and translates state and errors into driver events. `internal/platform/apple`, which macOS and iOS share, uses `CBCentralManager` and `CBPeripheral`; Android uses `BluetoothLeScanner` and `BluetoothGatt`.
 
 Every operation is asynchronous. A backend never blocks the engine goroutine while scanning, connecting, discovering, reading, writing or subscribing. Bytes are copied at the driver boundary, so an app may reuse its input after a write returns. Notifications preserve their arrival order per characteristic; events from different characteristics may interleave.
+
+## Targets
+
+| Target | First scope |
+| --- | --- |
+| iOS, macOS | `internal/platform/apple`; the Info.plist declares `NSBluetoothAlwaysUsageDescription` (`apple.info`) |
+| Android | The Java runtime, with `classes.dex` rebuilt |
+| tvOS, watchOS, Windows, Linux, the web, mini programs | Unavailable, recorded in the [roadmap](../roadmap.md#finish-the-existing-platforms) |
+
+An `Env` flag says the platform has the service, as `Env.CanRecognizeSpeech` does for speech; elsewhere `core` answers availability as unsupported and fails a scan or connection at once, without asking the platform. Windows (`Windows.Devices.Bluetooth`) and Linux (BlueZ over D-Bus) can follow. The web's Web Bluetooth picks one device in the browser's own chooser after a user gesture rather than scanning with the app's filters, so it would need an API of its own; mini programs' Bluetooth is each host's.
+
+A Mac App Store build is sandboxed and needs `com.apple.security.device.bluetooth`. `sandboxEntitlements` (`cmd/nsgo/macstore.go`) adds only the microphone and camera entitlements from `apple.info`, so the tool should add Bluetooth's where the Info.plist declares `NSBluetoothAlwaysUsageDescription`; until then an app adds it through `macos.entitlements`.
 
 ## Identity and handles
 
@@ -42,7 +54,7 @@ Provider-specific limits stay in the backend: maximum write length, prepare-writ
 
 The API reports Bluetooth availability and authorization separately from a scan or connection error, and reading them never asks the user, as `NotificationPermission` reads the notification permission. As the other services do, the first scan or connection asks with the system's prompt when the permission is not determined yet, as `TakePhoto` asks for the camera and a speech session for the microphone, and an explicit request asks without scanning, as `RequestNotificationPermission` does. A denied permission fails the scan or connection with a permission error and asks no more.
 
-Apple packages that use the service declare `NSBluetoothAlwaysUsageDescription` in their Info.plist; without it a request fails, since the system would end the app as it asks. Background central activity needs the `bluetooth-central` background mode and remains subject to Apple's restoration and scheduling rules. The backend may restore a connection, but it cannot promise a scan or notification at an exact time while the app is suspended.
+Apple packages that use the service declare `NSBluetoothAlwaysUsageDescription` in their Info.plist; without it a request fails, since the system would end the app as it asks. Background central activity needs the `bluetooth-central` background mode, an array entry in `UIBackgroundModes` that `apple.info`, which holds strings only, cannot write yet, and remains subject to Apple's restoration and scheduling rules. The backend may restore a connection, but it cannot promise a scan or notification at an exact time while the app is suspended.
 
 Android 12 and later require the `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` runtime permissions; advertising would additionally require `BLUETOOTH_ADVERTISE`. The runtime's `minSdkVersion` is 28, and on API 28 to 30 BLE needs the install-time `BLUETOOTH` and `BLUETOOTH_ADMIN`, declared with `android:maxSdkVersion="30"`, and scans need `ACCESS_FINE_LOCATION` granted and find nothing while location is off. An app whose scans never derive location marks `BLUETOOTH_SCAN` with `android:usesPermissionFlags="neverForLocation"` and caps `ACCESS_FINE_LOCATION` at `maxSdkVersion` 30; that is a package policy choice, not something the core can add silently. The declarations belong in `nsgo.yaml` and the generated manifest, while the user prompt belongs to the Android host and its answer comes back through `permissionResult`, as the camera's does. Today `android.permissions` (`cmd/nsgo/project.go`) takes names only and `cmd/nsgo/apk/axml.go` writes only `android:name`, with neither `maxSdkVersion` nor `usesPermissionFlags` in its attribute table, so the tool must take those attributes before an app can declare these.
 
