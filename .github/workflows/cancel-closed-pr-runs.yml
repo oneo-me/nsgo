@@ -1,0 +1,41 @@
+name: Cancel closed pull request runs
+
+# Once a pull request is merged or closed, cancels its runs still queued or waiting. Runs already under way finish: the one in progress at merge time may be the only full check that code gets. A workflow's concurrency group cancels an older run only when the same pull request pushes again, and a merge starts no new run in that group, so without this the queued runs of merged pull requests keep waiting for runners, the few macOS ones a public repository gets above all.
+#
+# pull_request_target gives fork pull requests a token that can cancel runs, which pull_request's read-only token cannot; it never checks out or runs the pull request's code, and the pull request's fields reach the script only through the environment.
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    name: Cancel queued runs of the closed pull request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Cancel queued pull request runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # Match the head repository as well as the branch: a fork's branch of the same name belongs to another pull request. Only pull_request runs are cancelled; pushes, dispatches and schedules are left alone.
+          for status in queued waiting; do
+            gh api --paginate -X GET "repos/$REPO/actions/runs" \
+              -f event=pull_request -f status="$status" -f branch="$HEAD_REF" -f per_page=100 \
+              --jq ".workflow_runs[] | select(.head_repository.full_name == env.HEAD_REPO and (.id | tostring) != env.RUN_ID) | .id"
+          done | sort -u | while read -r id; do
+            # A run may finish between listing and cancelling, and GitHub then answers 409.
+            if gh api -X POST "repos/$REPO/actions/runs/$id/cancel" >/dev/null 2>&1; then
+              echo "Cancelled run $id"
+            else
+              echo "Run $id already finished or cannot be cancelled; skipping"
+            fi
+          done

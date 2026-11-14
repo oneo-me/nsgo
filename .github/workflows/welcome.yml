@@ -1,0 +1,56 @@
+name: Welcome
+
+# Greets a person's first issue and first pull request in this repository with what the templates cannot say on their own. pull_request_target lets it comment on fork pull requests; nothing is checked out.
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  greet:
+    name: First interaction
+    # Bots and the repository's owners, members and collaborators are never first-timers, and author_association comes with the event, so they cost no API calls.
+    if: >-
+      ${{ !endsWith(github.actor, '[bot]')
+      && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association || github.event.pull_request.author_association) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # actions/first-interaction greets anyone who has not opened an issue or a pull request, whichever this event is, so a contributor who only opens pull requests is welcomed on every one. Count instead the author's earlier items of the same kind as this one.
+      - name: Greet a first issue or pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.issue.user.login || github.event.pull_request.user.login }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          IS_PR: ${{ github.event_name == 'pull_request_target' }}
+          ISSUE_MESSAGE: |
+            Thanks for the report! This is your first issue here.
+
+            - Please make sure it holds no credentials, personal data or private paths, and edit them out if it does.
+            - For a bug, name the target, the NSGo commit and the smallest steps that reproduce it; that speeds things up a lot.
+            - Report a security problem through the [private advisory form](https://github.com/nsgo-dev/nsgo/security/advisories/new) instead of a public issue.
+          PR_MESSAGE: |
+            Thanks for your first pull request! Before it is merged:
+
+            - Write the title as a Conventional Commit, such as `fix(linux): ...`; a squash merge uses it as the commit subject.
+            - Run `go tool nsgo check` and `go tool nsgo test`, and say in the description what you ran on which targets and what you could not.
+            - [Making a change](https://github.com/nsgo-dev/nsgo/blob/main/docs/public/en/contributing/changes.md) says what a pull request needs, and [AGENTS.md](https://github.com/nsgo-dev/nsgo/blob/main/AGENTS.md) and [ARCHITECTURE.md](https://github.com/nsgo-dev/nsgo/blob/main/ARCHITECTURE.md) how the code is organized.
+        run: |
+          set -euo pipefail
+          # The issues endpoint lists pull requests too; they carry a pull_request key.
+          earlier=$(gh api --paginate "repos/$REPO/issues?creator=$AUTHOR&state=all&per_page=100" \
+            --jq ".[] | select(.number < $NUMBER and ((.pull_request != null) == $IS_PR)) | .number" | wc -l)
+          if [ "$earlier" -gt 0 ]; then
+            echo "$AUTHOR has $earlier earlier $([ "$IS_PR" = true ] && echo 'pull requests' || echo issues); not greeting."
+            exit 0
+          fi
+          if [ "$IS_PR" = true ]; then body=$PR_MESSAGE; else body=$ISSUE_MESSAGE; fi
+          gh api "repos/$REPO/issues/$NUMBER/comments" -f body="$body" >/dev/null
+          echo "Greeted #$NUMBER."

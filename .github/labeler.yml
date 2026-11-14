@@ -1,0 +1,107 @@
+# Path labels for pull requests, applied by pr-triage.yml. They reuse the repository's platform and area labels: a backend lives under internal/platform/<name> with its run_<name>.go and view_<name>.go entry points beside nsgo.go, and internal/platform/apple is shared by macOS and iOS.
+
+macOS:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/macos/**
+          - internal/platform/apple/**
+          - "*_macos.go"
+
+iOS:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/ios/**
+          - internal/platform/apple/**
+          - "*_ios.go"
+
+tvOS:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*tvos*"
+
+watchOS:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/watchos/**
+          - cmd/nsgo/watch/**
+          - "*_watchos.go"
+
+Windows:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/windows/**
+          - "*_windows.go"
+
+Linux:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/linux/**
+          - "*_linux.go"
+
+Web:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/web/**
+          - internal/platform/webstyle/**
+          - "*_web.go"
+
+Android:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/android/**
+          - "*_android.go"
+
+Mini-program:
+  - changed-files:
+      - any-glob-to-any-file:
+          - internal/platform/miniprogram/**
+          - "*_miniprogram.go"
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - core/**
+          - internal/driver/**
+          - internal/engine/**
+          - internal/layout/**
+
+base:
+  - changed-files:
+      - any-glob-to-any-file:
+          - base/**
+
+ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ui/**
+
+tsx:
+  - changed-files:
+      - any-glob-to-any-file:
+          - tsx/**
+
+cli:
+  - changed-files:
+      - any-glob-to-any-file:
+          - cmd/**
+
+updater:
+  - changed-files:
+      - any-glob-to-any-file:
+          - updater/**
+
+website:
+  - changed-files:
+      - any-glob-to-any-file:
+          - website/**
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - docs/**

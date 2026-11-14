@@ -1,26 +1,34 @@
 name: Test
 
-# Automatic runs are temporarily disabled: restore the push and pull_request triggers to run again.
+# Vets and tests every package on Linux under a virtual display, and Apple's shared platform code on macOS. Until the first release it runs only when dispatched (AGENTS.md); restore the push and pull_request triggers as part of releasing. release.yml calls it before publishing a release.
 on:
   # push:
   #   branches:
   #     - main
   # pull_request:
   workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: test-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - name: Check out
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          go-version: "1.26.x"
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
           cache: true
       - name: Install GTK 4 and a virtual display
         run: |
@@ -36,13 +44,16 @@ jobs:
 
   apple:
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - name: Check out
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          go-version: "1.26.x"
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
           cache: true
       - name: Vet
         run: go tool nsgo check ./internal/platform/apple

@@ -54,7 +54,7 @@ Run `go tool nsgo check` and `go tool nsgo test` from the repository root, never
 
 Run `bun run build` in `website/` when changing the website; it type-checks the site and rebuilds the gallery it embeds.
 
-Keep workflows except the website deployment on `workflow_dispatch` until the first release; restore their automatic triggers as part of releasing.
+Keep the workflows that build or test code, `test.yml` and `codeql.yml`, on `workflow_dispatch` until the first release; restore their automatic triggers as part of releasing. The rest run on their own: the website's deployment, pull request triage, labels, `quality.yml`, Dependabot and `release.yml`, which publishes a version tag's changelog section once `test.yml` passes.
 
 ## Documentation
 
