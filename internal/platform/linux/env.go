@@ -231,6 +231,17 @@ func mappedCallback(widget, data uintptr) {
 func activityCallback(object, pspec, data uintptr) {
 	windowHandles.Range(func(_, v any) bool {
 		if w := v.(*window); !w.closing {
+			active := w.win != 0 && gtkWindowIsActive(w.win) != 0
+			if active {
+				w.focused = true
+			}
+			if w.kind == driver.SurfacePanel && w.hideOnBlur && w.visible && w.focused && !active {
+				w.visible = false
+				gtkWidgetSetVisible(w.win, 0)
+				if w.engine != nil {
+					w.engine.Dispatch(driver.Event{Kind: driver.EventWindowHidden})
+				}
+			}
 			w.updateEnvironment()
 		}
 		return true

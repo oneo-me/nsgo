@@ -37,7 +37,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Opening sends `ItemOpenSurface` to the app's surface. The platform makes the window and attaches it: `engine.Engine.Attach(id, platform)` returns the surface's `Engine`, which reports its size, environment and events as the first surface's does.
 - The engine commits every attached tree after each wake-up, the first first, and asks a window's platform for display frames, since the app's surface has no display. A tree waits uncommitted until it is attached.
 - A closed window's tree ends: the engine sends its platform one batch, `WindowDestroy`, and forgets it, or sends it to a platform that attaches after the close.
-- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow`, `OpenPanel` and `NewTray` return nil, whose methods do nothing, and `core.AppRoot` shows the main view in it.
+- Where the platform opens no windows (phones, the web, `nsgo.NewView` and test hosts), the first tree is the one surface: `OpenWindow` and `OpenPanel` return nil, while supported desktop backends still process `NewTray`, and `core.AppRoot` shows the main view in it.
 
 ## Lifecycle
 
@@ -60,6 +60,10 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - A drawn icon is a surface in the button: an embedded surface whose hit test lets clicks through to the button, the item as wide as the view.
 - Global shortcuts are Carbon's `RegisterEventHotKey` on the application's event target, which needs no accessibility permission; a key names its ANSI virtual key code.
 - An alert asked from the app's own surface, which has no window to hold a sheet, runs app-modal.
+
+## Linux
+
+The Linux backend attaches opened window surfaces to GTK's main loop and registers StatusNotifierItem icons and `com.canonical.dbusmenu` menus on the session bus when a compatible watcher is present, reporting primary and secondary activation and menu choices. Panels use borderless GTK windows, take keyboard focus and honor `HideOnBlur`; tray anchoring, non-activating behavior, drawn tray views and the no-watcher fallback remain in the surfaces slice of the roadmap.
 
 ## Configuration
 

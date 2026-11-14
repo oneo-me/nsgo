@@ -52,6 +52,9 @@ import (
 type Options struct {
 	Title         string
 	Width, Height driver.Points
+	// Hidden keeps the backend's root window out of the screen while it
+	// hosts app-level services such as tray icons.
+	Hidden bool
 	// ID names the app's directories and storage (engine.AppDirs).
 	ID string
 	// Components are the native components Native elements name.
@@ -86,6 +89,14 @@ type window struct {
 	batch   uint64  // batches applied
 	win     uintptr // GtkWindow, 0 for an embedded surface
 	surface uintptr // the NsgoView holding the root view
+	// primary is the backend's own surface. Opened surfaces share the GTK main
+	// loop, but closing one must not end the app.
+	primary    bool
+	kind       driver.SurfaceKind
+	destroying bool
+	hideOnBlur bool
+	visible    bool
+	focused    bool
 	// embedded is set for a host's widget (NewView): the host owns the
 	// window, its chrome and the main loop. app and opts start its engine
 	// once GTK first allocates it.
@@ -218,6 +229,7 @@ type window struct {
 	popover   uintptr
 	popoverID uint32
 	popupRefs map[uintptr]menuRef
+	trays     map[uint32]*linuxTray
 	// appearance is the one the app forces; preferDark the session's
 	// gtk-application-prefer-dark-theme, read once it is first forced.
 	appearance                  driver.Appearance
@@ -285,6 +297,7 @@ func start(app engine.App, opts Options) (*window, error) {
 		return nil, fmt.Errorf("the Linux backend needs GTK 4: %w", err)
 	}
 	w := newWindow(opts, false)
+	w.primary, w.app, w.opts = true, app, opts
 	w.createWindow(opts)
 	w.env = w.environment()
 
@@ -301,6 +314,7 @@ func newWindow(opts Options, embedded bool) *window {
 	w := &window{
 		entries: map[uintptr]*view{},
 		natives: map[uintptr]*view{},
+		trays:   map[uint32]*linuxTray{},
 		appID:   opts.ID,
 
 		actionRefs: map[uintptr]menuRef{},
@@ -322,6 +336,11 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Environment: w.env,
 		Appearance:  opts.Appearance,
 		Host:        opts.Host,
+		Tray:        !w.embedded,
+	}
+	if opts.Hidden {
+		eopts.Windows = &engine.WindowOptions{Title: opts.Title, Width: opts.Width, Height: opts.Height,
+			Constraints: opts.Constraints}
 	}
 	eopts.SetDirs(engine.AppDirs(opts.ID))
 	if opts.test != nil {
@@ -332,6 +351,51 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		eopts.Perf = w.startPerf()
 	}
 	w.engine = engine.Start(w, app, eopts)
+}
+
+// openSurface creates a window on GTK's existing main loop and attaches its
+// tree to the root engine. Panels use a borderless GTK window and can hide on
+// blur; tray anchoring and non-activating behavior remain separate work.
+func (w *window) openSurface(cfg driver.SurfaceConfig) {
+	opts := w.opts
+	if cfg.Title != "" {
+		opts.Title = cfg.Title
+	}
+	if cfg.Width > 0 {
+		opts.Width = cfg.Width
+	}
+	if cfg.Height > 0 {
+		opts.Height = cfg.Height
+	}
+	opts.Hidden = cfg.Hidden
+	opts.Constraints = cfg.Constraints
+	if cfg.Kind == driver.SurfaceTrayIcon {
+		// The status item is still registered, but Linux does not yet draw a
+		// surface into it. Keep the attached tree out of sight until that
+		// slice is implemented.
+		opts.Hidden = true
+	}
+	child := newWindow(opts, false)
+	child.kind, child.hideOnBlur, child.opts = cfg.Kind, cfg.HideOnBlur, opts
+	child.createWindow(opts)
+	child.setupSettings()
+	child.visible = !opts.Hidden
+	if cfg.Kind == driver.SurfacePanel {
+		// GTK has no non-activating panel equivalent. A borderless window
+		// still gives the panel its own keyboard focus and native surface.
+		gtkWindowSetDecorated(child.win, 0)
+	}
+	if cfg.Frame.Width > 0 || cfg.Frame.Height > 0 {
+		child.setFrame(cfg.Frame)
+	}
+	child.env = child.environment()
+	child.engine = w.engine.Attach(cfg.ID, child)
+	size := driver.Size{Width: opts.Width, Height: opts.Height}
+	child.engine.Resize(size)
+	child.engine.SetEnvironment(child.env)
+	if !opts.Hidden {
+		gtkWindowPresent(child.win)
+	}
 }
 
 // View is an app in a GtkWidget of an embedding host's window, which the
@@ -430,7 +494,9 @@ func (w *window) toplevel() uintptr {
 
 // run presents the window and runs GTK's main loop until it closes.
 func (w *window) run() {
-	gtkWindowPresent(w.win)
+	if !w.opts.Hidden {
+		gtkWindowPresent(w.win)
+	}
 	gMainLoopRun(w.loop)
 }
 
@@ -564,9 +630,20 @@ func applyCallback(data uintptr) int32 {
 
 func closeRequestCallback(win uintptr, data uintptr) int32 {
 	if w := windowOf(data); w != nil {
-		w.close()
+		if w.primary || w.embedded {
+			w.close()
+			return 1
+		}
+		if w.destroying {
+			w.close()
+			return 0
+		}
+		if w.engine != nil {
+			w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
+		}
+		return 0
 	}
-	return 1 // the window closes; Run returns after the loop ends
+	return 1
 }
 
 // runTasks runs what other goroutines posted, in order.
@@ -601,6 +678,8 @@ func (w *window) close() {
 		return
 	}
 	w.closing = true
+	w.visible = false
+	w.removeTrays()
 	if w.tickID != 0 {
 		gSourceRemove(w.tickID)
 		w.tickID = 0
@@ -694,6 +773,28 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPopupMenu:
 			w.popupMenu(it.Menu, it.Point, it.Count)
+			continue
+		case driver.ItemTray:
+			w.applyTray(*it.Tray)
+			continue
+		case driver.ItemTrayMenu:
+			tr := (*linuxTray)(nil)
+			if it.Tray != nil {
+				tr = w.trays[it.Tray.ID]
+			}
+			if tr == nil || tr.menuID == 0 {
+				// A host without a DBus menu closes this request here.
+				w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: it.Count})
+				continue
+			}
+			tr.menu = slices.Clone(it.Menu)
+			tr.revision++
+			tr.popupID = it.Count
+			continue
+		case driver.ItemOpenSurface:
+			if it.Surface != nil {
+				w.openSurface(*it.Surface)
+			}
 			continue
 		case driver.ItemAppearance:
 			// The settings are the process's, which a host's widget
@@ -1023,6 +1124,16 @@ func (w *window) delete(v *view) {
 // windowCommand carries out a Window item.
 func (w *window) windowCommand(c *driver.WindowCommand) {
 	switch c.Action {
+	case driver.WindowDestroy:
+		w.destroying = true
+		w.visible = false
+		if !w.primary && !w.embedded {
+			w.close()
+			w.closeNatives()
+		}
+		if w.win != 0 {
+			gtkWindowDestroy(w.win)
+		}
 	case driver.WindowSetTitleBar:
 		w.chrome.titleBar = c.TitleBar
 		w.chrome.height = c.Height
@@ -1044,10 +1155,28 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 		w.showMenuBar()
 		w.updateEnvironment()
 	case driver.WindowClose:
-		w.close()
+		if w.primary || w.embedded {
+			w.close()
+		} else {
+			w.destroying = true
+			w.visible = false
+			gtkWindowClose(w.win)
+		}
+	case driver.WindowShow:
+		w.visible = true
+		w.focused = false
+		gtkWidgetSetVisible(w.win, 1)
+		// Anchor placement is not available through GTK's portable API;
+		// presenting still gives a panel keyboard focus.
+		gtkWindowPresent(w.win)
+	case driver.WindowHide:
+		w.visible = false
+		gtkWidgetSetVisible(w.win, 0)
 	case driver.WindowSetFrame:
 		w.setFrame(c.Frame)
 	case driver.WindowOrderFront:
+		w.visible = true
+		w.focused = false
 		gtkWindowPresent(w.win)
 	case driver.WindowSetMenuBar:
 		w.chrome.menuBar, w.chrome.revealed = c.MenuBar, false
