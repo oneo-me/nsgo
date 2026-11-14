@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"log"
 	"maps"
+	"mime"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 
@@ -25,6 +30,12 @@ var (
 	webkitErr  error
 
 	webkitWebViewGetType                 func() uintptr
+	webkitWebViewGetContext              func(uintptr) uintptr
+	webkitWebContextRegisterURIScheme    func(uintptr, *byte, uintptr, uintptr, uintptr)
+	webkitURISchemeRequestGetURI         func(uintptr) uintptr
+	webkitURISchemeRequestGetWebView     func(uintptr) uintptr
+	webkitURISchemeRequestFinish         func(uintptr, uintptr, int64, *byte)
+	gMemoryInputStreamNewFromBytes       func(uintptr) uintptr
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
 	webkitNetworkSessionGetCookieManager func(uintptr) uintptr
@@ -108,6 +119,12 @@ func openWebKit() error {
 func bindWebKit(webkit, jsc, soup uintptr) {
 	reg := func(fn any, name string) { purego.RegisterLibFunc(fn, webkit, name) }
 	reg(&webkitWebViewGetType, "webkit_web_view_get_type")
+	reg(&webkitWebViewGetContext, "webkit_web_view_get_context")
+	reg(&webkitWebContextRegisterURIScheme, "webkit_web_context_register_uri_scheme")
+	reg(&webkitURISchemeRequestGetURI, "webkit_uri_scheme_request_get_uri")
+	reg(&webkitURISchemeRequestGetWebView, "webkit_uri_scheme_request_get_web_view")
+	reg(&webkitURISchemeRequestFinish, "webkit_uri_scheme_request_finish")
+	purego.RegisterLibFunc(&gMemoryInputStreamNewFromBytes, gioLib, "g_memory_input_stream_new_from_bytes")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
 	reg(&webkitNetworkSessionGetCookieManager, "webkit_network_session_get_cookie_manager")
@@ -198,6 +215,8 @@ type web struct {
 	background [4]float32   // WebKit's own, for views without an opaque one
 	pointer    driver.Point // where the pointer is in the page
 }
+
+var webSchemeSessions = map[uintptr]map[string]struct{}{}
 
 type webDownload struct {
 	window *window
@@ -311,6 +330,7 @@ func (w *window) makeWeb(v *view) {
 	wv.session = w.webSession(wv.config.Incognito)
 	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), wv.session, uintptr(0))
 	wv.content = webkitWebViewGetUserContentManager(wv.widget)
+	w.registerWebSchemes(wv)
 	webkitContentRegisterHandler(wv.content, cstr(webHandler), nil)
 	webkitWebViewGetBackgroundColor(wv.widget, &wv.background)
 	w.host(v, &wv.hosted, wv.widget, true)
@@ -340,6 +360,28 @@ func (w *window) makeWeb(v *view) {
 	gtkEventControllerSetPropagationPhase(scroll, propagationPhaseCapture)
 	w.connect(v, scroll, "scroll", cbWebScroll)
 	gtkWidgetAddController(wv.widget, scroll)
+}
+
+func (w *window) registerWebSchemes(wv *web) {
+	if len(wv.config.SchemeHandlers) == 0 || wv.session == 0 {
+		return
+	}
+	context := webkitWebViewGetContext(wv.widget)
+	if context == 0 {
+		return
+	}
+	registered := webSchemeSessions[context]
+	if registered == nil {
+		registered = map[string]struct{}{}
+		webSchemeSessions[context] = registered
+	}
+	for name := range wv.config.SchemeHandlers {
+		if _, ok := registered[name]; ok {
+			continue
+		}
+		webkitWebContextRegisterURIScheme(context, cstr(name), cbWebScheme, wv.session, 0)
+		registered[name] = struct{}{}
+	}
 }
 
 // webSessions are the network sessions by app ID: one network process,
@@ -375,6 +417,40 @@ func (w *window) webSession(incognito bool) uintptr {
 	}
 	webSessions[w.appID] = s
 	return s
+}
+
+func webSchemeCallback(request, data uintptr) {
+	page := webkitURISchemeRequestGetWebView(request)
+	w, v := webWindowForPage(data, page)
+	if w == nil || v == nil || v.web == nil {
+		return
+	}
+	raw := goString(webkitURISchemeRequestGetURI(request))
+	u, err := url.Parse(raw)
+	if err != nil {
+		return
+	}
+	handler := v.web.config.SchemeHandlers[strings.ToLower(u.Scheme)]
+	if handler == nil {
+		webkitURISchemeRequestFinish(request, 0, 0, cstr("application/octet-stream"))
+		return
+	}
+	body := handler(raw)
+	bytes := gBytesNew(unsafe.Pointer(nil), 0)
+	if len(body) > 0 {
+		bytes = gBytesNew(unsafe.Pointer(&body[0]), uintptr(len(body)))
+	}
+	stream := gMemoryInputStreamNewFromBytes(bytes)
+	gBytesUnref(bytes)
+	contentType := mime.TypeByExtension(filepath.Ext(u.Path))
+	if contentType == "" && len(body) > 0 {
+		contentType = http.DetectContentType(body)
+	}
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	webkitURISchemeRequestFinish(request, stream, int64(len(body)), cstr(contentType))
+	gObjectUnref(stream)
 }
 
 func webWindowForPage(session, page uintptr) (*window, *view) {
@@ -560,6 +636,9 @@ func (w *window) closeWeb(v *view) {
 		delete(webSessionHandles[wv.session], w.handle)
 		if len(webSessionHandles[wv.session]) == 0 {
 			delete(webSessionHandles, wv.session)
+			if context := webkitWebViewGetContext(wv.widget); context != 0 {
+				delete(webSchemeSessions, context)
+			}
 			gObjectUnref(wv.session)
 		}
 	}

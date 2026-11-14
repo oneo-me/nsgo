@@ -111,6 +111,26 @@ func TestAccessRefusesServices(t *testing.T) {
 	}
 }
 
+func TestAccessAllowsRegisteredWebScheme(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		cx.ProvideAccess(hostsAccess{})
+		if err := cx.ServeScheme("app", func(string) []byte { return []byte("ok") }); err != nil {
+			t.Fatal(err)
+		}
+		return WebView{Source: WebSrc("app://index.html"), TestID: "web"}
+	})
+	b := h.commit()
+	for _, item := range b.Items {
+		if item.Kind == driver.ItemWeb {
+			if item.Web.Source.Src != "app://index.html" || !item.Web.Restricted || item.Web.SchemeHandlers["app"] == nil {
+				t.Fatalf("web config %+v", item.Web)
+			}
+			return
+		}
+	}
+	t.Fatal("no web item")
+}
+
 func TestProvideHostGivesASubtreeItsOwnChannel(t *testing.T) {
 	app, plugin := NewHost(), NewHost()
 	app.Handle("secret", func(c *HostCall) { c.Resolve("the app's") })
@@ -206,11 +226,11 @@ func TestProvideStoragePartitions(t *testing.T) {
 }
 
 func TestWebConfigNavigable(t *testing.T) {
-	c := driver.WebConfig{Restricted: true, Hosts: "ok.com *.cdn.com"}
+	c := driver.WebConfig{Restricted: true, Hosts: "ok.com *.cdn.com", SchemeHandlers: map[string]func(string) []byte{"app": nil}}
 	for url, want := range map[string]bool{
 		"https://ok.com/a": true, "http://OK.com": true, "https://a.cdn.com/x": true, "https://cdn.com/": false,
 		"https://evil.io": false, "https://ok.com@evil.io/": false, "about:blank": true, "data:text/html,x": true,
-		"file:///etc/hosts": false, "mailto:a@ok.com": false,
+		"file:///etc/hosts": false, "mailto:a@ok.com": false, "app://settings/index.html": true,
 	} {
 		if got := c.Navigable(url); got != want {
 			t.Errorf("Navigable(%q) = %v", url, got)

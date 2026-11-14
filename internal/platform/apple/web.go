@@ -4,12 +4,15 @@ package apple
 
 import (
 	"maps"
+	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -34,6 +37,7 @@ type Web struct {
 var (
 	classWebHandler objc.Class
 	webHandlers     = map[objc.ID]*Web{}
+	schemeHandlers  = map[objc.ID]*Web{}
 )
 
 // messageHandler is the name pages post to, as window.webkit.messageHandlers.nsgo.
@@ -73,7 +77,7 @@ func loadWebKit() {
 		}
 	}
 	var protocols []*objc.Protocol
-	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler", "WKDownloadDelegate"} {
+	for _, name := range []string{"WKNavigationDelegate", "WKScriptMessageHandler", "WKDownloadDelegate", "WKURLSchemeHandler"} {
 		if p := objc.GetProtocol(name); p != nil {
 			protocols = append(protocols, p)
 		}
@@ -90,6 +94,41 @@ func loadWebKit() {
 					w.Dispatch(driver.Event{Kind: driver.EventMessage, Text: GoString(body.Send(sel("description")))})
 				}
 			}},
+			{Cmd: sel("webView:startURLSchemeTask:"), Fn: func(self objc.ID, _ objc.SEL, _, task objc.ID) {
+				w := schemeHandlers[self]
+				if w == nil || task == 0 {
+					return
+				}
+				u := task.Send(sel("request")).Send(sel("URL"))
+				raw := GoString(u.Send(sel("absoluteString")))
+				name := strings.ToLower(GoString(u.Send(sel("scheme"))))
+				handler := w.config.SchemeHandlers[name]
+				if handler == nil {
+					task.Send(sel("didFinish"))
+					return
+				}
+				body := handler(raw)
+				mimeType := mime.TypeByExtension(filepath.Ext(GoString(u.Send(sel("path")))))
+				if mimeType == "" && len(body) > 0 {
+					mimeType = http.DetectContentType(body)
+				}
+				if mimeType == "" {
+					mimeType = "application/octet-stream"
+				}
+				response := objc.ID(Class("NSURLResponse")).Send(sel("alloc")).Send(
+					sel("initWithURL:MIMEType:expectedContentLength:textEncodingName:"), u,
+					NSString(mimeType), int64(len(body)), objc.ID(0))
+				task.Send(sel("didReceiveResponse:"), response)
+				response.Send(sel("release"))
+				var ptr unsafe.Pointer
+				if len(body) > 0 {
+					ptr = unsafe.Pointer(&body[0])
+				}
+				data := objc.ID(Class("NSData")).Send(sel("dataWithBytes:length:"), ptr, uintptr(len(body)))
+				task.Send(sel("didReceiveData:"), data)
+				task.Send(sel("didFinish"))
+			}},
+			{Cmd: sel("webView:stopURLSchemeTask:"), Fn: func(objc.ID, objc.SEL, objc.ID, objc.ID) {}},
 			// Downloads (WKDownload, macOS 11.3 and iOS 14.5), only for a
 			// view that saves them.
 			{Cmd: sel("webView:decidePolicyForNavigationAction:decisionHandler:"), Fn: func(self objc.ID, _ objc.SEL, _, action, decide objc.ID) {
@@ -257,6 +296,10 @@ func (w *Web) make() {
 	w.handler = objc.ID(classWebHandler).Send(sel("new"))
 	webHandlers[w.handler] = w
 	config.Send(sel("userContentController")).Send(sel("addScriptMessageHandler:name:"), w.handler, NSString(messageHandler))
+	for name := range w.config.SchemeHandlers {
+		schemeHandlers[w.handler] = w
+		config.Send(sel("setURLSchemeHandler:forURLScheme:"), w.handler, NSString(name))
+	}
 	bounds := objc.Send[CGRect](w.holder, sel("bounds"))
 	w.web = objc.ID(Class("WKWebView")).Send(sel("alloc")).Send(sel("initWithFrame:configuration:"), bounds, config)
 	config.Send(sel("release"))
@@ -380,6 +423,7 @@ func (w *Web) close() {
 	w.web.Send(sel("removeFromSuperview"))
 	w.web.Send(sel("release"))
 	delete(webHandlers, w.handler)
+	delete(schemeHandlers, w.handler)
 	w.handler.Send(sel("release"))
 	w.web, w.handler = 0, 0
 }

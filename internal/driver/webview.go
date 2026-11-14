@@ -57,7 +57,10 @@ type WebConfig struct {
 	Headers map[string]string
 	// Incognito keeps website data in memory for this view. Platforms read
 	// this when the native view is first made.
-	Incognito           bool
+	Incognito bool
+	// SchemeHandlers are app-owned URL schemes and their response bodies.
+	// Platforms read them when the native view is first made.
+	SchemeHandlers      map[string]func(string) []byte
 	NoScroll            bool
 	NoJavaScript        bool
 	BackForwardGestures bool
@@ -89,6 +92,9 @@ func (c *WebConfig) Navigable(rawURL string) bool {
 		return true
 	case "http", "https":
 		return AllowsHost(strings.Fields(c.Hosts), u.Hostname())
+	}
+	if _, ok := c.SchemeHandlers[strings.ToLower(u.Scheme)]; ok {
+		return true
 	}
 	return false
 }

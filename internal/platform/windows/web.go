@@ -47,6 +47,9 @@ package windows
 // once the document scripts asked for are added.
 
 import (
+	"mime"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -83,6 +86,7 @@ type webView struct {
 	commands               []webCommand // waiting for the controller
 	userAgent              string       // WebView2's own
 	headerFilter           bool
+	schemeServing          bool
 
 	// The document scripts: the app's IDs and the one keeping the page
 	// from scrolling, the generation of each kind, and how many are still
@@ -260,6 +264,7 @@ func (wv *webView) controllerReady(comp *comObject) {
 	wv.addScript(webBridge, func(string) bool { return true })
 	wv.listen()
 	wv.listenDownloads()
+	wv.serveSchemes()
 	wv.listenInput()
 	wv.executed = newHandler(&iidExecuteScriptCompleted, nil)
 	wv.ready = true
@@ -529,6 +534,7 @@ func webError(status int32) string {
 func (wv *webView) configure(c *driver.WebConfig) {
 	wv.config, wv.configured = *c, true
 	if wv.ready {
+		wv.serveSchemes()
 		wv.paintBackground()
 		wv.apply()
 	}
@@ -730,21 +736,70 @@ func (wv *webView) serveHTML() {
 		if !sameDocument(uri, wv.base) {
 			return
 		}
-		body := []byte(wv.html)
-		stream, _, _ := shCreateMemStream.Call(uintptr(unsafe.Pointer(&body[0])), uintptr(len(body)))
-		if stream == 0 {
-			return
-		}
-		s := *(**comObject)(unsafe.Pointer(&stream))
-		defer s.release()
-		var response *comObject
-		if failed(wv.env.call(envCreateWebResourceResponse, s.ptr(), 200, uintptr(unsafe.Pointer(wide("OK"))),
-			uintptr(unsafe.Pointer(wide("Content-Type: text/html; charset=utf-8"))), uintptr(unsafe.Pointer(&response)))) {
-			return
-		}
-		a.call(resourceArgsPutResponse, response.ptr())
-		response.release()
+		wv.respondResource(a, []byte(wv.html), "text/html; charset=utf-8")
 	}))
+}
+
+// serveSchemes answers requests for the app-owned schemes of this view.
+func (wv *webView) serveSchemes() {
+	if wv.schemeServing || len(wv.config.SchemeHandlers) == 0 || wv.web == nil {
+		return
+	}
+	wv.schemeServing = true
+	wv.web.call(webAddWebResourceRequestedFilter, uintptr(unsafe.Pointer(wide("*"))), webResourceContextAll)
+	wv.web.subscribe(webAddWebResourceRequested, newHandler(&iidWebResourceRequested, func(_ uintptr, args unsafe.Pointer) {
+		if wv.closed || wv.env == nil {
+			return
+		}
+		a := (*comObject)(args)
+		var request *comObject
+		if failed(a.call(resourceArgsGetRequest, uintptr(unsafe.Pointer(&request)))) || request == nil {
+			return
+		}
+		uri := request.getString(requestGetUri)
+		request.release()
+		u, err := url.Parse(uri)
+		if err != nil {
+			return
+		}
+		handler := wv.config.SchemeHandlers[strings.ToLower(u.Scheme)]
+		if handler == nil {
+			return
+		}
+		body := handler(uri)
+		wv.respondResource(a, body, webMIME(u.Path, body))
+	}))
+}
+
+func (wv *webView) respondResource(args *comObject, body []byte, contentType string) {
+	var data unsafe.Pointer
+	if len(body) > 0 {
+		data = unsafe.Pointer(&body[0])
+	}
+	stream, _, _ := shCreateMemStream.Call(uintptr(data), uintptr(len(body)))
+	if stream == 0 {
+		return
+	}
+	s := *(**comObject)(unsafe.Pointer(&stream))
+	defer s.release()
+	var response *comObject
+	header := "Content-Type: " + contentType + "\r\nAccess-Control-Allow-Origin: *"
+	if failed(wv.env.call(envCreateWebResourceResponse, s.ptr(), 200, uintptr(unsafe.Pointer(wide("OK"))),
+		uintptr(unsafe.Pointer(wide(header))), uintptr(unsafe.Pointer(&response)))) {
+		return
+	}
+	args.call(resourceArgsPutResponse, response.ptr())
+	response.release()
+}
+
+func webMIME(path string, body []byte) string {
+	if typ := mime.TypeByExtension(filepath.Ext(path)); typ != "" {
+		return typ
+	}
+	if len(body) > 0 {
+		return http.DetectContentType(body)
+	}
+	return "application/octet-stream"
 }
 
 // serveHeaders adds the app's configured headers to WebView2 requests.
