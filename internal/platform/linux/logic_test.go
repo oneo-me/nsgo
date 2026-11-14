@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -66,6 +67,29 @@ func TestX11TriggerModifiers(t *testing.T) {
 	}
 	if _, ok := x11TriggerModifiers([]string{"NOPE"}); ok {
 		t.Fatal("unknown X11 modifier was accepted")
+	}
+}
+
+// TestX11ShortcutsIgnoreLocksGroupsAndButtons: a grabbed press matches its combination whatever locks, pointer buttons and XKB layout group its state also carries.
+func TestX11ShortcutsIgnoreLocksGroupsAndButtons(t *testing.T) {
+	x := &x11HotKeys{bindings: map[x11HotKey]uint32{{keycode: 45, modifiers: x11ControlMask | x11Mod1Mask}: 7}}
+	press := func(kind int32, state, keycode uint32) (uint32, bool) {
+		var ev [24]uint64 // sizeof(XEvent) on LP64
+		p := unsafe.Pointer(&ev[0])
+		*(*int32)(p) = kind
+		*(*uint32)(unsafe.Add(p, 80)) = state
+		*(*uint32)(unsafe.Add(p, 84)) = keycode
+		return x.match(p)
+	}
+	const button1, group2 = 1 << 8, 1 << 13
+	if id, ok := press(x11KeyPress, x11ControlMask|x11Mod1Mask|x11LockMask|x11Mod2Mask|button1|group2, 45); !ok || id != 7 {
+		t.Errorf("a press with locks, a button and the second group = (%d, %v), want (7, true)", id, ok)
+	}
+	if _, ok := press(x11KeyPress, x11ControlMask|x11Mod1Mask|x11ShiftMask, 45); ok {
+		t.Error("a press with Shift added matched Ctrl+Alt")
+	}
+	if _, ok := press(x11KeyPress+1, x11ControlMask|x11Mod1Mask, 45); ok {
+		t.Error("a key release matched")
 	}
 }
 

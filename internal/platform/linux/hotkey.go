@@ -18,21 +18,20 @@ import (
 var portalTokenID atomic.Uint64
 
 var (
-	gdkX11DisplayGetXDisplay func(display uintptr) uintptr
-	gdkDisplayAddFilter      func(display, filter, data uintptr)
-	gdkDisplayRemoveFilter   func(display, filter, data uintptr)
-	x11DefaultRootWindow     func(display uintptr) uintptr
-	x11StringToKeysym        func(name *byte) uintptr
-	x11KeysymToKeycode       func(display, keysym uintptr) uint8
-	x11GrabKey               func(display uintptr, keycode int32, modifiers uint32, root uintptr, ownerEvents, pointerMode, keyboardMode int32) int32
-	x11UngrabKey             func(display uintptr, keycode int32, modifiers uint32, root uintptr)
-	x11Flush                 func(display uintptr) int32
-	x11HotKeysReady          bool
-	bindX11HotKeys           = sync.OnceFunc(func() {
+	gdkX11DisplayGetXDisplay   func(display uintptr) uintptr
+	gdkX11DisplayErrorTrapPush func(display uintptr)
+	gdkX11DisplayErrorTrapPop  func(display uintptr) int32
+	x11DefaultRootWindow       func(display uintptr) uintptr
+	x11StringToKeysym          func(name *byte) uintptr
+	x11KeysymToKeycode         func(display, keysym uintptr) uint8
+	x11GrabKey                 func(display uintptr, keycode int32, modifiers uint32, root uintptr, ownerEvents, pointerMode, keyboardMode int32) int32
+	x11UngrabKey               func(display uintptr, keycode int32, modifiers uint32, root uintptr) int32
+	x11HotKeysReady            bool
+	bindX11HotKeys             = sync.OnceFunc(func() {
 		if os.Getenv("WAYLAND_DISPLAY") != "" || strings.Contains(strings.ToLower(os.Getenv("GDK_BACKEND")), "wayland") || os.Getenv("DISPLAY") == "" {
 			return
 		}
-		for _, symbol := range []string{"gdk_x11_display_get_xdisplay", "gdk_display_add_filter", "gdk_display_remove_filter"} {
+		for _, symbol := range []string{"gdk_x11_display_get_xdisplay", "gdk_x11_display_error_trap_push", "gdk_x11_display_error_trap_pop"} {
 			if _, err := purego.Dlsym(gtkLib, symbol); err != nil {
 				return
 			}
@@ -43,20 +42,19 @@ var (
 				return
 			}
 		}
-		for _, symbol := range []string{"XDefaultRootWindow", "XStringToKeysym", "XKeysymToKeycode", "XGrabKey", "XUngrabKey", "XFlush"} {
+		for _, symbol := range []string{"XDefaultRootWindow", "XStringToKeysym", "XKeysymToKeycode", "XGrabKey", "XUngrabKey"} {
 			if _, err := purego.Dlsym(lib, symbol); err != nil {
 				return
 			}
 		}
 		purego.RegisterLibFunc(&gdkX11DisplayGetXDisplay, gtkLib, "gdk_x11_display_get_xdisplay")
-		purego.RegisterLibFunc(&gdkDisplayAddFilter, gtkLib, "gdk_display_add_filter")
-		purego.RegisterLibFunc(&gdkDisplayRemoveFilter, gtkLib, "gdk_display_remove_filter")
+		purego.RegisterLibFunc(&gdkX11DisplayErrorTrapPush, gtkLib, "gdk_x11_display_error_trap_push")
+		purego.RegisterLibFunc(&gdkX11DisplayErrorTrapPop, gtkLib, "gdk_x11_display_error_trap_pop")
 		purego.RegisterLibFunc(&x11DefaultRootWindow, lib, "XDefaultRootWindow")
 		purego.RegisterLibFunc(&x11StringToKeysym, lib, "XStringToKeysym")
 		purego.RegisterLibFunc(&x11KeysymToKeycode, lib, "XKeysymToKeycode")
 		purego.RegisterLibFunc(&x11GrabKey, lib, "XGrabKey")
 		purego.RegisterLibFunc(&x11UngrabKey, lib, "XUngrabKey")
-		purego.RegisterLibFunc(&x11Flush, lib, "XFlush")
 		x11HotKeysReady = true
 	})
 )
@@ -113,9 +111,10 @@ type x11HotKey struct {
 }
 
 type x11HotKeys struct {
-	display  uintptr
+	gdk      uintptr // the GdkDisplay
+	display  uintptr // its Xlib Display
 	root     uintptr
-	handle   uintptr
+	handler  uint64 // the xevent handler's ID
 	grabs    []x11Grab
 	bindings map[x11HotKey]uint32
 }
@@ -135,30 +134,33 @@ type globalHotKeys struct {
 }
 
 const (
-	x11KeyPress     = 2
-	x11FilterRemove = 2 // GDK_FILTER_REMOVE
-	x11ShiftMask    = 1 << 0
-	x11LockMask     = 1 << 1
-	x11ControlMask  = 1 << 2
-	x11Mod1Mask     = 1 << 3
-	x11Mod2Mask     = 1 << 4 // NumLock on the standard XKB map
-	x11Mod4Mask     = 1 << 6 // Super/Logo on the standard XKB map
+	x11KeyPress      = 2
+	x11GrabModeAsync = 1
+	x11ShiftMask     = 1 << 0
+	x11LockMask      = 1 << 1
+	x11ControlMask   = 1 << 2
+	x11Mod1Mask      = 1 << 3
+	x11Mod2Mask      = 1 << 4 // NumLock on the standard XKB map
+	x11Mod4Mask      = 1 << 6 // Super/Logo on the standard XKB map
+	// x11HotKeyMask is what a combination is matched on: a key event's state also carries Lock and NumLock, the pointer's buttons, Mod3 and Mod5, and XKB's layout group in bits 13 and 14, none of which a passive grab tells apart.
+	x11HotKeyMask = x11ShiftMask | x11ControlMask | x11Mod1Mask | x11Mod4Mask
 )
 
-// applyX11HotKeys uses passive grabs on the X11 root window. GTK's display
-// filter receives the resulting key events while the focused app keeps its
-// normal event stream for every other key.
+// applyX11HotKeys uses passive grabs on the X11 root window. GTK 4 has no display filters; its GdkX11Display emits xevent for every X event before translating it, and the handler takes the grabbed key presses while the focused app keeps its normal event stream for every other key.
 func (w *window) applyX11HotKeys(keys []driver.KeyBinding) bool {
 	bindX11HotKeys()
 	if !x11HotKeysReady {
 		return false
 	}
-	display := gdkX11DisplayGetXDisplay(gdkDisplayGetDefault())
+	gdk := gdkDisplayGetDefault()
+	if gdk == 0 {
+		return false
+	}
+	display := gdkX11DisplayGetXDisplay(gdk)
 	if display == 0 {
 		return false
 	}
-	root := x11DefaultRootWindow(display)
-	state := &globalHotKeys{x11: &x11HotKeys{display: display, root: root, handle: w.handle, bindings: map[x11HotKey]uint32{}}}
+	x := &x11HotKeys{gdk: gdk, display: display, root: x11DefaultRootWindow(display), bindings: map[x11HotKey]uint32{}}
 	for _, key := range keys {
 		trigger, ok := portalTrigger(key.Key)
 		if !ok {
@@ -167,8 +169,11 @@ func (w *window) applyX11HotKeys(keys []driver.KeyBinding) bool {
 		parts := strings.Split(trigger, "+")
 		name := parts[len(parts)-1]
 		keysym := x11StringToKeysym(cstr(name))
+		if keysym == 0 {
+			continue
+		}
 		keycode := x11KeysymToKeycode(display, keysym)
-		if keysym == 0 || keycode == 0 {
+		if keycode == 0 {
 			continue
 		}
 		mods, ok := x11TriggerModifiers(parts[:len(parts)-1])
@@ -176,42 +181,47 @@ func (w *window) applyX11HotKeys(keys []driver.KeyBinding) bool {
 			continue
 		}
 		combo := x11HotKey{keycode: keycode, modifiers: mods}
-		if _, exists := state.x11.bindings[combo]; exists {
+		if _, exists := x.bindings[combo]; exists {
 			continue
 		}
-		before := len(state.x11.grabs)
+		grabs := make([]x11Grab, 0, 4)
 		for _, extra := range []uint32{0, x11LockMask, x11Mod2Mask, x11LockMask | x11Mod2Mask} {
-			grab := x11Grab{keycode: keycode, modifiers: mods | extra}
-			if x11GrabKey(display, int32(keycode), grab.modifiers, root, 1, 1, 1) == 0 {
-				continue
-			}
-			state.x11.grabs = append(state.x11.grabs, grab)
+			grabs = append(grabs, x11Grab{keycode: keycode, modifiers: mods | extra})
 		}
-		if len(state.x11.grabs) > before {
-			state.x11.bindings[combo] = key.ID
+		// A combination another client grabbed, such as the window manager's, fails with an asynchronous BadAccess, which GTK ends the process for outside an error trap. Popping the trap waits for the server's answer. Without owner events every grabbed press goes to the root window as a core event, even while the app's own window, whose keys GTK takes through XInput 2, has the focus.
+		gdkX11DisplayErrorTrapPush(gdk)
+		for _, grab := range grabs {
+			x11GrabKey(display, int32(grab.keycode), grab.modifiers, x.root, 0, x11GrabModeAsync, x11GrabModeAsync)
 		}
+		if gdkX11DisplayErrorTrapPop(gdk) != 0 {
+			x.ungrab(grabs)
+			continue
+		}
+		x.grabs = append(x.grabs, grabs...)
+		x.bindings[combo] = key.ID
 	}
-	if len(state.x11.grabs) == 0 {
+	if len(x.grabs) == 0 {
 		return false
 	}
-	w.hotKeys = state
-	gdkDisplayAddFilter(gdkDisplayGetDefault(), cbX11HotKeyFilter, w.handle)
-	x11Flush(display)
+	x.handler = gSignalConnect(gdk, "xevent", cbX11HotKeyEvent, w.handle)
+	w.hotKeys = &globalHotKeys{x11: x}
 	return true
 }
 
-func closeX11HotKeys(state *x11HotKeys) {
-	if state == nil {
-		return
+// ungrab releases grabs, those that failed included: XUngrabKey leaves other clients' grabs alone.
+func (x *x11HotKeys) ungrab(grabs []x11Grab) {
+	gdkX11DisplayErrorTrapPush(x.gdk)
+	for _, grab := range grabs {
+		x11UngrabKey(x.display, int32(grab.keycode), grab.modifiers, x.root)
 	}
-	display := gdkDisplayGetDefault()
-	if display != 0 {
-		gdkDisplayRemoveFilter(display, cbX11HotKeyFilter, state.handle)
+	_ = gdkX11DisplayErrorTrapPop(x.gdk)
+}
+
+func closeX11HotKeys(x *x11HotKeys) {
+	if x.handler != 0 {
+		gSignalHandlerDisconnect(x.gdk, x.handler)
 	}
-	for _, grab := range state.grabs {
-		x11UngrabKey(state.display, int32(grab.keycode), grab.modifiers, state.root)
-	}
-	x11Flush(state.display)
+	x.ungrab(x.grabs)
 }
 
 func x11TriggerModifiers(parts []string) (uint32, bool) {
@@ -233,22 +243,35 @@ func x11TriggerModifiers(parts []string) (uint32, bool) {
 	return mods, true
 }
 
-func x11HotKeyFilter(xevent, event, data uintptr) int32 {
+// x11HotKeyEvent is GdkX11Display's xevent handler, gboolean (*)(GdkX11Display *, const XEvent *, gpointer): TRUE takes the event from GTK.
+func x11HotKeyEvent(display, xevent, data uintptr) int32 {
 	if xevent == 0 {
 		return 0
 	}
 	w := windowOf(data)
-	if w == nil || w.closing || w.engine == nil || w.hotKeys == nil || w.hotKeys.x11 == nil ||
-		*(*int32)(cPointer(xevent)) != x11KeyPress {
+	if w == nil || w.closing || w.engine == nil || w.hotKeys == nil || w.hotKeys.x11 == nil {
 		return 0
 	}
-	keycode := *(*uint8)(unsafe.Add(cPointer(xevent), 84))
-	state := *(*uint32)(unsafe.Add(cPointer(xevent), 80)) &^ (x11LockMask | x11Mod2Mask)
-	if id, ok := w.hotKeys.x11.bindings[x11HotKey{keycode: keycode, modifiers: state}]; ok {
-		w.engine.Dispatch(driver.Event{Kind: driver.EventHotKey, Count: id})
-		return x11FilterRemove
+	id, ok := w.hotKeys.x11.match(cPointer(xevent))
+	if !ok {
+		return 0
 	}
-	return 0
+	w.engine.Dispatch(driver.Event{Kind: driver.EventHotKey, Count: id})
+	return 1
+}
+
+// match returns the shortcut a key press, an XKeyEvent, is: its state at 80 and its keycode at 84 on LP64.
+func (x *x11HotKeys) match(ev unsafe.Pointer) (uint32, bool) {
+	if *(*int32)(ev) != x11KeyPress {
+		return 0, false
+	}
+	keycode := *(*uint32)(unsafe.Add(ev, 84))
+	if keycode > 255 {
+		return 0, false
+	}
+	state := *(*uint32)(unsafe.Add(ev, 80)) & x11HotKeyMask
+	id, ok := x.bindings[x11HotKey{keycode: uint8(keycode), modifiers: state}]
+	return id, ok
 }
 
 // applyHotKeys replaces the app's global shortcuts. A portal request may

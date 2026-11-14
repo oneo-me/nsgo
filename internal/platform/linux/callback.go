@@ -76,7 +76,7 @@ var (
 	cbNotificationClosed    uintptr
 	cbGlobalHotKeyResponse  uintptr
 	cbGlobalHotKeyActivated uintptr
-	cbX11HotKeyFilter       uintptr
+	cbX11HotKeyEvent        uintptr
 
 	cbShaderRender    uintptr
 	cbShaderUnrealize uintptr
@@ -154,7 +154,7 @@ func init() {
 	cbNotificationClosed = newCallback(notificationClosedCallback)
 	cbGlobalHotKeyResponse = newCallback(globalHotKeyResponse)
 	cbGlobalHotKeyActivated = newCallback(globalHotKeyActivated)
-	cbX11HotKeyFilter = newCallback(x11HotKeyFilter)
+	cbX11HotKeyEvent = newCallback(x11HotKeyEvent)
 
 	cbShaderRender = newCallback(shaderRenderCallback)
 	cbShaderUnrealize = newCallback(shaderUnrealizeCallback)
