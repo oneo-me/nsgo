@@ -79,6 +79,9 @@ type Options struct {
 	Perf bool
 	// Updates is how the app updates, with WinSparkle (updates.go).
 	Updates updates.Config
+	// RegisterToast is the shortcut the installer has the app stamp with the toast activator, and UnregisterToast has the uninstaller's run remove the activator's registration, from the launch flags; either run does that alone and returns (toast_activation.go).
+	RegisterToast   string
+	UnregisterToast bool
 	// Host is what an embedding host gives the view (NewView), and Parent
 	// the HWND of the window it is a child window of.
 	Host   engine.HostOptions
@@ -505,10 +508,12 @@ func wide(s string) *uint16 {
 func Run(app engine.App, opts Options) {
 	comApartment()
 	// The installer's and uninstaller's runs come first: handed off to a running copy, they would never stamp the shortcut or remove the registration.
-	if registerToastShortcutCommand(opts.ID) {
+	if opts.RegisterToast != "" {
+		setToastActivatorShortcut(opts.RegisterToast, opts.ID)
 		return
 	}
-	if unregisterToastCommand(opts.ID) {
+	if opts.UnregisterToast {
+		unregisterToast(opts.ID)
 		return
 	}
 	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.

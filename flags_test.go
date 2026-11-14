@@ -32,3 +32,30 @@ func TestLaunchFlags(t *testing.T) {
 		t.Errorf("no args = %q", got)
 	}
 }
+
+// Windows' installer and COM start the app with flags of their own, which the app's flag parsing never sees, COM's -Embedding included.
+func TestToastLaunchFlags(t *testing.T) {
+	var f launchFlags
+	got := f.parse([]string{`C:\App\App.exe`, `--nsgo-register-toast=C:\Start Menu\Bob's Notes.lnk`, "--nsgo-unregister-toast"})
+	if want := []string{`C:\App\App.exe`}; !slices.Equal(got, want) {
+		t.Errorf("args = %q, want %q", got, want)
+	}
+	if f.registerToast != `C:\Start Menu\Bob's Notes.lnk` || !f.unregisterToast || f.toastActivation {
+		t.Errorf("flags = %+v", f)
+	}
+
+	f = launchFlags{}
+	got = f.parse([]string{"app", "--nsgo-toast-activation", "-Embedding", "-v"})
+	if want := []string{"app", "-v"}; !slices.Equal(got, want) || !f.toastActivation {
+		t.Errorf("args = %q, want %q, flags = %+v", got, want, f)
+	}
+	f = launchFlags{}
+	if got, want := f.parse([]string{"app", "--nsgo-toast-activation", "/Embedding"}), []string{"app"}; !slices.Equal(got, want) {
+		t.Errorf("args = %q, want %q", got, want)
+	}
+	// Without the activation flag -Embedding is the app's.
+	f = launchFlags{}
+	if got, want := f.parse([]string{"app", "-Embedding", "--nsgo-register-toast"}), []string{"app", "-Embedding"}; !slices.Equal(got, want) || f.registerToast != "" {
+		t.Errorf("args = %q, want %q, flags = %+v", got, want, f)
+	}
+}

@@ -17,9 +17,7 @@ import (
 	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
-// Unpackaged desktop toasts are activated through a COM local server. The
-// Start menu shortcut names the activator CLSID; the shell starts the app
-// with LocalServer32 after it has exited and calls INotificationActivationCallback.
+// Unpackaged desktop toasts are activated through a COM local server. The Start menu shortcut names the activator CLSID; the shell starts the app with LocalServer32 after it has exited and calls INotificationActivationCallback. The installer and LocalServer32 start the app with the --nsgo- launch flags, which leave os.Args before main (flags.go): --nsgo-register-toast and --nsgo-unregister-toast arrive as Options, and --nsgo-toast-activation only takes away the -Embedding COM appends.
 
 var (
 	coRegisterClassObject = ole32.NewProc("CoRegisterClassObject")
@@ -122,7 +120,7 @@ func registerToastActivator(id string) {
 	if err != nil {
 		return
 	}
-	command := fmt.Sprintf(`"%s" --toast-activation`, exe)
+	command := fmt.Sprintf(`"%s" --nsgo-toast-activation`, exe)
 	path := `Software\Classes\CLSID\` + formatGUID(clsid) + `\LocalServer32`
 	if err := setUserRegistryString(path, "", command); err != nil {
 		return
@@ -314,37 +312,21 @@ func dispatchToastActivation(id string) {
 	}
 }
 
-// registerToastShortcutCommand is called by the NSIS installer after it has
-// created the Start menu link. It is intentionally a short-lived app mode.
-func registerToastShortcutCommand(id string) bool {
-	for i, arg := range os.Args {
-		if arg == "--register-toast" && i+1 < len(os.Args) {
-			setToastActivatorShortcut(os.Args[i+1], id, toastActivatorCLSID(id))
-			return true
-		}
-	}
-	return false
-}
-
-func unregisterToastCommand(id string) bool {
-	for _, arg := range os.Args {
-		if arg == "--unregister-toast" {
-			if id == "" {
-				id = "dev.nsgo.app"
-			}
-			clsid := toastActivatorCLSID(id)
-			deleteUserRegistryTree(`Software\Classes\CLSID\` + formatGUID(clsid))
-			deleteUserRegistryTree(`Software\Classes\AppUserModelId\` + id)
-			return true
-		}
-	}
-	return false
-}
-
-func setToastActivatorShortcut(path, id string, clsid guid) {
+// unregisterToast removes the current user's activator registration and AppUserModelID of the app, as the uninstaller runs it with --nsgo-unregister-toast.
+func unregisterToast(id string) {
 	if id == "" {
 		id = "dev.nsgo.app"
 	}
+	deleteUserRegistryTree(`Software\Classes\CLSID\` + formatGUID(toastActivatorCLSID(id)))
+	deleteUserRegistryTree(`Software\Classes\AppUserModelId\` + id)
+}
+
+// setToastActivatorShortcut stamps the shortcut at path with the app's AppUserModelID and toast activator, as the installer runs it with --nsgo-register-toast once it made the Start menu shortcut.
+func setToastActivatorShortcut(path, id string) {
+	if id == "" {
+		id = "dev.nsgo.app"
+	}
+	clsid := toastActivatorCLSID(id)
 	var link *comObject
 	hr, _, _ := coCreateInstance.Call(uintptr(unsafe.Pointer(&clsidShellLink)), 0, clsctxInprocServer,
 		uintptr(unsafe.Pointer(&iidShellLink)), uintptr(unsafe.Pointer(&link)))

@@ -94,8 +94,8 @@ func TestNSISScript(t *testing.T) {
 		`LangString NSGO_SHORTCUT ${LANG_SimpChinese} "创建桌面快捷方式"`,
 		`LangString NSGO_RUNNING ${LANG_Japanese} "My App は実行中です。終了して続行しますか？"`,
 		`CreateShortCut "$SMPROGRAMS\My App.lnk" "$INSTDIR\MyApp.exe"`,
-		`ExecWait '"$INSTDIR\MyApp.exe" --register-toast "$SMPROGRAMS\My App.lnk"'`,
-		`ExecWait '"$INSTDIR\MyApp.exe" --unregister-toast'`,
+		`ExecWait '"$INSTDIR\MyApp.exe" --nsgo-register-toast="$SMPROGRAMS\My App.lnk"'`,
+		`ExecWait '"$INSTDIR\MyApp.exe" --nsgo-unregister-toast'`,
 		`Delete "$INSTDIR\fonts\a$$b.ttf"`,
 		`RMDir "$INSTDIR\fonts"`,
 		`${IfNot} ${IsNativeARM64}`,
@@ -119,7 +119,7 @@ func TestNSISScript(t *testing.T) {
 	if err := nsisTemplate.Execute(&out, d); err != nil {
 		t.Fatal(err)
 	}
-	if want := "ExecWait '\"$INSTDIR\\MyApp.exe\" --register-toast \"$SMPROGRAMS\\Bob$\\'s `Notes`.lnk\"'"; !strings.Contains(out.String(), want) {
+	if want := "ExecWait '\"$INSTDIR\\MyApp.exe\" --nsgo-register-toast=\"$SMPROGRAMS\\Bob$\\'s `Notes`.lnk\"'"; !strings.Contains(out.String(), want) {
 		t.Errorf("script lacks %s", want)
 	}
 	for v, want := range map[string]string{"1.2.3": "1.2.3.0", "v2": "2.0.0.0", "1.2.3.4.5": "1.2.3.4"} {
