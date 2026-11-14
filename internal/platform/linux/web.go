@@ -38,6 +38,7 @@ var (
 	gMemoryInputStreamNewFromBytes       func(uintptr) uintptr
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
+	webkitNetworkSessionNewEphemeral     func() uintptr
 	webkitNetworkSessionGetCookieManager func(uintptr) uintptr
 	webkitDownloadGetWebView             func(uintptr) uintptr
 	webkitDownloadGetRequest             func(uintptr) uintptr
@@ -129,6 +130,7 @@ func bindWebKit(webkit, jsc, soup uintptr) {
 	purego.RegisterLibFunc(&gMemoryInputStreamNewFromBytes, gioLib, "g_memory_input_stream_new_from_bytes")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
+	reg(&webkitNetworkSessionNewEphemeral, "webkit_network_session_new_ephemeral")
 	reg(&webkitNetworkSessionGetCookieManager, "webkit_network_session_get_cookie_manager")
 	reg(&webkitDownloadGetWebView, "webkit_download_get_web_view")
 	reg(&webkitDownloadGetRequest, "webkit_download_get_request")
@@ -359,8 +361,8 @@ func (w *window) makeWeb(v *view) {
 	wv := v.web
 	var session uintptr
 	if wv.config.Incognito {
-		// A session without data or cache directories is ephemeral. The page holds its own reference; wv.session is released when the view closes.
-		wv.session = webkitNetworkSessionNew(nil, nil)
+		// The page holds its own reference; wv.session is released when the view closes.
+		wv.session = webkitNetworkSessionNewEphemeral()
 		gSignalConnect(wv.session, "download-started", cbWebDownloadStarted, 0)
 		session = wv.session
 	} else {
