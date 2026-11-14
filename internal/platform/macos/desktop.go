@@ -136,6 +136,7 @@ func (s *surface) command(c *driver.WindowCommand) {
 	case driver.WindowShow:
 		s.show(c.Anchor)
 	case driver.WindowHide:
+		s.showFirst = false
 		if s.kind == driver.SurfacePanel {
 			s.hidePanel(false)
 		} else {
@@ -442,12 +443,12 @@ func (v *view) takesPointer() bool {
 // setMenu makes entries the menu bar, or restores the default one.
 func (s *surface) setMenu(entries []driver.MenuEntry) {
 	nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
-	if s.menu != 0 {
-		defer s.menu.Send(selRelease)
-		s.menu = 0
-	}
 	s.menuEntries = entries
 	if entries == nil {
+		if s.menu != 0 {
+			defer s.menu.Send(selRelease)
+			s.menu = 0
+		}
 		nsApp.Send(sel("setMainMenu:"), defaultMenu)
 		return
 	}
@@ -467,9 +468,108 @@ func (s *surface) setMenu(entries []driver.MenuEntry) {
 		bar.Send(sel("addItem:"), holder)
 		holder.Send(selRelease)
 	}
+	if s.menu != 0 && nsApp.Send(sel("mainMenu")) == s.menu {
+		// setMainMenu: redraws the whole bar, which flickers as an app
+		// sets its menu again, such as for an item it checks, so the bar
+		// shown takes the new one's items in place.
+		syncMenu(s.menu, bar)
+		bar.Send(selRelease)
+		s.directMenu(s.menu)
+		return
+	}
 	s.directMenu(bar)
 	nsApp.Send(sel("setMainMenu:"), bar)
+	if s.menu != 0 {
+		s.menu.Send(selRelease)
+	}
 	s.menu = bar
+}
+
+// syncMenu makes the app's items of menu m what next is, keeping those
+// still of the same kind and taking the others from next. The items
+// AppKit adds itself, such as the Edit menu's Start Dictation, stay.
+func syncMenu(m, next objc.ID) {
+	if t := next.Send(sel("title")); apple.GoString(m.Send(sel("title"))) != apple.GoString(t) {
+		m.Send(sel("setTitle:"), t)
+	}
+	var old []objc.ID
+	for i := range objc.Send[int](m, sel("numberOfItems")) {
+		if it := m.Send(selItemAtIndex, i); isOwnItem(it) {
+			old = append(old, it)
+		}
+	}
+	n := objc.Send[int](next, sel("numberOfItems"))
+	items := make([]objc.ID, n)
+	for i := range items {
+		items[i] = next.Send(selItemAtIndex, 0).Send(sel("retain"))
+		next.Send(sel("removeItemAtIndex:"), 0)
+	}
+	at := 0 // where the next item goes: after the one before it
+	for i, it := range items {
+		if i < len(old) {
+			if sameMenuKind(old[i], it) {
+				syncMenuItem(old[i], it)
+				it.Send(selRelease)
+				at = objc.Send[int](m, sel("indexOfItem:"), old[i]) + 1
+				continue
+			}
+			m.Send(sel("removeItem:"), old[i])
+		}
+		m.Send(sel("insertItem:atIndex:"), it, at)
+		it.Send(selRelease)
+		at++
+	}
+	for _, it := range old[min(n, len(old)):] {
+		m.Send(sel("removeItem:"), it)
+	}
+}
+
+var selSetIdentifier = sel("setIdentifier:")
+
+// ownItemID is the identifier of the menu items NSGo makes.
+const ownItemID = "dev.nsgo.menu"
+
+func ownItem() objc.ID { return apple.NSString(ownItemID) }
+
+func isOwnItem(it objc.ID) bool { return apple.GoString(it.Send(sel("identifier"))) == ownItemID }
+
+var selItemAtIndex = sel("itemAtIndex:")
+
+// sameMenuKind reports whether a and b are both separators, both hold
+// submenus or both are actions.
+func sameMenuKind(a, b objc.ID) bool {
+	sep := sel("isSeparatorItem")
+	return objc.Send[bool](a, sep) == objc.Send[bool](b, sep) &&
+		(a.Send(sel("submenu")) == 0) == (b.Send(sel("submenu")) == 0)
+}
+
+// syncMenuItem gives item it what next has, setting only what changed.
+func syncMenuItem(it, next objc.ID) {
+	if objc.Send[bool](next, sel("isSeparatorItem")) {
+		return
+	}
+	for _, p := range [][2]string{{"title", "setTitle:"}, {"keyEquivalent", "setKeyEquivalent:"}} {
+		if v := next.Send(sel(p[0])); apple.GoString(it.Send(sel(p[0]))) != apple.GoString(v) {
+			it.Send(sel(p[1]), v)
+		}
+	}
+	if v := objc.Send[uint](next, sel("keyEquivalentModifierMask")); objc.Send[uint](it, sel("keyEquivalentModifierMask")) != v {
+		it.Send(sel("setKeyEquivalentModifierMask:"), v)
+	}
+	if v := objc.Send[objc.SEL](next, sel("action")); objc.Send[objc.SEL](it, sel("action")) != v {
+		it.Send(sel("setAction:"), v)
+	}
+	if v := next.Send(sel("target")); it.Send(sel("target")) != v {
+		it.Send(selSetTarget, v)
+	}
+	for _, p := range [][2]string{{"tag", "setTag:"}, {"state", "setState:"}} {
+		if v := objc.Send[int](next, sel(p[0])); objc.Send[int](it, sel(p[0])) != v {
+			it.Send(sel(p[1]), v)
+		}
+	}
+	if sub := next.Send(sel("submenu")); sub != 0 {
+		syncMenu(it.Send(sel("submenu")), sub)
+	}
 }
 
 // relabelMenus says the menu bar again in the surface's language.
@@ -500,6 +600,7 @@ func (s *surface) holder(label string, disabled bool, items []driver.MenuEntry) 
 	}
 	it := objc.ID(apple.Class("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
 		apple.NSString(label), action, apple.NSString(""))
+	it.Send(selSetIdentifier, ownItem())
 	sub := s.submenu(label, items)
 	it.Send(sel("setSubmenu:"), sub)
 	sub.Send(selRelease)
@@ -514,7 +615,9 @@ func (s *surface) submenu(title string, items []driver.MenuEntry) objc.ID {
 		switch {
 		case e.Separator:
 			if !lastSeparator {
-				m.Send(sel("addItem:"), objc.ID(apple.Class("NSMenuItem")).Send(sel("separatorItem")))
+				sep := objc.ID(apple.Class("NSMenuItem")).Send(sel("separatorItem"))
+				sep.Send(selSetIdentifier, ownItem())
+				m.Send(sel("addItem:"), sep)
 				lastSeparator = true
 			}
 			continue
@@ -570,6 +673,7 @@ func (s *surface) item(e driver.MenuEntry) objc.ID {
 	}
 	it := objc.ID(apple.Class("NSMenuItem")).Send(selAlloc).Send(sel("initWithTitle:action:keyEquivalent:"),
 		apple.NSString(title), action, apple.NSString(key))
+	it.Send(selSetIdentifier, ownItem())
 	if key != "" {
 		it.Send(sel("setKeyEquivalentModifierMask:"), mods)
 	}

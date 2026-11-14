@@ -157,6 +157,31 @@ func TestApplicationMenuFollowsItsOwner(t *testing.T) {
 	}
 }
 
+// TestApplicationMenuSetAgainKeepsTheBar sends a menu an effect sets
+// again in place of the one before, without the default between them,
+// which a menu bar would show for a moment.
+func TestApplicationMenuSetAgainKeepsTheBar(t *testing.T) {
+	var checked *Signal[bool]
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		checked = NewSignal(cx, true)
+		cx.Effect(func() {
+			cx.SetApplicationMenu([]MenuItem{{Label: "View", Items: []MenuItem{{Label: "Sidebar", Checked: checked.Get()}}}})
+		})
+		return View{}
+	})
+	h.commit()
+	checked.Set(false)
+	var menus [][]MenuEntry
+	for _, it := range h.commit().Items {
+		if it.Kind == driver.ItemMenu {
+			menus = append(menus, it.Menu)
+		}
+	}
+	if len(menus) != 1 || menus[0] == nil || menus[0][0].Items[0].Checked {
+		t.Fatalf("menus sent = %+v, want the new one alone", menus)
+	}
+}
+
 func TestBordersPerSide(t *testing.T) {
 	red, blue := RGB(0xff0000), RGB(0x0000ff)
 	for _, c := range []struct {

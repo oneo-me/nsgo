@@ -1,6 +1,10 @@
 package core
 
-import "github.com/nsgo-dev/nsgo/internal/driver"
+import (
+	"slices"
+
+	"github.com/nsgo-dev/nsgo/internal/driver"
+)
 
 // Desktop windows with the platform's native chrome and their menus: the
 // core's part of package desktop, which apps use. Platforms without
@@ -123,6 +127,10 @@ func (cx *Scope) SetApplicationMenu(items []MenuItem) {
 			}
 		})
 	}
+	// It replaces a menu not sent yet, such as the default one the
+	// cleanup of the effect setting it again asked for, which would show
+	// for a moment.
+	t.commands = slices.DeleteFunc(t.commands, func(it driver.MountItem) bool { return it.Kind == driver.ItemMenu })
 	t.commands = append(t.commands, driver.MountItem{Kind: driver.ItemMenu, Menu: entries})
 	t.changed = true
 }
