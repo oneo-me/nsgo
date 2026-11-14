@@ -1,6 +1,6 @@
 # Bluetooth Low Energy
 
-This is the design for issue [#58](https://github.com/nsgo-dev/nsgo/issues/58). It is not an implemented API. The first scope is the central role: discover peripherals, connect to one, discover its GATT database, read and write characteristics, and subscribe to notifications. Peripheral advertising and acting as a GATT server are separate work.
+This is the design for issue [#58](https://github.com/nsgo-dev/nsgo/issues/58). It is not an implemented API. The first scope is the central role: discover peripherals, connect to one, discover its GATT database, read and write characteristics, and subscribe to notifications. Peripheral advertising and acting as a GATT server are separate work. The questions it leaves open are in [Open questions](../../ARCHITECTURE.md#open-questions).
 
 Background scanning and connections depend on the Android engine/view lifetime work in [#12](https://github.com/nsgo-dev/nsgo/issues/12); this document does not promise a background process before that dependency is decided.
 
@@ -75,13 +75,3 @@ The implementation is complete only when these checks exist:
 - Apple tests use fake central and peripheral delegates to cover authorization read without a manager, the `unknown` state before the first update, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
 - Android tests cover the pipe's encoding of UUIDs, empty values and large payloads, `protocol_test.go` holds the new kinds in `Protocol.java` to the driver's, and a fake scanner and GATT client cover API 31 permissions, the install-time permissions and location-gated scans before it, adapter state, reconnect and cleanup without a device; and
 - target tests use a controlled peripheral or provider simulator, never a user's nearby device, and verify that no callback runs after its owning scope is disposed.
-
-## Open decisions
-
-These decisions need confirmation before an implementation chooses them:
-
-1. Is the first public API central-only, or should advertising and the peripheral role be part of the initial contract?
-2. Does a second scan replace the first scan or return an error?
-3. Should the public API expose operation IDs and negotiated MTU/write limits, or keep them backend details initially?
-4. Does Bluetooth use one `AccessBluetooth` capability or separate scan/connect grants?
-5. Which background guarantees are allowed after #12: restored connections, scans, notification delivery, or all three with separate policies?
