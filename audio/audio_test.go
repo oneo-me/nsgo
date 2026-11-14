@@ -68,6 +68,37 @@ func TestSoundLifecycle(t *testing.T) {
 	}
 }
 
+func TestSoundEndBeforeOnEnd(t *testing.T) {
+	backend := &fakeBackend{}
+	previous := targetBackend
+	targetBackend = backend
+	t.Cleanup(func() { targetBackend = previous })
+
+	sound, err := PlayFile("click.wav")
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.soundEnd()
+	ended := make(chan struct{}, 2)
+	if err := sound.OnEnd(func() { ended <- struct{}{} }); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-ended:
+	case <-time.After(time.Second):
+		t.Fatal("end callback registered after the cue ended did not run")
+	}
+	backend.soundEnd()
+	select {
+	case <-ended:
+		t.Error("end callback ran twice")
+	case <-time.After(50 * time.Millisecond):
+	}
+	if err := sound.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestPlayerCallbacksAndState(t *testing.T) {
 	backend := &fakeBackend{}
 	previous := targetBackend

@@ -44,8 +44,7 @@ func (sound *Sound) Stop() error {
 	return backend.stop()
 }
 
-// OnEnd registers the callback called when the cue finishes. Passing nil
-// removes the callback. Callbacks run serially on the package callback queue.
+// OnEnd registers the callback called when the cue finishes. A callback registered after the cue has finished is called once, at once, so a cue that ends before OnEnd is not missed. Passing nil removes the callback. Callbacks run serially on the package callback queue.
 func (sound *Sound) OnEnd(callback func()) error {
 	sound.mu.Lock()
 	defer sound.mu.Unlock()
@@ -53,6 +52,9 @@ func (sound *Sound) OnEnd(callback func()) error {
 		return ErrClosed
 	}
 	sound.onEnd = callback
+	if sound.ended && callback != nil {
+		callbacks.add(func() { sound.deliverEnd(callback) })
+	}
 	return nil
 }
 
@@ -78,14 +80,18 @@ func (sound *Sound) endedByBackend() {
 		return
 	}
 	sound.ended = true
+	callback := sound.onEnd
 	sound.mu.Unlock()
-	callbacks.add(func() {
-		sound.mu.Lock()
-		callback := sound.onEnd
-		closed := sound.closed
-		sound.mu.Unlock()
-		if !closed && callback != nil {
-			callback()
-		}
-	})
+	if callback != nil {
+		callbacks.add(func() { sound.deliverEnd(callback) })
+	}
+}
+
+func (sound *Sound) deliverEnd(callback func()) {
+	sound.mu.Lock()
+	closed := sound.closed
+	sound.mu.Unlock()
+	if !closed {
+		callback()
+	}
 }

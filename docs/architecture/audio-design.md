@@ -37,7 +37,8 @@ entry points return `ErrUnsupported` after validating their source and options.
 `Sound` is a short-lived cue. It has `SetVolume`, `Stop`, `OnEnd` and `Close`;
 `Close` is idempotent and releases the native player. A cue that is played
 again may use a new native player, so an old end callback cannot end the new
-one.
+one. A cue starts before `PlayFile` returns, so an `OnEnd` registered after
+the cue has finished is called at once rather than missed.
 
 `Player` is long-form playback. It has `Play`, `Pause`, `Stop`, `Seek`,
 `SetVolume`, `SetRate`, `SetLoop`, `Position`, `Duration`, `Playing`, `Ended`,
