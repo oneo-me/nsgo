@@ -42,6 +42,7 @@ var (
 	iidUnknown                        = parseGUID("00000000-0000-0000-c000-000000000046")
 	iidAgileObject                    = parseGUID("94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90")
 	iidEnvironment                    = parseGUID("b96d755e-0319-4e92-a296-23436f46a1fc")
+	iidEnvironment2                   = parseGUID("41f3632b-5ef4-404f-ad82-2d606c5a9a21")
 	iidEnvironment3                   = parseGUID("80a22ae3-be7c-4ce2-afe1-5a50056cdeeb")
 	iidEnvironment10                  = parseGUID("ee0eb9df-6f12-46ce-b53f-3f47b9c928e0")
 	iidControllerOptions              = parseGUID("12aae616-8ccb-44ec-bcb3-eb1831881635")
@@ -56,7 +57,7 @@ var (
 	iidNavigationCompleted            = parseGUID("d33a35bf-1c49-4f98-93ab-006e0533fe1c")
 	iidWebMessageReceived             = parseGUID("57213f19-00e6-49fa-8e07-898ea01ecbd2")
 	iidWebResourceRequested           = parseGUID("ab00b74c-15f1-4646-80e8-e76341d25d71")
-	iidHttpRequestHeaders             = parseGUID("e86cac0e-5523-465c-b536-8fb9fc8c8c60")
+	iidWeb2                           = parseGUID("9e8f0cf8-e670-4b5e-b2bc-73e061e3184c")
 	iidWeb4                           = parseGUID("20d02d59-6df2-42dc-bd06-f98a694b1302")
 	iidDownloadStarting               = parseGUID("efedc989-c396-41ca-83f7-07f845a55724")
 	iidBytesReceivedChanged           = parseGUID("828e8ab6-d94c-4264-9cef-5217170d6251")
@@ -74,8 +75,9 @@ const (
 	comAddRef         = 1
 	comRelease        = 2
 
-	// ICoreWebView2Environment, then ICoreWebView2Environment3 and 10
+	// ICoreWebView2Environment, then ICoreWebView2Environment2, 3 and 10
 	envCreateWebResourceResponse   = 4
+	env2CreateWebResourceRequest   = 8
 	envCreateCompositionController = 9
 	envCreatePointerInfo           = 10
 	env10CreateControllerOptions   = 20
@@ -125,8 +127,9 @@ const (
 	webGetDocumentTitle              = 48
 	webAddWebResourceRequested       = 55
 	webAddWebResourceRequestedFilter = 57
-	// ICoreWebView2_4 (after ICoreWebView2_2 and ICoreWebView2_3).
-	webAddDownloadStarting = 75
+	// ICoreWebView2_2, then ICoreWebView2_4 (after ICoreWebView2_3).
+	web2NavigateWithWebResourceRequest = 63
+	webAddDownloadStarting             = 75
 
 	// ICoreWebView2DownloadStartingEventArgs.
 	downloadArgsGetOperation  = 3
@@ -170,8 +173,6 @@ const (
 	resourceArgsGetRequest  = 3
 	resourceArgsPutResponse = 5
 	requestGetUri           = 3
-	requestGetHeaders       = 5
-	httpHeadersSetHeader    = 8
 
 	// ICoreWebView2PointerInfo
 	pointerPutPointerKind         = 4

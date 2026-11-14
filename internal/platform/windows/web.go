@@ -47,9 +47,11 @@ package windows
 // once the document scripts asked for are added.
 
 import (
+	"maps"
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -83,7 +85,6 @@ type webView struct {
 	configured, hasApplied bool
 	commands               []webCommand // waiting for the controller
 	userAgent              string       // WebView2's own
-	headerFilter           bool
 	schemeServing          bool
 
 	// The document scripts: the app's IDs and the one keeping the page
@@ -559,9 +560,6 @@ func (wv *webView) apply() {
 			s6.release()
 		}
 	}
-	if len(c.Headers) > 0 {
-		wv.serveHeaders()
-	}
 	scripts := first || c.InjectedJavaScript != old.InjectedJavaScript ||
 		c.InjectedJavaScriptBeforeContent != old.InjectedJavaScriptBeforeContent
 	if scripts {
@@ -588,7 +586,7 @@ func (wv *webView) apply() {
 	if first && c.NoScroll || !first && c.NoScroll != old.NoScroll {
 		wv.setScrolls(!c.NoScroll)
 	}
-	if scripts || c.Source != old.Source {
+	if scripts || c.Source != old.Source || !maps.Equal(c.Headers, old.Headers) {
 		wv.navigatePending = true
 		wv.navigateIfReady()
 	}
@@ -689,7 +687,7 @@ func (wv *webView) navigate() {
 	case src.HTML != "":
 		hr = wv.web.call(webNavigateToString, uintptr(unsafe.Pointer(wide(src.HTML))))
 	case src.Src != "":
-		hr = wv.web.call(webNavigate, uintptr(unsafe.Pointer(wide(webURL(src.Src)))))
+		hr = wv.navigateURL(webURL(src.Src))
 	default:
 		hr = wv.web.call(webNavigate, uintptr(unsafe.Pointer(wide("about:blank"))))
 	}
@@ -701,6 +699,47 @@ func (wv *webView) navigate() {
 		wv.report(driver.Event{Kind: driver.EventError, Text: hresultError("the page could not be loaded", hr).Error(),
 			Navigation: &driver.WebNavigation{URL: url}})
 	}
+}
+
+// navigateURL loads uri, sending the config's headers with this request only (NavigateWithWebResourceRequest), as the other backends do: the page's own requests and later navigations go without them.
+func (wv *webView) navigateURL(uri string) uintptr {
+	headers := webRequestHeaders(wv.config.Headers)
+	if headers == "" {
+		return wv.web.call(webNavigate, uintptr(unsafe.Pointer(wide(uri))))
+	}
+	env2 := wv.env.query(&iidEnvironment2)
+	web2 := wv.web.query(&iidWeb2)
+	defer env2.release()
+	defer web2.release()
+	if env2 == nil || web2 == nil {
+		// A runtime too old for it loads the URL without the headers.
+		return wv.web.call(webNavigate, uintptr(unsafe.Pointer(wide(uri))))
+	}
+	var request *comObject
+	if hr := env2.call(env2CreateWebResourceRequest, uintptr(unsafe.Pointer(wide(uri))), uintptr(unsafe.Pointer(wide("GET"))),
+		0, uintptr(unsafe.Pointer(wide(headers))), uintptr(unsafe.Pointer(&request))); failed(hr) {
+		return hr
+	} else if request == nil {
+		return eFail
+	}
+	defer request.release()
+	return web2.call(web2NavigateWithWebResourceRequest, request.ptr())
+}
+
+// webRequestHeaders is headers as WebView2's CRLF-separated header lines, in name order, without the fields whose name or value would break a line or a field.
+func webRequestHeaders(headers map[string]string) string {
+	var b strings.Builder
+	for _, name := range slices.Sorted(maps.Keys(headers)) {
+		value := headers[name]
+		if name == "" || strings.ContainsAny(name, "\r\n:") || strings.ContainsAny(value, "\r\n") {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteString("\r\n")
+		}
+		b.WriteString(name + ": " + value)
+	}
+	return b.String()
 }
 
 // webURL is s as WebView2 navigates to it: an absolute path as a file
@@ -792,34 +831,6 @@ func (wv *webView) respondResource(args *comObject, body []byte, contentType str
 
 func webMIME(path string, body []byte) string {
 	return driver.WebMIME(path, body)
-}
-
-// serveHeaders adds the app's configured headers to WebView2 requests.
-func (wv *webView) serveHeaders() {
-	if wv.headerFilter || wv.web == nil {
-		return
-	}
-	wv.headerFilter = true
-	wv.web.call(webAddWebResourceRequestedFilter, uintptr(unsafe.Pointer(wide("*"))), webResourceContextAll)
-	wv.web.subscribe(webAddWebResourceRequested, newHandler(&iidWebResourceRequested, func(_ uintptr, args unsafe.Pointer) {
-		if wv.closed || len(wv.config.Headers) == 0 {
-			return
-		}
-		a := (*comObject)(args)
-		var request *comObject
-		if failed(a.call(resourceArgsGetRequest, uintptr(unsafe.Pointer(&request)))) || request == nil {
-			return
-		}
-		defer request.release()
-		var headers *comObject
-		if failed(request.call(requestGetHeaders, uintptr(unsafe.Pointer(&headers)))) || headers == nil {
-			return
-		}
-		defer headers.release()
-		for name, value := range wv.config.Headers {
-			headers.call(httpHeadersSetHeader, uintptr(unsafe.Pointer(wide(name))), uintptr(unsafe.Pointer(wide(value))))
-		}
-	}))
 }
 
 // sameDocument reports whether a and b name the same document, fragments
