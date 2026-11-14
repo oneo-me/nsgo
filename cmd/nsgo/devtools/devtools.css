@@ -47,3 +47,14 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .err { color: var(--bad); }
 .hint { color: var(--muted); }
 .code { flex: 1; margin: 0; padding: 12px; overflow: auto; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--panel); }
+.box-model { margin: 12px 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
+.box { border: 1px dashed var(--muted); padding: 2px 6px; position: relative; }
+.box-label { position: absolute; left: 4px; top: 1px; color: var(--muted); font-size: 10px; }
+.box-mid { display: flex; align-items: center; gap: 6px; }
+.box-mid > .box { flex: 1; }
+.box.margin { background: rgba(246, 178, 107, 0.25); }
+.box.border { background: rgba(255, 229, 153, 0.35); border-style: solid; }
+.box.padding { background: rgba(147, 196, 125, 0.3); }
+.box.content { background: rgba(111, 168, 220, 0.35); border-style: solid; padding: 8px; }
+#commits td, #hot td { white-space: nowrap; }
+#commits { overflow-x: auto; }

@@ -106,3 +106,16 @@ func TestDevToolsServerPassesMessagesBothWays(t *testing.T) {
 		}
 	}
 }
+
+// A phone is told the server's first address, which is the one the machine reaches other hosts through, not a virtual network's that comes first among the interfaces.
+func TestDevServerTellsPhonesTheOutboundAddressFirst(t *testing.T) {
+	out := outboundIP()
+	if out == nil || !out.IsPrivate() {
+		t.Skip("no private outbound address here")
+	}
+	s := &devServer{port: 8080}
+	urls := s.lanURLs()
+	if len(urls) == 0 || urls[0] != "http://"+out.String()+":8080" {
+		t.Fatalf("lanURLs = %v, want %s first", urls, out)
+	}
+}

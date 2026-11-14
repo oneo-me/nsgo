@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,6 +68,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 		return err
 	}
 	defer srv.close()
+	srv.dir = p.Dir
 	opts.server = srv
 	s, err := sessionFor(p, opts)
 	if err != nil {
@@ -310,8 +312,9 @@ type devServer struct {
 
 	mu      sync.Mutex
 	clients map[chan string]bool
-	// pages are the DevTools pages following the app's messages.
+	// pages are the DevTools pages following the app's messages, and dir the app's directory, which their relative sites (a TSX file's) are in.
 	pages   map[chan string]bool
+	dir     string
 	last    string // the last error event, for apps that connect later
 	files   string
 	bundles map[string]string // the latest TSX bundles, by entry
@@ -403,16 +406,38 @@ func (s *devServer) serve(dir string) {
 // url is the server's address on this machine.
 func (s *devServer) url() string { return fmt.Sprintf("http://127.0.0.1:%d", s.port) }
 
-// lanURLs are the server's addresses on the machine's networks.
+// lanURLs are the server's addresses on the machine's networks, the one the machine reaches other hosts through first: a phone is told the first, and a virtual network's (a VPN's, a container's) comes before the Wi-Fi's in the interfaces' order.
 func (s *devServer) lanURLs() []string {
-	var out []string
+	var ips []net.IP
 	addrs, _ := net.InterfaceAddrs()
 	for _, a := range addrs {
 		if ip, ok := a.(*net.IPNet); ok && !ip.IP.IsLoopback() && ip.IP.To4() != nil && ip.IP.IsPrivate() {
-			out = append(out, fmt.Sprintf("http://%s:%d", ip.IP, s.port))
+			ips = append(ips, ip.IP)
 		}
 	}
+	if out := outboundIP(); out != nil {
+		if i := slices.IndexFunc(ips, out.Equal); i > 0 {
+			ips = append(append([]net.IP{ips[i]}, ips[:i]...), ips[i+1:]...)
+		}
+	}
+	out := make([]string, len(ips))
+	for i, ip := range ips {
+		out[i] = fmt.Sprintf("http://%s:%d", ip, s.port)
+	}
 	return out
+}
+
+// outboundIP is the address the machine sends from to other hosts, as its default route goes; a UDP socket connects without sending anything. Nil without a route.
+func outboundIP() net.IP {
+	c, err := net.Dial("udp4", "192.0.2.1:9")
+	if err != nil {
+		return nil
+	}
+	defer c.Close()
+	if a, ok := c.LocalAddr().(*net.UDPAddr); ok {
+		return a.IP
+	}
+	return nil
 }
 
 // send tells every client kind: "error" with a failed build's output,

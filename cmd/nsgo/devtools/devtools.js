@@ -24,8 +24,12 @@ function send(cmd) {
   return fetch("/_nsgo/devtools/command", { method: "POST", body: JSON.stringify({ surface: state.surface, ...cmd }) });
 }
 
-const sitePattern = /^(\/.*|[A-Za-z]:\\.*):(\d+)$/;
+// A site names a file and a line: whole for Go, relative to the app's directory for TSX through its source maps.
+const sitePattern = /^([^():\s][^():]*\.[A-Za-z]+|[A-Za-z]:\\[^():]*):(\d+)$/;
 const isPath = (site) => !!site && sitePattern.test(site);
+let projectDir = "";
+fetch("/_nsgo/devtools/project").then((r) => r.json()).then((p) => { projectDir = p.dir || ""; }).catch(() => {});
+const absolute = (file) => (file.startsWith("/") || /^[A-Za-z]:\\/.test(file) || !projectDir ? file : projectDir.replace(/\/$/, "") + "/" + file);
 
 // A site is a whole path and a line, or NSGo's function for what it made itself; a path opens in the editor chosen.
 function siteLink(site) {
@@ -35,7 +39,8 @@ function siteLink(site) {
   const parts = m[1].split(/[\\/]/);
   const short = parts.slice(-2).join("/") + ":" + m[2];
   const editor = $("editor").value;
-  const href = editor ? `${editor}://file${m[1].startsWith("/") ? "" : "/"}${m[1]}:${m[2]}` : undefined;
+  const file = absolute(m[1]);
+  const href = editor && (file.startsWith("/") || /^[A-Za-z]:/.test(file)) ? `${editor}://file${file.startsWith("/") ? "" : "/"}${file}:${m[2]}` : undefined;
   return el("a", { class: "site", href, title: site }, short);
 }
 
@@ -113,14 +118,35 @@ function renderDetails() {
     ["Component", n.component ? [n.component, " ", siteLink(n.site)] : null],
     ["Selector", n.selector ? el("code", {}, n.selector) : el("span", { class: "hint" }, "none: give it a TestID")],
     ["Bounds", `${x}, ${y}, ${w} × ${h}`],
+    ["Classes", n.classes ? el("code", {}, n.classes) : null],
     ["Role", n.role], ["Label", n.label], ["Text", n.text], ["Hidden", n.hidden ? "yes" : null],
   ].filter(([, v]) => v);
   const style = (n.style || []).map((p) => el("tr", {}, el("td", {}, p.name), el("td", {}, p.value)));
   box.replaceChildren(
     el("table", {}, rows.map(([k, v]) => el("tr", {}, el("th", {}, k), el("td", {}, v)))),
+    n.selector ? el("div", { class: "toolbar" },
+      el("button", { onclick: () => addStep({ action: "AssertExists", selector: n.selector }), title: "Add a check that this view shows to the recorded test" }, "Assert shown"),
+      n.text ? el("button", { onclick: () => addStep({ action: "AssertText", selector: n.selector, text: n.text }), title: "Add a check of this view's text to the recorded test" }, "Assert text") : null) : null,
+    boxModel(n),
     el("h4", {}, "Style"),
     style.length ? el("table", {}, style) : el("p", { class: "hint" }, "No style of its own."),
   );
+}
+
+// boxModel draws a view's margin, border, padding and content as nested boxes, as browsers' DevTools do.
+function boxModel(n) {
+  const b = n.box || {};
+  const fmt = (v) => (v ? +v.toFixed(1) : "–");
+  const layer = (name, sides, inner) => el("div", { class: "box " + name },
+    el("span", { class: "box-label" }, name),
+    el("div", { class: "box-top" }, fmt(sides[0])),
+    el("div", { class: "box-mid" }, el("span", {}, fmt(sides[3])), inner, el("span", {}, fmt(sides[1]))),
+    el("div", { class: "box-bottom" }, fmt(sides[2])));
+  const [, , w, h] = n.bounds;
+  const pad = b.padding || [0, 0, 0, 0], border = b.border || [0, 0, 0, 0];
+  const cw = w - pad[1] - pad[3] - border[1] - border[3], ch = h - pad[0] - pad[2] - border[0] - border[2];
+  const content = el("div", { class: "box content" }, `${+cw.toFixed(1)} × ${+ch.toFixed(1)}`);
+  return el("div", { class: "box-model" }, layer("margin", b.margin || [0, 0, 0, 0], layer("border", border, layer("padding", pad, content))));
 }
 
 // State.
@@ -133,7 +159,8 @@ function renderOwners() {
   const own = $("state-own").checked;
   const has = (s) => s && s.toLowerCase().includes(q);
   // A computation that holds nothing, such as an element's binding, counts on its owner's row rather than taking one.
-  const leaf = (o) => (o.computations || []).length > 0 && !(o.values || []).length && !(o.children || []).length;
+  // A memo keeps its row, for its value.
+  const leaf = (o) => (o.computations || []).length > 0 && !(o.values || []).length && !(o.children || []).length && o.computations.every((c) => c.value === undefined);
   const walk = (o, depth) => {
     // A value NSGo made for itself names NSGo's function rather than a file: hidden unless asked for.
     const values = (o.values || []).filter((v) => (own || isPath(v.site)) && (!q || has(v.site) || has(v.type) || has(v.text) || has(o.name)));
@@ -152,10 +179,12 @@ function renderOwners() {
     const comps = o.computations || [];
     const head = el("div", { class: "row", style: `padding-left:${8 + depth * 14}px` },
       el("span", { class: "kind" }, o.name), siteLink(o.site),
-      comps.map((c) => el("span", { class: "chip" }, `ran ${c.runs}×`)),
+      comps.map((c) => [c.value !== undefined ? el("span", { class: "dim" }, " = " + c.value) : null,
+        el("span", { class: "chip" }, `ran ${c.runs}×`), c.readers ? el("span", { class: "chip" }, `read by ${c.readers}`) : null]),
       leaves.length ? el("span", { class: "chip", title: "The computations it owns that hold nothing, such as its elements' bindings" }, `${counted}, ran ${runs}×`) : null);
     const vals = values.map((v) => el("div", { class: "row value", style: `padding-left:${22 + depth * 14}px` },
-      el("span", { class: "dim" }, v.type + " "), valueField(v), siteLink(v.site)));
+      el("span", { class: "dim" }, v.type + " "), valueField(v), siteLink(v.site),
+      el("span", { class: "chip", title: "The computations that read it now" }, v.readers ? `read by ${v.readers}` : "read by none")));
     return [head, ...vals, ...sub];
   };
   tree.append(...walk(state.owners, 0));
@@ -172,31 +201,50 @@ function valueField(v) {
 
 // Profiler.
 
+const ms = (ns) => (ns / 1e6).toFixed(2);
+
 function renderCommits() {
   const list = $("commits");
-  const max = Math.max(1, ...state.commits.map((c) => c.ms));
+  const total = (c) => c.ms + (c.causes ? c.causes.App / 1e6 : 0) + (c.platform || 0);
+  const max = Math.max(1, ...state.commits.map(total));
+  const rows = [];
+  for (const c of state.commits.slice().reverse()) {
+    const k = c.causes || {};
+    const writes = k.Writes || [];
+    const ran = k.Ran || [];
+    const open = state.openCommit === c.n;
+    rows.push(el("tr", { onclick: () => { state.openCommit = open ? 0 : c.n; renderCommits(); }, title: "Show what this commit ran" },
+      el("td", { class: "num" }, (ran.length ? (open ? "▾ " : "▸ ") : "") + c.n),
+      el("td", { class: "num" }, total(c).toFixed(2)),
+      el("td", { style: "width:80px" }, el("div", { class: "bar", style: `width:${(80 * total(c)) / max}px` })),
+      el("td", { class: "num dim" }, k.App !== undefined ? ms(k.App) : ""),
+      el("td", { class: "num dim" }, c.ms.toFixed(2)),
+      el("td", { class: "num dim" }, k.Layout !== undefined ? ms(k.Layout) : ""),
+      el("td", { class: "num dim" }, c.platform !== undefined ? c.platform.toFixed(2) : ""),
+      el("td", { class: "num" }, c.items),
+      el("td", {}, writes.slice(0, 3).map((w) => el("div", {}, w.Site + (w.Count > 1 ? ` ×${w.Count}` : ""))), writes.length > 3 ? el("div", { class: "dim" }, `and ${writes.length - 3} more`) : null),
+      el("td", { class: "dim" }, `${k.Renders || 0} bindings, ${k.Effects || 0} effects, ${k.Memos || 0} memos`)));
+    if (open) rows.push(el("tr", {}, el("td", {}), el("td", { colspan: 9 }, el("table", {},
+      el("tr", {}, el("th", {}, "ms"), el("th", {}, "runs"), el("th", {}, "kind"), el("th", {}, "made at")),
+      ran.map((r) => el("tr", {}, el("td", { class: "num" }, ms(r.Took)), el("td", { class: "num" }, r.Runs), el("td", {}, r.Kind), el("td", {}, siteLink(r.Site) || el("span", { class: "dim" }, "—"))))))));
+  }
   list.replaceChildren(el("table", {},
-    el("tr", {}, el("th", {}, "#"), el("th", {}, "ms"), el("th", {}), el("th", {}, "items"), el("th", {}, "after"), el("th", {}, "ran")),
-    state.commits.slice().reverse().map((c) => {
-      const writes = (c.causes && c.causes.Writes) || [];
-      const ran = c.causes ? `${c.causes.Renders} bindings, ${c.causes.Effects} effects, ${c.causes.Memos} memos` : "";
-      return el("tr", {},
-        el("td", { class: "num" }, c.n), el("td", { class: "num" }, c.ms.toFixed(2)),
-        el("td", { style: "width:80px" }, el("div", { class: "bar", style: `width:${(80 * c.ms) / max}px` })),
-        el("td", { class: "num" }, c.items),
-        el("td", {}, writes.slice(0, 3).map((w) => el("div", {}, w.Site + (w.Count > 1 ? ` ×${w.Count}` : ""))), writes.length > 3 ? el("div", { class: "dim" }, `and ${writes.length - 3} more`) : null),
-        el("td", { class: "dim" }, ran));
-    })));
+    el("tr", {}, el("th", {}, "#"), el("th", {}, "ms"), el("th", {}), el("th", { title: "The app's code before the commit: handlers, timers, effects" }, "app"),
+      el("th", { title: "The commit: rendering, text, layout and diffing" }, "commit"), el("th", { title: "Layout, within the commit" }, "layout"),
+      el("th", { title: "Applying the batch on the platform's main thread" }, "platform"),
+      el("th", {}, "items"), el("th", {}, "after"), el("th", {}, "ran")),
+    rows));
 }
 
 function renderHot(hot) {
   $("hot").replaceChildren(el("table", {},
-    el("tr", {}, el("th", {}, "runs"), el("th", {}, "kind"), el("th", {}, "made at")),
-    (hot || []).map((c) => el("tr", {}, el("td", { class: "num" }, c.runs), el("td", {}, c.kind), el("td", {}, siteLink(c.site) || el("span", { class: "dim" }, "—"))))));
+    el("tr", {}, el("th", {}, "ms"), el("th", {}, "runs"), el("th", {}, "kind"), el("th", {}, "made at")),
+    (hot || []).map((c) => el("tr", {}, el("td", { class: "num" }, ms(c.took || 0)), el("td", { class: "num" }, c.runs), el("td", {}, c.kind), el("td", {}, siteLink(c.site) || el("span", { class: "dim" }, "—"))))));
 }
 
 // Recorder.
 
+// testCode writes the steps as a test file: consecutive typing in one field is one Type.
 function testCode() {
   const steps = [];
   for (const s of state.steps) {
@@ -204,18 +252,34 @@ function testCode() {
     if (s.action === "Type" && last && last.action === "Type" && last.selector === s.selector) last.text += s.text;
     else steps.push({ ...s });
   }
-  const lines = steps.map((s) => {
-    if (!s.selector) return `\t// a ${s.action.toLowerCase()} on a view with no selector: give it a TestID`;
+  let core = false;
+  const lines = steps.flatMap((s) => {
+    if (!s.selector) return [`\t// a ${s.action.toLowerCase()} on a view with no selector: give it a TestID`];
     const sel = JSON.stringify(s.selector);
-    return s.action === "Type" ? `\tapp.Type(${sel}, ${JSON.stringify(s.text)})` : `\tapp.${s.action}(${sel})`;
+    switch (s.action) {
+      case "Type": return [`\tapp.Type(${sel}, ${JSON.stringify(s.text)})`];
+      case "ScrollTo": core = true; return [`\tapp.ScrollTo(${sel}, core.Point{X: ${s.offset[0]}, Y: ${s.offset[1]}})`];
+      case "AssertText": return [
+        `\tif got := app.Find(${sel}).Text; got != ${JSON.stringify(s.text)} {`,
+        `\t\tt.Errorf("%s shows %q, want %q", ${sel}, got, ${JSON.stringify(s.text)})`,
+        "\t}"];
+      case "AssertExists": return [`\tif !app.Exists(${sel}) {`, `\t\tt.Errorf("%s is not shown", ${sel})`, "\t}"];
+      default: return [`\tapp.${s.action}(${sel})`];
+    }
   });
-  return ["func TestRecorded(t *testing.T) {", "\tapp := nsgotest.Start(t, Root)", ...lines, "}", ""].join("\n");
+  const imports = ['\t"testing"', "", ...(core ? ['\t"github.com/nsgo-dev/nsgo/core"'] : []), '\t"github.com/nsgo-dev/nsgo/nsgotest"'];
+  return ["package main", "", "import (", ...imports, ")", "", "func TestRecorded(t *testing.T) {", "\tapp := nsgotest.Start(t, Root)", ...lines, "}", ""].join("\n");
 }
 
 function renderRecorder() {
   $("record").textContent = state.recording ? "Stop" : "Record";
   $("record").classList.toggle("on", state.recording);
   $("test-code").textContent = testCode();
+}
+
+function addStep(step) {
+  state.steps.push(step);
+  renderRecorder();
 }
 
 // Messages.
@@ -257,9 +321,14 @@ function onMessage(m) {
     case "owners": state.owners = m.data; renderOwners(); break;
     case "hover": { const r = state.rows.get(m.id); for (const x of state.rows.values()) x.row.style.outline = ""; if (r) { r.row.style.outline = "1px solid var(--accent)"; r.row.scrollIntoView({ block: "nearest" }); } break; }
     case "picked": state.picking = false; $("pick").classList.remove("on"); showTab("elements"); send({ op: "elements" }); state.selected = m.id; setTimeout(() => select(m.id), 300); break;
-    case "step": state.steps.push(m.step); renderRecorder(); break;
+    case "step": addStep(m.step); break;
     case "set": if (m.error) alert(m.error); send({ op: "owners" }); break;
     case "hot": if (state.tab === "profiler") renderHot(m.hot); break;
+    case "applied": {
+      const c = state.commits.find((x) => x.n === m.id);
+      if (c) { c.platform = m.data; if (state.tab === "profiler") renderCommits(); }
+      break;
+    }
     case "commit":
       state.connected = true;
       if (!state.paused) { state.commits.push(m.commit); if (state.commits.length > 500) state.commits.shift(); if (state.tab === "profiler") renderCommits(); }

@@ -35,6 +35,11 @@ func (s *devServer) serveDevTools() {
 		}
 	})
 	s.mux.HandleFunc("/_nsgo/devtools/stream", s.pageStream)
+	// The app's directory, for the page's links to TSX files, which source maps name relative to it.
+	s.mux.HandleFunc("/_nsgo/devtools/project", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"dir": s.dir})
+	})
 	s.mux.HandleFunc("/_nsgo/devtools/command", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "POST a command", http.StatusMethodNotAllowed)
