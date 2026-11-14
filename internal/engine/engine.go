@@ -99,6 +99,8 @@ type Options struct {
 	// the app's own, which shows no view, and the platform attaches each
 	// surface the app opens.
 	Windows *WindowOptions
+	// HotKeys, set where the platform registers global shortcuts but opens no windows, has the first surface take the app's global shortcuts (core.RootOptions.HotKeys).
+	HotKeys bool
 	// Perf collects this app's commit timings; nil measures nothing.
 	Perf *PerfMonitor
 	// Thread runs first on the OS thread the engine keeps, before the
@@ -371,6 +373,7 @@ func (e *Engine) run(p Platform, app App, opts Options, tokens Tokens) {
 		CacheDir:     opts.CacheDir,
 		Host:         opts.Host.Channel,
 		Windows:      opts.Windows,
+		HotKeys:      opts.HotKeys,
 	})
 	defer root.Dispose()
 	tree := core.NewTree(root, p)

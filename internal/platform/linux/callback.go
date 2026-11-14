@@ -72,8 +72,11 @@ var (
 	cbTick            uintptr
 	cbYield           uintptr
 
-	cbNotificationAction uintptr
-	cbNotificationClosed uintptr
+	cbNotificationAction    uintptr
+	cbNotificationClosed    uintptr
+	cbGlobalHotKeyResponse  uintptr
+	cbGlobalHotKeyActivated uintptr
+	cbX11HotKeyEvent        uintptr
 
 	cbShaderRender    uintptr
 	cbShaderUnrealize uintptr
@@ -149,6 +152,9 @@ func init() {
 	cbYield = newCallback(yieldCallback)
 	cbNotificationAction = newCallback(notificationActionCallback)
 	cbNotificationClosed = newCallback(notificationClosedCallback)
+	cbGlobalHotKeyResponse = newCallback(globalHotKeyResponse)
+	cbGlobalHotKeyActivated = newCallback(globalHotKeyActivated)
+	cbX11HotKeyEvent = newCallback(x11HotKeyEvent)
 
 	cbShaderRender = newCallback(shaderRenderCallback)
 	cbShaderUnrealize = newCallback(shaderUnrealizeCallback)

@@ -106,6 +106,8 @@ type RootOptions struct {
 	// window's options (SetMainView): the first tree is then the app's
 	// own surface, which shows no view.
 	Windows *WindowOptions
+	// HotKeys, set where the platform registers global shortcuts but opens no windows, sends RegisterHotKey's shortcuts to the first tree, as a platform that opens windows has them sent to the app's own surface.
+	HotKeys bool
 }
 
 // NewRoot returns the root scope of a new graph.
@@ -115,7 +117,7 @@ func NewRoot(opts RootOptions) *Scope {
 	}
 	rt := &runtime{post: opts.Post, clock: opts.Clock, report: opts.Report,
 		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir,
-		requestFrame: opts.RequestFrame, windows: opts.Windows}
+		requestFrame: opts.RequestFrame, windows: opts.Windows, takesHotKeys: opts.HotKeys}
 	rt.root = &Scope{rt: rt}
 	if devtools.Enabled {
 		rt.dev = newDevState()
@@ -199,6 +201,8 @@ type runtime struct {
 	trayID      uint32
 	hotKeys     []*hotKey
 	hotKeyID    uint32
+	// takesHotKeys is RootOptions.HotKeys.
+	takesHotKeys bool
 	// theme is DefaultTheme's, made on first use; subtreeAppearance
 	// whether any scope has forced one.
 	theme             *Theme

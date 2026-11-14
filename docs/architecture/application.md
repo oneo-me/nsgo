@@ -1,6 +1,6 @@
 # Application and windows
 
-An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens them; the [roadmap](../roadmap.md#application-and-windows) orders Windows and Linux.
+An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens the full set; Linux also handles global shortcuts; the [roadmap](../roadmap.md#application-and-windows) orders the remaining Windows and Linux work.
 
 ## Model
 
@@ -37,7 +37,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Opening sends `ItemOpenSurface` to the app's surface. The platform makes the window and attaches it: `engine.Engine.Attach(id, platform)` returns the surface's `Engine`, which reports its size, environment and events as the first surface's does.
 - The engine commits every attached tree after each wake-up, the first first, and asks a window's platform for display frames, since the app's surface has no display. A tree waits uncommitted until it is attached.
 - A closed window's tree ends: the engine sends its platform one batch, `WindowDestroy`, and forgets it, or sends it to a platform that attaches after the close.
-- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow`, `OpenPanel` and `NewTray` return nil, whose methods do nothing, and `core.AppRoot` shows the main view in it.
+- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow`, `OpenPanel` and `NewTray` return nil, whose methods do nothing, and `core.AppRoot` shows the main view in it. A platform that registers global shortcuts there, as Linux's own window does, says so with `core.RootOptions.HotKeys`, and the shortcuts go to that surface.
 
 ## Lifecycle
 
@@ -60,6 +60,12 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - A drawn icon is a surface in the button: an embedded surface whose hit test lets clicks through to the button, the item as wide as the view.
 - Global shortcuts are Carbon's `RegisterEventHotKey` on the application's event target, which needs no accessibility permission; a key names its ANSI virtual key code.
 - An alert asked from the app's own surface, which has no window to hold a sheet, runs app-modal.
+
+## Linux
+
+- Global shortcuts are passive `XGrabKey` grabs on the X11 root window, made inside GDK's error trap so that a combination another client holds is skipped rather than ending the app; GdkX11Display's `xevent` signal takes their presses, as GTK 4 has no display filters. A press matches on Shift, Control, Alt and Super alone, whatever its locks, buttons and layout group.
+- On Wayland, and on X11 where no grab succeeds, they use the XDG `GlobalShortcuts` portal, where the compositor asks the user to bind them. The portal knows an unsandboxed app by the ID it registers (`Registry.Register`), which must name its `.desktop` entry and comes before any other portal call on the connection; GTK calls the portal as it starts, so the shortcuts have a session bus connection of their own, whose calls run in order off the main thread.
+- Both paths dispatch the same `EventHotKey`; when neither backend is available, the shortcut is ignored. A host's `NewView` takes none.
 
 ## Configuration
 

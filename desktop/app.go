@@ -88,7 +88,8 @@ func NewTray(cx *core.Scope, opts TrayOptions) *Tray { return cx.NewTray(opts) }
 
 // RegisterHotKey runs fn when key, in core.Scope.OnKey's form such as
 // "alt+space", is pressed whichever app has the focus, while the current
-// owner lives.
+// owner lives. Linux uses its compositor's global-shortcut portal on Wayland
+// and X11 passive grabs; unsupported desktop sessions ignore the binding.
 func RegisterHotKey(cx *core.Scope, key string, fn func()) { cx.RegisterHotKey(key, fn) }
 
 // SetDockVisible shows the app in the Dock and the app switcher, or

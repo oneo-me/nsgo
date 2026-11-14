@@ -124,6 +124,7 @@ type window struct {
 	natives   map[uintptr]*view // by the objects of hosted widgets
 	appID     string
 	keys      []driver.KeyBinding
+	hotKeys   *globalHotKeys
 	held      map[uint32]bool // the keys down, by keycode
 	animating []*view
 	ticking   bool
@@ -322,6 +323,8 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Environment: w.env,
 		Appearance:  opts.Appearance,
 		Host:        opts.Host,
+		// The app's own window takes its global shortcuts; a host's widget leaves them to the host.
+		HotKeys: !w.embedded,
 	}
 	eopts.SetDirs(engine.AppDirs(opts.ID))
 	if opts.test != nil {
@@ -601,6 +604,7 @@ func (w *window) close() {
 		return
 	}
 	w.closing = true
+	w.closeHotKeys()
 	if w.tickID != 0 {
 		gSourceRemove(w.tickID)
 		w.tickID = 0
@@ -670,6 +674,9 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
+			continue
+		case driver.ItemHotKeys:
+			w.applyHotKeys(it.Keys)
 			continue
 		case driver.ItemCheckForUpdates:
 			w.checkForUpdates(it.Count)
