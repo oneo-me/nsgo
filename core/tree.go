@@ -489,6 +489,7 @@ type inputNode struct {
 	count     uint32 // the platform's last edit
 	autoFocus bool
 	accessory string // the InputAccessoryView's ID
+	suggest   *Suggest
 	// themeSelection and themeCaret are its theme's colors, which the
 	// input shows without a SelectionColor of its style's.
 	themeSelection, themeCaret Color
@@ -512,6 +513,12 @@ type inputNode struct {
 	measured, sized preparedInput
 	reported        Size // the content size last reported
 	reportedOK      bool
+}
+
+func (in *inputNode) suggestSelection(r TextRange) {
+	if in.suggest != nil {
+		in.suggest.selectionChanged(r)
+	}
 }
 
 // preparedInput is text of a field prepared in its style.
@@ -1748,6 +1755,16 @@ func (t *Tree) mountInput(cx *Scope, parent *node, v Input) {
 		AutoCapitalize: v.AutoCapitalize, NoAutoCorrect: v.NoAutoCorrect, AutoComplete: v.AutoComplete,
 		KeyboardAppearance: v.IOS.KeyboardAppearance, HideCaret: v.HideCaret, PasteBehavior: v.PasteBehavior}
 	n.input = in
+	in.suggest = v.Suggest
+	if in.suggest != nil {
+		in.suggest.bind(v.Value, v.OnChange, v.Ref)
+		if in.selection == nil {
+			in.selection = func(TextRange) {}
+		}
+		if in.caret == nil {
+			in.caret = func(CaretEvent) {}
+		}
+	}
 	t.bindInputTheme(cx, n)
 	t.bindBool(cx, n, v.Disabled, &in.config.Disabled)
 	if v.PlaceholderFunc != nil {
@@ -2084,6 +2101,9 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			return
 		}
 		in.shown, in.value, in.count = ev.Text, ev.Text, ev.Count
+		if in.suggest != nil {
+			in.suggest.changed(ev.Text)
+		}
 		if h.change != nil {
 			t.within(n.owner, func() { h.change(ev.Text) })
 		}
@@ -2099,8 +2119,12 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			t.within(n.owner, func() { h.submit(ev.Text) })
 		}
 	case driver.EventSelectionChange:
-		if in := n.input; in != nil && in.selection != nil {
-			t.within(n.owner, func() { in.selection(TextRange{Start: ev.Index, End: int(ev.Count)}) })
+		if in := n.input; in != nil {
+			r := TextRange{Start: ev.Index, End: int(ev.Count)}
+			in.suggestSelection(r)
+			if in.selection != nil {
+				t.within(n.owner, func() { in.selection(r) })
+			}
 		}
 		if h.textSelection != nil {
 			t.within(n.owner, func() { h.textSelection(Bounds{Origin: ev.Point, Size: ev.Size}) })
@@ -2123,7 +2147,11 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			page := b
 			o := t.surfaceBounds(n).Origin
 			page.Origin = Point{X: o.X + b.Origin.X, Y: o.Y + b.Origin.Y}
-			t.within(n.owner, func() { in.caret(CaretEvent{Bounds: b, PageBounds: page}) })
+			e := CaretEvent{Bounds: b, PageBounds: page}
+			if in.suggest != nil {
+				in.suggest.caretMoved(e)
+			}
+			t.within(n.owner, func() { in.caret(e) })
 		}
 	case driver.EventPaste:
 		if in := n.input; in != nil && in.paste != nil {

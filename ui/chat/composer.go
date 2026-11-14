@@ -23,6 +23,9 @@ type Composer struct {
 	PlaceholderFunc func() string
 	Running         func() bool
 	OnSend, OnStop  func()
+	// Suggest offers rows after "@" (or the hook's trigger). Choosing a row
+	// replaces the trigger and query at the caret.
+	Suggest func(query string) []Suggestion
 	// Accessory holds controls in the card's bottom row, such as chips, and
 	// shrinks; Trailing compact ones just before Send or Stop, which do not.
 	Accessory, Trailing View
@@ -47,6 +50,13 @@ type Composer struct {
 	TestID string
 }
 
+// Suggestion is one row offered by Composer.Suggest.
+type Suggestion struct {
+	ID, Label, Detail, Insert string
+	Icon                      func() *core.SVG
+	Disabled                  bool
+}
+
 // Render implements core.Node.
 func (m Composer) Render(cx *core.Scope) core.Node {
 	colors := tonesOf(cx)
@@ -66,11 +76,25 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 	}
 	focused, dragging := core.NewSignal(cx, false), core.NewSignal(cx, false)
 	height := core.NewSignal(cx, core.Points(chatEditorLine))
+	var suggest *core.Suggest
+	var suggestRef *core.Ref
+	if m.Suggest != nil {
+		suggestRef = new(core.Ref)
+		suggest = core.NewSuggest(cx, core.SuggestOptions{Items: func(query string) []core.SuggestItem {
+			rows := m.Suggest(query)
+			out := make([]core.SuggestItem, len(rows))
+			for i, row := range rows {
+				out[i] = core.SuggestItem{ID: row.ID, Label: row.Label, Detail: row.Detail, Insert: row.Insert, Icon: row.Icon, Disabled: row.Disabled}
+			}
+			return out
+		}})
+	}
 	submit := core.SubmitBehaviorNewline
 	if cx.Env().Desktop() {
 		submit = core.SubmitBehaviorSubmit
 	}
-	editor := base.Input{Value: draft, OnChange: m.OnDraftChange, Multiline: true, SubmitBehavior: submit, Label: m.Label, Placeholder: m.Placeholder, PlaceholderFunc: m.PlaceholderFunc, TestID: "composer",
+	editor := base.Input{Value: draft, OnChange: m.OnDraftChange, Multiline: true, SubmitBehavior: submit, Label: m.Label, Placeholder: m.Placeholder, PlaceholderFunc: m.PlaceholderFunc, TestID: "composer", Ref: suggestRef, Suggest: suggest,
+		Expanded:            func() bool { return suggest != nil && suggest.Open() },
 		OnSubmit:            func(string) { send() },
 		OnPaste:             m.OnPaste,
 		OnFocus:             func() { focused.Set(true) },
@@ -121,7 +145,29 @@ func (m Composer) Render(cx *core.Scope) core.Node {
 			return core.View{Style: core.Style{Direction: core.Row, Wrap: core.Wrap, Gap: 6, Padding: core.Edges{Right: 10, Bottom: 6, Left: 10}}, Children: []core.Node{core.Func(m.Attachments)}}
 		}})
 	}
-	body = append(body, editor, core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Margin: core.Edges{Top: 8}, Padding: core.Symmetric(0, 10), AlignItems: core.AlignCenter, Gap: 8}, Children: row})
+	body = append(body, editor)
+	if suggest != nil {
+		body = append(body, suggest.Keys(), core.Show{When: suggest.Open, Then: func(cx *core.Scope) core.Node {
+			rows := suggest.Items
+			return core.Overlay{AnchorBounds: suggest.Anchor, Placement: core.PlaceTop, Align: core.AlignStart, Offset: 4, Margin: 8, Role: core.RoleListbox, TestID: "composer-suggestions",
+				Style: core.Style{Width: core.Pt(280), MaxHeight: core.Pt(220), Padding: core.All(4), CornerRadius: 9, BorderWidth: 1, BorderColor: colors.Border(), Background: colors.Surface(), Shadows: []core.BoxShadow{ui.Shadow(0, 4, 16, 0, ui.Black(0.16))}},
+				Children: []core.Node{core.Scroll{Role: core.RoleListbox, Label: m.Label, Style: core.Style{MaxHeight: core.Pt(212), MinHeight: core.Pt(0)}, Children: []core.Node{core.Each(rows, func(it core.SuggestItem) string { return it.ID + "\x00" + it.Label }, func(cx *core.Scope, item func() core.SuggestItem, index func() int) core.Node {
+					label := func() string { return item().Label }
+					return core.View{Role: core.RoleOption, LabelFunc: label, Selected: func() bool { return suggest.Selected() == index() }, Disabled: func() bool { return item().Disabled }, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, MinHeight: core.Pt(30), Padding: core.Symmetric(0, 8), CornerRadius: 6}, StyleFunc: func() core.Style {
+						if suggest.Selected() == index() {
+							return core.Style{Background: ui.Alpha(colors.Accent(), 0.14)}
+						}
+						return core.Style{}
+					}, OnPress: func(core.PressEvent) { suggest.SetSelected(index()); suggest.Accept() }, Children: []core.Node{
+						core.Show{When: func() bool { return item().Icon != nil }, Then: func(*core.Scope) core.Node { return ui.IconOf(item().Icon, 15, colors.Muted) }},
+						core.View{Style: core.Style{MinWidth: core.Pt(0), FlexGrow: 1}, Children: []core.Node{ui.Textf(label, 13, ui.Medium, colors.Text), core.Show{When: func() bool { return item().Detail != "" }, Then: func(*core.Scope) core.Node {
+							return ui.Textf(func() string { return item().Detail }, 11.5, ui.Regular, colors.Muted)
+						}}}},
+					}}
+				})}}}}
+		}})
+	}
+	body = append(body, core.View{Style: core.Style{Direction: core.Row, MinWidth: core.Pt(0), Margin: core.Edges{Top: 8}, Padding: core.Symmetric(0, 10), AlignItems: core.AlignCenter, Gap: 8}, Children: row})
 	card := core.View{Style: core.Style{MinWidth: core.Pt(0), Padding: core.Symmetric(10, 0), CornerRadius: 13, BorderWidth: 1, FlexShrink: 0},
 		StyleFunc: func() core.Style {
 			surface := colors.Surface()

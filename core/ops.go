@@ -359,9 +359,21 @@ func (t *Tree) setInput(n *node, v Input) {
 		in.value, in.autoFocus = v.DefaultValue, v.AutoFocus
 	}
 	in.accessory = v.InputAccessoryViewID
+	in.suggest = v.Suggest
+	if in.suggest != nil {
+		in.suggest.bind(v.Value, v.OnChange, v.Ref)
+	}
 	in.noScale, in.maxScale = v.NoFontScaling, v.MaxFontSizeMultiplier
 	in.selection, in.keyPress, in.composition = v.OnSelectionChange, v.OnKeyPress, v.OnCompositionChange
 	in.contentSize, in.caret, in.paste = v.OnContentSizeChange, v.OnCaretMove, v.OnPaste
+	if in.suggest != nil {
+		if in.selection == nil {
+			in.selection = func(TextRange) {}
+		}
+		if in.caret == nil {
+			in.caret = func(CaretEvent) {}
+		}
+	}
 	placeholder := v.Placeholder
 	if v.PlaceholderFunc != nil {
 		placeholder = v.PlaceholderFunc()

@@ -424,6 +424,9 @@ type Input struct {
 	// InputAccessoryViewID names the InputAccessoryView shown above the
 	// software keyboard while the field has focus.
 	InputAccessoryViewID string
+	// Suggest makes the field offer rows after a trigger and captures
+	// navigation, Return, Tab and Escape while its list is open.
+	Suggest *Suggest
 	// NoFontScaling and MaxFontSizeMultiplier limit the user's text size
 	// setting for the field's text, as Text's do.
 	NoFontScaling         bool
