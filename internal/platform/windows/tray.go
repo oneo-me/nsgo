@@ -31,6 +31,7 @@ const (
 	nifMessage        = 0x00000001
 	nifIcon           = 0x00000002
 	nifTip            = 0x00000004
+	nifShowTip        = 0x00000080 // the standard tooltip, which version 4 otherwise suppresses
 	notifyIconVersion = 4
 
 	trayCallbackMessage = 0x8000 + 9
@@ -122,7 +123,7 @@ func (w *window) applyTray(cfg driver.TrayConfig) {
 
 func (w *window) trayData(cfg driver.TrayConfig, icon uintptr) notifyIconData {
 	d := notifyIconData{Hwnd: w.hwnd, ID: cfg.ID, Callback: trayCallbackMessage, Icon: icon}
-	d.Flags = nifMessage | nifTip
+	d.Flags = nifMessage | nifTip | nifShowTip
 	if tip := syscall.StringToUTF16(cfg.Tooltip); len(tip) > 0 {
 		copy(d.Tip[:], tip[:min(len(tip), len(d.Tip)-1)])
 	}
