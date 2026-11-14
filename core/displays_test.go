@@ -21,3 +21,18 @@ func TestDisplaysFollowEnvironment(t *testing.T) {
 		t.Fatalf("updated displays: %q", app.Find("id:count").Text)
 	}
 }
+
+// TestDisplaysKeepReadersWhenUnchanged runs a reader of Displays again only when the displays change, not with every other change of the environment.
+func TestDisplaysKeepReadersWhenUnchanged(t *testing.T) {
+	runs := 0
+	displays := []core.DisplayInfo{{ID: "main", Main: true}}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		e := cx.Env()
+		return core.Text{TestID: "count", ContentFunc: func() string { runs++; return strconv.Itoa(len(e.Displays())) }}
+	}, nsgotest.Environment(core.Environment{Displays: displays}))
+	before := runs
+	app.SetEnvironment(core.Environment{Displays: displays, Locale: "fr-FR"})
+	if runs != before {
+		t.Fatalf("the reader ran %d more times for unchanged displays", runs-before)
+	}
+}

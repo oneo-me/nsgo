@@ -236,7 +236,7 @@ func hostSize(w, h, scale, top, left, bottom, right float64, flags uint32) {
 		s.size = size
 		s.engine.Resize(size)
 	}
-	if env != s.env {
+	if !env.Equal(s.env) {
 		s.env = env
 		s.engine.SetEnvironment(env)
 	}

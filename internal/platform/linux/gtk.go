@@ -210,6 +210,7 @@ var (
 	gdkMonitorGetGeometry      func(uintptr, *gdkMonitorRectangle)
 	gdkMonitorGetWorkarea      func(uintptr, *gdkMonitorRectangle)
 	gdkMonitorGetScaleFactor   func(uintptr) int32
+	gdkMonitorGetConnector     func(uintptr) uintptr
 	gdkToplevelBeginMove       func(uintptr, uintptr, int32, float64, float64, uint32)
 	gtkGestureGetDevice        func(uintptr) uintptr
 
@@ -544,6 +545,7 @@ func bind() {
 	purego.RegisterLibFunc(&gdkMonitorGetGeometry, gtkLib, "gdk_monitor_get_geometry")
 	purego.RegisterLibFunc(&gdkMonitorGetWorkarea, gtkLib, "gdk_monitor_get_workarea")
 	purego.RegisterLibFunc(&gdkMonitorGetScaleFactor, gtkLib, "gdk_monitor_get_scale_factor")
+	purego.RegisterLibFunc(&gdkMonitorGetConnector, gtkLib, "gdk_monitor_get_connector")
 	purego.RegisterLibFunc(&gdkToplevelBeginMove, gtkLib, "gdk_toplevel_begin_move")
 
 	// GIO.

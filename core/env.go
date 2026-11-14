@@ -157,7 +157,9 @@ func (e *Env) set(v Environment) {
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
 	e.settings.Set(v.LocaleSettings)
-	e.displays.Set(&displayList{values: slices.Clone(v.Displays)})
+	if !slices.Equal(e.displays.GetUntracked().values, v.Displays) {
+		e.displays.Set(&displayList{values: slices.Clone(v.Displays)})
+	}
 	e.os.Set(v.OS)
 	e.version.Set(v.OSVersion)
 	e.appleKeys.Set(v.OS == OSMacOS || v.OS == OSIOS || v.AppleKeyboard)

@@ -109,7 +109,15 @@ func displays() []driver.DisplayInfo {
 		point := func(r gdkMonitorRectangle) driver.Bounds {
 			return driver.Bounds{Origin: driver.Point{X: driver.Points(float32(r.X)), Y: driver.Points(float32(r.Y))}, Size: driver.Size{Width: driver.Points(float32(r.Width)), Height: driver.Points(float32(r.Height))}}
 		}
-		out = append(out, driver.DisplayInfo{ID: fmt.Sprintf("%x", monitor), Frame: point(frame), VisibleFrame: point(visible), Scale: scale, Main: i == 0})
+		// The connector, as DP-1 or HDMI-A-1, names the display across runs; the object's address only while it is connected.
+		id := ""
+		if c := gdkMonitorGetConnector(monitor); c != 0 {
+			id = goString(c)
+		}
+		if id == "" {
+			id = fmt.Sprintf("%x", monitor)
+		}
+		out = append(out, driver.DisplayInfo{ID: id, Frame: point(frame), VisibleFrame: point(visible), Scale: scale, Main: i == 0})
 		gObjectUnref(monitor)
 	}
 	return out

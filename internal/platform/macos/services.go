@@ -428,15 +428,14 @@ func screenFrames(selector string) []apple.CGRect {
 	return frames
 }
 
-// displays returns AppKit's screens in the coordinate space used by
-// WindowFrame: the primary screen's top left, with y growing down.
+// displays returns AppKit's screens in the coordinate space used by WindowFrame: the primary screen's top left, with y growing down. The primary screen is the first of screens, the one with the menu bar; mainScreen is the one with the key window, which moves.
 func displays() []driver.DisplayInfo {
 	screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
 	count := objc.Send[uint](screens, sel("count"))
 	if count == 0 {
 		return nil
 	}
-	primary := objc.ID(apple.Class("NSScreen")).Send(sel("mainScreen"))
+	primary := screens.Send(sel("objectAtIndex:"), uint(0))
 	primaryFrame := objc.Send[apple.CGRect](primary, sel("frame"))
 	top := primaryFrame.Origin.Y + primaryFrame.Size.Height
 	out := make([]driver.DisplayInfo, 0, count)

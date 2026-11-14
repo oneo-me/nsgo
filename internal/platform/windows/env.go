@@ -101,20 +101,12 @@ func (w *window) displays() []driver.DisplayInfo {
 // logical scale; the origin lets window placement convert those points back
 // to the virtual desktop's pixels.
 func monitorLayout() ([]displayPlacement, rect) {
-	type found struct {
-		monitor uintptr
-		info    monitorInfoEx
-	}
-	var all []found
-	callback := syscall.NewCallback(func(monitor, _, _, data uintptr) uintptr {
-		var info monitorInfoEx
-		info.Size = uint32(unsafe.Sizeof(info))
-		if ok, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&info))); ok != 0 {
-			all = append(all, found{monitor: monitor, info: info})
-		}
-		return 1
-	})
-	enumDisplayMonitors.Call(0, 0, callback, 0)
+	monitorsFound.mu.Lock()
+	monitorsFound.all = nil
+	enumDisplayMonitors.Call(0, 0, monitorFound, 0)
+	all := monitorsFound.all
+	monitorsFound.all = nil
+	monitorsFound.mu.Unlock()
 	if len(all) == 0 {
 		return nil, rect{}
 	}
@@ -144,6 +136,26 @@ func monitorLayout() ([]displayPlacement, rect) {
 	}
 	return out, base
 }
+
+// monitorsFound collects what EnumDisplayMonitors reports, through the one callback monitorFound: Go makes at most about 2000 callbacks in a process, and windows read the layout on every move.
+var monitorsFound struct {
+	mu  sync.Mutex
+	all []foundMonitor
+}
+
+type foundMonitor struct {
+	monitor uintptr
+	info    monitorInfoEx
+}
+
+var monitorFound = syscall.NewCallback(func(monitor, _, _, _ uintptr) uintptr {
+	var info monitorInfoEx
+	info.Size = uint32(unsafe.Sizeof(info))
+	if ok, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&info))); ok != 0 {
+		monitorsFound.all = append(monitorsFound.all, foundMonitor{monitor: monitor, info: info})
+	}
+	return 1
+})
 
 func displayContains(d driver.Bounds, p driver.Point) bool {
 	return p.X >= d.Origin.X && p.X < d.Origin.X+d.Size.Width && p.Y >= d.Origin.Y && p.Y < d.Origin.Y+d.Size.Height

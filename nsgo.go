@@ -93,8 +93,8 @@ func Run[M Main](main M, opts ...Option) {
 		if err := restart(launchArgs); err != nil {
 			log.Printf("nsgo: restarting: %v", err)
 		}
-	} else if core.Restarting() && restartGuarded.Load() {
-		log.Printf("nsgo: restart refused to prevent a restart loop")
+	} else if core.Restarting() && !devBuild {
+		log.Printf("nsgo: not restarting: the app restarted again within %v of its restart", restartLoopWindow)
 	}
 }
 
