@@ -4,6 +4,7 @@ package windows
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"syscall"
@@ -11,6 +12,13 @@ import (
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
+
+type displayPlacement struct {
+	monitor uintptr
+	info    monitorInfoEx
+	scale   float64
+	display driver.DisplayInfo
+}
 
 var (
 	dwmapi = syscall.NewLazyDLL("dwmapi.dll")
@@ -80,6 +88,19 @@ func (w *window) environment() driver.Environment {
 // displays reads the monitors in the virtual desktop. Coordinates are
 // expressed from the primary monitor's top left, like WindowFrame.
 func (w *window) displays() []driver.DisplayInfo {
+	placements, _ := monitorLayout()
+	out := make([]driver.DisplayInfo, 0, len(placements))
+	for _, placement := range placements {
+		out = append(out, placement.display)
+	}
+	return out
+}
+
+// monitorLayout reads the monitors in physical pixels and also returns the
+// primary monitor's physical origin. Display frames use each monitor's own
+// logical scale; the origin lets window placement convert those points back
+// to the virtual desktop's pixels.
+func monitorLayout() ([]displayPlacement, rect) {
 	type found struct {
 		monitor uintptr
 		info    monitorInfoEx
@@ -95,7 +116,7 @@ func (w *window) displays() []driver.DisplayInfo {
 	})
 	enumDisplayMonitors.Call(0, 0, callback, 0)
 	if len(all) == 0 {
-		return nil
+		return nil, rect{}
 	}
 	primary := 0
 	for i := range all {
@@ -105,23 +126,53 @@ func (w *window) displays() []driver.DisplayInfo {
 		}
 	}
 	base := all[primary].info.Monitor
-	out := make([]driver.DisplayInfo, 0, len(all))
+	out := make([]displayPlacement, 0, len(all))
 	for _, item := range all {
-		scale := float32(1)
+		scale := float64(1)
 		var dpi, dpiY uint32
 		if r, _, _ := getDpiForMonitor.Call(item.monitor, 0, uintptr(unsafe.Pointer(&dpi)), uintptr(unsafe.Pointer(&dpiY))); r == 0 && dpi > 0 {
-			scale = float32(dpi) / 96
+			scale = float64(dpi) / 96
 		}
 		bounds := func(r rect) driver.Bounds {
-			return driver.Bounds{Origin: driver.Point{X: driver.Points(float64(r.Left-base.Left) / float64(scale)), Y: driver.Points(float64(r.Top-base.Top) / float64(scale))}, Size: driver.Size{Width: driver.Points(float64(r.Right-r.Left) / float64(scale)), Height: driver.Points(float64(r.Bottom-r.Top) / float64(scale))}}
+			return driver.Bounds{Origin: driver.Point{X: driver.Points(float64(r.Left-base.Left) / scale), Y: driver.Points(float64(r.Top-base.Top) / scale)}, Size: driver.Size{Width: driver.Points(float64(r.Right-r.Left) / scale), Height: driver.Points(float64(r.Bottom-r.Top) / scale)}}
 		}
 		id := syscall.UTF16ToString(item.info.Device[:])
 		if id == "" {
 			id = fmt.Sprintf("%x", item.monitor)
 		}
-		out = append(out, driver.DisplayInfo{ID: id, Frame: bounds(item.info.Monitor), VisibleFrame: bounds(item.info.Work), Scale: scale, Main: item.info.Flags&1 != 0})
+		out = append(out, displayPlacement{monitor: item.monitor, info: item.info, scale: scale, display: driver.DisplayInfo{ID: id, Frame: bounds(item.info.Monitor), VisibleFrame: bounds(item.info.Work), Scale: float32(scale), Main: item.info.Flags&1 != 0}})
 	}
-	return out
+	return out, base
+}
+
+func displayContains(d driver.Bounds, p driver.Point) bool {
+	return p.X >= d.Origin.X && p.X < d.Origin.X+d.Size.Width && p.Y >= d.Origin.Y && p.Y < d.Origin.Y+d.Size.Height
+}
+
+// placementForFrame chooses the monitor that owns the frame's center. A
+// frame copied from Env.Displays therefore uses that display's scale when it
+// is passed back to SetWindowFrame, even before the window has moved there.
+func placementForFrame(f driver.WindowFrame) (displayPlacement, rect, bool) {
+	placements, base := monitorLayout()
+	p := driver.Point{X: f.X + f.Width/2, Y: f.Y + f.Height/2}
+	for _, placement := range placements {
+		if displayContains(placement.display.Frame, p) {
+			return placement, base, true
+		}
+	}
+	if len(placements) == 0 {
+		return displayPlacement{}, base, false
+	}
+	// If a frame is outside every display, keep the nearest monitor's scale.
+	best, distance := placements[0], math.Inf(1)
+	for _, placement := range placements {
+		dx := max(max(float64(placement.display.Frame.Origin.X-p.X), float64(p.X-(placement.display.Frame.Origin.X+placement.display.Frame.Size.Width))), 0)
+		dy := max(max(float64(placement.display.Frame.Origin.Y-p.Y), float64(p.Y-(placement.display.Frame.Origin.Y+placement.display.Frame.Size.Height))), 0)
+		if d := dx*dx + dy*dy; d < distance {
+			best, distance = placement, d
+		}
+	}
+	return best, base, true
 }
 
 // appActive is whether the app is the active one, as the last

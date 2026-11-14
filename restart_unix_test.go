@@ -35,6 +35,16 @@ func TestRestartWaitsForTheApp(t *testing.T) {
 	go func() { _ = app.Wait(); exited <- time.Now() }()
 	started := filepath.Join(t.TempDir(), "started")
 	cmd := restartCommand(app.Process.Pid, []string{"/bin/sh", "-c", `touch "$0"`, started})
+	guarded := false
+	for _, value := range cmd.Env {
+		if value == restartGuardEnv+"=1" {
+			guarded = true
+			break
+		}
+	}
+	if !guarded {
+		t.Fatal("restart command did not mark its child")
+	}
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

@@ -24,6 +24,9 @@ tabComponents: 组件
 tabBasics: 基础
 appSections: 分区
 settingsGeneral: 通用
+settingsAppInfo: 应用
+settingsAppInfoDetail: nsgo.yaml 中的版本、构建号和开发状态。
+settingsAppInfoValue: "版本 {version} · 构建 {build} · 开发版本 {development}"
 settingsHelp: 帮助
 settingsStats: 统计
 settingsStatsSend: 发送使用统计

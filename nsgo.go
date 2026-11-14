@@ -89,10 +89,12 @@ func Run[M Main](main M, opts ...Option) {
 		run(nil, launch.localizedApp(m), o)
 	}
 	// nsgo dev ends with the app it started, so a restart there only quits.
-	if core.Restarting() && !devBuild {
+	if core.Restarting() && restartPermitted() {
 		if err := restart(launchArgs); err != nil {
 			log.Printf("nsgo: restarting: %v", err)
 		}
+	} else if core.Restarting() && restartGuarded.Load() {
+		log.Printf("nsgo: restart refused to prevent a restart loop")
 	}
 }
 

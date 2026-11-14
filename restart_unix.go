@@ -27,6 +27,7 @@ func restart(args []string) error {
 func restartCommand(pid int, program []string) *exec.Cmd {
 	const script = `i=0; while kill -0 "$0" 2>/dev/null && [ $i -lt 100 ]; do sleep 0.1; i=$((i+1)); done; exec "$@"`
 	cmd := exec.Command("/bin/sh", append([]string{"-c", script, fmt.Sprint(pid)}, program...)...)
+	cmd.Env = append(os.Environ(), restartGuardEnv+"=1")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	return cmd
 }
@@ -55,4 +56,4 @@ func appBundle(exe string) string {
 }
 
 // awaitRestarted does nothing: restart's shell waits instead.
-func awaitRestarted() {}
+func awaitRestarted() { markRestarted() }

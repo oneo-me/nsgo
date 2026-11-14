@@ -38,6 +38,9 @@ tabComponents: Components
 tabBasics: Basics
 appSections: Sections
 settingsGeneral: General
+settingsAppInfo: App
+settingsAppInfoDetail: The version, build number and development status from nsgo.yaml.
+settingsAppInfoValue: "version {version} · build {build} · development {development}"
 settingsHelp: Help
 settingsStats: Statistics
 settingsStatsSend: Send usage statistics

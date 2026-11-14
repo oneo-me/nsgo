@@ -129,6 +129,7 @@ const (
 	wmEraseBkgnd    = 0x0014
 	wmSettingChange = 0x001A
 	wmDisplayChange = 0x007E
+	wmDPIChanged    = 0x02E0
 	wmShowWindow    = 0x0018
 	wmActivateApp   = 0x001C
 	wmKeyDown       = 0x0100
@@ -1826,6 +1827,11 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 				other.updateEnvironment()
 			}
 		}
+	case wmDPIChanged:
+		if dpi := uint32(wParam & 0xffff); dpi != 0 {
+			w.scale = float64(dpi) / 96
+		}
+		w.updateEnvironment()
 	case wmActivateApp:
 		// Sent to each top-level window of the thread: the embedded views
 		// on it follow too.

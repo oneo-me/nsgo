@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -760,7 +761,18 @@ func (w *window) windowFrame() driver.WindowFrame {
 	}
 	var r rect
 	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&r)))
-	corner, size := w.point(r.Left, r.Top), w.point(r.Right-r.Left, r.Bottom-r.Top)
+	placements, base := monitorLayout()
+	scale := w.scale
+	if monitor, _, _ := monitorFromWindow.Call(w.hwnd, monitorDefaultNear); monitor != 0 {
+		for _, placement := range placements {
+			if placement.monitor == monitor {
+				scale = placement.scale
+				break
+			}
+		}
+	}
+	corner := driver.Point{X: driver.Points(float64(r.Left-base.Left) / scale), Y: driver.Points(float64(r.Top-base.Top) / scale)}
+	size := driver.Point{X: driver.Points(float64(r.Right-r.Left) / scale), Y: driver.Points(float64(r.Bottom-r.Top) / scale)}
 	return driver.WindowFrame{X: corner.X, Y: corner.Y, Move: true, Width: size.X, Height: size.Y}
 }
 
@@ -777,14 +789,20 @@ func (w *window) setWindowFrame(f driver.WindowFrame) {
 	var r rect
 	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&r)))
 	x, y, cx, cy := r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top
+	scale := w.scale
+	var base rect
 	if f.Move {
-		x, y = w.px(f.X), w.px(f.Y)
+		placement, origin, ok := placementForFrame(f)
+		if ok {
+			scale, base = placement.scale, origin
+		}
+		x, y = base.Left+int32(math.Round(float64(f.X)*scale)), base.Top+int32(math.Round(float64(f.Y)*scale))
 	}
 	if f.Width > 0 {
-		cx = w.px(f.Width)
+		cx = int32(math.Round(float64(f.Width) * scale))
 	}
 	if f.Height > 0 {
-		cy = w.px(f.Height)
+		cy = int32(math.Round(float64(f.Height) * scale))
 	}
 	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), swpNoZOrder|swpNoActivate)
 }
