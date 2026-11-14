@@ -4,7 +4,9 @@ package audio
 
 import (
 	"fmt"
+	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -194,24 +196,30 @@ func newApplePlayer(src source, options Options) (objc.ID, error) {
 		if url = objc.ID(objc.GetClass("NSURL")).Send(appleSel("fileURLWithPath:"), path); url == 0 {
 			return 0, ErrUnreadableSource
 		}
+		// AVAudioPlayer fails the same way for a file it cannot read and
+		// one it cannot decode; reading it first tells them apart.
+		if err := appleReadable(src.path); err != nil {
+			return 0, fmt.Errorf("%w: %w", ErrUnreadableSource, err)
+		}
 	}
 	var player objc.ID
 	av := objc.ID(objc.GetClass("AVAudioPlayer")).Send(appleSel("alloc"))
 	if av == 0 {
 		return 0, ErrUnsupported
 	}
+	var nsError objc.ID
 	if len(src.data) > 0 {
 		data := objc.ID(objc.GetClass("NSData")).Send(appleSel("dataWithBytes:length:"), unsafe.Pointer(&src.data[0]), uint(len(src.data)))
-		player = av.Send(appleSel("initWithData:error:"), data, objc.ID(0))
+		player = av.Send(appleSel("initWithData:fileTypeHint:error:"), data, appleTypeHint(src.mime), unsafe.Pointer(&nsError))
 	} else {
-		player = av.Send(appleSel("initWithContentsOfURL:error:"), url, objc.ID(0))
+		player = av.Send(appleSel("initWithContentsOfURL:error:"), url, unsafe.Pointer(&nsError))
 	}
 	if player == 0 {
-		av.Send(appleSel("release"))
-		if len(src.data) > 0 {
-			return 0, ErrUnsupportedFormat
+		// A failed init has released av already.
+		if detail := appleErrorText(nsError); detail != "" {
+			return 0, fmt.Errorf("%w: %s", ErrUnsupportedFormat, detail)
 		}
-		return 0, ErrUnreadableSource
+		return 0, ErrUnsupportedFormat
 	}
 	objc.Send[bool](player, appleSel("prepareToPlay"))
 	objc.Send[float32](player, appleSel("setVolume:"), float32(options.Volume))
@@ -224,6 +232,45 @@ func newApplePlayer(src source, options Options) (objc.ID, error) {
 	objc.Send[int](player, appleSel("setNumberOfLoops:"), loops)
 	return player, nil
 }
+
+// appleReadable reports why path cannot be read as a file, or nil.
+func appleReadable(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err == nil && info.IsDir() {
+		err = fmt.Errorf("%s is a directory", path)
+	}
+	return err
+}
+
+// appleTypeHint returns the uniform type identifier of a MIME type, which
+// AVAudioPlayer takes as a hint for a format it cannot tell from the bytes
+// alone, or nil when the system knows no such type.
+func appleTypeHint(mime string) objc.ID {
+	appleUTType.Do(func() {
+		purego.Dlopen("/System/Library/Frameworks/UniformTypeIdentifiers.framework/UniformTypeIdentifiers", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	})
+	class := objc.ID(objc.GetClass("UTType"))
+	if mime, _, _ = strings.Cut(mime, ";"); class == 0 || !utf8.ValidString(mime) {
+		return 0
+	}
+	name := appleNSString(strings.TrimSpace(mime))
+	if name == 0 {
+		return 0
+	}
+	// A MIME type the system does not know gets a dynamic type, which
+	// hints at nothing.
+	if kind := class.Send(appleSel("typeWithMIMEType:"), name); kind != 0 && !objc.Send[bool](kind, appleSel("isDynamic")) {
+		return kind.Send(appleSel("identifier"))
+	}
+	return 0
+}
+
+var appleUTType sync.Once
 
 type appleSound struct {
 	mu     sync.Mutex

@@ -5,7 +5,9 @@ package audio
 import (
 	"encoding/binary"
 	"errors"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -137,5 +139,43 @@ func TestAppleRejectsPathsItCannotName(t *testing.T) {
 	}
 	if _, err := PlayFile("/tmp/\xff.wav"); !errors.Is(err, ErrUnreadableSource) {
 		t.Errorf("invalid UTF-8 cue path error %v, want ErrUnreadableSource", err)
+	}
+}
+
+func TestAppleTellsUnreadableFromUnsupported(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := Open(filepath.Join(dir, "missing.wav")); !errors.Is(err, ErrUnreadableSource) || !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("missing file error %v, want ErrUnreadableSource and fs.ErrNotExist", err)
+	}
+	if _, err := Open(dir); !errors.Is(err, ErrUnreadableSource) {
+		t.Errorf("directory error %v, want ErrUnreadableSource", err)
+	}
+	text := filepath.Join(dir, "text.wav")
+	if err := os.WriteFile(text, []byte("not audio at all"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Open(text); !errors.Is(err, ErrUnsupportedFormat) {
+		t.Errorf("text file error %v, want ErrUnsupportedFormat", err)
+	}
+	if _, err := OpenBytes([]byte("not audio at all"), "audio/wav"); !errors.Is(err, ErrUnsupportedFormat) {
+		t.Errorf("text bytes error %v, want ErrUnsupportedFormat", err)
+	}
+	wav := filepath.Join(dir, "tone.wav")
+	if err := os.WriteFile(wav, tone(100*time.Millisecond), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	player, err := Open(wav)
+	if err != nil {
+		t.Fatal(err)
+	}
+	player.Close()
+	// A MIME type is a hint, not a requirement, and may carry parameters.
+	for _, mime := range []string{"audio/wav; codecs=1", "audio/mpeg", "application/x-unknown"} {
+		player, err := OpenBytes(tone(100*time.Millisecond), mime)
+		if err != nil {
+			t.Errorf("WAV bytes as %s: %v", mime, err)
+			continue
+		}
+		player.Close()
 	}
 }
