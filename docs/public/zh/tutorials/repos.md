@@ -26,6 +26,7 @@ go tool nsgo dev
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -44,9 +45,14 @@ type repo struct {
 	Stars       int    `json:"stargazers_count"`
 }
 
-// fetch runs on its own goroutine, never the engine's.
-func fetch() ([]repo, error) {
-	resp, err := http.Get(api)
+// fetch runs on its own goroutine, never the engine's. ctx is cancelled
+// once its answer no longer counts.
+func fetch(ctx context.Context) ([]repo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, api, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -64,27 +70,20 @@ func fetch() ([]repo, error) {
 func main() { nsgo.Run(Root) }
 
 func Root(cx *core.Scope) core.Node {
-	repos := core.NewSignalFunc(cx, []repo(nil), nil)
-	loading := core.NewSignal(cx, false)
-	failure := core.NewSignal(cx, "")
-	colors := ui.ColorsOf(cx)
-
-	load := func() {
-		loading.Set(true)
-		failure.Set("")
-		go func() {
-			list, err := fetch()
-			cx.Post(func() {
-				loading.Set(false)
-				if err != nil {
-					failure.Set(err.Error())
-					return
-				}
-				repos.Set(list)
-			})
-		}()
+	repos := core.NewResource(cx, nil, func(ctx context.Context, _ struct{}, _ core.ResourceInfo) ([]repo, error) {
+		return fetch(ctx)
+	})
+	list := func() []repo {
+		list, _ := repos.Get()
+		return list
 	}
-	load()
+	failure := func() string {
+		if err := repos.Err(); err != nil {
+			return err.Error()
+		}
+		return ""
+	}
+	colors := ui.ColorsOf(cx)
 
 	return core.View{
 		Style:     core.Style{FlexGrow: 1, FlexShrink: 1, PaddingEnv: core.EnvAll(core.EnvSafeArea)},
@@ -92,24 +91,24 @@ func Root(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
 				ui.Text("Popular Go repositories", 22, ui.Bold, colors.Text),
-				core.Show{When: loading.Get, Then: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} }},
+				core.Show{When: repos.Loading, Then: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} }},
 			}},
 			core.Show{
-				When: func() bool { return failure.Get() != "" },
+				When: func() bool { return repos.State() == core.ResourceErrored },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Padding: core.All(16), Gap: 12, AlignItems: core.AlignStart}, Children: []core.Node{
-						ui.Textf(failure.Get, 14, ui.Regular, colors.Muted),
-						ui.Button{Text: "Try again", OnPress: load},
+						ui.Textf(failure, 14, ui.Regular, colors.Muted),
+						ui.Button{Text: "Try again", OnPress: repos.Refetch},
 					}}
 				},
 				Else: func(*core.Scope) core.Node {
 					return core.List{
-						Count:         func() int { return len(repos.Get()) },
-						Key:           func(i int) any { return repos.Get()[i].Name },
+						Count:         func() int { return len(list()) },
+						Key:           func(i int) any { return list()[i].Name },
 						EstimatedSize: 64,
 						Style:         core.Style{FlexGrow: 1},
 						Row: func(cx *core.Scope, row core.ListRow) core.Node {
-							r := repos.Get()[row.Index()]
+							r := list()[row.Index()]
 							return core.View{Style: core.Style{Padding: core.Symmetric(10, 16), Gap: 2}, Children: []core.Node{
 								core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween, Gap: 8}, Children: []core.Node{
 									ui.Text(r.Name, 15, ui.Medium, colors.Text),
@@ -132,9 +131,9 @@ func Root(cx *core.Scope) core.Node {
 
 **Go 自己的网络库。** `net/http` 在每个目标上都能用，并使用系统的 TLS 和代理设置，所以 `fetch` 就是普通的 Go 代码。
 
-**不在引擎的 goroutine 上请求。** 组件和 signal 属于引擎的 goroutine，它绝不能等待网络。`load` 用 `go` 发起请求，`cx.Post` 把结果送回引擎，在那里设置 signal。
+**不在引擎的 goroutine 上请求。** 组件和 signal 属于引擎的 goroutine，它绝不能等待网络。`core.NewResource` 在自己的 goroutine 上运行 `fetch`，再把结果送回引擎。它的来源为 nil，所以只加载一次；**重试**按钮调用 `Refetch` 重新加载。只有最新一次加载有效：离开界面会通过 `ctx` 取消请求，迟到的响应也不会覆盖较新的结果。
 
-**每种状态一个 signal。** `loading`、`failure` 和 `repos` 各保存状态的一部分。`core.Show` 在加载时显示加载指示，然后显示带**重试**按钮的错误或列表；条件变化时只重建那一部分。
+**状态都是 signal。** `repos.Get`、`repos.Err`、`repos.State` 和 `repos.Loading` 都是 signal，读取它们的绑定会跟着每次加载更新。`core.Show` 在加载时显示加载指示，然后显示带**重试**按钮的错误或列表；条件变化时只重建那一部分。重试时会保留上一次的列表，直到新列表到达。
 
 **任意长度的列表。** `core.List` 只构建靠近屏幕的行，并以仓库名作为 key，所以新的结果会复用同一仓库的行。
 

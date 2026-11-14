@@ -14,6 +14,7 @@ The graph follows NSH's (Solid 1.9's scheduling): signals, memos, render effects
 - A reader and each source it read keep each other's index in their lists, so a computation that runs again unlinks in constant time however many read the same source: a table's thousand cells reading one signal.
 - A write marks everything downstream for checking, through memos that will compute what they had. What follows a fast signal, such as a scroll offset, and rarely changes is set from it by an effect into a signal of its own, which reaches no one while it holds: `DataTable`'s windows.
 - Timers go through the `Clock` interface. Tests inject a `ManualClock`.
+- `NewResource` follows NSH's resource (Solid's `createResource`), as TSX's `resource` does: a value a fetcher loads on a goroutine of its own from a tracked source, with its value, error and state in signals. Only the latest load counts. Where NSH drops a superseded load's future, Go cancels its context, and the owner's disposal cancels the one running; results reach the graph through `Post`. A panic in a fetcher fails the load and goes to the nearest `Catch`.
 - A panic in app code is recovered and sent to the nearest `Catch` above the owner it happened under. With no `Catch`, the host reports it and the app keeps running.
 
 ## Elements and components
