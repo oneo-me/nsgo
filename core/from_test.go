@@ -82,3 +82,32 @@ func TestFromNeedsAHost(t *testing.T) {
 	}()
 	From(NewRoot(RootOptions{}), 0, func(func(int)) func() { return nil })
 }
+
+func TestFromTakesTheValueHandedAsItSubscribes(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, nil)
+	var set func(string)
+	get := From(h.root, "initial", func(s func(string)) func() {
+		set = s
+		s("current")
+		return nil
+	})
+	if got := get(); got != "current" {
+		t.Fatalf("value = %q before any post, want the value handed as it subscribed", got)
+	}
+	h.mu.Lock()
+	posted := len(h.posts)
+	h.mu.Unlock()
+	if posted != 0 {
+		t.Fatalf("%d posts for a value taken at once", posted)
+	}
+	// Later values go through Post as before.
+	set("later")
+	if get() != "current" {
+		t.Fatal("a later value skipped Post")
+	}
+	h.waitPost()
+	h.drain()
+	if get() != "later" {
+		t.Fatalf("value = %q", get())
+	}
+}

@@ -2,7 +2,7 @@ package core
 
 import "sync"
 
-// From returns an accessor of the latest value a source outside the graph delivers, as Solid's from does: a subscription to a store, a socket or a file watcher. subscribe runs once, untracked, with set, which any goroutine may call; it returns stop, which runs when the current owner is disposed. Values that arrive before the graph takes them coalesce, the latest winning, and a value equal to the one held changes nothing.
+// From returns an accessor of the latest value a source outside the graph delivers, as Solid's from does: a subscription to a store, a socket or a file watcher. subscribe runs once, untracked, with set, which any goroutine may call; it returns stop, which runs when the current owner is disposed. A value set while subscribe runs, as a source handing its current value does, is the accessor's at once; values that arrive before the graph takes them coalesce, the latest winning, and a value equal to the one held changes nothing.
 //
 // Its values reach the graph through Post, so the graph needs a host: an engine or a test driver.
 func From[T comparable](cx *Scope, initial T, subscribe func(set func(T)) (stop func())) func() T {
@@ -18,26 +18,36 @@ func FromFunc[T any](cx *Scope, initial T, equal func(a, b T) bool, subscribe fu
 	s := NewSignalFunc(cx, initial, equal)
 	var mu sync.Mutex
 	var latest T
-	pending := false
+	// pending says latest waits for the graph; subscribing holds what arrives while subscribe runs, which From takes before it returns.
+	pending, subscribing := false, true
+	take := func() {
+		mu.Lock()
+		v := latest
+		var zero T
+		latest, pending = zero, false
+		mu.Unlock()
+		s.Set(v)
+	}
 	set := func(v T) {
 		mu.Lock()
 		latest = v
-		post := !pending
+		post := !pending && !subscribing
 		pending = true
 		mu.Unlock()
 		if post {
-			o.Post(func() {
-				mu.Lock()
-				v := latest
-				var zero T
-				latest, pending = zero, false
-				mu.Unlock()
-				s.Set(v)
-			})
+			o.Post(take)
 		}
 	}
 	var stop func()
 	cx.Untrack(func() { stop = subscribe(set) })
+	// A source that hands its current value as it subscribes shows it in the first frame, not one post later.
+	mu.Lock()
+	subscribing = false
+	now := pending
+	mu.Unlock()
+	if now {
+		take()
+	}
 	if stop != nil {
 		o.addCleanup(stop)
 	}
