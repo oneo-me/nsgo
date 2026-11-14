@@ -1968,7 +1968,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		w.showAlert()
 		return 0
 	case trayCallbackMessage:
-		w.trayMessage(wParam, lParam)
+		w.trayMessage(lParam)
 		return 0
 	case wmDialog:
 		w.showDialog()

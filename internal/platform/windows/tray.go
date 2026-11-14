@@ -15,6 +15,8 @@ import (
 // their button messages back to the window through trayCallbackMessage.
 // Custom PNGs become private HICONs; the executable's icon is a shared
 // fallback and is therefore never destroyed here.
+//
+// The icons use NOTIFYICON_VERSION_4: the callback's LOWORD(lParam) is the event and HIWORD(lParam) the icon's ID, and a click arrives both as its raw button message and as NIN_SELECT or WM_CONTEXTMENU, of which only the latter count; a middle click has only its button-up.
 
 var (
 	shellNotifyIcon        = shell32.NewProc("Shell_NotifyIconW")
@@ -165,21 +167,28 @@ func (w *window) trayRect(id uint32) (rect, bool) {
 	return rect{}, false
 }
 
-func (w *window) trayMessage(id, message uintptr) {
-	tr := w.trays[uint32(id)]
-	if tr == nil || w.engine == nil {
+// trayEvent decodes a version 4 callback: the icon's ID and the button, 0 for the primary, of a click; ok is false for what is not a click, the raw button messages that come before NIN_SELECT and WM_CONTEXTMENU among them.
+func trayEvent(lParam uintptr) (id uint32, index int, ok bool) {
+	id = uint32(lParam>>16) & 0xffff
+	switch uint32(lParam) & 0xffff {
+	case ninSelect, ninKeySelect, wmMButtonUp:
+		return id, 0, true
+	case wmContextMenu:
+		return id, 1, true
+	}
+	return 0, 0, false
+}
+
+func (w *window) trayMessage(lParam uintptr) {
+	id, index, ok := trayEvent(lParam)
+	if !ok || w.engine == nil {
 		return
 	}
-	index := uint32(0)
-	switch uint32(message) {
-	case wmRButtonUp, wmContextMenu:
-		index = 1
-	case wmLButtonUp, wmMButtonUp, ninSelect, ninKeySelect:
-		// primary button (and keyboard activation)
-	default:
+	tr := w.trays[id]
+	if tr == nil {
 		return
 	}
-	w.engine.Dispatch(driver.Event{Kind: driver.EventTray, Count: uint32(id), Index: int(index)})
+	w.engine.Dispatch(driver.Event{Kind: driver.EventTray, Count: id, Index: index})
 }
 
 func trayHICON(data []byte) (uintptr, bool) {
