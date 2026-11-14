@@ -156,7 +156,7 @@ cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 
 ## Biometrics
 
-`cx.BiometricAvailability` reports whether Face ID, Touch ID or a device fingerprint is enrolled. `cx.AuthenticateBiometric` asks the system to confirm the user with a reason and reports success, failure, cancellation or unavailability. It does not choose a passcode fallback for the app.
+`cx.BiometricAvailability` reports whether Face ID, Touch ID or a device fingerprint is enrolled; Android does not say which kind is enrolled, so there it reports a fingerprint when one is enrolled and otherwise face when the device has face hardware. `cx.AuthenticateBiometric` asks the system to confirm the user with a reason, which must not be empty, and reports success, failure, cancellation or unavailability. It does not choose a passcode fallback for the app.
 
 ```go
 cx.BiometricAvailability(func(kind core.BiometricKind) {

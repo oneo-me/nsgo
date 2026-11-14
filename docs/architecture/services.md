@@ -128,12 +128,12 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 ## Biometrics
 
-`BiometricAvailability` answers with the enrolled kind (`BiometricFace`, `BiometricFingerprint` or `BiometricNone`) without prompting. `AuthenticateBiometric` shows the system's biometric prompt with the app's reason and answers `BiometricSuccess`, `BiometricFailure`, `BiometricCancelled` or `BiometricUnavailable`; it never falls back to a device passcode. Code whose `Access` does not grant `AccessBiometrics` gets unavailable.
+`BiometricAvailability` answers with the enrolled kind (`BiometricFace`, `BiometricFingerprint` or `BiometricNone`) without prompting. `AuthenticateBiometric` shows the system's biometric prompt with the app's reason, which must not be empty (an empty one answers `BiometricFailure` without a prompt, as `LocalAuthentication` throws on it), and answers `BiometricSuccess`, `BiometricFailure`, `BiometricCancelled` or `BiometricUnavailable`; it never falls back to a device passcode. Code whose `Access` does not grant `AccessBiometrics` gets unavailable.
 
 | Target | Availability and authentication | App configuration |
 | --- | --- | --- |
 | macOS, iOS | `LAContext` from `LocalAuthentication` (`apple/biometric.go`) | Face ID needs `NSFaceIDUsageDescription` in `nsgo.yaml`'s `apple.info` |
-| Android | `BiometricManager`/`BiometricPrompt` from API 28 | The app lists `USE_BIOMETRIC` in `android.permissions` |
+| Android | `BiometricManager`/`BiometricPrompt` from API 28; as Android does not say which kind is enrolled, an enrolled fingerprint answers `BiometricFingerprint` and otherwise face hardware answers `BiometricFace` | The app lists `USE_BIOMETRIC` in `android.permissions` |
 | Other targets | Unavailable | None |
 
 `nsgotest` exposes `BiometricAvailability`, `BiometricAnswer` and `AuthenticationReasons` so tests can fake enrollment and prompt results.

@@ -2908,15 +2908,25 @@ public class NsgoView extends FrameLayout {
                     ? manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
                     : manager.canAuthenticate();
             if (state != BiometricManager.BIOMETRIC_SUCCESS) return Protocol.BIOMETRIC_NONE;
-            if (Build.VERSION.SDK_INT >= 29 && pm.hasSystemFeature(PackageManager.FEATURE_FACE)) return Protocol.BIOMETRIC_FACE;
-            if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) return Protocol.BIOMETRIC_FINGERPRINT;
-            return Protocol.BIOMETRIC_NONE;
+            // canAuthenticate does not say which kind is enrolled and FEATURE_FACE only says the hardware is there, so an enrolled fingerprint answers first; face is the best guess for a device with face hardware and no fingerprint enrolled.
+            boolean fingerprint = pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
+            if (fingerprint && hasEnrolledFingerprints()) return Protocol.BIOMETRIC_FINGERPRINT;
+            if (pm.hasSystemFeature(PackageManager.FEATURE_FACE)) return Protocol.BIOMETRIC_FACE;
+            return fingerprint ? Protocol.BIOMETRIC_FINGERPRINT : Protocol.BIOMETRIC_NONE;
         }
         if (!pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) return Protocol.BIOMETRIC_NONE;
+        return hasEnrolledFingerprints() ? Protocol.BIOMETRIC_FINGERPRINT : Protocol.BIOMETRIC_NONE;
+    }
+
+    /** Says whether the device has a fingerprint enrolled, which FingerprintManager answers for USE_BIOMETRIC too. */
+    private boolean hasEnrolledFingerprints() {
         android.hardware.fingerprint.FingerprintManager manager =
                 (android.hardware.fingerprint.FingerprintManager) getContext().getSystemService(Context.FINGERPRINT_SERVICE);
-        return manager != null && manager.isHardwareDetected() && manager.hasEnrolledFingerprints()
-                ? Protocol.BIOMETRIC_FINGERPRINT : Protocol.BIOMETRIC_NONE;
+        try {
+            return manager != null && manager.isHardwareDetected() && manager.hasEnrolledFingerprints();
+        } catch (SecurityException e) {
+            return false;
+        }
     }
 
     /**
