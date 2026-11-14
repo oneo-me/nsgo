@@ -28,7 +28,7 @@ Scanning takes filters that the app supplies: service UUIDs, manufacturer data a
 
 Results are coalesced by the backend's device ID and carry the latest RSSI and advertisement data. The core does not infer proximity, deduplicate by name or keep a device alive merely because it was seen. A scan can finish with a normal stop, an unavailable radio, a denied permission or a provider error.
 
-On iOS, `CBCentralManager` reports the manager state before a scan starts, and the backend maps `poweredOff`, `unauthorized`, `unsupported` and `resetting` to stable core errors. On Android, the backend checks the adapter and the runtime permissions before `BluetoothLeScanner.startScan`; it must not request a permission from a background callback.
+On Apple, the radio's state exists only on a `CBCentralManager`, and creating the first one while the authorization is not determined shows the system's prompt. The backend therefore reads the permission from the class property `CBManager.authorization` without a manager, and creates its manager, with `CBCentralManagerOptionShowPowerAlertKey` false, only once the permission is granted or a scan, connection or permission request asks for it. A new manager starts in `unknown`, a temporary state in which CoreBluetooth ignores a scan, so the backend holds commands until the first state update; it then maps `poweredOff`, `unauthorized` and `unsupported` to stable core errors, and `resetting` fails the pending operations and closes the connections, as the system drops them. On Android, the backend checks the adapter and the runtime permissions before `BluetoothLeScanner.startScan`; it must not request a permission from a background callback.
 
 ## GATT operations
 
@@ -58,7 +58,7 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover handle ownership, scan filters, coalesced results, connection state, operation cancellation, stale events, subscription cleanup and byte preservation;
 - `internal/driver` tests cover protocol encoding, operation IDs, UUIDs, empty values and payloads larger than one bridge frame;
-- Apple tests use fake central and peripheral delegates to cover authorization, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
+- Apple tests use fake central and peripheral delegates to cover authorization read without a manager, the `unknown` state before the first update, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
 - Android tests use a fake scanner and GATT client to cover API 31 permissions, location-gated older scans, adapter state, reconnect and cleanup without a device; and
 - target tests use a controlled peripheral or provider simulator, never a user's nearby device, and verify that no callback runs after its owning scope is disposed.
 
