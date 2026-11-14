@@ -194,6 +194,14 @@ What updates ([updates](architecture/updates.md)) still lack, on the direct chan
 | Package manager manifests | `brew` casks, `winget-pkgs` | Each direct release writes a Homebrew cask saying `auto_updates true` and a winget manifest for its setup, checked by `brew audit` and `winget validate` |
 | Mini programs and the web | `wx.getUpdateManager`, service workers | A mini program answers `updater.Check` from its platform's `UpdateManager` and restarts into the new version, and a web app offers to reload once a newer build is deployed |
 
+## Contacts and calendar
+
+What NSGo's own [#57](https://github.com/nsgo-dev/nsgo/issues/57) asks for, which NSH has not; [its design](architecture/contacts-calendar.md) waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Contacts and calendar | [Contacts and calendar](architecture/contacts-calendar.md) | On an iPhone with iOS 18 and an Android phone, the picker returns the contacts the user chose and the system's editor adds an event, neither asking for a permission; with the permission, a query reads the contacts, all of them or the ones iOS's limited access shares, and a week's occurrences, and the same queries work in a notarized and a Mac App Store build on a Mac; each permission reads without asking, `Env` says where none exists, and `nsgotest` and the gallery's System page check each service |
+
 ## Finish the existing platforms
 
 These items wait for community contributions, and a change to one backend records the gaps it leaves here.
