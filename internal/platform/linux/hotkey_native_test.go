@@ -24,7 +24,7 @@ func TestGlobalShortcutsReachTheBackend(t *testing.T) {
 	title := "nsgo-hotkeys"
 	app := func(cx *core.Scope) core.Node {
 		fired := core.NewSignal(cx, 0)
-		cx.RegisterHotKey("ctrl+alt+f12", func() { fired.Update(func(n int) int { return n + 1 }) })
+		cx.RegisterHotKey("ctrl+alt+k", func() { fired.Update(func(n int) int { return n + 1 }) })
 		cx.Effect(func() { cx.SetTitle(fmt.Sprintf("%s|%d", title, fired.Get())) })
 		return core.View{Style: core.Style{Background: driver.RGB(0xffffff)}}
 	}
