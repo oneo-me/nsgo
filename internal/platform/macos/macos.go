@@ -315,6 +315,10 @@ type surface struct {
 var (
 	surfaces = map[*surface]bool{}
 	runner   *surface
+	// quitPending is AppKit's NSTerminateLater request waiting for the
+	// engine's ItemQuitResponse.
+	quitPending   bool
+	quitRequestID uint32
 )
 
 // views maps native objects (views and fields) to their Go side.
@@ -640,6 +644,9 @@ func surfaceMoved(self objc.ID, cmd objc.SEL) {
 // delegate, in opts' appearance, and returns NSApp.
 func startApp(opts Options) objc.ID {
 	loadAppKit()
+	quitPending = false
+	quitRequestID = 0
+	finished = false
 	apple.RegisterFonts(opts.Fonts)
 	nsApp := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
 	// An accessory app set so before the loop runs never shows in the
@@ -659,9 +666,24 @@ func startApp(opts Options) objc.ID {
 		// Quitting returns from Run instead of ending the process.
 		Cmd: sel("applicationShouldTerminate:"),
 		Fn: func(self objc.ID, _ objc.SEL, app objc.ID) uint {
-			finish()
-			const terminateCancel = 0
-			return terminateCancel
+			if finished {
+				const terminateCancel = 0
+				return terminateCancel
+			}
+			if own == nil || own.engine == nil {
+				finish()
+				const terminateCancel = 0
+				return terminateCancel
+			}
+			if quitPending {
+				const terminateLater = 2
+				return terminateLater
+			}
+			quitPending = true
+			quitRequestID++
+			own.engine.Dispatch(driver.Event{Kind: driver.EventQuitRequest, Count: quitRequestID})
+			const terminateLater = 2
+			return terminateLater
 		},
 	}, {
 		// Clicking the Dock icon, or launching the app again, is the
@@ -1490,6 +1512,16 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemQuit:
 			if !s.embedded {
 				apple.OnMain(finish)
+			}
+			continue
+		case driver.ItemQuitResponse:
+			if !s.embedded && it.Count == quitRequestID && quitPending {
+				quitPending = false
+				app := objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication"))
+				app.Send(sel("replyToApplicationShouldTerminate:"), it.On)
+				if it.On {
+					finish()
+				}
 			}
 			continue
 		case driver.ItemOpenSurface:
