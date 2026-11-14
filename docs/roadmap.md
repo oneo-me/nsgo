@@ -52,7 +52,6 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Context menus from any input | `elements.md`, #978, #1098, #1544, #1555, #1610 | The menu key, Shift+F10 and a screen reader's menu action open a view's context menu; a held finger or pen opens a `ContextMenu` on any device and a mouse never; a secondary click outside closes overlays; a second one on the trigger opens it again where it lands; and `ContextMenuEvent` names its pointer |
-| Text-level search | #47, [text-level search design](architecture/text-search.md) | `base/textview` finds and highlights matches across document views, and `ui/chat` adds a transcript find bar without owning matching rules |
 
 ## Application and windows
 
@@ -89,6 +88,14 @@ What `base/terminal` still lacks of a terminal app's features, Ghostty's the ref
 | Keybinds, zoom, the context menu and secondary clicks | `keybind`, `right-click-action` | Ghostty's actions bind to keys over the defaults, zoom changes the font's size, and a secondary click shows Copy, Paste, Select All and Clear |
 | Drawn box characters, blinking and contrast | `cursor-style-blink`, `minimum-contrast`, `window-padding-color` | Box drawing, blocks and Powerline's separators are drawn so lines join, the cursor blinks, and minimum contrast and padding colors apply |
 | Search, images and shell integration | Find, the Kitty graphics protocol, `shell-integration` | A search highlights matches, programs show images, and OSC 133 prompts take Option+click to move the cursor |
+
+## Text views
+
+What `base/textview` and `ui/chat` still lack, from NSGo's own issues ([text view](architecture/textview.md)).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Text-level search | NSGo's [#47](https://github.com/nsgo-dev/nsgo/issues/47), [text-level search](architecture/text-search.md) | `base/textview` finds and highlights matches across document views, and `ui/chat` adds a transcript find bar without owning matching rules |
 
 ## Widgets
 
