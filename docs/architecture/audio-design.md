@@ -29,11 +29,7 @@ if err == nil {
 }
 ```
 
-`PlayBytes` and `OpenBytes` take encoded bytes and an explicit MIME type. A
-`Source` helper may be added if more than a path and bytes are needed, but the
-first API keeps the source forms explicit. Paths are opened by the platform
-worker, never by the engine goroutine. Until a target backend is linked, these
-entry points return `ErrUnsupported` after validating their source and options.
+`PlayBytes` and `OpenBytes` take encoded bytes and an explicit MIME type. A `Source` helper may be added if more than a path and bytes are needed, but the first API keeps the source forms explicit. Opening reads the source's header and prepares the output on the calling goroutine, so that these entry points can return its errors, and `Play` starts the output there too; an app opening a large file, or playing over a slow route such as Bluetooth, calls them off its engine goroutine. Until a target backend is linked, these entry points return `ErrUnsupported` after validating their source and options.
 
 `Sound` is a short-lived cue. It has `SetVolume`, `Stop`, `OnEnd` and `Close`;
 `Close` is idempotent and releases the native player. A cue that is played

@@ -179,3 +179,30 @@ func TestAppleTellsUnreadableFromUnsupported(t *testing.T) {
 		player.Close()
 	}
 }
+
+func TestApplePlayerStopsAndPlaysAgain(t *testing.T) {
+	player, err := OpenBytes(tone(time.Second), "audio/wav", WithVolume(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	needOutput(t, player.Play())
+	time.Sleep(100 * time.Millisecond)
+	if err := player.Stop(); err != nil {
+		t.Fatal(err)
+	}
+	if player.Playing() || player.Position() != 0 {
+		t.Errorf("playing=%v position=%s after Stop, want false/0", player.Playing(), player.Position())
+	}
+	if err := player.Play(); err != nil {
+		t.Fatal(err)
+	}
+	if !player.Playing() {
+		t.Error("not playing after Play following Stop")
+	}
+	if err := player.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := player.Close(); err != nil {
+		t.Fatalf("second Close: %v", err)
+	}
+}

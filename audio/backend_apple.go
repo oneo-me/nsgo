@@ -296,12 +296,13 @@ func (sound *appleSound) stop() error {
 	if sound.closed {
 		return ErrClosed
 	}
-	objc.Send[bool](sound.player, appleSel("stop"))
+	// -stop blocks while it releases the output; Close does that off the
+	// caller's goroutine.
+	sound.player.Send(appleSel("pause"))
 	return nil
 }
 
 func (sound *appleSound) close() error {
-	defer applePool()()
 	sound.mu.Lock()
 	if sound.closed {
 		sound.mu.Unlock()
@@ -313,7 +314,10 @@ func (sound *appleSound) close() error {
 	sound.mu.Unlock()
 	if player != 0 {
 		appleUnwatch(player)
-		appleRelease(player)
+		go func() {
+			defer applePool()()
+			appleRelease(player)
+		}()
 	}
 	return nil
 }
@@ -372,7 +376,9 @@ func (player *applePlayer) stop() error {
 		player.mu.Unlock()
 		return ErrClosed
 	}
-	objc.Send[bool](player.player, appleSel("stop"))
+	// -stop blocks while it releases the output; pausing keeps it until
+	// Close, which releases it off the caller's goroutine.
+	player.player.Send(appleSel("pause"))
 	objc.Send[float64](player.player, appleSel("setCurrentTime:"), float64(0))
 	player.stopProgressLocked()
 	player.mu.Unlock()
@@ -456,7 +462,6 @@ func (player *applePlayer) playing() bool {
 }
 
 func (player *applePlayer) close() error {
-	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -467,15 +472,19 @@ func (player *applePlayer) close() error {
 	playerID, done := player.player, player.tickDone
 	player.player = 0
 	player.mu.Unlock()
-	if playerID != 0 {
-		appleUnwatch(playerID)
+	if playerID == 0 {
+		return nil
 	}
-	if done != nil {
-		<-done
-	}
-	if playerID != 0 {
+	appleUnwatch(playerID)
+	// Releasing the output blocks, and the progress ticker may still be
+	// reading the player, so both are waited for off the caller's goroutine.
+	go func() {
+		if done != nil {
+			<-done
+		}
+		defer applePool()()
 		appleRelease(playerID)
-	}
+	}()
 	return nil
 }
 
