@@ -42,7 +42,7 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover one-region defaults, the size and geometry changing in one batch, region ordering, reserved and occluding obstructions, surface detachment and signals that change only when geometry changes;
 - `internal/engine` tests cover queued resizes merging with their geometry, including a resize merged ahead of an environment pushed before it;
-- `internal/driver` tests cover serialization, empty lists, posture transitions, points conversion and frames outside the surface;
+- `internal/driver` tests cover serialization, empty lists, state transitions, points conversion and frames outside the surface;
 - iOS tests use recorded reserved regions and hinge updates for an open, a half-open and a closed hinge, rotation and a vertical bar on either edge, and an older system without the selectors;
 - Android tests use recorded WindowManager observations for an open fold, a half-open fold, an open hinge between two panels (occluding and separating together), rotation and multi-window states; and
 - a target test verifies an app can place two explicit panes on either side of a separating obstruction without any implicit device-specific behavior from core or base.
