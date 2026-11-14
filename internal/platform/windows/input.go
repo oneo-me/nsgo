@@ -772,6 +772,15 @@ func revealAxis(offset, length, from, size driver.Points) driver.Points {
 // inactive.
 func (w *window) windowFocus(focused bool) {
 	w.inactive = !focused
+	if focused {
+		w.focused = true
+	} else if w.kind == driver.SurfacePanel && w.hideOnBlur && w.visible && w.focused {
+		w.visible = false
+		showWindow.Call(w.hwnd, swHide)
+		if w.engine != nil {
+			w.engine.Dispatch(driver.Event{Kind: driver.EventWindowHidden})
+		}
+	}
 	if in := w.focusedField(); in != nil {
 		in.active = focused
 		in.drag = dragNone

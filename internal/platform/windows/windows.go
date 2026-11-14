@@ -331,11 +331,14 @@ type window struct {
 	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
-	// root is the backend's own surface. Opened surfaces share its engine
+	// primary is the backend's own surface. Opened surfaces share its engine
 	// and message loop, but closing one must not end the process.
-	root       bool
+	primary    bool
 	kind       driver.SurfaceKind
 	destroying bool
+	hideOnBlur bool
+	visible    bool
+	focused    bool
 	// language is what the menus say (driver.ItemDirection).
 	language string
 	// rtl is the app's direction (driver.ItemDirection), which the menus
@@ -540,7 +543,7 @@ func Run(app engine.App, opts Options) {
 	setDpiAwareness.Call(perMonitorAwareV2)
 	registerFonts(opts.Fonts)
 	w := newWindow(opts)
-	w.root, w.app, w.opts = true, app, opts
+	w.primary, w.app, w.opts = true, app, opts
 	if opts.Material != driver.WindowMaterialNone {
 		switch {
 		case !systemBackdrops():
@@ -783,8 +786,14 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 		opts.Height = cfg.Height
 	}
 	opts.Frame, opts.Material, opts.Constraints, opts.Hidden = cfg.Frame, cfg.Material, cfg.Constraints, cfg.Hidden
+	if cfg.Kind == driver.SurfaceTrayIcon {
+		// The notification-area icon does not yet host a drawn surface on
+		// Windows, so keep its attached tree out of sight.
+		opts.Hidden = true
+	}
 	child := newWindow(opts)
-	child.opts, child.kind = opts, cfg.Kind
+	child.opts, child.kind, child.hideOnBlur = opts, cfg.Kind, cfg.HideOnBlur
+	child.visible = !opts.Hidden
 	child.chrome.constraints = opts.Constraints
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
 	if cfg.Kind == driver.SurfacePanel {
@@ -794,7 +803,11 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	if cfg.Kind == driver.SurfaceWindow {
 		adjustWindowRect.Call(uintptr(unsafe.Pointer(&frame)), style, 0)
 	}
-	instance, className := registerClass()
+	// Run and NewView register the class before the engine can open a
+	// surface. Reuse it directly here; calling registerClass from this path
+	// would make wndProc's callback initialization recursive.
+	instance, _, _ := getModuleHandleW.Call(0)
+	className := wide("NsgoWindow")
 	hwnd, _, _ := createWindowExW.Call(0, uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(wide(opts.Title))), style,
 		cwUseDefault, cwUseDefault, uintptr(frame.Right-frame.Left), uintptr(frame.Bottom-frame.Top),
@@ -824,8 +837,12 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	child.engine = w.engine.Attach(cfg.ID, child)
 	child.engine.Resize(driver.Size{Width: size.X, Height: size.Y})
 	child.engine.SetEnvironment(child.env)
-	if !cfg.Hidden {
-		showWindow.Call(hwnd, swShow)
+	if !opts.Hidden {
+		if cfg.Kind == driver.SurfacePanel {
+			child.orderFront()
+		} else {
+			showWindow.Call(hwnd, swShow)
+		}
 	}
 }
 
@@ -1882,7 +1899,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		r, _, _ := defWindowProcW.Call(hwnd, uintptr(message), wParam, lParam)
 		return r
 	}
-	if message == wmClose && !w.root && !w.embedded && !w.destroying {
+	if message == wmClose && !w.primary && !w.embedded && !w.destroying {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
 		return 0
 	}
@@ -2261,7 +2278,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		for c := range w.hosts {
 			w.closeComponent(c)
 		}
-		if w.root {
+		if w.primary {
 			postQuitMessage.Call(0)
 			return 0
 		}
