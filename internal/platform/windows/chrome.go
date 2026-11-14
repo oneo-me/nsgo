@@ -83,6 +83,7 @@ const (
 	swMaximize = 3
 	swMinimize = 6
 	swRestore  = 9
+	swShowNA   = 8 // SW_SHOWNA: shown in its state, not activated
 
 	wsPopup            = 0x80000000
 	monitorDefaultNear = 2
@@ -284,7 +285,8 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 			w.placePanel(c.Anchor)
 			w.orderFront()
 		} else {
-			showWindow.Call(w.hwnd, swShow)
+			// Without taking the focus from another app (core.Window.Show).
+			showWindow.Call(w.hwnd, swShowNA)
 		}
 	case driver.WindowHide:
 		w.visible = false
