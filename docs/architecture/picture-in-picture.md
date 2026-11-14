@@ -44,7 +44,7 @@ PiP needs the shared `AVAudioSession` in the playback category and the `audio` b
 
 ## Configuration and privacy
 
-The tool must make the app's intent explicit in YAML and generated entitlements. Video PiP needs the appropriate playback/background declaration; custom content needs the same only if its session continues while the app is not foreground. The exact key and minimum iOS version remain open until the tool and runtime are implemented together.
+The tool must make the app's intent explicit in YAML. PiP needs no entitlement but the Info.plist's `UIBackgroundModes` with `audio`, for custom content as for video, as PiP exists to show while the app is not in front. That key is an array, while `nsgo.yaml`'s `apple.info` holds string entries alone (`cmd/nsgo/project.go`, written as `<string>` by `cmd/nsgo/build.go`), so issue #54's route through `apple.info` cannot declare it: the tool needs a field that writes the array, an open decision. NSGo's iOS minimum, 15.0, has every API here: `AVPictureInPictureController` from iOS 9, automatic starts from 14.2 and content sources from 15.
 
 PiP content is an app-owned frame or video URL. NSGo does not upload it, persist it or inspect its pixels. A network video continues to use the existing `AccessNetwork` check; a custom frame stream is app data and must follow the app's own access grant.
 
@@ -64,7 +64,7 @@ These decisions need confirmation before an implementation chooses them:
 1. Should the first release expose video PiP only, or ship a separate custom-frame API at the same time?
 2. Does custom content end when the engine is suspended, or must the adapter retain and present frames independently?
 3. Is the public entry point a `mobile` service, a `core.Video` method, or a new `core` session type?
-4. Which iOS versions and background entitlements are supported for each path?
+4. Which `nsgo.yaml` field declares the `audio` background mode: a PiP setting of its own, or `apple.info` taking arrays?
 5. Should PiP control callbacks expose seek/skip commands, or only play and pause initially?
 6. Can a session outlive the view that started it, through a deferred deletion in the mount protocol, or does deleting the view always end it?
 7. Does a video with `Controls` start PiP from code through a second `AVPlayerLayer` on its player, or only by its button?
