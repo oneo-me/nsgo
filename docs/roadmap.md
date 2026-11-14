@@ -118,6 +118,19 @@ What `app_clip` lacks of App Clips ([tool](architecture/tool.md#app-clips)).
 | Links into the full app | `applinks:`, `CFBundleURLTypes` | The full app takes universal links and URL schemes into `mobile.OpenedURL`, as the clip takes its invocation |
 | Opened links elsewhere | `Intent.getData`, `location.href` | Android's App Links and the web page's address reach `mobile.OpenedURL` as iOS's links do, which reads "" there now |
 
+## Picture in Picture
+
+What issue #54 asks of Picture in Picture ([Picture in Picture](architecture/picture-in-picture.md)), which waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Videos on iOS | `AVPictureInPictureController`, `AVPlayerViewController` | On an iPhone and the simulator a `Video` enters and leaves PiP and keeps playing there with the default `AudioSession`, enters it on its own as the app goes to the background when the app chose so, and the app hears when the user returns; a device without PiP reports it unavailable |
+| Custom content on iOS | `AVSampleBufferDisplayLayer`, `AVPictureInPictureSampleBufferPlaybackDelegate` | On an iPhone a PiP window shows what the app's content draws and follows its state, fast enough to show a recording level change, and its play, pause and skip reach the app |
+| PiP on tvOS | `AVPictureInPictureController` | A video enters PiP on an Apple TV, where iOS's backend reports PiP unavailable until then |
+| PiP on macOS | `AVPlayerView.allowsPictureInPicturePlayback`, `AVPictureInPictureController` | A `Video` on a Mac enters and leaves PiP with the same states as on iOS |
+| PiP on Android | `Activity.enterPictureInPictureMode` | An Android app's activity enters PiP showing its video, with the same states as on iOS |
+| PiP on the web | `HTMLVideoElement.requestPictureInPicture` | A `Video` on the web enters and leaves PiP with the same states as on iOS |
+
 ## Apple TV
 
 tvOS runs on iOS's backend, its remote moving a focus ([keyboard focus](architecture/interaction.md#keyboard-focus)); what it still lacks:
