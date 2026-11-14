@@ -54,8 +54,19 @@ func (c *Collection[K, T]) newItem(v T) *Signal[collectionItem[T]] {
 // Len returns the number of items, following the order.
 func (c *Collection[K, T]) Len() int { return len(c.order.Get()) }
 
-// KeyAt returns the key of the item at i, following the order.
+// KeyAt returns the key of the item at i, following the order; it panics when i is out of range, as a slice does.
 func (c *Collection[K, T]) KeyAt(i int) K { return c.order.Get()[i] }
+
+// At returns the item at i, following the order and that item, and whether i is in range. A list's row reads its item with At: as items go, a row's binding may run once more with its old index before the list removes the row.
+func (c *Collection[K, T]) At(i int) (T, bool) {
+	keys := c.order.Get()
+	if i < 0 || i >= len(keys) {
+		var zero T
+		return zero, false
+	}
+	it := c.items[keys[i]].Get()
+	return it.v, it.ok
+}
 
 // Keys returns the keys in order, following the order. The slice is the collection's: it does not change, and must not be changed.
 func (c *Collection[K, T]) Keys() []K { return c.order.Get() }

@@ -141,9 +141,11 @@ func TestCollectionRunsOneListRowPerChange(t *testing.T) {
 		return List{Count: c.Len, Key: func(i int) any { return c.KeyAt(i) }, Style: Style{FlexGrow: 1},
 			Row: func(cx *Scope, row ListRow) Node {
 				return Text{Style: Style{Height: Pt(30)}, ContentFunc: func() string {
-					id := c.KeyAt(row.Index())
-					it, _ := c.Get(id)
-					builds[id]++
+					it, ok := c.At(row.Index())
+					if !ok {
+						return ""
+					}
+					builds[it.id]++
 					if it.done {
 						return it.text + " done"
 					}
@@ -172,6 +174,40 @@ func TestCollectionRunsOneListRowPerChange(t *testing.T) {
 		}
 		if n != want {
 			t.Fatalf("row %d ran %d times, want %d", id, n, want)
+		}
+	}
+}
+
+func TestCollectionListRowsOutliveTheirItems(t *testing.T) {
+	for _, n := range []int{5, 50} {
+		for _, gone := range []int{n - 1, 0, n / 2} {
+			var c *Collection[int, task]
+			h := newHost(t, Size{Width: 200, Height: 300}, func(cx *Scope) Node {
+				items := make([]task, n)
+				for i := range items {
+					items[i] = task{id: i, text: "task " + strconv.Itoa(i)}
+				}
+				c = NewCollection(cx, taskID, items)
+				return List{Count: c.Len, Key: func(i int) any { return c.KeyAt(i) }, Style: Style{FlexGrow: 1},
+					Row: func(cx *Scope, row ListRow) Node {
+						return Text{Style: Style{Height: Pt(30)}, ContentFunc: func() string {
+							it, _ := c.At(row.Index())
+							return it.text
+						}}
+					}}
+			})
+			h.commit()
+			h.paced()
+			c.Delete(gone)
+			h.commit()
+			c.Replace(nil)
+			h.commit()
+			if len(h.errs) != 0 {
+				t.Fatalf("%d items, deleting %d: %v", n, gone, h.errs[0])
+			}
+			if _, ok := c.At(0); ok || c.Len() != 0 {
+				t.Fatalf("an emptied collection holds %d", c.Len())
+			}
 		}
 	}
 }

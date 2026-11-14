@@ -57,7 +57,7 @@ todos := core.NewCollection(cx, func(t Todo) int { return t.ID }, nil)
 
 core.List{Count: todos.Len, Key: func(i int) any { return todos.KeyAt(i) },
 	Row: func(cx *core.Scope, row core.ListRow) core.Node {
-		return core.Text{ContentFunc: func() string { t, _ := todos.Get(todos.KeyAt(row.Index())); return t.Title }}
+		return core.Text{ContentFunc: func() string { t, _ := todos.At(row.Index()); return t.Title }}
 	}}
 
 todos.Update(id, func(t Todo) Todo { t.Done = true; return t })
