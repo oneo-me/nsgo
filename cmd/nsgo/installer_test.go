@@ -113,6 +113,29 @@ func TestNSISScript(t *testing.T) {
 			t.Errorf("script holds %s", unwanted)
 		}
 	}
+	// A command-line package adds and removes its install folder from the
+	// user's Path, while preserving the existing toast registration.
+	p.Windows.CommandLine = true
+	d, err = nsisScript(p, pkg, "arm64")
+	if err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if err := nsisTemplate.Execute(&out, d); err != nil {
+		t.Fatal(err)
+	}
+	script = out.String()
+	for _, want := range []string{
+		"WriteUninstaller \"$INSTDIR\\Uninstall.exe\"\n  Call UserPath\n",
+		"Call un.CloseApp\n  Call un.UserPath\n",
+		`SetEnvironmentVariable(t "NSGO_PATH_REMOVE", t "1")`,
+		`$$k.SetValue('Path', ($$p -join ';'), 'ExpandString')`,
+		`SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000`,
+	} {
+		if !strings.Contains(script, want) {
+			t.Errorf("command line script lacks %s", want)
+		}
+	}
 	// A quote in the name stays inside the command lines the installer runs.
 	d.Name = "Bob's `Notes`"
 	out.Reset()

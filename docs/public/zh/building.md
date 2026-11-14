@@ -73,7 +73,7 @@ Apple TV 的图标不是方形，而是一张分层卡片：`tvos` 取 Xcode 的
 | 目标 | 安装程序 |
 | --- | --- |
 | macOS | `<name>-<version>-macos-<arch>.dmg`，打开后显示应用、一个箭头和“应用程序”文件夹的链接，提示把应用拖过去，用 `sign.identity` 签名并[公证](#公证) |
-| Windows | `<name>-<version>-windows-<arch>-setup.exe`，[NSIS](https://nsis.sourceforge.io) 安装程序，为当前用户安装，再次安装时装回用户之前选的目录，应用运行中会先关闭它，带开始菜单快捷方式、可选的桌面快捷方式，以及只删除自己装过的文件的卸载程序；`windows.command_line` 还会安装 `.com` 伴侣 |
+| Windows | `<name>-<version>-windows-<arch>-setup.exe`，[NSIS](https://nsis.sourceforge.io) 安装程序，为当前用户安装，再次安装时装回用户之前选的目录，应用运行中会先关闭它，带开始菜单快捷方式、可选的桌面快捷方式，以及只删除自己装过的文件的卸载程序；`windows.command_line` 还会安装 `.com` 伴侣，并把应用目录加入用户的 `Path`，安装后新开的控制台可直接运行应用的命令 |
 | Linux | 供 Debian 和 Ubuntu 使用的 `<name>-<version>-linux-<arch>.deb`，以及供 Arch Linux 使用的 `<name>-<version>-linux-<arch>.pkg.tar.gz`，把应用装到 `/opt/<name>`，并带命令、桌面入口和图标；还有 `<name>-<version>-linux-<arch>.AppImage`，无需安装即可在任何发行版上运行 |
 
 Windows 安装程序需要 NSIS 的编译器，在 Mac 上用 `brew install makensis` 安装，因此 Mac 可以构建全部安装程序；没有它时，`build` 把脚本 `<name>.nsi` 留在包里，在任何系统上都可原样编译。安装程序提供应用文案中 NSIS 有翻译的语言，包括简体和繁体中文，并按系统语言选择。`-installers=false` 或 `build.installers: false` 只构建包本身。
