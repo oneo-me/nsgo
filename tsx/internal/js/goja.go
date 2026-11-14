@@ -49,3 +49,13 @@ var (
 	MustCompile          = goja.MustCompile
 	UncapFieldNameMapper = goja.UncapFieldNameMapper
 )
+
+// Caller is the line of JS code r runs now, through the source maps the code carries, as file and line; ok is false while r runs none.
+func Caller(r *Runtime) (file string, line int, ok bool) {
+	for _, f := range r.CaptureCallStack(16, nil) {
+		if p := f.Position(); p.Filename != "" && p.Line > 0 {
+			return p.Filename, p.Line, true
+		}
+	}
+	return "", 0, false
+}

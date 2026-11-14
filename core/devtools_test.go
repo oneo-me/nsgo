@@ -5,9 +5,11 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/devtools"
+	"github.com/nsgo-dev/nsgo/internal/driver"
 	"github.com/nsgo-dev/nsgo/nsgotest"
 )
 
@@ -177,5 +179,131 @@ func TestDevToolsNameTheComputationsThatRanMost(t *testing.T) {
 	d.on(func() { hot = d.surface.Hot(10) })
 	if len(hot) == 0 || hot[0].Kind != "binding" || hot[0].Site != d.funcAt || hot[0].Runs < 3 {
 		t.Fatalf("hot = %+v, want the count's binding at %s first", hot, d.funcAt)
+	}
+}
+
+func TestDevToolsShowMemosAndReaders(t *testing.T) {
+	devtools.Enabled = true
+	t.Cleanup(func() { devtools.Enabled = false })
+	var site string
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		n := core.NewSignal(cx, 3)
+		unread := core.NewSignal(cx, "nobody reads me")
+		_ = unread
+		var double *core.Memo[int]
+		double, site = core.NewMemo(cx, func() int { return n.Get() * 2 }), line()
+		return core.Text{ContentFunc: func() string { return strconv.Itoa(double.Get()) }}
+	}, nsgotest.Size(100, 50))
+	s := devtools.Surfaces()[len(devtools.Surfaces())-1]
+	t.Cleanup(func() { devtools.Unregister(s) })
+	var owners devtools.Owner
+	app.Post(func() { owners = s.Owners() })
+	app.Settle()
+	var memo *devtools.Computation
+	readers := map[string]int{}
+	var walk func(o devtools.Owner)
+	walk = func(o devtools.Owner) {
+		for i, c := range o.Computations {
+			if c.Kind == "memo" && c.Site == site {
+				memo = &o.Computations[i]
+			}
+		}
+		for _, v := range o.Values {
+			readers[v.Text] = v.Readers
+		}
+		for _, c := range o.Children {
+			walk(c)
+		}
+	}
+	walk(owners)
+	if memo == nil || memo.Value != "6" || memo.Readers != 1 {
+		t.Fatalf("memo = %+v, want 6 read by the text, made at %s", memo, site)
+	}
+	if readers["3"] != 1 || readers["nobody reads me"] != 0 {
+		t.Errorf("readers = %v", readers)
+	}
+}
+
+func TestCommitsNameWhatTheyRanWhileDevToolsRecord(t *testing.T) {
+	driver.TraceCauses, devtools.Enabled = true, true
+	defer func() { driver.TraceCauses, devtools.Enabled = false, false }()
+	root := core.NewRoot(core.RootOptions{Post: func(func()) {}, Clock: core.NewManualClock(time.Unix(0, 0))})
+	tree := core.NewTree(root, core.ApproxTextEngine{})
+	tree.Resize(core.Size{Width: 100, Height: 100})
+	var count *core.Signal[int]
+	_, file, at, _ := runtime.Caller(0)
+	tree.Mount(func(cx *core.Scope) core.Node {
+		count = core.NewSignal(cx, 0)
+		return core.Text{ContentFunc: func() string { return strconv.Itoa(count.Get()) }}
+	})
+	tree.Commit()
+	count.Set(7)
+	c := tree.Commit().Causes
+	// The binding is made by the tree, so it names the component that built its text.
+	want := file + ":" + strconv.Itoa(at+1)
+	if len(c.Ran) != 1 || c.Ran[0].Kind != "binding" || c.Ran[0].Site != want || c.Ran[0].Runs != 1 || c.Ran[0].Took <= 0 {
+		t.Fatalf("ran = %+v, want the text's binding at %s", c.Ran, want)
+	}
+	if c.Layout <= 0 {
+		t.Errorf("layout took %v", c.Layout)
+	}
+	if c := tree.Commit(); c != nil {
+		t.Errorf("an idle commit sent %+v", c)
+	}
+}
+
+func TestDevToolsRecordAScrollAsOneStep(t *testing.T) {
+	devtools.Enabled = true
+	t.Cleanup(func() { devtools.Enabled = false })
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		rows := make([]core.Node, 40)
+		for i := range rows {
+			rows[i] = core.Text{Content: "row " + strconv.Itoa(i), Style: core.Style{Height: core.Pt(30)}}
+		}
+		return core.View{Style: core.Style{FlexGrow: 1}, Children: []core.Node{
+			core.Scroll{TestID: "list", Style: core.Style{Height: core.Pt(200)}, Children: rows},
+			core.View{TestID: "done", Role: core.RoleButton, Style: core.Style{Height: core.Pt(20)}, OnPress: func(core.PressEvent) {}},
+		}}
+	}, nsgotest.Size(200, 300))
+	s := devtools.Surfaces()[len(devtools.Surfaces())-1]
+	t.Cleanup(func() { devtools.Unregister(s) })
+	var steps []devtools.Step
+	app.Post(func() { s.Record(true, func(st devtools.Step) { steps = append(steps, st) }) })
+	app.Settle()
+	app.ScrollTo("id:list", core.Point{Y: 100})
+	app.ScrollTo("id:list", core.Point{Y: 250})
+	app.Press("id:done")
+	want := []devtools.Step{{Action: "ScrollTo", Selector: "id:list", Offset: [2]float32{0, 250}}, {Action: "Press", Selector: "id:done"}}
+	if len(steps) != len(want) || steps[0] != want[0] || steps[1] != want[1] {
+		t.Fatalf("steps = %+v, want %+v", steps, want)
+	}
+	// A scroll left when recording ends is a step too.
+	app.ScrollTo("id:list", core.Point{Y: 30})
+	app.Post(func() { s.Record(false, nil) })
+	app.Settle()
+	if last := steps[len(steps)-1]; last.Action != "ScrollTo" || last.Offset != [2]float32{0, 30} {
+		t.Errorf("steps = %+v, want the last scroll recorded as recording ended", steps)
+	}
+}
+
+func TestDevToolsShowClassesAndTheBox(t *testing.T) {
+	devtools.Enabled = true
+	t.Cleanup(func() { devtools.Enabled = false })
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		return core.View{Children: []core.Node{
+			core.View{TestID: "card", Class: "p-2 border", Style: core.Style{Margin: core.All(4), Width: core.Pt(100), Height: core.Pt(50)}},
+		}}
+	}, nsgotest.Size(200, 200))
+	s := devtools.Surfaces()[len(devtools.Surfaces())-1]
+	t.Cleanup(func() { devtools.Unregister(s) })
+	var root devtools.Node
+	app.Post(func() { root = s.Elements() })
+	app.Settle()
+	card := find(root, func(n devtools.Node) bool { return n.TestID == "card" })
+	if card == nil || card.Classes != "p-2 border" {
+		t.Fatalf("card = %+v", card)
+	}
+	if card.Box.Margin != [4]float32{4, 4, 4, 4} || card.Box.Padding != [4]float32{8, 8, 8, 8} || card.Box.Border != [4]float32{1, 1, 1, 1} {
+		t.Errorf("box = %+v, want a 4 margin, 8 padding and 1 border", card.Box)
 	}
 }

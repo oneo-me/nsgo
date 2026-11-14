@@ -21,8 +21,40 @@ const highlightFor = 500 * time.Millisecond
 // highlightColor is the outlines' color, a blue seen on light and dark.
 var highlightColor = RGB(0x2f9bff)
 
-// inspectColor is the fill and outline of the view DevTools inspect.
-var inspectColor = RGBA(0x2f9bff, 0.25)
+// The fills of the view DevTools inspect, as browsers' DevTools draw them: its margin, its padding and border, and its content.
+var (
+	marginColor  = RGBA(0xf6b26b, 0.35)
+	paddingColor = RGBA(0x93c47d, 0.35)
+	contentColor = RGBA(0x6fa8dc, 0.4)
+)
+
+// inspection is the view DevTools inspect: its border box in the surface and its margin and its border and padding together, each top, right, bottom and left.
+type inspection struct {
+	bounds                Bounds
+	margin, borderPadding [4]Points
+}
+
+// inspected is n's inspection, or none for nil.
+func (t *Tree) inspected(n *node) inspection {
+	if n == nil {
+		return inspection{}
+	}
+	l := &n.lstate.Rounded
+	return inspection{bounds: t.surfaceBounds(n),
+		margin: [4]Points{Points(l.Margin.Top), Points(l.Margin.Right), Points(l.Margin.Bottom), Points(l.Margin.Left)},
+		borderPadding: [4]Points{Points(l.Border.Top + l.Padding.Top), Points(l.Border.Right + l.Padding.Right),
+			Points(l.Border.Bottom + l.Padding.Bottom), Points(l.Border.Left + l.Padding.Left)}}
+}
+
+// boxStyle places a fill over r grown by out (top, right, bottom, left), none when r is empty.
+func boxStyle(r Bounds, out [4]Points, sign Points, fill Color) Style {
+	if r.Size.Width <= 0 || r.Size.Height <= 0 {
+		return Style{Display: DisplayNone}
+	}
+	x, y := r.Origin.X-sign*out[3], r.Origin.Y-sign*out[0]
+	w, h := r.Size.Width+sign*(out[1]+out[3]), r.Size.Height+sign*(out[0]+out[2])
+	return Style{Position: Absolute, Left: Pt(x), Top: Pt(y), Width: Pt(max(w, 0)), Height: Pt(max(h, 0)), Background: fill}
+}
 
 // highlights are a tree's UpdateHighlights: the boxes it shows, and its overlay, whose views it leaves out. DevTools also draw the view they inspect there, and take presses there while they pick one.
 type highlights struct {
@@ -32,7 +64,7 @@ type highlights struct {
 	next  uint64
 	// updates is whether commits are outlined: DevTools turn it off and on.
 	updates bool
-	inspect *Signal[Bounds]
+	inspect *Signal[inspection]
 	picking *Signal[bool]
 	// hover and picked hear the views the pointer is over and the one pressed while picking.
 	hover, picked func(id uint32)
@@ -50,7 +82,7 @@ func (t *Tree) mountHighlights(cx *Scope, parent *node) {
 	// Its own scope holds what it runs, which DevTools leave out of the app's computations.
 	cx = cx.Child()
 	h := &highlights{owner: cx, root: new(Ref), boxes: NewSignalFunc[[]highlightBox](cx, nil, nil), updates: true,
-		inspect: NewSignal(cx, Bounds{}), picking: NewSignal(cx, false)}
+		inspect: NewSignal(cx, inspection{}), picking: NewSignal(cx, false)}
 	t.highlights = h
 	cx.Cleanup(func() {
 		if t.highlights == h {
@@ -64,14 +96,12 @@ func (t *Tree) mountHighlights(cx *Scope, parent *node) {
 				BorderWidth: 2, BorderColor: highlightColor, CornerRadius: 2}
 		}}
 	}
-	inspected := View{PointerEvents: PointerEventsNone, StyleFunc: func() Style {
-		r := h.inspect.Get()
-		if r.Size.Width <= 0 || r.Size.Height <= 0 {
-			return Style{Display: DisplayNone}
-		}
-		return Style{Position: Absolute, Left: Pt(r.Origin.X), Top: Pt(r.Origin.Y), Width: Pt(r.Size.Width), Height: Pt(r.Size.Height),
-			Background: inspectColor, BorderWidth: 1, BorderColor: highlightColor}
-	}}
+	// The inspected view as browsers' DevTools draw it: its margin around its border box, which shows its border and padding, around its content.
+	inspected := Group{
+		View{PointerEvents: PointerEventsNone, StyleFunc: func() Style { i := h.inspect.Get(); return boxStyle(i.bounds, i.margin, 1, marginColor) }},
+		View{PointerEvents: PointerEventsNone, StyleFunc: func() Style { i := h.inspect.Get(); return boxStyle(i.bounds, [4]Points{}, 0, paddingColor) }},
+		View{PointerEvents: PointerEventsNone, StyleFunc: func() Style { i := h.inspect.Get(); return boxStyle(i.bounds, i.borderPadding, -1, contentColor) }},
+	}
 	// While DevTools pick, a view over the whole surface takes the pointer: what it is over and what it presses is the app's view under it.
 	catcher := Show{When: h.picking.Get, Then: func(cx *Scope) Node {
 		return View{TestID: "nsgo-devtools-pick", Style: Style{Position: Absolute, Left: Pt(0), Top: Pt(0), Width: Pct(100), Height: Pct(100)},
@@ -95,7 +125,7 @@ func (t *Tree) pickAt(p Point, pressed bool) {
 	if n == nil {
 		return
 	}
-	h.inspect.Set(t.surfaceBounds(n))
+	h.inspect.Set(t.inspected(n))
 	if pressed {
 		h.picking.Set(false)
 		if h.picked != nil {

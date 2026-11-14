@@ -1265,7 +1265,10 @@ func (s *surface) MountsAtOnce() {}
 
 // Mount implements engine.Platform; the page has one thread, so it
 // applies the batch right away.
-func (s *surface) Mount(b *driver.MountBatch) {
+func (s *surface) Mount(b *driver.MountBatch) { driver.Apply(b, s.mount) }
+
+// mount applies b to the page at once, which runs on its one thread.
+func (s *surface) mount(b *driver.MountBatch) {
 	defer collectLater()
 	var lb *layoutBatch
 	if b.LayoutAnimation != nil && !s.env.ReduceMotion {

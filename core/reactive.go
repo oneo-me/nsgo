@@ -587,8 +587,9 @@ func (c *computation) run() {
 	if driver.TraceCauses {
 		c.rt.noteRun(c.kind)
 	}
+	var began time.Time
 	if c.rt.dev != nil {
-		c.rt.dev.ran(c)
+		began = time.Now()
 	}
 	c.disposeOwned()
 	c.unlink()
@@ -605,6 +606,10 @@ func (c *computation) run() {
 			changed = c.fn()
 		}
 	})
+	// Its own time: what its writes run next, in maybeFlush, is theirs.
+	if rt.dev != nil {
+		rt.dev.ran(c, time.Since(began))
+	}
 	rt.batch--
 	rt.owner, rt.observer = prevOwner, prevObs
 	if changed && c.subs != nil {
@@ -820,6 +825,9 @@ func newMemo[T any](cx *Scope, fn func() T, equal func(a, b T) bool) *Memo[T] {
 		return true
 	})
 	m.c.subs = &subscribers{}
+	if d := m.c.rt.dev; d != nil {
+		d.memo(m.c, func() string { return fmt.Sprint(any(m.value)) })
+	}
 	m.c.run()
 	return m
 }

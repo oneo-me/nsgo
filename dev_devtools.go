@@ -44,6 +44,9 @@ type devMessage struct {
 	Hot     []devtools.Computation `json:"hot,omitempty"`
 }
 
+// maxUnapplied bounds the batches waiting for the platform that DevTools remember: a platform that applies none, as Android's Java runtime reports none, keeps no more.
+const maxUnapplied = 1000
+
 // devCommit is a commit as the profiler shows it.
 type devCommit struct {
 	N      int            `json:"n"`
@@ -60,6 +63,8 @@ func startDevTools(server string) {
 	go out.run()
 	commits := 0
 	var mu sync.Mutex
+	// sent are the batches the platform has not applied yet, by commit number, so its time joins the commit's row.
+	sent := map[*driver.MountBatch]int{}
 	prev := engine.Trace
 	engine.Trace = func(b *driver.MountBatch, took time.Duration) {
 		if prev != nil {
@@ -68,8 +73,20 @@ func startDevTools(server string) {
 		mu.Lock()
 		commits++
 		n := commits
+		if len(sent) < maxUnapplied {
+			sent[b] = n
+		}
 		mu.Unlock()
 		out.send(devMessage{Type: "commit", Commit: &devCommit{N: n, Items: len(b.Items), Millis: float64(took.Microseconds()) / 1000, Causes: b.Causes}})
+	}
+	driver.Applied = func(b *driver.MountBatch, took time.Duration) {
+		mu.Lock()
+		n, ok := sent[b]
+		delete(sent, b)
+		mu.Unlock()
+		if ok {
+			out.send(devMessage{Type: "applied", ID: uint32(n), Data: float64(took.Microseconds()) / 1000})
+		}
 	}
 	go listenDevTools(server, out)
 }

@@ -6,28 +6,35 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
+
+// maxRan is how many of a commit's computations its causes name, the longest first.
+const maxRan = 20
 
 // causeDepth is how many callers of a signal's Set a write keeps, to find the app's line among them.
 const causeDepth = 12
 
 // causes are what the graph did since a tree last committed, recorded while driver.TraceCauses is set.
 type causes struct {
-	writes                  map[[causeDepth]uintptr]int
+	// writes count the writes by site, read as each write is made: a TSX app's line is the JS running then.
+	writes                  map[string]int
 	memos, renders, effects int
+	layout                  time.Duration
 }
 
 // noteWrite records the line that called a signal's Set.
 func (rt *runtime) noteWrite() {
 	var pcs [causeDepth]uintptr
 	// Skip runtime.Callers, noteWrite and Set.
-	goruntime.Callers(3, pcs[:])
+	n := goruntime.Callers(3, pcs[:])
 	if rt.causes.writes == nil {
-		rt.causes.writes = map[[causeDepth]uintptr]int{}
+		rt.causes.writes = map[string]int{}
 	}
-	rt.causes.writes[pcs]++
+	rt.causes.writes[causeSite(pcs[:n])]++
 }
 
 // noteRun counts a computation's run by its kind.
@@ -44,15 +51,11 @@ func (rt *runtime) noteRun(k compKind) {
 
 // takeCauses returns what the graph did since it was last asked, its writes merged by their site, and forgets it.
 func (rt *runtime) takeCauses() *driver.Causes {
-	c := &driver.Causes{Memos: rt.causes.memos, Renders: rt.causes.renders, Effects: rt.causes.effects}
-	at := map[string]int{}
-	for pcs, n := range rt.causes.writes {
-		site := causeSite(pcs[:])
-		if i, ok := at[site]; ok {
-			c.Writes[i].Count += n
-			continue
-		}
-		at[site] = len(c.Writes)
+	c := &driver.Causes{Memos: rt.causes.memos, Renders: rt.causes.renders, Effects: rt.causes.effects, Layout: rt.causes.layout}
+	if rt.dev != nil {
+		c.Ran = rt.dev.takeRan(maxRan)
+	}
+	for site, n := range rt.causes.writes {
 		c.Writes = append(c.Writes, driver.Write{Site: site, Count: n})
 	}
 	// Map order is random: sites sort by count, then name, so a trace reads the same each run.
@@ -88,6 +91,12 @@ func appFrame(pcs []uintptr, site func(file string, line int) string) string {
 			break
 		}
 		if !runsApps(f.Function) && !strings.HasPrefix(f.Function, "runtime.") {
+			// tsx's Go runs a TSX app's code: its line is the TSX the JS runs now.
+			if strings.HasPrefix(f.Function, nsgoPackage+"tsx") && devtools.ScriptSite != nil {
+				if file, line, ok := devtools.ScriptSite(); ok {
+					return site(file, line)
+				}
+			}
 			return site(f.File, f.Line)
 		}
 		if strings.HasPrefix(f.Function, "github.com/nsgo-dev/nsgo") {
@@ -105,6 +114,10 @@ func appFrame(pcs []uintptr, site func(file string, line int) string) string {
 
 // fileSite is a line of a file as traces and DevTools name it: dir/file.go:line.
 func fileSite(file string, line int) string {
+	// A TSX file's path, through its source map, is relative to the app already.
+	if !filepath.IsAbs(file) {
+		return file + ":" + strconv.Itoa(line)
+	}
 	return filepath.Base(filepath.Dir(file)) + "/" + filepath.Base(file) + ":" + strconv.Itoa(line)
 }
 

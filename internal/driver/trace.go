@@ -30,7 +30,21 @@ var TraceCauses bool
 type Causes struct {
 	Writes                  []Write
 	Memos, Renders, Effects int
+	// App is how long the app's code ran before the commit, its handlers, timers and effects, and Layout how long the commit laid the tree out; a trace's took is the commit's whole.
+	App, Layout time.Duration
+	// Ran are the computations that ran, by kind and the line that made them, the longest first; they are named only while DevTools record sites (devtools.Enabled).
+	Ran []Ran
 }
+
+// Ran is the runs of the computations of one kind made at one line, and their time.
+type Ran struct {
+	Kind, Site string
+	Runs       int
+	Took       time.Duration
+}
+
+// traceRan is how many of a commit's computations a trace names.
+const traceRan = 5
 
 // Write is the signal writes one line made: the app's line, as dir/file.go:line, or for writes NSGo made of its own, as an animation's, NSGo's function that made them.
 type Write struct {
@@ -59,7 +73,22 @@ func (c *Causes) write(s *strings.Builder) {
 		s.WriteString("\n")
 	}
 	fmt.Fprintf(s, "   ran %d bindings, %d effects, %d memos\n", c.Renders, c.Effects, c.Memos)
+	if c.App > 0 || c.Layout > 0 {
+		fmt.Fprintf(s, "   app %.2f ms before, layout %.2f ms\n", ms(c.App), ms(c.Layout))
+	}
+	if len(c.Ran) > 0 {
+		s.WriteString("   longest")
+		for i, r := range c.Ran[:min(len(c.Ran), traceRan)] {
+			if i > 0 {
+				s.WriteString(",")
+			}
+			fmt.Fprintf(s, " %s %s ×%d %.2f ms", r.Kind, r.Site, r.Runs, ms(r.Took))
+		}
+		s.WriteString("\n")
+	}
 }
+
+func ms(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
 
 var itemNames = map[ItemKind]string{
 	ItemCreate: "create", ItemInsert: "insert", ItemRemove: "remove", ItemDelete: "delete",
@@ -152,4 +181,18 @@ func (k ViewKind) String() string {
 		return "shader"
 	}
 	return "?"
+}
+
+// Applied, which nsgo dev -devtools sets, hears how long a platform took to apply each batch on its main thread; nil measures nothing.
+var Applied func(b *MountBatch, took time.Duration)
+
+// Apply applies b with apply, timing it for Applied while one is set: what each backend calls where it applies a batch.
+func Apply(b *MountBatch, apply func(*MountBatch)) {
+	if Applied == nil {
+		apply(b)
+		return
+	}
+	began := time.Now()
+	apply(b)
+	Applied(b, time.Since(began))
 }

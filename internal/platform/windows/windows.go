@@ -1785,7 +1785,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 			if w.hud != nil && !b.Sent.IsZero() {
 				w.hud.monitor.RecordLatency(time.Since(b.Sent))
 			}
-			w.apply(b)
+			driver.Apply(b, w.apply)
 		}
 		done()
 		return 0

@@ -55,7 +55,7 @@ var layers = []struct {
 	{"internal/platform/updates", []string{"internal/driver", "internal/platform/imageload"}},
 	{"internal/platform/webstyle", []string{"internal/driver"}},
 	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales"}, platformShared...)},
-	{"nsgotest", []string{"core", "internal/driver", "internal/testhost"}},
+	{"nsgotest", []string{"core", "internal/devtools", "internal/driver", "internal/testhost"}},
 	{"", []string{"core", "internal/devtools", "internal/engine", "internal/platform/", "updater"}},
 	// The code nsgo writes from catalogs runs on i18n.
 	{"i18n", []string{"core", "internal/cldr"}},
@@ -82,7 +82,7 @@ var layers = []struct {
 	{"tsx/ui/", []string{"core", "base/", "ui/", "tsx", "tsx/"}},
 	// The scripts the page ships, which the tool writes as the page's files.
 	{"tsx/websrc", nil},
-	{"tsx/", []string{"core", "base/", "mobile", "desktop", "tsx", "tsx/bundler", "tsx/internal/js", "tsx/pkg", "tsx/websrc"}},
+	{"tsx/", []string{"core", "base/", "mobile", "desktop", "internal/devtools", "tsx", "tsx/bundler", "tsx/internal/js", "tsx/pkg", "tsx/websrc"}},
 	// Apps use the public packages only, and the hosts that embed an
 	// example app its package.
 	{"examples/", []string{"", "core", "base/", "ui/", "mobile", "desktop", "desktop/locales", "i18n", "icons/", "nsgotest", "tsx/", "updater", "widget", "examples/"}},

@@ -47,6 +47,7 @@ import (
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
@@ -342,7 +343,8 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 	}
 	if os.Getenv("NSGO_TEST_TRACE") != "" {
 		a.trace = os.Stdout
-		driver.TraceCauses = true
+		// Sites name the computations each step's commit ran.
+		driver.TraceCauses, devtools.Enabled = true, true
 	}
 	a.stepName = "start"
 	if onTarget() && a.manualFrames {

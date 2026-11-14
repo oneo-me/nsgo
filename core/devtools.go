@@ -1,12 +1,14 @@
 package core
 
 import (
+	"cmp"
 	"fmt"
 	"reflect"
 	goruntime "runtime"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -19,15 +21,20 @@ type devState struct {
 	byID       map[uint64]*devValue
 	comps      map[*computation]*devComp
 	next       uint64
+	// commit is what ran since the last commit took it, by kind and site.
+	commit map[ranKey]*driver.Ran
 }
+
+type ranKey struct{ kind, site string }
 
 type devComponent struct{ name, site string }
 
 type devValue struct {
-	id   uint64
-	site string
-	typ  string
-	get  func() string
+	id      uint64
+	site    string
+	typ     string
+	get     func() string
+	readers func() int
 	// set writes a value given as text; nil for a type DevTools do not edit.
 	set func(string) error
 }
@@ -35,10 +42,14 @@ type devValue struct {
 type devComp struct {
 	site        string
 	runs, since int
+	took        time.Duration // since the page last asked (Hot)
+	// value is a memo's value as text; nil for other computations.
+	value func() string
 }
 
 func newDevState() *devState {
-	return &devState{components: map[*Scope]devComponent{}, values: map[*Scope][]*devValue{}, byID: map[uint64]*devValue{}, comps: map[*computation]*devComp{}}
+	return &devState{components: map[*Scope]devComponent{}, values: map[*Scope][]*devValue{}, byID: map[uint64]*devValue{}, comps: map[*computation]*devComp{},
+		commit: map[ranKey]*driver.Ran{}}
 }
 
 // devSignal records s, made under owner, from the caller of the signal's constructor.
@@ -46,7 +57,7 @@ func devSignal[T any](owner *Scope, s *Signal[T]) {
 	d := s.rt.dev
 	d.next++
 	v := &devValue{id: d.next, site: callerSite(3), typ: reflect.TypeFor[T]().String(),
-		get: func() string { return clip(fmt.Sprint(any(s.value))) }}
+		get: func() string { return clip(fmt.Sprint(any(s.value))) }, readers: func() int { return len(s.subs.list) }}
 	if parse := parserFor[T](); parse != nil {
 		v.set = func(text string) error {
 			x, err := parse(text)
@@ -97,13 +108,26 @@ func parserFor[T any]() func(string) (T, error) {
 	return nil
 }
 
+// memo has DevTools show memo c's value, which value gives as text.
+func (d *devState) memo(c *computation, value func() string) {
+	if dc := d.comps[c]; dc != nil {
+		dc.value = value
+	}
+}
+
 // computation records c, made by the caller of its constructor. A binding is made by the tree once the component that built its element returned, so it takes that component's site when read (siteOf).
 func (d *devState) computation(c *computation) {
-	dc := &devComp{}
-	if c.kind != renderEffect {
-		dc.site = callerSite(3)
+	dc := &devComp{site: callerSite(3)}
+	// A binding the tree made has only NSGo's code above it: it takes its component's site. A TSX app's bindings are made as its JS runs, which names their line.
+	if c.kind == renderEffect && !isPath(dc.site) {
+		dc.site = ""
 	}
 	d.comps[c] = dc
+}
+
+// isPath reports whether site names a file, rather than NSGo's function for what it made itself.
+func isPath(site string) bool {
+	return strings.Contains(site, ".") && strings.Contains(site, ":") && !strings.Contains(site, "(")
 }
 
 // siteOf is where c was made: its own site, or for a binding the site of the component around it.
@@ -119,12 +143,39 @@ func (d *devState) siteOf(c *computation, dc *devComp) string {
 	return ""
 }
 
-// ran counts a run of c.
-func (d *devState) ran(c *computation) {
-	if dc := d.comps[c]; dc != nil {
-		dc.runs++
-		dc.since++
+// ran counts a run of c that took took.
+func (d *devState) ran(c *computation, took time.Duration) {
+	dc := d.comps[c]
+	if dc == nil {
+		return
 	}
+	dc.runs++
+	dc.since++
+	dc.took += took
+	k := ranKey{compKindName(c.kind), d.siteOf(c, dc)}
+	r := d.commit[k]
+	if r == nil {
+		r = &driver.Ran{Kind: k.kind, Site: k.site}
+		d.commit[k] = r
+	}
+	r.Runs++
+	r.Took += took
+}
+
+// takeRan returns what ran since it was last asked, the longest first, at most n, and forgets it.
+func (d *devState) takeRan(n int) []driver.Ran {
+	out := make([]driver.Ran, 0, len(d.commit))
+	for _, r := range d.commit {
+		out = append(out, *r)
+	}
+	clear(d.commit)
+	slices.SortFunc(out, func(a, b driver.Ran) int {
+		if a.Took != b.Took {
+			return cmp.Compare(b.Took, a.Took)
+		}
+		return strings.Compare(a.Site, b.Site)
+	})
+	return out[:min(len(out), n)]
 }
 
 // component records that s renders el.
@@ -192,13 +243,7 @@ func (s *devSurface) highlights(fn func(*highlights)) {
 }
 
 func (s *devSurface) Inspect(id uint32) {
-	s.highlights(func(h *highlights) {
-		var b Bounds
-		if n := s.t.node(NodeID(id)); n != nil {
-			b = s.t.surfaceBounds(n)
-		}
-		h.inspect.Set(b)
-	})
+	s.highlights(func(h *highlights) { h.inspect.Set(s.t.inspected(s.t.node(NodeID(id)))) })
 }
 
 func (s *devSurface) Pick(on bool, hover, picked func(id uint32)) {
@@ -206,13 +251,16 @@ func (s *devSurface) Pick(on bool, hover, picked func(id uint32)) {
 		h.hover, h.picked = hover, picked
 		h.picking.Set(on)
 		if !on {
-			h.inspect.Set(Bounds{})
+			h.inspect.Set(inspection{})
 		}
 	})
 }
 
 func (s *devSurface) Record(on bool, step func(devtools.Step)) {
-	s.t.record = nil
+	if s.t.record != nil {
+		s.t.devFlushScrolls()
+	}
+	s.t.record, s.t.devScrolls = nil, nil
 	if on {
 		s.t.record = step
 	}
@@ -232,21 +280,26 @@ func (s *devSurface) Set(signal uint64, value string) error {
 
 func (s *devSurface) Hot(n int) []devtools.Computation {
 	// Computations of one kind made at one site, as a list's rows' bindings, count as one.
-	type key struct{ kind, site string }
-	runs := map[key]int{}
+	runs := map[ranKey]*devtools.Computation{}
 	for c, dc := range s.t.rt.dev.comps {
-		if dc.since > 0 && s.ownedByDevTools(&c.Scope) {
-			dc.since = 0
+		if dc.since == 0 {
 			continue
 		}
-		if dc.since > 0 {
-			runs[key{compKindName(c.kind), s.t.rt.dev.siteOf(c, dc)}] += dc.since
-			dc.since = 0
+		if !s.ownedByDevTools(&c.Scope) {
+			k := ranKey{compKindName(c.kind), s.t.rt.dev.siteOf(c, dc)}
+			r := runs[k]
+			if r == nil {
+				r = &devtools.Computation{Kind: k.kind, Site: k.site}
+				runs[k] = r
+			}
+			r.Runs += dc.since
+			r.Took += int64(dc.took)
 		}
+		dc.since, dc.took = 0, 0
 	}
 	var out []devtools.Computation
-	for k, n := range runs {
-		out = append(out, devtools.Computation{Kind: k.kind, Site: k.site, Runs: n})
+	for _, r := range runs {
+		out = append(out, *r)
 	}
 	slices.SortFunc(out, func(a, b devtools.Computation) int {
 		if a.Runs != b.Runs {
@@ -317,6 +370,12 @@ func (s *devSurface) element(n *node, walk func(*node) []devtools.Node) devtools
 	if e.Kind == "" {
 		e.Kind = "View"
 	}
+	if n.cls != nil && n.cls.list != nil {
+		e.Classes = strings.TrimSpace(n.cls.list.class)
+	}
+	l := &n.lstate.Rounded
+	e.Box = devtools.Box{Margin: fourSides(l.Margin.Top, l.Margin.Right, l.Margin.Bottom, l.Margin.Left),
+		Border: fourSides(l.Border.Top, l.Border.Right, l.Border.Bottom, l.Border.Left), Padding: fourSides(l.Padding.Top, l.Padding.Right, l.Padding.Bottom, l.Padding.Left)}
 	if n.text != nil {
 		e.Text = clip(n.text.content)
 	}
@@ -333,6 +392,10 @@ func (s *devSurface) element(n *node, walk func(*node) []devtools.Node) devtools
 	}
 	e.Children = walk(n)
 	return e
+}
+
+func fourSides(top, right, bottom, left float32) [4]float32 {
+	return [4]float32{top, right, bottom, left}
 }
 
 // styleProps are the style's fields a view sets, by their Go names; a state's style (Hovered, Disabled) lists the fields it sets.
@@ -396,12 +459,19 @@ func (s *devSurface) Owners() devtools.Owner {
 			out.Name = kind
 			if dc := d.comps[o.comp]; dc != nil {
 				out.Site = d.siteOf(o.comp, dc)
-				out.Computations = []devtools.Computation{{Kind: kind, Site: out.Site, Runs: dc.runs}}
+				c := devtools.Computation{Kind: kind, Site: out.Site, Runs: dc.runs}
+				if dc.value != nil {
+					c.Value = clip(dc.value())
+					if o.comp.subs != nil {
+						c.Readers = len(o.comp.subs.list)
+					}
+				}
+				out.Computations = []devtools.Computation{c}
 			}
 		}
 		for _, v := range d.values[o] {
 			text := v.get()
-			out.Values = append(out.Values, devtools.Value{ID: v.id, Site: v.site, Type: v.typ, Text: text, Editable: v.set != nil})
+			out.Values = append(out.Values, devtools.Value{ID: v.id, Site: v.site, Type: v.typ, Text: text, Editable: v.set != nil, Readers: v.readers()})
 		}
 		for c := o.first; c != nil && count < maxOwners; c = c.next {
 			if h := s.t.highlights; h != nil && c == h.owner {
@@ -428,6 +498,32 @@ func (t *Tree) devRecordPress(n *node) {
 		return
 	}
 	t.record(devtools.Step{Action: "Press", Selector: selectorFor(n)})
+}
+
+// devRecordScroll keeps where scroll view n came to: a scroll is one step however many offsets it passes, recorded once the user does something else, the view comes to rest or recording ends.
+func (t *Tree) devRecordScroll(n *node, offset Point) {
+	if t.highlights != nil && t.highlights.owns(n) {
+		return
+	}
+	if t.devScrolls == nil {
+		t.devScrolls = map[*node]Point{}
+	}
+	t.devScrolls[n] = offset
+}
+
+// devFlushScrolls records the scrolls kept as ScrollTo steps.
+func (t *Tree) devFlushScrolls() {
+	views := make([]*node, 0, len(t.devScrolls))
+	for n := range t.devScrolls {
+		views = append(views, n)
+	}
+	// Views in the order of their IDs, so a recording reads the same each time.
+	slices.SortFunc(views, func(a, b *node) int { return cmp.Compare(a.id, b.id) })
+	for _, n := range views {
+		p := t.devScrolls[n]
+		t.record(devtools.Step{Action: "ScrollTo", Selector: selectorFor(n), Offset: [2]float32{float32(p.X), float32(p.Y)}})
+	}
+	clear(t.devScrolls)
 }
 
 // devRecordEdit records an edit of n's text from before to after as Clear and Type steps.

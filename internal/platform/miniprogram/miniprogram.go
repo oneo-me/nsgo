@@ -101,7 +101,7 @@ func (s *surface) Prepare(t *driver.AttributedText) driver.PreparedText { return
 func (s *surface) MountsAtOnce() {}
 
 // Mount implements engine.Platform.
-func (s *surface) Mount(b *driver.MountBatch) { s.m.mount(b) }
+func (s *surface) Mount(b *driver.MountBatch) { driver.Apply(b, s.m.mount) }
 
 // RequestFrame implements engine.Platform.
 func (s *surface) RequestFrame() { s.m.requestFrame() }

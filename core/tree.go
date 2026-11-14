@@ -171,8 +171,9 @@ type Tree struct {
 	lastShared bool
 	// highlights, while an UpdateHighlights is mounted, outlines what each commit changed.
 	highlights *highlights
-	// record, while DevTools record a test, hears what the user does.
-	record func(devtools.Step)
+	// record, while DevTools record a test, hears what the user does; devScrolls holds each scroll view's offset until the scroll is a step (devFlushScrolls).
+	record     func(devtools.Step)
+	devScrolls map[*node]Point
 }
 
 // report is a handler to run under owner after the commit.
@@ -2046,6 +2047,7 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			}
 		}
 		if t.record != nil && h.press != nil {
+			t.devFlushScrolls()
 			t.devRecordPress(n)
 		}
 		press(h.press)
@@ -2101,6 +2103,7 @@ func (t *Tree) Dispatch(ev driver.Event) {
 			return
 		}
 		if t.record != nil && ev.Text != in.value {
+			t.devFlushScrolls()
 			t.devRecordEdit(n, in.value, ev.Text)
 		}
 		in.shown, in.value, in.count = ev.Text, ev.Text, ev.Count
@@ -2214,11 +2217,17 @@ func (t *Tree) Dispatch(ev driver.Event) {
 		}
 	case driver.EventScrollDragStart, driver.EventScrollDragEnd, driver.EventMomentumStart, driver.EventMomentumEnd,
 		driver.EventScrollEnd, driver.EventRefresh:
+		if t.record != nil && ev.Kind == driver.EventScrollEnd {
+			t.devFlushScrolls()
+		}
 		if n.scroll != nil {
 			t.scrolled(n, ev)
 			t.dispatchScroll(n, ev)
 		}
 	case driver.EventScroll:
+		if t.record != nil && n.scroll != nil {
+			t.devRecordScroll(n, ev.Point)
+		}
 		if n.scroll != nil {
 			t.scrolled(n, ev)
 			if ev.Value > 0 {

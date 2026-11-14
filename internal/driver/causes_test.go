@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTraceNamesWhatACommitFollowedFrom(t *testing.T) {
@@ -27,8 +28,34 @@ func TestTraceNamesWhatACommitFollowedFrom(t *testing.T) {
 		t.Errorf("a single write = %q", b.String())
 	}
 	b.Reset()
+	WriteTrace(&b, "commit 4", &MountBatch{Causes: &Causes{App: 1500 * time.Microsecond, Layout: 250 * time.Microsecond,
+		Ran: []Ran{{Kind: "binding", Site: "app/row.go:9", Runs: 40, Took: 2 * time.Millisecond}, {Kind: "memo", Site: "app/main.go:5", Runs: 1, Took: 10 * time.Microsecond}}}}, 0)
+	for _, want := range []string{"   app 1.50 ms before, layout 0.25 ms\n", "   longest binding app/row.go:9 ×40 2.00 ms, memo app/main.go:5 ×1 0.01 ms\n"} {
+		if !strings.Contains(b.String(), want) {
+			t.Errorf("trace = %q, want %q", b.String(), want)
+		}
+	}
+	b.Reset()
 	WriteTrace(&b, "commit 3", &MountBatch{}, 0)
 	if strings.Contains(b.String(), "after") || strings.Contains(b.String(), "ran") {
 		t.Errorf("a batch without causes names some: %q", b.String())
+	}
+}
+
+func TestApplyReportsThePlatformsTimeOnlyWhenAsked(t *testing.T) {
+	b := &MountBatch{}
+	applied := 0
+	apply := func(*MountBatch) { applied++; time.Sleep(time.Millisecond) }
+	Apply(b, apply)
+	if applied != 1 {
+		t.Fatalf("applied %d times", applied)
+	}
+	var heard *MountBatch
+	var took time.Duration
+	Applied = func(b *MountBatch, d time.Duration) { heard, took = b, d }
+	defer func() { Applied = nil }()
+	Apply(b, apply)
+	if applied != 2 || heard != b || took < time.Millisecond {
+		t.Fatalf("applied %d times, heard %p after %v", applied, heard, took)
 	}
 }

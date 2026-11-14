@@ -92,6 +92,17 @@ func (t *Tree) commit(shared bool) *driver.MountBatch {
 	return b
 }
 
+// timeLayout lays the tree out, adding the time to the commit's causes while traces record them.
+func (t *Tree) timeLayout() {
+	if !driver.TraceCauses {
+		t.layout()
+		return
+	}
+	began := time.Now()
+	t.layout()
+	t.rt.causes.layout += time.Since(began)
+}
+
 // timeTransitionEnds runs each restyled node's OnTransitionEnd once its
 // new transition's time is over, in place of an earlier wait.
 func (t *Tree) timeTransitionEnds() {
@@ -197,21 +208,21 @@ func (t *Tree) commitRound() {
 	}
 	t.stacks = live
 	t.resolve(t.view, textFields{}, false)
-	t.layout()
+	t.timeLayout()
 	// Lists fill their windows from the layout, which may need another.
 	for range 4 {
 		if !t.updateLists() {
 			break
 		}
 		t.resolve(t.view, textFields{}, false)
-		t.layout()
+		t.timeLayout()
 	}
 	// System headers cover what the stacks' places decide.
 	for range 2 {
 		if !t.sizeHeaders() {
 			break
 		}
-		t.layout()
+		t.timeLayout()
 	}
 	t.markHeaderScrolls()
 	t.markEdgeScrolls()
