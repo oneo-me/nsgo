@@ -247,6 +247,11 @@ const (
 	// notification whose ID is Text, the one that started the app
 	// included.
 	EventNotificationPress
+	// EventQuitRequest asks the app whether a platform quit request may
+	// proceed. Count identifies the request; the app answers with
+	// ItemQuitResponse. It is sent for user-initiated app termination,
+	// not Scope.Quit.
+	EventQuitRequest
 	// EventBiometric answers an ItemBiometricAvailability or
 	// ItemBiometricAuthenticate request: Index is a kind or result.
 	EventBiometric

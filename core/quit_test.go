@@ -5,6 +5,8 @@ import (
 	"slices"
 	"testing"
 	"time"
+
+	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
 func TestOnQuitRunsLivingHandlersOldestFirstOnce(t *testing.T) {
@@ -48,6 +50,80 @@ func TestOnQuitRunsLivingHandlersOldestFirstOnce(t *testing.T) {
 	}
 	if h.root.Quitting() || len(ran) != 2 {
 		t.Errorf("a second quit ran %v", ran)
+	}
+}
+
+func TestQuitRequestRunsNewestFirstAndCanCancel(t *testing.T) {
+	var ran []string
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		cx.OnQuitRequest(func(*QuitRequest) { ran = append(ran, "old") })
+		return Func(func(cx *Scope) Node {
+			cx.OnQuitRequest(func(q *QuitRequest) { ran = append(ran, "new"); q.Cancel() })
+			return View{}
+		})
+	})
+	h.commit()
+	h.tree.Dispatch(driver.Event{Kind: driver.EventQuitRequest, Count: 7})
+	b := h.tree.Commit()
+	if !slices.Equal(ran, []string{"new"}) {
+		t.Fatalf("handlers ran %v", ran)
+	}
+	if b == nil || len(b.Items) != 1 || b.Items[0].Kind != driver.ItemQuitResponse || b.Items[0].Count != 7 || b.Items[0].On {
+		t.Fatalf("cancel response %#v", b)
+	}
+}
+
+func TestQuitRequestApprovesAfterHandlersPass(t *testing.T) {
+	var ran []string
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		cx.OnQuitRequest(func(*QuitRequest) { ran = append(ran, "old") })
+		return Func(func(cx *Scope) Node {
+			cx.OnQuitRequest(func(*QuitRequest) { ran = append(ran, "new") })
+			return View{}
+		})
+	})
+	h.commit()
+	h.tree.Dispatch(driver.Event{Kind: driver.EventQuitRequest, Count: 8})
+	b := h.tree.Commit()
+	if !slices.Equal(ran, []string{"new", "old"}) {
+		t.Fatalf("handlers ran %v", ran)
+	}
+	if b == nil || len(b.Items) != 1 || b.Items[0].Kind != driver.ItemQuitResponse || b.Items[0].Count != 8 || !b.Items[0].On {
+		t.Fatalf("approval response %#v", b)
+	}
+}
+
+func TestQuitRequestCanDeferAndAnswersOnce(t *testing.T) {
+	var answer func(bool)
+	h := newHost(t, Size{Width: 390, Height: 844}, func(cx *Scope) Node {
+		cx.OnQuitRequest(func(q *QuitRequest) { answer = q.Defer() })
+		return View{}
+	})
+	h.commit()
+	h.tree.Dispatch(driver.Event{Kind: driver.EventQuitRequest, Count: 9})
+	if b := h.tree.Commit(); b != nil {
+		for _, it := range b.Items {
+			if it.Kind == driver.ItemQuitResponse {
+				t.Fatal("deferred request answered before callback")
+			}
+		}
+	}
+	answer(true)
+	answer(false)
+	h.drain()
+	b := h.tree.Commit()
+	if b == nil || len(b.Items) != 1 || b.Items[0].Kind != driver.ItemQuitResponse || b.Items[0].Count != 9 || !b.Items[0].On {
+		t.Fatalf("deferred response %#v", b)
+	}
+}
+
+func TestQuitRequestApprovesWithoutHandlers(t *testing.T) {
+	h := newHost(t, Size{Width: 390, Height: 844}, func(*Scope) Node { return View{} })
+	h.commit()
+	h.tree.Dispatch(driver.Event{Kind: driver.EventQuitRequest, Count: 11})
+	b := h.tree.Commit()
+	if b == nil || len(b.Items) != 1 || b.Items[0].Kind != driver.ItemQuitResponse || !b.Items[0].On {
+		t.Fatalf("default response %#v", b)
 	}
 }
 

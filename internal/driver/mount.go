@@ -323,6 +323,9 @@ const (
 	ItemCloseNotification
 	// ItemBadge shows Count on the app's icon; 0 clears it.
 	ItemBadge
+	// ItemQuitResponse answers EventQuitRequest Count. On permits the
+	// platform's pending termination request; false cancels it.
+	ItemQuitResponse
 	// ItemBiometricAvailability asks whether an enrolled biometric can be
 	// used; the platform answers with EventBiometric and its kind in Index.
 	ItemBiometricAvailability
