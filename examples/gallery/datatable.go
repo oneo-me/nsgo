@@ -406,7 +406,7 @@ func dataTableDemo(cx *core.Scope) core.Node {
 			status(describe, colors.Text),
 			status(func() string {
 				v := visible.Get()
-				return tr.TableRowsOf(itoa(v[0]+1), itoa(v[1]), visitors(stockRows))
+				return tr.TableRowsOf(itoa(v[0]+1), itoa(v[1]), thousands(int(stockRows)))
 			}, colors.Muted),
 			status(func() string { return tr.TableColumnsTick(len(columns), ticks.Get()) }, colors.Muted),
 		}})

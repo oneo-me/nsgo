@@ -1046,31 +1046,25 @@ func TestCollapsingHeader(t *testing.T) {
 	app.Find("id:footer >> text:That's all 160 entries")
 }
 
-// TestCharts hovers the week's plot, switches weeks with its knob and finds the
-// sparklines, a plot per row of a list.
+// TestCharts finds a plot per card, reads a month of the sales out under
+// the pointer, stacks its bars and pauses the live price.
 func TestCharts(t *testing.T) {
 	app := startDesktop(t)
 	open(app, "Plot")
-	app.Find("text:Sun, the last day")
-	plot := "role:image Visitors per day, from 1,820 on Monday to 1,180 on Sunday"
-	app.Find(plot)
-	// The pointer at the middle: Thursday, the fourth of seven days.
-	app.Hover(plot)
-	app.Find("text:2,480 visitors")
-	app.Press("role:tab This week")
-	app.Find("text:1,330 visitors")
-	if len(app.Query("text:NSHL")) == 0 {
-		t.Fatal("no sparkline rows")
+	for _, id := range []string{"live", "depth", "equity", "underwater", "capacity", "revenue", "sales", "bridge", "funnel", "candles", "volume",
+		"risk", "targets", "volume-price", "margins", "correlation", "seasonality", "activity", "factors", "flows", "market", "allocation"} {
+		app.Find("id:" + id + "-plot")
 	}
-	if n := len(app.Query("role:image")); n < 5 {
-		t.Fatalf("%d images, want the week's plot and a sparkline per row", n)
-	}
-	// A card for each of the other marks.
-	app.Find("id:bars-plot")
-	for _, title := range []string{"Bars", "Bridge", "Candles", "Share", "Gauge", "Scatter", "Heatmap", "Radar", "Flows", "Market"} {
-		app.Find("role:image " + title)
-	}
-	app.Press("role:button New data >> nth=0")
+	app.Find("text:Jul, the last month")
+	// The pointer at the middle: April, the fourth of seven months.
+	app.Hover("id:sales-plot")
+	app.Find("text:96k")
+	app.Press("role:tab Stacked")
+	app.Press("role:button Pause")
+	app.Find("text:PAUSED")
+	app.Press("role:button Show as pie")
+	app.Find("role:button Show as donut")
+	app.Find("id:watchlist >> text:AAPL")
 }
 
 // TestDataTable selects a row of the million stocks, sorts by ID and
@@ -1177,9 +1171,17 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 			// answers the terminal when it will.
 			drawings := d.name != "Stocks" && d.name != "Terminal"
 			shown := "id:demo-" + d.name
+			// The live price ticks each second and glides to each tick: both
+			// builds pause it, so they show the same prices at rest.
+			settle := func(app *nsgotest.App) {
+				if d.name == "Plot" {
+					app.Press("role:button Pause")
+				}
+				app.FastForward(2 * time.Second)
+			}
 			app := startDesktop(t)
 			open(app, d.name)
-			app.FastForward(2 * time.Second)
+			settle(app)
 			before := viewIDs(rootOf(app.Find(shown)))
 			app.Press("id:theme-menu")
 			app.Press("role:menuitem Dark")
@@ -1194,7 +1196,7 @@ func TestAppearanceRestylesInPlace(t *testing.T) {
 			// starts after the switched one is read.
 			fresh := startDesktop(t, nsgotest.Environment(dark), nsgotest.Storage(map[string]string{themeKey: "dark"}))
 			open(fresh, d.name)
-			fresh.FastForward(2 * time.Second)
+			settle(fresh)
 			checkLooks(t, got, snapshot(fresh, shown, drawings))
 		})
 	}

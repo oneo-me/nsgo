@@ -122,8 +122,72 @@ var Parameters = map[string][]string{
 	"ScrollPost":                {"n"},
 	"ScrollNew":                 {"n"},
 	"ScrollPosts":               {"count"},
-	"ChartsVisitorsPerDay":      {"monday", "sunday"},
-	"ChartsHoverValue":          {"day", "visitors", "other", "week"},
+	"ChartsLiveLabel":           {"price", "change"},
+	"ChartsMidSpread":           {"spread", "share"},
+	"ChartsDepthLabel":          {"ticks", "bids", "asks"},
+	"ChartsBidsTo":              {"price", "size"},
+	"ChartsAsksTo":              {"price", "size"},
+	"ChartsTicks":               {"ticks"},
+	"ChartsFromTheHigh":         {"change"},
+	"ChartsDay":                 {"day"},
+	"ChartsEquityLabel":         {"change", "worst", "from", "to"},
+	"ChartsUnderwaterLabel":     {"worst", "day"},
+	"ChartsDays":                {"days"},
+	"ChartsCapacityLabel":       {"period", "loads"},
+	"ChartsRevenueLabel":        {"total", "region", "share"},
+	"ChartsTheLastMonth":        {"month"},
+	"ChartsSalesLabel":          {"month"},
+	"ChartsSalesValue":          {"month", "online", "store"},
+	"ChartsOfRevenue":           {"share"},
+	"ChartsNetMarginOf":         {"share"},
+	"ChartsBridgeLabel":         {"quarter", "revenue", "net", "margin"},
+	"ChartsTradersOfVisits":     {"traders", "visits"},
+	"ChartsKeptOf":              {"kept", "stage", "share"},
+	"ChartsFunnelLabel":         {"channel", "visits", "trades", "share"},
+	"ChartsFunnelValue":         {"stage", "reached", "kept"},
+	"ChartsCandlesLabel":        {"span", "open", "close_", "change"},
+	"ChartsCandleValue":         {"date", "open", "high", "low", "close_"},
+	"ChartsVolumeLabel":         {"span", "volume"},
+	"ChartsMillion":             {"volume"},
+	"ChartsWeekTo":              {"day"},
+	"ChartsVolumePriceLabel":    {"span", "change", "shares", "unit"},
+	"ChartsVolumePriceValue":    {"period", "close_", "shares"},
+	"ChartsAvgPer":              {"unit"},
+	"ChartsMarginsLabel":        {"segment", "revenue", "losses"},
+	"ChartsMarginsValue":        {"quarter", "revenue", "margin"},
+	"ChartsVolSharpe":           {"vol", "sharpe"},
+	"ChartsMeanReturn":          {"vol"},
+	"ChartsHoldingsWeight":      {"holdings", "rate"},
+	"ChartsSectorCap":           {"sector", "cap_"},
+	"ChartsRiskLabel":           {"holdings", "period", "best", "ahead"},
+	"ChartsRiskValue":           {"name", "ret", "vol", "sharpe"},
+	"ChartsAnalysts":            {"analysts"},
+	"ChartsStocks":              {"stocks"},
+	"ChartsFromPrice":           {"upside", "price"},
+	"ChartsTargetRange":         {"low", "high", "revised"},
+	"ChartsRaised":              {"raised", "stocks"},
+	"ChartsTargetsLabel":        {"list", "upside", "ticker", "most"},
+	"ChartsTargetsValue":        {"ticker", "target", "upside", "price"},
+	"ChartsHoldings":            {"holdings"},
+	"ChartsMeanOfPairs":         {"pairs"},
+	"ChartsCorrelationLabel":    {"holdings", "lookback", "a", "b_", "r", "hedgeA", "hedgeB", "hedge"},
+	"ChartsPairValue":           {"a", "b_", "r"},
+	"ChartsSeasonalityLabel":    {"symbol", "best", "bestReturn", "worst", "worstReturn"},
+	"ChartsTradesOfDay":         {"share", "day"},
+	"ChartsQuietest":            {"trades"},
+	"ChartsBusiest":             {"trades"},
+	"ChartsActivityLabel":       {"market", "day", "slot", "trades", "quietDay", "quietSlot"},
+	"ChartsActivityValue":       {"day", "slot", "trades"},
+	"ChartsFactorsLabel":        {"benchmark", "factor", "score"},
+	"ChartsOfQuarterRevenue":    {"share", "quarter"},
+	"ChartsFlowsLabel":          {"quarter", "revenue", "net", "margin"},
+	"ChartsTop":                 {"stocks"},
+	"ChartsAdvancing":           {"up", "down", "cap_"},
+	"ChartsCapWeighted":         {"cap_"},
+	"ChartsMarketMapLabel":      {"stocks", "sectors", "period", "up"},
+	"ChartsPositions":           {"positions"},
+	"ChartsOfThePortfolio":      {"value", "weight"},
+	"ChartsAllocationLabel":     {"total", "classes"},
 	"ShaderStartPressed":        {"count"},
 	"ShaderScaleIntensity":      {"scale", "intensity"},
 	"PhotosViews":               {"count"},
@@ -249,8 +313,72 @@ type Translation struct {
 	ScrollPost                func(n int) string
 	ScrollNew                 func(n int) string
 	ScrollPosts               func(count int) string
-	ChartsVisitorsPerDay      func(monday string, sunday string) string
-	ChartsHoverValue          func(day string, visitors string, other string, week string) string
+	ChartsLiveLabel           func(price string, change string) string
+	ChartsMidSpread           func(spread string, share string) string
+	ChartsDepthLabel          func(ticks string, bids string, asks string) string
+	ChartsBidsTo              func(price string, size string) string
+	ChartsAsksTo              func(price string, size string) string
+	ChartsTicks               func(ticks string) string
+	ChartsFromTheHigh         func(change string) string
+	ChartsDay                 func(day string) string
+	ChartsEquityLabel         func(change string, worst string, from string, to string) string
+	ChartsUnderwaterLabel     func(worst string, day string) string
+	ChartsDays                func(days string) string
+	ChartsCapacityLabel       func(period string, loads string) string
+	ChartsRevenueLabel        func(total string, region string, share string) string
+	ChartsTheLastMonth        func(month string) string
+	ChartsSalesLabel          func(month string) string
+	ChartsSalesValue          func(month string, online string, store string) string
+	ChartsOfRevenue           func(share string) string
+	ChartsNetMarginOf         func(share string) string
+	ChartsBridgeLabel         func(quarter string, revenue string, net string, margin string) string
+	ChartsTradersOfVisits     func(traders string, visits string) string
+	ChartsKeptOf              func(kept string, stage string, share string) string
+	ChartsFunnelLabel         func(channel string, visits string, trades string, share string) string
+	ChartsFunnelValue         func(stage string, reached string, kept string) string
+	ChartsCandlesLabel        func(span string, open string, close_ string, change string) string
+	ChartsCandleValue         func(date string, open string, high string, low string, close_ string) string
+	ChartsVolumeLabel         func(span string, volume string) string
+	ChartsMillion             func(volume string) string
+	ChartsWeekTo              func(day string) string
+	ChartsVolumePriceLabel    func(span string, change string, shares string, unit string) string
+	ChartsVolumePriceValue    func(period string, close_ string, shares string) string
+	ChartsAvgPer              func(unit string) string
+	ChartsMarginsLabel        func(segment string, revenue string, losses string) string
+	ChartsMarginsValue        func(quarter string, revenue string, margin string) string
+	ChartsVolSharpe           func(vol string, sharpe string) string
+	ChartsMeanReturn          func(vol string) string
+	ChartsHoldingsWeight      func(holdings string, rate string) string
+	ChartsSectorCap           func(sector string, cap_ string) string
+	ChartsRiskLabel           func(holdings string, period string, best string, ahead string) string
+	ChartsRiskValue           func(name string, ret string, vol string, sharpe string) string
+	ChartsAnalysts            func(analysts string) string
+	ChartsStocks              func(stocks string) string
+	ChartsFromPrice           func(upside string, price string) string
+	ChartsTargetRange         func(low string, high string, revised string) string
+	ChartsRaised              func(raised string, stocks string) string
+	ChartsTargetsLabel        func(list string, upside string, ticker string, most string) string
+	ChartsTargetsValue        func(ticker string, target string, upside string, price string) string
+	ChartsHoldings            func(holdings string) string
+	ChartsMeanOfPairs         func(pairs string) string
+	ChartsCorrelationLabel    func(holdings string, lookback string, a string, b_ string, r string, hedgeA string, hedgeB string, hedge string) string
+	ChartsPairValue           func(a string, b_ string, r string) string
+	ChartsSeasonalityLabel    func(symbol string, best string, bestReturn string, worst string, worstReturn string) string
+	ChartsTradesOfDay         func(share string, day string) string
+	ChartsQuietest            func(trades string) string
+	ChartsBusiest             func(trades string) string
+	ChartsActivityLabel       func(market string, day string, slot string, trades string, quietDay string, quietSlot string) string
+	ChartsActivityValue       func(day string, slot string, trades string) string
+	ChartsFactorsLabel        func(benchmark string, factor string, score string) string
+	ChartsOfQuarterRevenue    func(share string, quarter string) string
+	ChartsFlowsLabel          func(quarter string, revenue string, net string, margin string) string
+	ChartsTop                 func(stocks string) string
+	ChartsAdvancing           func(up string, down string, cap_ string) string
+	ChartsCapWeighted         func(cap_ string) string
+	ChartsMarketMapLabel      func(stocks string, sectors string, period string, up string) string
+	ChartsPositions           func(positions string) string
+	ChartsOfThePortfolio      func(value string, weight string) string
+	ChartsAllocationLabel     func(total string, classes string) string
 	ShaderStartPressed        func(count int) string
 	ShaderScaleIntensity      func(scale string, intensity string) string
 	PhotosViews               func(count string) string
@@ -1888,12 +2016,182 @@ const (
 	textScrollErrors
 	textDockOpen
 	textDockClosedState
-	textChartsVisitors
-	textChartsAWeekOverTheOther
-	textChartsTheLastDay
-	textChartsVisitors2
-	textChartsSparklines
-	textChartsAPlotPerRowOf
+	textChartsLivePrice
+	textChartsLivePriceNote
+	textChartsLive
+	textChartsPaused
+	textChartsPause
+	textChartsResume
+	textChartsNow
+	textChartsOpen
+	textChartsHigh
+	textChartsLow
+	textChartsRange
+	textChartsDepth
+	textChartsDepthNote
+	textChartsBids
+	textChartsAsks
+	textChartsDrawdown
+	textChartsDrawdownNote
+	textChartsAtAHigh
+	textChartsMax
+	textChartsReturn
+	textChartsWorst
+	textChartsRecovery
+	textChartsUnderwater
+	textChartsCapacity
+	textChartsCapacityNote
+	textChartsNowPeriod
+	textChartsDayPeak
+	textChartsWeekPeak
+	textChartsAvgLoad
+	textChartsPeriod
+	textChartsRevenue
+	textChartsRevenueNote
+	textChartsTotal
+	textChartsShowAsPie
+	textChartsShowAsDonut
+	textChartsSales
+	textChartsSalesNote
+	textChartsOnline
+	textChartsInStore
+	textChartsLayout
+	textChartsSideBySide
+	textChartsStacked
+	textChartsBridge
+	textChartsBridgeNote
+	textChartsRevenueStep
+	textChartsRev
+	textChartsCostOfSales
+	textChartsGrossProfit
+	textChartsGross
+	textChartsOtherIncome
+	textChartsOtherLoss
+	textChartsOther
+	textChartsTax
+	textChartsNetProfit
+	textChartsNet
+	textChartsAdds
+	textChartsTakes
+	textChartsOperating
+	textChartsQuarter
+	textChartsFunnel
+	textChartsFunnelNote
+	textChartsAll
+	textChartsApp
+	textChartsWeb
+	textChartsVisitsToFirstTrade
+	textChartsTopOfTheFunnel
+	textChartsOverall
+	textChartsBiggestDrop
+	textChartsLostThere
+	textChartsChannel
+	textChartsCandles
+	textChartsCandlesNote
+	textChartsChange
+	textChartsUpDays
+	textChartsVolumePrice
+	textChartsVolumePriceNote
+	textChartsDayUnit
+	textChartsWeekUnit
+	textChartsMonthUnit
+	textChartsVolume
+	textChartsClose
+	textChartsShares
+	textChartsMargins
+	textChartsMarginsNote
+	textChartsNetMargin
+	textChartsMargin
+	textChartsCloud
+	textChartsDevices
+	textChartsLast4Q
+	textChartsBestMargin
+	textChartsLossQuarters
+	textChartsSegment
+	textChartsRisk
+	textChartsRiskNote
+	textChartsBenchmark
+	textChartsPortfolio
+	textChartsTheIndex
+	textChartsReturnAnnualized
+	textChartsVolatility
+	textChartsLessRisk
+	textChartsMoreRisk
+	textChartsBestSharpe
+	textChartsAhead
+	textChartsTargets
+	textChartsTargetsNote
+	textChartsSemis
+	textChartsSoftware
+	textChartsBanks
+	textChartsMedianUpside
+	textChartsMeanTarget
+	textCharts3MonthsAgo
+	textChartsLowToHigh
+	textChartsToday
+	textChartsMostUpside
+	textChartsWidest
+	textChartsRaisedFigure
+	textChartsCoverage
+	textChartsCorrelation
+	textChartsCorrelationNote
+	textChartsItself
+	textChartsMoveClosely
+	textChartsMoveTogether
+	textChartsLooselyRelated
+	textChartsBarelyRelated
+	textChartsMoveApart
+	textChartsTheLower
+	textChartsDailyOverAYear
+	textChartsDailyOverThreeYears
+	textChartsClosest
+	textChartsBestHedge
+	textChartsMean
+	textChartsLookback
+	textCharts1Year
+	textCharts3Years
+	textChartsSeasonality
+	textChartsSeasonalityNote
+	textChartsTotalReturn
+	textChartsBestMonth
+	textChartsWorstMonth
+	textChartsUpMonths
+	textChartsSymbol
+	textChartsActivity
+	textChartsActivityNote
+	textChartsTradesPerHalfHour
+	textChartsTradesADay
+	textChartsHoursHK
+	textChartsHoursUS
+	textChartsBusiestFigure
+	textChartsQuietestFigure
+	textChartsOpenVs
+	textChartsMarket
+	textChartsFactors
+	textChartsFactorsNote
+	textChartsPeers
+	textChartsIndex
+	textChartsAllSixFactors
+	textChartsScore
+	textChartsMeanScore
+	textChartsSpread
+	textChartsLead
+	textChartsVsIndex
+	textChartsVsPeers
+	textChartsFlows
+	textChartsFlowsNote
+	textChartsGrossMargin
+	textChartsMarketMap
+	textChartsMarketMapNote
+	textChartsDayPeriod
+	textChartsWeekPeriod
+	textChartsMonthPeriod
+	textChartsAllocation
+	textChartsAllocationNote
+	textChartsView
+	textChartsAYearAgo
+	textChartsWatchlist
+	textChartsWatchlistNote
 	textEdgesInbox
 	textEdgesSearch
 	textEdgesStarred
@@ -1959,36 +2257,6 @@ const (
 	textDiffExpandEveryLine
 	textDiffCollapseUnchangedLines
 	textDiffStartAgain
-	textChartsMon
-	textChartsTue
-	textChartsWed
-	textChartsThu
-	textChartsFri
-	textChartsSat
-	textChartsSun
-	textChartsLastWeek
-	textChartsThisWeek
-	textChartsBars
-	textChartsBarsNote
-	textChartsBridge
-	textChartsBridgeNote
-	textChartsCandles
-	textChartsCandlesNote
-	textChartsShare
-	textChartsShareNote
-	textChartsGauge
-	textChartsGaugeNote
-	textChartsScatter
-	textChartsScatterNote
-	textChartsHeatmap
-	textChartsHeatmapNote
-	textChartsRadar
-	textChartsRadarNote
-	textChartsFlows
-	textChartsFlowsNote
-	textChartsMarket
-	textChartsMarketNote
-	textChartsNewData
 	textTextviewCopied
 	textTextviewCopyCode
 	textTextviewStreaming
@@ -3956,12 +4224,182 @@ var keyOfText = [numTexts]string{
 	"scrollErrors",
 	"dockOpen",
 	"dockClosedState",
-	"chartsVisitors",
-	"chartsAWeekOverTheOther",
-	"chartsTheLastDay",
-	"chartsVisitors2",
-	"chartsSparklines",
-	"chartsAPlotPerRowOf",
+	"chartsLivePrice",
+	"chartsLivePriceNote",
+	"chartsLive",
+	"chartsPaused",
+	"chartsPause",
+	"chartsResume",
+	"chartsNow",
+	"chartsOpen",
+	"chartsHigh",
+	"chartsLow",
+	"chartsRange",
+	"chartsDepth",
+	"chartsDepthNote",
+	"chartsBids",
+	"chartsAsks",
+	"chartsDrawdown",
+	"chartsDrawdownNote",
+	"chartsAtAHigh",
+	"chartsMax",
+	"chartsReturn",
+	"chartsWorst",
+	"chartsRecovery",
+	"chartsUnderwater",
+	"chartsCapacity",
+	"chartsCapacityNote",
+	"chartsNowPeriod",
+	"chartsDayPeak",
+	"chartsWeekPeak",
+	"chartsAvgLoad",
+	"chartsPeriod",
+	"chartsRevenue",
+	"chartsRevenueNote",
+	"chartsTotal",
+	"chartsShowAsPie",
+	"chartsShowAsDonut",
+	"chartsSales",
+	"chartsSalesNote",
+	"chartsOnline",
+	"chartsInStore",
+	"chartsLayout",
+	"chartsSideBySide",
+	"chartsStacked",
+	"chartsBridge",
+	"chartsBridgeNote",
+	"chartsRevenueStep",
+	"chartsRev",
+	"chartsCostOfSales",
+	"chartsGrossProfit",
+	"chartsGross",
+	"chartsOtherIncome",
+	"chartsOtherLoss",
+	"chartsOther",
+	"chartsTax",
+	"chartsNetProfit",
+	"chartsNet",
+	"chartsAdds",
+	"chartsTakes",
+	"chartsOperating",
+	"chartsQuarter",
+	"chartsFunnel",
+	"chartsFunnelNote",
+	"chartsAll",
+	"chartsApp",
+	"chartsWeb",
+	"chartsVisitsToFirstTrade",
+	"chartsTopOfTheFunnel",
+	"chartsOverall",
+	"chartsBiggestDrop",
+	"chartsLostThere",
+	"chartsChannel",
+	"chartsCandles",
+	"chartsCandlesNote",
+	"chartsChange",
+	"chartsUpDays",
+	"chartsVolumePrice",
+	"chartsVolumePriceNote",
+	"chartsDayUnit",
+	"chartsWeekUnit",
+	"chartsMonthUnit",
+	"chartsVolume",
+	"chartsClose",
+	"chartsShares",
+	"chartsMargins",
+	"chartsMarginsNote",
+	"chartsNetMargin",
+	"chartsMargin",
+	"chartsCloud",
+	"chartsDevices",
+	"chartsLast4Q",
+	"chartsBestMargin",
+	"chartsLossQuarters",
+	"chartsSegment",
+	"chartsRisk",
+	"chartsRiskNote",
+	"chartsBenchmark",
+	"chartsPortfolio",
+	"chartsTheIndex",
+	"chartsReturnAnnualized",
+	"chartsVolatility",
+	"chartsLessRisk",
+	"chartsMoreRisk",
+	"chartsBestSharpe",
+	"chartsAhead",
+	"chartsTargets",
+	"chartsTargetsNote",
+	"chartsSemis",
+	"chartsSoftware",
+	"chartsBanks",
+	"chartsMedianUpside",
+	"chartsMeanTarget",
+	"charts3MonthsAgo",
+	"chartsLowToHigh",
+	"chartsToday",
+	"chartsMostUpside",
+	"chartsWidest",
+	"chartsRaisedFigure",
+	"chartsCoverage",
+	"chartsCorrelation",
+	"chartsCorrelationNote",
+	"chartsItself",
+	"chartsMoveClosely",
+	"chartsMoveTogether",
+	"chartsLooselyRelated",
+	"chartsBarelyRelated",
+	"chartsMoveApart",
+	"chartsTheLower",
+	"chartsDailyOverAYear",
+	"chartsDailyOverThreeYears",
+	"chartsClosest",
+	"chartsBestHedge",
+	"chartsMean",
+	"chartsLookback",
+	"charts1Year",
+	"charts3Years",
+	"chartsSeasonality",
+	"chartsSeasonalityNote",
+	"chartsTotalReturn",
+	"chartsBestMonth",
+	"chartsWorstMonth",
+	"chartsUpMonths",
+	"chartsSymbol",
+	"chartsActivity",
+	"chartsActivityNote",
+	"chartsTradesPerHalfHour",
+	"chartsTradesADay",
+	"chartsHoursHK",
+	"chartsHoursUS",
+	"chartsBusiestFigure",
+	"chartsQuietestFigure",
+	"chartsOpenVs",
+	"chartsMarket",
+	"chartsFactors",
+	"chartsFactorsNote",
+	"chartsPeers",
+	"chartsIndex",
+	"chartsAllSixFactors",
+	"chartsScore",
+	"chartsMeanScore",
+	"chartsSpread",
+	"chartsLead",
+	"chartsVsIndex",
+	"chartsVsPeers",
+	"chartsFlows",
+	"chartsFlowsNote",
+	"chartsGrossMargin",
+	"chartsMarketMap",
+	"chartsMarketMapNote",
+	"chartsDayPeriod",
+	"chartsWeekPeriod",
+	"chartsMonthPeriod",
+	"chartsAllocation",
+	"chartsAllocationNote",
+	"chartsView",
+	"chartsAYearAgo",
+	"chartsWatchlist",
+	"chartsWatchlistNote",
 	"edgesInbox",
 	"edgesSearch",
 	"edgesStarred",
@@ -4027,36 +4465,6 @@ var keyOfText = [numTexts]string{
 	"diffExpandEveryLine",
 	"diffCollapseUnchangedLines",
 	"diffStartAgain",
-	"chartsMon",
-	"chartsTue",
-	"chartsWed",
-	"chartsThu",
-	"chartsFri",
-	"chartsSat",
-	"chartsSun",
-	"chartsLastWeek",
-	"chartsThisWeek",
-	"chartsBars",
-	"chartsBarsNote",
-	"chartsBridge",
-	"chartsBridgeNote",
-	"chartsCandles",
-	"chartsCandlesNote",
-	"chartsShare",
-	"chartsShareNote",
-	"chartsGauge",
-	"chartsGaugeNote",
-	"chartsScatter",
-	"chartsScatterNote",
-	"chartsHeatmap",
-	"chartsHeatmapNote",
-	"chartsRadar",
-	"chartsRadarNote",
-	"chartsFlows",
-	"chartsFlowsNote",
-	"chartsMarket",
-	"chartsMarketNote",
-	"chartsNewData",
 	"textviewCopied",
 	"textviewCopyCode",
 	"textviewStreaming",
@@ -6022,12 +6430,182 @@ var textsEn = i18n.NewTexts(""+
 	"Errors"+
 	"open"+
 	"closed"+
-	"Visitors"+
-	"A week over the other, with hover, grid lines and motion"+
-	", the last day"+
-	" visitors"+
-	"Sparklines"+
-	"A plot per row of a list, drawn in as the row comes"+
+	"Live price"+
+	"A tick a second, the last price tagged"+
+	"Live"+
+	"Paused"+
+	"Pause"+
+	"Resume"+
+	"now"+
+	"Open"+
+	"High"+
+	"Low"+
+	"Range"+
+	"Order book depth"+
+	"Each side summed out from the spread, as steps"+
+	"Bids"+
+	"Asks"+
+	"Drawdown"+
+	"Value against its high, the worst run shaded"+
+	"at a high"+
+	"Max"+
+	"Return"+
+	"Worst"+
+	"Recovery"+
+	"Underwater"+
+	"Capacity"+
+	"Rings of load against each resource's limit"+
+	"Now"+
+	"24h peak"+
+	"7d peak"+
+	"Avg load"+
+	"Period"+
+	"Revenue by region"+
+	"A donut of shares, or a pie labeled around its rim"+
+	"Total"+
+	"Show as pie"+
+	"Show as donut"+
+	"Sales"+
+	"Bars per month, side by side or stacked"+
+	"Online"+
+	"In store"+
+	"Layout"+
+	"Side by side"+
+	"Stacked"+
+	"Profit bridge"+
+	"A quarter's revenue down to net profit, step by step"+
+	"Revenue"+
+	"Rev"+
+	"Cost of sales"+
+	"Gross profit"+
+	"Gross"+
+	"Other income"+
+	"Other loss"+
+	"Other"+
+	"Tax"+
+	"Net profit"+
+	"Net"+
+	"Adds"+
+	"Takes"+
+	"Operating"+
+	"Quarter"+
+	"Conversion funnel"+
+	"From a first visit to a first trade"+
+	"All"+
+	"App"+
+	"Web"+
+	"Visits to first trade"+
+	"the top of the funnel"+
+	"Overall"+
+	"Biggest drop"+
+	"Lost there"+
+	"Channel"+
+	"Daily candles"+
+	"Open to close over each day's range, its volume under it"+
+	"Change"+
+	"Up days"+
+	"Volume and price"+
+	"Shares traded on the left scale, the close on the right"+
+	"day"+
+	"week"+
+	"month"+
+	"Volume"+
+	"Close"+
+	"Shares"+
+	"Revenue and margin"+
+	"Quarterly revenue on the left, net margin on the right"+
+	"Net margin"+
+	"Margin"+
+	"Cloud"+
+	"Devices"+
+	"Last 4Q"+
+	"Best margin"+
+	"Loss quarters"+
+	"Segment"+
+	"Risk vs return"+
+	"Volatility against return, sized by market cap"+
+	"Benchmark"+
+	"Portfolio"+
+	"The index the holdings are measured against"+
+	"Return, annualized"+
+	"Volatility"+
+	"Less risk, more return"+
+	"More risk, less return"+
+	"Best Sharpe"+
+	"Ahead"+
+	"Price targets"+
+	"Analysts' one-year targets against today's price"+
+	"Semis"+
+	"Software"+
+	"Banks"+
+	"median upside to the mean target"+
+	"Mean target"+
+	"3 months ago"+
+	"Low to high"+
+	"Today"+
+	"Most upside"+
+	"Widest"+
+	"Raised"+
+	"Coverage"+
+	"Holdings correlation"+
+	"How closely each pair of holdings moves"+
+	"A holding against itself"+
+	"Move together closely"+
+	"Move together"+
+	"Loosely related"+
+	"Barely related"+
+	"Move apart: a hedge"+
+	"The lower, the more each holding diversifies the rest"+
+	"Daily returns over a year"+
+	"Daily returns over three years"+
+	"Closest"+
+	"Best hedge"+
+	"Mean"+
+	"Lookback"+
+	"1 year"+
+	"3 years"+
+	"Monthly returns"+
+	"Every month since 2020, red for a loss"+
+	"total return, months compounded"+
+	"Best month"+
+	"Worst month"+
+	"Up months"+
+	"Symbol"+
+	"Trading activity"+
+	"Trades every half hour of a week"+
+	"Trades per half hour"+
+	"trades a day"+
+	"9:30 to 16:00, closed 12:00 to 13:00 for lunch"+
+	"9:30 to 16:00, one session"+
+	"Busiest"+
+	"Quietest"+
+	"Open vs 13:30"+
+	"Market"+
+	"Factor exposure"+
+	"A portfolio against its benchmark on six factors"+
+	"Peers"+
+	"Index"+
+	"All six factors"+
+	"score"+
+	"mean score"+
+	"Spread"+
+	"Lead"+
+	"vs Index"+
+	"vs Peers"+
+	"Flows"+
+	"A quarter's revenue from its segments to net income"+
+	"Gross margin"+
+	"Market map"+
+	"The largest stocks by sector, sized by market cap"+
+	"Day"+
+	"Week"+
+	"Month"+
+	"Allocation"+
+	"Asset classes and their positions, by value"+
+	"View"+
+	"A year ago"+
+	"Watchlist"+
+	"Sparklines that draw in once and stay whole"+
 	"Inbox"+
 	"Search"+
 	"Starred"+
@@ -6093,36 +6671,6 @@ var textsEn = i18n.NewTexts(""+
 	"Expand every line"+
 	"Collapse unchanged lines"+
 	"Start again"+
-	"Mon"+
-	"Tue"+
-	"Wed"+
-	"Thu"+
-	"Fri"+
-	"Sat"+
-	"Sun"+
-	"Last week"+
-	"This week"+
-	"Bars"+
-	"Stacked and grouped in bands, an ordinal scale's colors, values at the bars' ends"+
-	"Bridge"+
-	"A base per row: each bar a step from where the last one ended"+
-	"Candles"+
-	"Rules from low to high under bars from open to close, volumes on a second scale"+
-	"Share"+
-	"A donut whose slices lift and sweep, with labels on leader lines"+
-	"Gauge"+
-	"Arcs that sweep round to a new value"+
-	"Scatter"+
-	"Dots whose area is a value, found by the nearest center"+
-	"Heatmap"+
-	"Cells on two band scales, a diverging ramp about zero; the arrows step across them"+
-	"Radar"+
-	"A radial line closed over its rings and spokes"+
-	"Flows"+
-	"A sankey of nodes and ribbons that dim away from the hovered node"+
-	"Market"+
-	"A treemap of sectors and their stocks, shaded by the day's change"+
-	"New data"+
 	"Copied"+
 	"Copy code"+
 	"Streaming"+
@@ -8085,12 +8633,182 @@ var textsEn = i18n.NewTexts(""+
 		6,
 		4,
 		6,
-		8,
-		56,
-		14,
-		9,
 		10,
+		38,
+		4,
+		6,
+		5,
+		6,
+		3,
+		4,
+		4,
+		3,
+		5,
+		16,
+		46,
+		4,
+		4,
+		8,
+		44,
+		9,
+		3,
+		6,
+		5,
+		8,
+		10,
+		8,
+		43,
+		3,
+		8,
+		7,
+		8,
+		6,
+		17,
+		50,
+		5,
+		11,
+		13,
+		5,
+		39,
+		6,
+		8,
+		6,
+		12,
+		7,
+		13,
+		52,
+		7,
+		3,
+		13,
+		12,
+		5,
+		12,
+		10,
+		5,
+		3,
+		10,
+		3,
+		4,
+		5,
+		9,
+		7,
+		17,
+		35,
+		3,
+		3,
+		3,
+		21,
+		21,
+		7,
+		12,
+		10,
+		7,
+		13,
+		56,
+		6,
+		7,
+		16,
+		55,
+		3,
+		4,
+		5,
+		6,
+		5,
+		6,
+		18,
+		54,
+		10,
+		6,
+		5,
+		7,
+		7,
+		11,
+		13,
+		7,
+		14,
+		46,
+		9,
+		9,
+		43,
+		18,
+		10,
+		22,
+		22,
+		11,
+		5,
+		13,
+		48,
+		5,
+		8,
+		5,
+		32,
+		11,
+		12,
+		11,
+		5,
+		11,
+		6,
+		6,
+		8,
+		20,
+		39,
+		24,
+		21,
+		13,
+		15,
+		14,
+		19,
+		53,
+		25,
+		30,
+		7,
+		10,
+		4,
+		8,
+		6,
+		7,
+		15,
+		38,
+		31,
+		10,
+		11,
+		9,
+		6,
+		16,
+		32,
+		20,
+		12,
+		46,
+		26,
+		7,
+		8,
+		13,
+		6,
+		15,
+		48,
+		5,
+		5,
+		15,
+		5,
+		10,
+		6,
+		4,
+		8,
+		8,
+		5,
 		51,
+		12,
+		10,
+		49,
+		3,
+		4,
+		5,
+		10,
+		43,
+		4,
+		10,
+		9,
+		43,
 		5,
 		6,
 		7,
@@ -8156,36 +8874,6 @@ var textsEn = i18n.NewTexts(""+
 		17,
 		24,
 		11,
-		3,
-		3,
-		3,
-		3,
-		3,
-		3,
-		3,
-		9,
-		9,
-		4,
-		81,
-		6,
-		61,
-		7,
-		79,
-		5,
-		64,
-		5,
-		36,
-		7,
-		55,
-		7,
-		82,
-		5,
-		46,
-		5,
-		65,
-		6,
-		65,
-		8,
 		6,
 		9,
 		9,
@@ -10151,12 +10839,182 @@ var textsZhHans = i18n.NewTexts(""+
 	"错误"+
 	"打开"+
 	"关闭"+
-	"访客"+
-	"两周叠加对比，带悬停、网格线和动效"+
-	"，最后一天"+
-	" 位访客"+
-	"迷你图"+
-	"列表中每行一个图，行出现时绘制进场"+
+	"实时价格"+
+	"每秒一笔成交，标出最新价"+
+	"实时"+
+	"已暂停"+
+	"暂停"+
+	"继续"+
+	"现在"+
+	"开盘"+
+	"最高"+
+	"最低"+
+	"范围"+
+	"订单簿深度"+
+	"两侧从价差向外累计，画成阶梯"+
+	"买盘"+
+	"卖盘"+
+	"回撤"+
+	"净值对比其高点，标出最大回撤段"+
+	"处于高点"+
+	"最大"+
+	"收益"+
+	"最差"+
+	"恢复"+
+	"水下"+
+	"容量"+
+	"各资源负载对比其上限的圆环"+
+	"现在"+
+	"24 小时峰值"+
+	"7 天峰值"+
+	"平均负载"+
+	"周期"+
+	"按地区的营收"+
+	"份额环形图，或在边缘标注的饼图"+
+	"合计"+
+	"显示为饼图"+
+	"显示为环形图"+
+	"销售额"+
+	"每月的柱，并排或堆叠"+
+	"线上"+
+	"门店"+
+	"布局"+
+	"并排"+
+	"堆叠"+
+	"利润桥"+
+	"一个季度从营收到净利润的逐步变化"+
+	"营收"+
+	"营收"+
+	"销售成本"+
+	"毛利"+
+	"毛利"+
+	"其他收入"+
+	"其他损失"+
+	"其他"+
+	"税"+
+	"净利润"+
+	"净利"+
+	"增加"+
+	"减少"+
+	"营业"+
+	"季度"+
+	"转化漏斗"+
+	"从首次访问到首笔交易"+
+	"全部"+
+	"应用"+
+	"网页"+
+	"访问到首笔交易"+
+	"漏斗顶部"+
+	"总体"+
+	"最大流失"+
+	"流失"+
+	"渠道"+
+	"日 K 线"+
+	"每日区间上的开收盘，下方是成交量"+
+	"涨跌"+
+	"上涨天数"+
+	"成交量与价格"+
+	"左轴为成交股数，右轴为收盘价"+
+	"日"+
+	"周"+
+	"月"+
+	"成交量"+
+	"收盘"+
+	"股数"+
+	"营收与利润率"+
+	"左轴为季度营收，右轴为净利率"+
+	"净利率"+
+	"利润率"+
+	"云业务"+
+	"设备"+
+	"近四季"+
+	"最高利润率"+
+	"亏损季度"+
+	"业务"+
+	"风险与收益"+
+	"波动率对比收益，大小为市值"+
+	"基准"+
+	"组合"+
+	"衡量持仓所对比的指数"+
+	"年化收益"+
+	"波动率"+
+	"风险更低，收益更高"+
+	"风险更高，收益更低"+
+	"最高夏普"+
+	"跑赢"+
+	"目标价"+
+	"分析师一年目标价对比当前价格"+
+	"半导体"+
+	"软件"+
+	"银行"+
+	"到平均目标价的中位空间"+
+	"平均目标价"+
+	"3 个月前"+
+	"最低到最高"+
+	"今天"+
+	"空间最大"+
+	"分歧最大"+
+	"上调"+
+	"覆盖"+
+	"持仓相关性"+
+	"每对持仓走势的接近程度"+
+	"持仓与自身"+
+	"走势高度一致"+
+	"走势一致"+
+	"弱相关"+
+	"几乎无关"+
+	"走势相反：可对冲"+
+	"越低，每只持仓越能分散其余持仓"+
+	"一年的日收益"+
+	"三年的日收益"+
+	"最接近"+
+	"最佳对冲"+
+	"平均"+
+	"回看"+
+	"1 年"+
+	"3 年"+
+	"月度收益"+
+	"2020 年以来的每个月，亏损为红色"+
+	"总收益，按月复利"+
+	"最佳月份"+
+	"最差月份"+
+	"上涨月份"+
+	"代码"+
+	"交易活跃度"+
+	"一周内每半小时的成交笔数"+
+	"每半小时成交"+
+	"每日成交笔数"+
+	"9:30 至 16:00，12:00 至 13:00 午休"+
+	"9:30 至 16:00，一个时段"+
+	"最繁忙"+
+	"最清淡"+
+	"开盘对比 13:30"+
+	"市场"+
+	"因子暴露"+
+	"组合在六个因子上对比其基准"+
+	"同类"+
+	"指数"+
+	"全部六个因子"+
+	"得分"+
+	"平均得分"+
+	"差值"+
+	"领先"+
+	"对比指数"+
+	"对比同类"+
+	"流向"+
+	"一个季度的营收从各业务流向净利润"+
+	"毛利率"+
+	"市场地图"+
+	"按板块划分的最大个股，大小为市值"+
+	"日"+
+	"周"+
+	"月"+
+	"配置"+
+	"各资产类别及其持仓，按价值"+
+	"视图"+
+	"一年前"+
+	"自选"+
+	"只绘入一次并保持完整的迷你图"+
 	"收件箱"+
 	"搜索"+
 	"已加星标"+
@@ -10222,36 +11080,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"展开所有行"+
 	"折叠未改动的行"+
 	"重新开始"+
-	"周一"+
-	"周二"+
-	"周三"+
-	"周四"+
-	"周五"+
-	"周六"+
-	"周日"+
-	"上周"+
-	"本周"+
-	"柱状图"+
-	"在条带中堆叠并分组，使用序数颜色比例尺，并在柱端标注数值"+
-	"桥图"+
-	"每行一个基线：每根柱从上一根结束处开始"+
-	"K 线"+
-	"从最低到最高的线段叠在开收盘柱之下，成交量使用第二比例尺"+
-	"占比"+
-	"切片可抬起并扫动的环形图，标签带引线"+
-	"仪表"+
-	"圆弧扫动到新值"+
-	"散点图"+
-	"面积表示数值的圆点，按最近圆心命中"+
-	"热力图"+
-	"两个条带比例尺上的单元格，以零为中心的发散色阶；方向键在其间移动"+
-	"雷达图"+
-	"闭合的径向线，覆盖在环和辐条之上"+
-	"流向"+
-	"由节点和条带组成的桑基图，非悬停节点的条带会变暗"+
-	"市场"+
-	"按板块和个股划分的矩形树图，按当日涨跌着色"+
-	"新数据"+
 	"已拷贝"+
 	"拷贝代码"+
 	"流式输出"+
@@ -12214,12 +13042,182 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
+		12,
+		36,
 		6,
-		51,
-		15,
-		10,
 		9,
-		51,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		15,
+		42,
+		6,
+		6,
+		6,
+		45,
+		12,
+		6,
+		6,
+		6,
+		6,
+		6,
+		6,
+		39,
+		6,
+		15,
+		11,
+		12,
+		6,
+		18,
+		45,
+		6,
+		15,
+		18,
+		9,
+		30,
+		6,
+		6,
+		6,
+		6,
+		6,
+		9,
+		48,
+		6,
+		6,
+		12,
+		6,
+		6,
+		12,
+		12,
+		6,
+		3,
+		9,
+		6,
+		6,
+		6,
+		6,
+		6,
+		12,
+		30,
+		6,
+		6,
+		6,
+		21,
+		12,
+		6,
+		12,
+		6,
+		6,
+		9,
+		48,
+		6,
+		12,
+		18,
+		42,
+		3,
+		3,
+		3,
+		9,
+		6,
+		6,
+		18,
+		42,
+		9,
+		9,
+		9,
+		6,
+		9,
+		15,
+		12,
+		6,
+		15,
+		39,
+		6,
+		6,
+		30,
+		12,
+		9,
+		27,
+		27,
+		12,
+		6,
+		9,
+		42,
+		9,
+		6,
+		6,
+		33,
+		15,
+		11,
+		15,
+		6,
+		12,
+		12,
+		6,
+		6,
+		15,
+		33,
+		15,
+		18,
+		12,
+		9,
+		12,
+		24,
+		45,
+		18,
+		18,
+		9,
+		12,
+		6,
+		6,
+		5,
+		5,
+		12,
+		44,
+		24,
+		12,
+		12,
+		12,
+		6,
+		15,
+		36,
+		18,
+		18,
+		39,
+		29,
+		9,
+		9,
+		18,
+		6,
+		12,
+		39,
+		6,
+		6,
+		18,
+		6,
+		12,
+		6,
+		6,
+		12,
+		12,
+		6,
+		48,
+		9,
+		12,
+		48,
+		3,
+		3,
+		3,
+		6,
+		39,
+		6,
+		9,
+		6,
+		42,
 		9,
 		6,
 		12,
@@ -12285,36 +13283,6 @@ var textsZhHans = i18n.NewTexts(""+
 		15,
 		21,
 		12,
-		6,
-		6,
-		6,
-		6,
-		6,
-		6,
-		6,
-		6,
-		6,
-		9,
-		84,
-		6,
-		57,
-		5,
-		84,
-		6,
-		54,
-		6,
-		21,
-		9,
-		51,
-		9,
-		96,
-		9,
-		48,
-		6,
-		72,
-		6,
-		63,
-		9,
 		9,
 		12,
 		12,
@@ -12974,11 +13942,203 @@ func Supply(lang string, t Translation) {
 	if t.ScrollPosts != nil {
 		s.ScrollPosts = t.ScrollPosts
 	}
-	if t.ChartsVisitorsPerDay != nil {
-		s.ChartsVisitorsPerDay = t.ChartsVisitorsPerDay
+	if t.ChartsLiveLabel != nil {
+		s.ChartsLiveLabel = t.ChartsLiveLabel
 	}
-	if t.ChartsHoverValue != nil {
-		s.ChartsHoverValue = t.ChartsHoverValue
+	if t.ChartsMidSpread != nil {
+		s.ChartsMidSpread = t.ChartsMidSpread
+	}
+	if t.ChartsDepthLabel != nil {
+		s.ChartsDepthLabel = t.ChartsDepthLabel
+	}
+	if t.ChartsBidsTo != nil {
+		s.ChartsBidsTo = t.ChartsBidsTo
+	}
+	if t.ChartsAsksTo != nil {
+		s.ChartsAsksTo = t.ChartsAsksTo
+	}
+	if t.ChartsTicks != nil {
+		s.ChartsTicks = t.ChartsTicks
+	}
+	if t.ChartsFromTheHigh != nil {
+		s.ChartsFromTheHigh = t.ChartsFromTheHigh
+	}
+	if t.ChartsDay != nil {
+		s.ChartsDay = t.ChartsDay
+	}
+	if t.ChartsEquityLabel != nil {
+		s.ChartsEquityLabel = t.ChartsEquityLabel
+	}
+	if t.ChartsUnderwaterLabel != nil {
+		s.ChartsUnderwaterLabel = t.ChartsUnderwaterLabel
+	}
+	if t.ChartsDays != nil {
+		s.ChartsDays = t.ChartsDays
+	}
+	if t.ChartsCapacityLabel != nil {
+		s.ChartsCapacityLabel = t.ChartsCapacityLabel
+	}
+	if t.ChartsRevenueLabel != nil {
+		s.ChartsRevenueLabel = t.ChartsRevenueLabel
+	}
+	if t.ChartsTheLastMonth != nil {
+		s.ChartsTheLastMonth = t.ChartsTheLastMonth
+	}
+	if t.ChartsSalesLabel != nil {
+		s.ChartsSalesLabel = t.ChartsSalesLabel
+	}
+	if t.ChartsSalesValue != nil {
+		s.ChartsSalesValue = t.ChartsSalesValue
+	}
+	if t.ChartsOfRevenue != nil {
+		s.ChartsOfRevenue = t.ChartsOfRevenue
+	}
+	if t.ChartsNetMarginOf != nil {
+		s.ChartsNetMarginOf = t.ChartsNetMarginOf
+	}
+	if t.ChartsBridgeLabel != nil {
+		s.ChartsBridgeLabel = t.ChartsBridgeLabel
+	}
+	if t.ChartsTradersOfVisits != nil {
+		s.ChartsTradersOfVisits = t.ChartsTradersOfVisits
+	}
+	if t.ChartsKeptOf != nil {
+		s.ChartsKeptOf = t.ChartsKeptOf
+	}
+	if t.ChartsFunnelLabel != nil {
+		s.ChartsFunnelLabel = t.ChartsFunnelLabel
+	}
+	if t.ChartsFunnelValue != nil {
+		s.ChartsFunnelValue = t.ChartsFunnelValue
+	}
+	if t.ChartsCandlesLabel != nil {
+		s.ChartsCandlesLabel = t.ChartsCandlesLabel
+	}
+	if t.ChartsCandleValue != nil {
+		s.ChartsCandleValue = t.ChartsCandleValue
+	}
+	if t.ChartsVolumeLabel != nil {
+		s.ChartsVolumeLabel = t.ChartsVolumeLabel
+	}
+	if t.ChartsMillion != nil {
+		s.ChartsMillion = t.ChartsMillion
+	}
+	if t.ChartsWeekTo != nil {
+		s.ChartsWeekTo = t.ChartsWeekTo
+	}
+	if t.ChartsVolumePriceLabel != nil {
+		s.ChartsVolumePriceLabel = t.ChartsVolumePriceLabel
+	}
+	if t.ChartsVolumePriceValue != nil {
+		s.ChartsVolumePriceValue = t.ChartsVolumePriceValue
+	}
+	if t.ChartsAvgPer != nil {
+		s.ChartsAvgPer = t.ChartsAvgPer
+	}
+	if t.ChartsMarginsLabel != nil {
+		s.ChartsMarginsLabel = t.ChartsMarginsLabel
+	}
+	if t.ChartsMarginsValue != nil {
+		s.ChartsMarginsValue = t.ChartsMarginsValue
+	}
+	if t.ChartsVolSharpe != nil {
+		s.ChartsVolSharpe = t.ChartsVolSharpe
+	}
+	if t.ChartsMeanReturn != nil {
+		s.ChartsMeanReturn = t.ChartsMeanReturn
+	}
+	if t.ChartsHoldingsWeight != nil {
+		s.ChartsHoldingsWeight = t.ChartsHoldingsWeight
+	}
+	if t.ChartsSectorCap != nil {
+		s.ChartsSectorCap = t.ChartsSectorCap
+	}
+	if t.ChartsRiskLabel != nil {
+		s.ChartsRiskLabel = t.ChartsRiskLabel
+	}
+	if t.ChartsRiskValue != nil {
+		s.ChartsRiskValue = t.ChartsRiskValue
+	}
+	if t.ChartsAnalysts != nil {
+		s.ChartsAnalysts = t.ChartsAnalysts
+	}
+	if t.ChartsStocks != nil {
+		s.ChartsStocks = t.ChartsStocks
+	}
+	if t.ChartsFromPrice != nil {
+		s.ChartsFromPrice = t.ChartsFromPrice
+	}
+	if t.ChartsTargetRange != nil {
+		s.ChartsTargetRange = t.ChartsTargetRange
+	}
+	if t.ChartsRaised != nil {
+		s.ChartsRaised = t.ChartsRaised
+	}
+	if t.ChartsTargetsLabel != nil {
+		s.ChartsTargetsLabel = t.ChartsTargetsLabel
+	}
+	if t.ChartsTargetsValue != nil {
+		s.ChartsTargetsValue = t.ChartsTargetsValue
+	}
+	if t.ChartsHoldings != nil {
+		s.ChartsHoldings = t.ChartsHoldings
+	}
+	if t.ChartsMeanOfPairs != nil {
+		s.ChartsMeanOfPairs = t.ChartsMeanOfPairs
+	}
+	if t.ChartsCorrelationLabel != nil {
+		s.ChartsCorrelationLabel = t.ChartsCorrelationLabel
+	}
+	if t.ChartsPairValue != nil {
+		s.ChartsPairValue = t.ChartsPairValue
+	}
+	if t.ChartsSeasonalityLabel != nil {
+		s.ChartsSeasonalityLabel = t.ChartsSeasonalityLabel
+	}
+	if t.ChartsTradesOfDay != nil {
+		s.ChartsTradesOfDay = t.ChartsTradesOfDay
+	}
+	if t.ChartsQuietest != nil {
+		s.ChartsQuietest = t.ChartsQuietest
+	}
+	if t.ChartsBusiest != nil {
+		s.ChartsBusiest = t.ChartsBusiest
+	}
+	if t.ChartsActivityLabel != nil {
+		s.ChartsActivityLabel = t.ChartsActivityLabel
+	}
+	if t.ChartsActivityValue != nil {
+		s.ChartsActivityValue = t.ChartsActivityValue
+	}
+	if t.ChartsFactorsLabel != nil {
+		s.ChartsFactorsLabel = t.ChartsFactorsLabel
+	}
+	if t.ChartsOfQuarterRevenue != nil {
+		s.ChartsOfQuarterRevenue = t.ChartsOfQuarterRevenue
+	}
+	if t.ChartsFlowsLabel != nil {
+		s.ChartsFlowsLabel = t.ChartsFlowsLabel
+	}
+	if t.ChartsTop != nil {
+		s.ChartsTop = t.ChartsTop
+	}
+	if t.ChartsAdvancing != nil {
+		s.ChartsAdvancing = t.ChartsAdvancing
+	}
+	if t.ChartsCapWeighted != nil {
+		s.ChartsCapWeighted = t.ChartsCapWeighted
+	}
+	if t.ChartsMarketMapLabel != nil {
+		s.ChartsMarketMapLabel = t.ChartsMarketMapLabel
+	}
+	if t.ChartsPositions != nil {
+		s.ChartsPositions = t.ChartsPositions
+	}
+	if t.ChartsOfThePortfolio != nil {
+		s.ChartsOfThePortfolio = t.ChartsOfThePortfolio
+	}
+	if t.ChartsAllocationLabel != nil {
+		s.ChartsAllocationLabel = t.ChartsAllocationLabel
 	}
 	if t.ShaderStartPressed != nil {
 		s.ShaderStartPressed = t.ShaderStartPressed
@@ -27008,47 +28168,2789 @@ func (msgs Messages) ScrollPosts(count int) string {
 	}
 }
 
-// ChartsVisitors says "Visitors"
+// ChartsLivePrice says "Live price"
 // in the language the app shows under cx.
-func ChartsVisitors(cx *core.Scope) string { return For(cx).ChartsVisitors() }
+func ChartsLivePrice(cx *core.Scope) string { return For(cx).ChartsLivePrice() }
 
-// ChartsVisitors is the package's ChartsVisitors in the language of msgs.
-func (msgs Messages) ChartsVisitors() string { return msgs.text(textChartsVisitors) }
+// ChartsLivePrice is the package's ChartsLivePrice in the language of msgs.
+func (msgs Messages) ChartsLivePrice() string { return msgs.text(textChartsLivePrice) }
 
-// ChartsAWeekOverTheOther says "A week over the other, with hover, grid lines and motion"
+// ChartsLivePriceNote says "A tick a second, the last price tagged"
 // in the language the app shows under cx.
-func ChartsAWeekOverTheOther(cx *core.Scope) string { return For(cx).ChartsAWeekOverTheOther() }
+func ChartsLivePriceNote(cx *core.Scope) string { return For(cx).ChartsLivePriceNote() }
 
-// ChartsAWeekOverTheOther is the package's ChartsAWeekOverTheOther in the language of msgs.
-func (msgs Messages) ChartsAWeekOverTheOther() string { return msgs.text(textChartsAWeekOverTheOther) }
+// ChartsLivePriceNote is the package's ChartsLivePriceNote in the language of msgs.
+func (msgs Messages) ChartsLivePriceNote() string { return msgs.text(textChartsLivePriceNote) }
 
-// ChartsTheLastDay says ", the last day"
+// ChartsLive says "Live"
 // in the language the app shows under cx.
-func ChartsTheLastDay(cx *core.Scope) string { return For(cx).ChartsTheLastDay() }
+func ChartsLive(cx *core.Scope) string { return For(cx).ChartsLive() }
 
-// ChartsTheLastDay is the package's ChartsTheLastDay in the language of msgs.
-func (msgs Messages) ChartsTheLastDay() string { return msgs.text(textChartsTheLastDay) }
+// ChartsLive is the package's ChartsLive in the language of msgs.
+func (msgs Messages) ChartsLive() string { return msgs.text(textChartsLive) }
 
-// ChartsVisitors2 says " visitors"
+// ChartsPaused says "Paused"
 // in the language the app shows under cx.
-func ChartsVisitors2(cx *core.Scope) string { return For(cx).ChartsVisitors2() }
+func ChartsPaused(cx *core.Scope) string { return For(cx).ChartsPaused() }
 
-// ChartsVisitors2 is the package's ChartsVisitors2 in the language of msgs.
-func (msgs Messages) ChartsVisitors2() string { return msgs.text(textChartsVisitors2) }
+// ChartsPaused is the package's ChartsPaused in the language of msgs.
+func (msgs Messages) ChartsPaused() string { return msgs.text(textChartsPaused) }
 
-// ChartsSparklines says "Sparklines"
+// ChartsPause says "Pause"
 // in the language the app shows under cx.
-func ChartsSparklines(cx *core.Scope) string { return For(cx).ChartsSparklines() }
+func ChartsPause(cx *core.Scope) string { return For(cx).ChartsPause() }
 
-// ChartsSparklines is the package's ChartsSparklines in the language of msgs.
-func (msgs Messages) ChartsSparklines() string { return msgs.text(textChartsSparklines) }
+// ChartsPause is the package's ChartsPause in the language of msgs.
+func (msgs Messages) ChartsPause() string { return msgs.text(textChartsPause) }
 
-// ChartsAPlotPerRowOf says "A plot per row of a list, drawn in as the row comes"
+// ChartsResume says "Resume"
 // in the language the app shows under cx.
-func ChartsAPlotPerRowOf(cx *core.Scope) string { return For(cx).ChartsAPlotPerRowOf() }
+func ChartsResume(cx *core.Scope) string { return For(cx).ChartsResume() }
 
-// ChartsAPlotPerRowOf is the package's ChartsAPlotPerRowOf in the language of msgs.
-func (msgs Messages) ChartsAPlotPerRowOf() string { return msgs.text(textChartsAPlotPerRowOf) }
+// ChartsResume is the package's ChartsResume in the language of msgs.
+func (msgs Messages) ChartsResume() string { return msgs.text(textChartsResume) }
+
+// ChartsNow says "now"
+// in the language the app shows under cx.
+func ChartsNow(cx *core.Scope) string { return For(cx).ChartsNow() }
+
+// ChartsNow is the package's ChartsNow in the language of msgs.
+func (msgs Messages) ChartsNow() string { return msgs.text(textChartsNow) }
+
+// ChartsLiveLabel says "NSHL, the last minute, {price}, {change} on the day"
+// in the language the app shows under cx.
+func ChartsLiveLabel(cx *core.Scope, price string, change string) string {
+	return For(cx).ChartsLiveLabel(price, change)
+}
+
+// ChartsLiveLabel is the package's ChartsLiveLabel in the language of msgs.
+func (msgs Messages) ChartsLiveLabel(price string, change string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsLiveLabel(price, change))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsLiveLabel; f != nil {
+			return f(price, change)
+		}
+		switch lang {
+		case "", "en":
+			return "NSHL, the last minute, " + msgs.arg(price) + ", " + msgs.arg(change) + " on the day"
+		case "zh-Hans":
+			return "NSHL 最近一分钟，" + price + "，当日 " + change
+		}
+	}
+}
+
+// ChartsOpen says "Open"
+// in the language the app shows under cx.
+func ChartsOpen(cx *core.Scope) string { return For(cx).ChartsOpen() }
+
+// ChartsOpen is the package's ChartsOpen in the language of msgs.
+func (msgs Messages) ChartsOpen() string { return msgs.text(textChartsOpen) }
+
+// ChartsHigh says "High"
+// in the language the app shows under cx.
+func ChartsHigh(cx *core.Scope) string { return For(cx).ChartsHigh() }
+
+// ChartsHigh is the package's ChartsHigh in the language of msgs.
+func (msgs Messages) ChartsHigh() string { return msgs.text(textChartsHigh) }
+
+// ChartsLow says "Low"
+// in the language the app shows under cx.
+func ChartsLow(cx *core.Scope) string { return For(cx).ChartsLow() }
+
+// ChartsLow is the package's ChartsLow in the language of msgs.
+func (msgs Messages) ChartsLow() string { return msgs.text(textChartsLow) }
+
+// ChartsRange says "Range"
+// in the language the app shows under cx.
+func ChartsRange(cx *core.Scope) string { return For(cx).ChartsRange() }
+
+// ChartsRange is the package's ChartsRange in the language of msgs.
+func (msgs Messages) ChartsRange() string { return msgs.text(textChartsRange) }
+
+// ChartsDepth says "Order book depth"
+// in the language the app shows under cx.
+func ChartsDepth(cx *core.Scope) string { return For(cx).ChartsDepth() }
+
+// ChartsDepth is the package's ChartsDepth in the language of msgs.
+func (msgs Messages) ChartsDepth() string { return msgs.text(textChartsDepth) }
+
+// ChartsDepthNote says "Each side summed out from the spread, as steps"
+// in the language the app shows under cx.
+func ChartsDepthNote(cx *core.Scope) string { return For(cx).ChartsDepthNote() }
+
+// ChartsDepthNote is the package's ChartsDepthNote in the language of msgs.
+func (msgs Messages) ChartsDepthNote() string { return msgs.text(textChartsDepthNote) }
+
+// ChartsMidSpread says "mid · spread {spread} ({share})"
+// in the language the app shows under cx.
+func ChartsMidSpread(cx *core.Scope, spread string, share string) string {
+	return For(cx).ChartsMidSpread(spread, share)
+}
+
+// ChartsMidSpread is the package's ChartsMidSpread in the language of msgs.
+func (msgs Messages) ChartsMidSpread(spread string, share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMidSpread(spread, share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMidSpread; f != nil {
+			return f(spread, share)
+		}
+		switch lang {
+		case "", "en":
+			return "mid · spread " + msgs.arg(spread) + " (" + msgs.arg(share) + ")"
+		case "zh-Hans":
+			return "中间价 · 价差 " + spread + "（" + share + "）"
+		}
+	}
+}
+
+// ChartsDepthLabel says "Order book depth within {ticks} ticks: {bids} bid, {asks} asked"
+// in the language the app shows under cx.
+func ChartsDepthLabel(cx *core.Scope, ticks string, bids string, asks string) string {
+	return For(cx).ChartsDepthLabel(ticks, bids, asks)
+}
+
+// ChartsDepthLabel is the package's ChartsDepthLabel in the language of msgs.
+func (msgs Messages) ChartsDepthLabel(ticks string, bids string, asks string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsDepthLabel(ticks, bids, asks))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsDepthLabel; f != nil {
+			return f(ticks, bids, asks)
+		}
+		switch lang {
+		case "", "en":
+			return "Order book depth within " + msgs.arg(ticks) + " ticks: " + msgs.arg(bids) + " bid, " + msgs.arg(asks) + " asked"
+		case "zh-Hans":
+			return ticks + " 档内的订单簿深度：买 " + bids + "，卖 " + asks
+		}
+	}
+}
+
+// ChartsBidsTo says "Bids to {price}: {size}"
+// in the language the app shows under cx.
+func ChartsBidsTo(cx *core.Scope, price string, size string) string {
+	return For(cx).ChartsBidsTo(price, size)
+}
+
+// ChartsBidsTo is the package's ChartsBidsTo in the language of msgs.
+func (msgs Messages) ChartsBidsTo(price string, size string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsBidsTo(price, size))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsBidsTo; f != nil {
+			return f(price, size)
+		}
+		switch lang {
+		case "", "en":
+			return "Bids to " + msgs.arg(price) + ": " + msgs.arg(size)
+		case "zh-Hans":
+			return "买至 " + price + "：" + size
+		}
+	}
+}
+
+// ChartsAsksTo says "Asks to {price}: {size}"
+// in the language the app shows under cx.
+func ChartsAsksTo(cx *core.Scope, price string, size string) string {
+	return For(cx).ChartsAsksTo(price, size)
+}
+
+// ChartsAsksTo is the package's ChartsAsksTo in the language of msgs.
+func (msgs Messages) ChartsAsksTo(price string, size string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsAsksTo(price, size))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsAsksTo; f != nil {
+			return f(price, size)
+		}
+		switch lang {
+		case "", "en":
+			return "Asks to " + msgs.arg(price) + ": " + msgs.arg(size)
+		case "zh-Hans":
+			return "卖至 " + price + "：" + size
+		}
+	}
+}
+
+// ChartsBids says "Bids"
+// in the language the app shows under cx.
+func ChartsBids(cx *core.Scope) string { return For(cx).ChartsBids() }
+
+// ChartsBids is the package's ChartsBids in the language of msgs.
+func (msgs Messages) ChartsBids() string { return msgs.text(textChartsBids) }
+
+// ChartsAsks says "Asks"
+// in the language the app shows under cx.
+func ChartsAsks(cx *core.Scope) string { return For(cx).ChartsAsks() }
+
+// ChartsAsks is the package's ChartsAsks in the language of msgs.
+func (msgs Messages) ChartsAsks() string { return msgs.text(textChartsAsks) }
+
+// ChartsTicks says "{ticks} ticks"
+// in the language the app shows under cx.
+func ChartsTicks(cx *core.Scope, ticks string) string { return For(cx).ChartsTicks(ticks) }
+
+// ChartsTicks is the package's ChartsTicks in the language of msgs.
+func (msgs Messages) ChartsTicks(ticks string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTicks(ticks))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTicks; f != nil {
+			return f(ticks)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(ticks) + " ticks"
+		case "zh-Hans":
+			return ticks + " 档"
+		}
+	}
+}
+
+// ChartsDrawdown says "Drawdown"
+// in the language the app shows under cx.
+func ChartsDrawdown(cx *core.Scope) string { return For(cx).ChartsDrawdown() }
+
+// ChartsDrawdown is the package's ChartsDrawdown in the language of msgs.
+func (msgs Messages) ChartsDrawdown() string { return msgs.text(textChartsDrawdown) }
+
+// ChartsDrawdownNote says "Value against its high, the worst run shaded"
+// in the language the app shows under cx.
+func ChartsDrawdownNote(cx *core.Scope) string { return For(cx).ChartsDrawdownNote() }
+
+// ChartsDrawdownNote is the package's ChartsDrawdownNote in the language of msgs.
+func (msgs Messages) ChartsDrawdownNote() string { return msgs.text(textChartsDrawdownNote) }
+
+// ChartsFromTheHigh says "{change} from the high"
+// in the language the app shows under cx.
+func ChartsFromTheHigh(cx *core.Scope, change string) string {
+	return For(cx).ChartsFromTheHigh(change)
+}
+
+// ChartsFromTheHigh is the package's ChartsFromTheHigh in the language of msgs.
+func (msgs Messages) ChartsFromTheHigh(change string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFromTheHigh(change))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFromTheHigh; f != nil {
+			return f(change)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(change) + " from the high"
+		case "zh-Hans":
+			return "距高点 " + change
+		}
+	}
+}
+
+// ChartsAtAHigh says "at a high"
+// in the language the app shows under cx.
+func ChartsAtAHigh(cx *core.Scope) string { return For(cx).ChartsAtAHigh() }
+
+// ChartsAtAHigh is the package's ChartsAtAHigh in the language of msgs.
+func (msgs Messages) ChartsAtAHigh() string { return msgs.text(textChartsAtAHigh) }
+
+// ChartsDay says "Day {day}"
+// in the language the app shows under cx.
+func ChartsDay(cx *core.Scope, day string) string { return For(cx).ChartsDay(day) }
+
+// ChartsDay is the package's ChartsDay in the language of msgs.
+func (msgs Messages) ChartsDay(day string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsDay(day))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsDay; f != nil {
+			return f(day)
+		}
+		switch lang {
+		case "", "en":
+			return "Day " + msgs.arg(day)
+		case "zh-Hans":
+			return "第 " + day + " 天"
+		}
+	}
+}
+
+// ChartsEquityLabel says "Portfolio value over 120 days, {change}; worst drawdown {worst} from day {from} to day {to}"
+// in the language the app shows under cx.
+func ChartsEquityLabel(cx *core.Scope, change string, worst string, from string, to string) string {
+	return For(cx).ChartsEquityLabel(change, worst, from, to)
+}
+
+// ChartsEquityLabel is the package's ChartsEquityLabel in the language of msgs.
+func (msgs Messages) ChartsEquityLabel(change string, worst string, from string, to string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsEquityLabel(change, worst, from, to))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsEquityLabel; f != nil {
+			return f(change, worst, from, to)
+		}
+		switch lang {
+		case "", "en":
+			return "Portfolio value over 120 days, " + msgs.arg(change) + "; worst drawdown " + msgs.arg(worst) + " from day " + msgs.arg(from) + " to day " + msgs.arg(to)
+		case "zh-Hans":
+			return "组合 120 天的净值，" + change + "；最大回撤 " + worst + "，从第 " + from + " 天到第 " + to + " 天"
+		}
+	}
+}
+
+// ChartsMax says "Max"
+// in the language the app shows under cx.
+func ChartsMax(cx *core.Scope) string { return For(cx).ChartsMax() }
+
+// ChartsMax is the package's ChartsMax in the language of msgs.
+func (msgs Messages) ChartsMax() string { return msgs.text(textChartsMax) }
+
+// ChartsUnderwaterLabel says "Drawdown from the high, at worst {worst} on day {day}"
+// in the language the app shows under cx.
+func ChartsUnderwaterLabel(cx *core.Scope, worst string, day string) string {
+	return For(cx).ChartsUnderwaterLabel(worst, day)
+}
+
+// ChartsUnderwaterLabel is the package's ChartsUnderwaterLabel in the language of msgs.
+func (msgs Messages) ChartsUnderwaterLabel(worst string, day string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsUnderwaterLabel(worst, day))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsUnderwaterLabel; f != nil {
+			return f(worst, day)
+		}
+		switch lang {
+		case "", "en":
+			return "Drawdown from the high, at worst " + msgs.arg(worst) + " on day " + msgs.arg(day)
+		case "zh-Hans":
+			return "距高点的回撤，最深 " + worst + "，在第 " + day + " 天"
+		}
+	}
+}
+
+// ChartsReturn says "Return"
+// in the language the app shows under cx.
+func ChartsReturn(cx *core.Scope) string { return For(cx).ChartsReturn() }
+
+// ChartsReturn is the package's ChartsReturn in the language of msgs.
+func (msgs Messages) ChartsReturn() string { return msgs.text(textChartsReturn) }
+
+// ChartsWorst says "Worst"
+// in the language the app shows under cx.
+func ChartsWorst(cx *core.Scope) string { return For(cx).ChartsWorst() }
+
+// ChartsWorst is the package's ChartsWorst in the language of msgs.
+func (msgs Messages) ChartsWorst() string { return msgs.text(textChartsWorst) }
+
+// ChartsRecovery says "Recovery"
+// in the language the app shows under cx.
+func ChartsRecovery(cx *core.Scope) string { return For(cx).ChartsRecovery() }
+
+// ChartsRecovery is the package's ChartsRecovery in the language of msgs.
+func (msgs Messages) ChartsRecovery() string { return msgs.text(textChartsRecovery) }
+
+// ChartsDays says "{days} days"
+// in the language the app shows under cx.
+func ChartsDays(cx *core.Scope, days string) string { return For(cx).ChartsDays(days) }
+
+// ChartsDays is the package's ChartsDays in the language of msgs.
+func (msgs Messages) ChartsDays(days string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsDays(days))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsDays; f != nil {
+			return f(days)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(days) + " days"
+		case "zh-Hans":
+			return days + " 天"
+		}
+	}
+}
+
+// ChartsUnderwater says "Underwater"
+// in the language the app shows under cx.
+func ChartsUnderwater(cx *core.Scope) string { return For(cx).ChartsUnderwater() }
+
+// ChartsUnderwater is the package's ChartsUnderwater in the language of msgs.
+func (msgs Messages) ChartsUnderwater() string { return msgs.text(textChartsUnderwater) }
+
+// ChartsCapacity says "Capacity"
+// in the language the app shows under cx.
+func ChartsCapacity(cx *core.Scope) string { return For(cx).ChartsCapacity() }
+
+// ChartsCapacity is the package's ChartsCapacity in the language of msgs.
+func (msgs Messages) ChartsCapacity() string { return msgs.text(textChartsCapacity) }
+
+// ChartsCapacityNote says "Rings of load against each resource's limit"
+// in the language the app shows under cx.
+func ChartsCapacityNote(cx *core.Scope) string { return For(cx).ChartsCapacityNote() }
+
+// ChartsCapacityNote is the package's ChartsCapacityNote in the language of msgs.
+func (msgs Messages) ChartsCapacityNote() string { return msgs.text(textChartsCapacityNote) }
+
+// ChartsNowPeriod says "Now"
+// in the language the app shows under cx.
+func ChartsNowPeriod(cx *core.Scope) string { return For(cx).ChartsNowPeriod() }
+
+// ChartsNowPeriod is the package's ChartsNowPeriod in the language of msgs.
+func (msgs Messages) ChartsNowPeriod() string { return msgs.text(textChartsNowPeriod) }
+
+// ChartsDayPeak says "24h peak"
+// in the language the app shows under cx.
+func ChartsDayPeak(cx *core.Scope) string { return For(cx).ChartsDayPeak() }
+
+// ChartsDayPeak is the package's ChartsDayPeak in the language of msgs.
+func (msgs Messages) ChartsDayPeak() string { return msgs.text(textChartsDayPeak) }
+
+// ChartsWeekPeak says "7d peak"
+// in the language the app shows under cx.
+func ChartsWeekPeak(cx *core.Scope) string { return For(cx).ChartsWeekPeak() }
+
+// ChartsWeekPeak is the package's ChartsWeekPeak in the language of msgs.
+func (msgs Messages) ChartsWeekPeak() string { return msgs.text(textChartsWeekPeak) }
+
+// ChartsAvgLoad says "Avg load"
+// in the language the app shows under cx.
+func ChartsAvgLoad(cx *core.Scope) string { return For(cx).ChartsAvgLoad() }
+
+// ChartsAvgLoad is the package's ChartsAvgLoad in the language of msgs.
+func (msgs Messages) ChartsAvgLoad() string { return msgs.text(textChartsAvgLoad) }
+
+// ChartsCapacityLabel says "Capacity, {period}: {loads}"
+// in the language the app shows under cx.
+func ChartsCapacityLabel(cx *core.Scope, period string, loads string) string {
+	return For(cx).ChartsCapacityLabel(period, loads)
+}
+
+// ChartsCapacityLabel is the package's ChartsCapacityLabel in the language of msgs.
+func (msgs Messages) ChartsCapacityLabel(period string, loads string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsCapacityLabel(period, loads))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsCapacityLabel; f != nil {
+			return f(period, loads)
+		}
+		switch lang {
+		case "", "en":
+			return "Capacity, " + msgs.arg(period) + ": " + msgs.arg(loads)
+		case "zh-Hans":
+			return "容量，" + period + "：" + loads
+		}
+	}
+}
+
+// ChartsPeriod says "Period"
+// in the language the app shows under cx.
+func ChartsPeriod(cx *core.Scope) string { return For(cx).ChartsPeriod() }
+
+// ChartsPeriod is the package's ChartsPeriod in the language of msgs.
+func (msgs Messages) ChartsPeriod() string { return msgs.text(textChartsPeriod) }
+
+// ChartsRevenue says "Revenue by region"
+// in the language the app shows under cx.
+func ChartsRevenue(cx *core.Scope) string { return For(cx).ChartsRevenue() }
+
+// ChartsRevenue is the package's ChartsRevenue in the language of msgs.
+func (msgs Messages) ChartsRevenue() string { return msgs.text(textChartsRevenue) }
+
+// ChartsRevenueNote says "A donut of shares, or a pie labeled around its rim"
+// in the language the app shows under cx.
+func ChartsRevenueNote(cx *core.Scope) string { return For(cx).ChartsRevenueNote() }
+
+// ChartsRevenueNote is the package's ChartsRevenueNote in the language of msgs.
+func (msgs Messages) ChartsRevenueNote() string { return msgs.text(textChartsRevenueNote) }
+
+// ChartsRevenueLabel says "Revenue by region, {total} in all; largest {region} at {share}"
+// in the language the app shows under cx.
+func ChartsRevenueLabel(cx *core.Scope, total string, region string, share string) string {
+	return For(cx).ChartsRevenueLabel(total, region, share)
+}
+
+// ChartsRevenueLabel is the package's ChartsRevenueLabel in the language of msgs.
+func (msgs Messages) ChartsRevenueLabel(total string, region string, share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsRevenueLabel(total, region, share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsRevenueLabel; f != nil {
+			return f(total, region, share)
+		}
+		switch lang {
+		case "", "en":
+			return "Revenue by region, " + msgs.arg(total) + " in all; largest " + msgs.arg(region) + " at " + msgs.arg(share)
+		case "zh-Hans":
+			return "按地区的营收，共 " + total + "；最大为 " + region + "，占 " + share
+		}
+	}
+}
+
+// ChartsTotal says "Total"
+// in the language the app shows under cx.
+func ChartsTotal(cx *core.Scope) string { return For(cx).ChartsTotal() }
+
+// ChartsTotal is the package's ChartsTotal in the language of msgs.
+func (msgs Messages) ChartsTotal() string { return msgs.text(textChartsTotal) }
+
+// ChartsShowAsPie says "Show as pie"
+// in the language the app shows under cx.
+func ChartsShowAsPie(cx *core.Scope) string { return For(cx).ChartsShowAsPie() }
+
+// ChartsShowAsPie is the package's ChartsShowAsPie in the language of msgs.
+func (msgs Messages) ChartsShowAsPie() string { return msgs.text(textChartsShowAsPie) }
+
+// ChartsShowAsDonut says "Show as donut"
+// in the language the app shows under cx.
+func ChartsShowAsDonut(cx *core.Scope) string { return For(cx).ChartsShowAsDonut() }
+
+// ChartsShowAsDonut is the package's ChartsShowAsDonut in the language of msgs.
+func (msgs Messages) ChartsShowAsDonut() string { return msgs.text(textChartsShowAsDonut) }
+
+// ChartsSales says "Sales"
+// in the language the app shows under cx.
+func ChartsSales(cx *core.Scope) string { return For(cx).ChartsSales() }
+
+// ChartsSales is the package's ChartsSales in the language of msgs.
+func (msgs Messages) ChartsSales() string { return msgs.text(textChartsSales) }
+
+// ChartsSalesNote says "Bars per month, side by side or stacked"
+// in the language the app shows under cx.
+func ChartsSalesNote(cx *core.Scope) string { return For(cx).ChartsSalesNote() }
+
+// ChartsSalesNote is the package's ChartsSalesNote in the language of msgs.
+func (msgs Messages) ChartsSalesNote() string { return msgs.text(textChartsSalesNote) }
+
+// ChartsTheLastMonth says "{month}, the last month"
+// in the language the app shows under cx.
+func ChartsTheLastMonth(cx *core.Scope, month string) string {
+	return For(cx).ChartsTheLastMonth(month)
+}
+
+// ChartsTheLastMonth is the package's ChartsTheLastMonth in the language of msgs.
+func (msgs Messages) ChartsTheLastMonth(month string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTheLastMonth(month))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTheLastMonth; f != nil {
+			return f(month)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(month) + ", the last month"
+		case "zh-Hans":
+			return month + "，最近一个月"
+		}
+	}
+}
+
+// ChartsOnline says "Online"
+// in the language the app shows under cx.
+func ChartsOnline(cx *core.Scope) string { return For(cx).ChartsOnline() }
+
+// ChartsOnline is the package's ChartsOnline in the language of msgs.
+func (msgs Messages) ChartsOnline() string { return msgs.text(textChartsOnline) }
+
+// ChartsInStore says "In store"
+// in the language the app shows under cx.
+func ChartsInStore(cx *core.Scope) string { return For(cx).ChartsInStore() }
+
+// ChartsInStore is the package's ChartsInStore in the language of msgs.
+func (msgs Messages) ChartsInStore() string { return msgs.text(textChartsInStore) }
+
+// ChartsSalesLabel says "Sales per month, online and in store, highest in {month}"
+// in the language the app shows under cx.
+func ChartsSalesLabel(cx *core.Scope, month string) string { return For(cx).ChartsSalesLabel(month) }
+
+// ChartsSalesLabel is the package's ChartsSalesLabel in the language of msgs.
+func (msgs Messages) ChartsSalesLabel(month string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsSalesLabel(month))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsSalesLabel; f != nil {
+			return f(month)
+		}
+		switch lang {
+		case "", "en":
+			return "Sales per month, online and in store, highest in " + msgs.arg(month)
+		case "zh-Hans":
+			return "每月线上和门店销售额，" + month + " 最高"
+		}
+	}
+}
+
+// ChartsSalesValue says "{month}, {online} online, {store} in store"
+// in the language the app shows under cx.
+func ChartsSalesValue(cx *core.Scope, month string, online string, store string) string {
+	return For(cx).ChartsSalesValue(month, online, store)
+}
+
+// ChartsSalesValue is the package's ChartsSalesValue in the language of msgs.
+func (msgs Messages) ChartsSalesValue(month string, online string, store string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsSalesValue(month, online, store))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsSalesValue; f != nil {
+			return f(month, online, store)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(month) + ", " + msgs.arg(online) + " online, " + msgs.arg(store) + " in store"
+		case "zh-Hans":
+			return month + "，线上 " + online + "，门店 " + store
+		}
+	}
+}
+
+// ChartsLayout says "Layout"
+// in the language the app shows under cx.
+func ChartsLayout(cx *core.Scope) string { return For(cx).ChartsLayout() }
+
+// ChartsLayout is the package's ChartsLayout in the language of msgs.
+func (msgs Messages) ChartsLayout() string { return msgs.text(textChartsLayout) }
+
+// ChartsSideBySide says "Side by side"
+// in the language the app shows under cx.
+func ChartsSideBySide(cx *core.Scope) string { return For(cx).ChartsSideBySide() }
+
+// ChartsSideBySide is the package's ChartsSideBySide in the language of msgs.
+func (msgs Messages) ChartsSideBySide() string { return msgs.text(textChartsSideBySide) }
+
+// ChartsStacked says "Stacked"
+// in the language the app shows under cx.
+func ChartsStacked(cx *core.Scope) string { return For(cx).ChartsStacked() }
+
+// ChartsStacked is the package's ChartsStacked in the language of msgs.
+func (msgs Messages) ChartsStacked() string { return msgs.text(textChartsStacked) }
+
+// ChartsBridge says "Profit bridge"
+// in the language the app shows under cx.
+func ChartsBridge(cx *core.Scope) string { return For(cx).ChartsBridge() }
+
+// ChartsBridge is the package's ChartsBridge in the language of msgs.
+func (msgs Messages) ChartsBridge() string { return msgs.text(textChartsBridge) }
+
+// ChartsBridgeNote says "A quarter's revenue down to net profit, step by step"
+// in the language the app shows under cx.
+func ChartsBridgeNote(cx *core.Scope) string { return For(cx).ChartsBridgeNote() }
+
+// ChartsBridgeNote is the package's ChartsBridgeNote in the language of msgs.
+func (msgs Messages) ChartsBridgeNote() string { return msgs.text(textChartsBridgeNote) }
+
+// ChartsRevenueStep says "Revenue"
+// in the language the app shows under cx.
+func ChartsRevenueStep(cx *core.Scope) string { return For(cx).ChartsRevenueStep() }
+
+// ChartsRevenueStep is the package's ChartsRevenueStep in the language of msgs.
+func (msgs Messages) ChartsRevenueStep() string { return msgs.text(textChartsRevenueStep) }
+
+// ChartsRev says "Rev"
+// in the language the app shows under cx.
+func ChartsRev(cx *core.Scope) string { return For(cx).ChartsRev() }
+
+// ChartsRev is the package's ChartsRev in the language of msgs.
+func (msgs Messages) ChartsRev() string { return msgs.text(textChartsRev) }
+
+// ChartsCostOfSales says "Cost of sales"
+// in the language the app shows under cx.
+func ChartsCostOfSales(cx *core.Scope) string { return For(cx).ChartsCostOfSales() }
+
+// ChartsCostOfSales is the package's ChartsCostOfSales in the language of msgs.
+func (msgs Messages) ChartsCostOfSales() string { return msgs.text(textChartsCostOfSales) }
+
+// ChartsGrossProfit says "Gross profit"
+// in the language the app shows under cx.
+func ChartsGrossProfit(cx *core.Scope) string { return For(cx).ChartsGrossProfit() }
+
+// ChartsGrossProfit is the package's ChartsGrossProfit in the language of msgs.
+func (msgs Messages) ChartsGrossProfit() string { return msgs.text(textChartsGrossProfit) }
+
+// ChartsGross says "Gross"
+// in the language the app shows under cx.
+func ChartsGross(cx *core.Scope) string { return For(cx).ChartsGross() }
+
+// ChartsGross is the package's ChartsGross in the language of msgs.
+func (msgs Messages) ChartsGross() string { return msgs.text(textChartsGross) }
+
+// ChartsOtherIncome says "Other income"
+// in the language the app shows under cx.
+func ChartsOtherIncome(cx *core.Scope) string { return For(cx).ChartsOtherIncome() }
+
+// ChartsOtherIncome is the package's ChartsOtherIncome in the language of msgs.
+func (msgs Messages) ChartsOtherIncome() string { return msgs.text(textChartsOtherIncome) }
+
+// ChartsOtherLoss says "Other loss"
+// in the language the app shows under cx.
+func ChartsOtherLoss(cx *core.Scope) string { return For(cx).ChartsOtherLoss() }
+
+// ChartsOtherLoss is the package's ChartsOtherLoss in the language of msgs.
+func (msgs Messages) ChartsOtherLoss() string { return msgs.text(textChartsOtherLoss) }
+
+// ChartsOther says "Other"
+// in the language the app shows under cx.
+func ChartsOther(cx *core.Scope) string { return For(cx).ChartsOther() }
+
+// ChartsOther is the package's ChartsOther in the language of msgs.
+func (msgs Messages) ChartsOther() string { return msgs.text(textChartsOther) }
+
+// ChartsTax says "Tax"
+// in the language the app shows under cx.
+func ChartsTax(cx *core.Scope) string { return For(cx).ChartsTax() }
+
+// ChartsTax is the package's ChartsTax in the language of msgs.
+func (msgs Messages) ChartsTax() string { return msgs.text(textChartsTax) }
+
+// ChartsNetProfit says "Net profit"
+// in the language the app shows under cx.
+func ChartsNetProfit(cx *core.Scope) string { return For(cx).ChartsNetProfit() }
+
+// ChartsNetProfit is the package's ChartsNetProfit in the language of msgs.
+func (msgs Messages) ChartsNetProfit() string { return msgs.text(textChartsNetProfit) }
+
+// ChartsNet says "Net"
+// in the language the app shows under cx.
+func ChartsNet(cx *core.Scope) string { return For(cx).ChartsNet() }
+
+// ChartsNet is the package's ChartsNet in the language of msgs.
+func (msgs Messages) ChartsNet() string { return msgs.text(textChartsNet) }
+
+// ChartsOfRevenue says "{share} of revenue"
+// in the language the app shows under cx.
+func ChartsOfRevenue(cx *core.Scope, share string) string { return For(cx).ChartsOfRevenue(share) }
+
+// ChartsOfRevenue is the package's ChartsOfRevenue in the language of msgs.
+func (msgs Messages) ChartsOfRevenue(share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsOfRevenue(share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsOfRevenue; f != nil {
+			return f(share)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(share) + " of revenue"
+		case "zh-Hans":
+			return "占营收 " + share
+		}
+	}
+}
+
+// ChartsNetMarginOf says "{share} net margin"
+// in the language the app shows under cx.
+func ChartsNetMarginOf(cx *core.Scope, share string) string { return For(cx).ChartsNetMarginOf(share) }
+
+// ChartsNetMarginOf is the package's ChartsNetMarginOf in the language of msgs.
+func (msgs Messages) ChartsNetMarginOf(share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsNetMarginOf(share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsNetMarginOf; f != nil {
+			return f(share)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(share) + " net margin"
+		case "zh-Hans":
+			return "净利率 " + share
+		}
+	}
+}
+
+// ChartsAdds says "Adds"
+// in the language the app shows under cx.
+func ChartsAdds(cx *core.Scope) string { return For(cx).ChartsAdds() }
+
+// ChartsAdds is the package's ChartsAdds in the language of msgs.
+func (msgs Messages) ChartsAdds() string { return msgs.text(textChartsAdds) }
+
+// ChartsTakes says "Takes"
+// in the language the app shows under cx.
+func ChartsTakes(cx *core.Scope) string { return For(cx).ChartsTakes() }
+
+// ChartsTakes is the package's ChartsTakes in the language of msgs.
+func (msgs Messages) ChartsTakes() string { return msgs.text(textChartsTakes) }
+
+// ChartsBridgeLabel says "Profit bridge, {quarter}: {revenue} revenue to {net} net profit, a net margin of {margin}"
+// in the language the app shows under cx.
+func ChartsBridgeLabel(cx *core.Scope, quarter string, revenue string, net string, margin string) string {
+	return For(cx).ChartsBridgeLabel(quarter, revenue, net, margin)
+}
+
+// ChartsBridgeLabel is the package's ChartsBridgeLabel in the language of msgs.
+func (msgs Messages) ChartsBridgeLabel(quarter string, revenue string, net string, margin string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsBridgeLabel(quarter, revenue, net, margin))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsBridgeLabel; f != nil {
+			return f(quarter, revenue, net, margin)
+		}
+		switch lang {
+		case "", "en":
+			return "Profit bridge, " + msgs.arg(quarter) + ": " + msgs.arg(revenue) + " revenue to " + msgs.arg(net) + " net profit, a net margin of " + msgs.arg(margin)
+		case "zh-Hans":
+			return "利润桥，" + quarter + "：营收 " + revenue + "，净利润 " + net + "，净利率 " + margin
+		}
+	}
+}
+
+// ChartsOperating says "Operating"
+// in the language the app shows under cx.
+func ChartsOperating(cx *core.Scope) string { return For(cx).ChartsOperating() }
+
+// ChartsOperating is the package's ChartsOperating in the language of msgs.
+func (msgs Messages) ChartsOperating() string { return msgs.text(textChartsOperating) }
+
+// ChartsQuarter says "Quarter"
+// in the language the app shows under cx.
+func ChartsQuarter(cx *core.Scope) string { return For(cx).ChartsQuarter() }
+
+// ChartsQuarter is the package's ChartsQuarter in the language of msgs.
+func (msgs Messages) ChartsQuarter() string { return msgs.text(textChartsQuarter) }
+
+// ChartsFunnel says "Conversion funnel"
+// in the language the app shows under cx.
+func ChartsFunnel(cx *core.Scope) string { return For(cx).ChartsFunnel() }
+
+// ChartsFunnel is the package's ChartsFunnel in the language of msgs.
+func (msgs Messages) ChartsFunnel() string { return msgs.text(textChartsFunnel) }
+
+// ChartsFunnelNote says "From a first visit to a first trade"
+// in the language the app shows under cx.
+func ChartsFunnelNote(cx *core.Scope) string { return For(cx).ChartsFunnelNote() }
+
+// ChartsFunnelNote is the package's ChartsFunnelNote in the language of msgs.
+func (msgs Messages) ChartsFunnelNote() string { return msgs.text(textChartsFunnelNote) }
+
+// ChartsAll says "All"
+// in the language the app shows under cx.
+func ChartsAll(cx *core.Scope) string { return For(cx).ChartsAll() }
+
+// ChartsAll is the package's ChartsAll in the language of msgs.
+func (msgs Messages) ChartsAll() string { return msgs.text(textChartsAll) }
+
+// ChartsApp says "App"
+// in the language the app shows under cx.
+func ChartsApp(cx *core.Scope) string { return For(cx).ChartsApp() }
+
+// ChartsApp is the package's ChartsApp in the language of msgs.
+func (msgs Messages) ChartsApp() string { return msgs.text(textChartsApp) }
+
+// ChartsWeb says "Web"
+// in the language the app shows under cx.
+func ChartsWeb(cx *core.Scope) string { return For(cx).ChartsWeb() }
+
+// ChartsWeb is the package's ChartsWeb in the language of msgs.
+func (msgs Messages) ChartsWeb() string { return msgs.text(textChartsWeb) }
+
+// ChartsVisitsToFirstTrade says "Visits to first trade"
+// in the language the app shows under cx.
+func ChartsVisitsToFirstTrade(cx *core.Scope) string { return For(cx).ChartsVisitsToFirstTrade() }
+
+// ChartsVisitsToFirstTrade is the package's ChartsVisitsToFirstTrade in the language of msgs.
+func (msgs Messages) ChartsVisitsToFirstTrade() string {
+	return msgs.text(textChartsVisitsToFirstTrade)
+}
+
+// ChartsTradersOfVisits says "{traders} traders of {visits} visits"
+// in the language the app shows under cx.
+func ChartsTradersOfVisits(cx *core.Scope, traders string, visits string) string {
+	return For(cx).ChartsTradersOfVisits(traders, visits)
+}
+
+// ChartsTradersOfVisits is the package's ChartsTradersOfVisits in the language of msgs.
+func (msgs Messages) ChartsTradersOfVisits(traders string, visits string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTradersOfVisits(traders, visits))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTradersOfVisits; f != nil {
+			return f(traders, visits)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(traders) + " traders of " + msgs.arg(visits) + " visits"
+		case "zh-Hans":
+			return visits + " 次访问中 " + traders + " 人交易"
+		}
+	}
+}
+
+// ChartsTopOfTheFunnel says "the top of the funnel"
+// in the language the app shows under cx.
+func ChartsTopOfTheFunnel(cx *core.Scope) string { return For(cx).ChartsTopOfTheFunnel() }
+
+// ChartsTopOfTheFunnel is the package's ChartsTopOfTheFunnel in the language of msgs.
+func (msgs Messages) ChartsTopOfTheFunnel() string { return msgs.text(textChartsTopOfTheFunnel) }
+
+// ChartsKeptOf says "{kept} of {stage} · {share} of visits"
+// in the language the app shows under cx.
+func ChartsKeptOf(cx *core.Scope, kept string, stage string, share string) string {
+	return For(cx).ChartsKeptOf(kept, stage, share)
+}
+
+// ChartsKeptOf is the package's ChartsKeptOf in the language of msgs.
+func (msgs Messages) ChartsKeptOf(kept string, stage string, share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsKeptOf(kept, stage, share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsKeptOf; f != nil {
+			return f(kept, stage, share)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(kept) + " of " + msgs.arg(stage) + " · " + msgs.arg(share) + " of visits"
+		case "zh-Hans":
+			return stage + "的 " + kept + " · 访问的 " + share
+		}
+	}
+}
+
+// ChartsFunnelLabel says "Conversion funnel, {channel}: {visits} visits to {trades} first trades, {share}"
+// in the language the app shows under cx.
+func ChartsFunnelLabel(cx *core.Scope, channel string, visits string, trades string, share string) string {
+	return For(cx).ChartsFunnelLabel(channel, visits, trades, share)
+}
+
+// ChartsFunnelLabel is the package's ChartsFunnelLabel in the language of msgs.
+func (msgs Messages) ChartsFunnelLabel(channel string, visits string, trades string, share string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFunnelLabel(channel, visits, trades, share))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFunnelLabel; f != nil {
+			return f(channel, visits, trades, share)
+		}
+		switch lang {
+		case "", "en":
+			return "Conversion funnel, " + msgs.arg(channel) + ": " + msgs.arg(visits) + " visits to " + msgs.arg(trades) + " first trades, " + msgs.arg(share)
+		case "zh-Hans":
+			return "转化漏斗，" + channel + "：" + visits + " 次访问，" + trades + " 次首笔交易，" + share
+		}
+	}
+}
+
+// ChartsFunnelValue says "{stage}: {reached}, {kept} of the stage before"
+// in the language the app shows under cx.
+func ChartsFunnelValue(cx *core.Scope, stage string, reached string, kept string) string {
+	return For(cx).ChartsFunnelValue(stage, reached, kept)
+}
+
+// ChartsFunnelValue is the package's ChartsFunnelValue in the language of msgs.
+func (msgs Messages) ChartsFunnelValue(stage string, reached string, kept string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFunnelValue(stage, reached, kept))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFunnelValue; f != nil {
+			return f(stage, reached, kept)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(stage) + ": " + msgs.arg(reached) + ", " + msgs.arg(kept) + " of the stage before"
+		case "zh-Hans":
+			return stage + "：" + reached + "，上一阶段的 " + kept
+		}
+	}
+}
+
+// ChartsOverall says "Overall"
+// in the language the app shows under cx.
+func ChartsOverall(cx *core.Scope) string { return For(cx).ChartsOverall() }
+
+// ChartsOverall is the package's ChartsOverall in the language of msgs.
+func (msgs Messages) ChartsOverall() string { return msgs.text(textChartsOverall) }
+
+// ChartsBiggestDrop says "Biggest drop"
+// in the language the app shows under cx.
+func ChartsBiggestDrop(cx *core.Scope) string { return For(cx).ChartsBiggestDrop() }
+
+// ChartsBiggestDrop is the package's ChartsBiggestDrop in the language of msgs.
+func (msgs Messages) ChartsBiggestDrop() string { return msgs.text(textChartsBiggestDrop) }
+
+// ChartsLostThere says "Lost there"
+// in the language the app shows under cx.
+func ChartsLostThere(cx *core.Scope) string { return For(cx).ChartsLostThere() }
+
+// ChartsLostThere is the package's ChartsLostThere in the language of msgs.
+func (msgs Messages) ChartsLostThere() string { return msgs.text(textChartsLostThere) }
+
+// ChartsChannel says "Channel"
+// in the language the app shows under cx.
+func ChartsChannel(cx *core.Scope) string { return For(cx).ChartsChannel() }
+
+// ChartsChannel is the package's ChartsChannel in the language of msgs.
+func (msgs Messages) ChartsChannel() string { return msgs.text(textChartsChannel) }
+
+// ChartsCandles says "Daily candles"
+// in the language the app shows under cx.
+func ChartsCandles(cx *core.Scope) string { return For(cx).ChartsCandles() }
+
+// ChartsCandles is the package's ChartsCandles in the language of msgs.
+func (msgs Messages) ChartsCandles() string { return msgs.text(textChartsCandles) }
+
+// ChartsCandlesNote says "Open to close over each day's range, its volume under it"
+// in the language the app shows under cx.
+func ChartsCandlesNote(cx *core.Scope) string { return For(cx).ChartsCandlesNote() }
+
+// ChartsCandlesNote is the package's ChartsCandlesNote in the language of msgs.
+func (msgs Messages) ChartsCandlesNote() string { return msgs.text(textChartsCandlesNote) }
+
+// ChartsCandlesLabel says "NSHL daily candles, {span}: {open} to {close}, {change}"
+// in the language the app shows under cx.
+func ChartsCandlesLabel(cx *core.Scope, span string, open string, close_ string, change string) string {
+	return For(cx).ChartsCandlesLabel(span, open, close_, change)
+}
+
+// ChartsCandlesLabel is the package's ChartsCandlesLabel in the language of msgs.
+func (msgs Messages) ChartsCandlesLabel(span string, open string, close_ string, change string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsCandlesLabel(span, open, close_, change))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsCandlesLabel; f != nil {
+			return f(span, open, close_, change)
+		}
+		switch lang {
+		case "", "en":
+			return "NSHL daily candles, " + msgs.arg(span) + ": " + msgs.arg(open) + " to " + msgs.arg(close_) + ", " + msgs.arg(change)
+		case "zh-Hans":
+			return "NSHL 日 K 线，" + span + "：" + open + " 至 " + close_ + "，" + change
+		}
+	}
+}
+
+// ChartsCandleValue says "{date}: open {open}, high {high}, low {low}, close {close}"
+// in the language the app shows under cx.
+func ChartsCandleValue(cx *core.Scope, date string, open string, high string, low string, close_ string) string {
+	return For(cx).ChartsCandleValue(date, open, high, low, close_)
+}
+
+// ChartsCandleValue is the package's ChartsCandleValue in the language of msgs.
+func (msgs Messages) ChartsCandleValue(date string, open string, high string, low string, close_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsCandleValue(date, open, high, low, close_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsCandleValue; f != nil {
+			return f(date, open, high, low, close_)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(date) + ": open " + msgs.arg(open) + ", high " + msgs.arg(high) + ", low " + msgs.arg(low) + ", close " + msgs.arg(close_)
+		case "zh-Hans":
+			return date + "：开盘 " + open + "，最高 " + high + "，最低 " + low + "，收盘 " + close_
+		}
+	}
+}
+
+// ChartsVolumeLabel says "NSHL volume, {span}: {volume} million a day"
+// in the language the app shows under cx.
+func ChartsVolumeLabel(cx *core.Scope, span string, volume string) string {
+	return For(cx).ChartsVolumeLabel(span, volume)
+}
+
+// ChartsVolumeLabel is the package's ChartsVolumeLabel in the language of msgs.
+func (msgs Messages) ChartsVolumeLabel(span string, volume string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVolumeLabel(span, volume))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsVolumeLabel; f != nil {
+			return f(span, volume)
+		}
+		switch lang {
+		case "", "en":
+			return "NSHL volume, " + msgs.arg(span) + ": " + msgs.arg(volume) + " million a day"
+		case "zh-Hans":
+			return "NSHL 成交量，" + span + "：每日 " + volume + " 百万"
+		}
+	}
+}
+
+// ChartsMillion says "{volume} million"
+// in the language the app shows under cx.
+func ChartsMillion(cx *core.Scope, volume string) string { return For(cx).ChartsMillion(volume) }
+
+// ChartsMillion is the package's ChartsMillion in the language of msgs.
+func (msgs Messages) ChartsMillion(volume string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMillion(volume))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMillion; f != nil {
+			return f(volume)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(volume) + " million"
+		case "zh-Hans":
+			return volume + " 百万"
+		}
+	}
+}
+
+// ChartsChange says "Change"
+// in the language the app shows under cx.
+func ChartsChange(cx *core.Scope) string { return For(cx).ChartsChange() }
+
+// ChartsChange is the package's ChartsChange in the language of msgs.
+func (msgs Messages) ChartsChange() string { return msgs.text(textChartsChange) }
+
+// ChartsUpDays says "Up days"
+// in the language the app shows under cx.
+func ChartsUpDays(cx *core.Scope) string { return For(cx).ChartsUpDays() }
+
+// ChartsUpDays is the package's ChartsUpDays in the language of msgs.
+func (msgs Messages) ChartsUpDays() string { return msgs.text(textChartsUpDays) }
+
+// ChartsVolumePrice says "Volume and price"
+// in the language the app shows under cx.
+func ChartsVolumePrice(cx *core.Scope) string { return For(cx).ChartsVolumePrice() }
+
+// ChartsVolumePrice is the package's ChartsVolumePrice in the language of msgs.
+func (msgs Messages) ChartsVolumePrice() string { return msgs.text(textChartsVolumePrice) }
+
+// ChartsVolumePriceNote says "Shares traded on the left scale, the close on the right"
+// in the language the app shows under cx.
+func ChartsVolumePriceNote(cx *core.Scope) string { return For(cx).ChartsVolumePriceNote() }
+
+// ChartsVolumePriceNote is the package's ChartsVolumePriceNote in the language of msgs.
+func (msgs Messages) ChartsVolumePriceNote() string { return msgs.text(textChartsVolumePriceNote) }
+
+// ChartsDayUnit says "day"
+// in the language the app shows under cx.
+func ChartsDayUnit(cx *core.Scope) string { return For(cx).ChartsDayUnit() }
+
+// ChartsDayUnit is the package's ChartsDayUnit in the language of msgs.
+func (msgs Messages) ChartsDayUnit() string { return msgs.text(textChartsDayUnit) }
+
+// ChartsWeekUnit says "week"
+// in the language the app shows under cx.
+func ChartsWeekUnit(cx *core.Scope) string { return For(cx).ChartsWeekUnit() }
+
+// ChartsWeekUnit is the package's ChartsWeekUnit in the language of msgs.
+func (msgs Messages) ChartsWeekUnit() string { return msgs.text(textChartsWeekUnit) }
+
+// ChartsMonthUnit says "month"
+// in the language the app shows under cx.
+func ChartsMonthUnit(cx *core.Scope) string { return For(cx).ChartsMonthUnit() }
+
+// ChartsMonthUnit is the package's ChartsMonthUnit in the language of msgs.
+func (msgs Messages) ChartsMonthUnit() string { return msgs.text(textChartsMonthUnit) }
+
+// ChartsWeekTo says "Week to {day}"
+// in the language the app shows under cx.
+func ChartsWeekTo(cx *core.Scope, day string) string { return For(cx).ChartsWeekTo(day) }
+
+// ChartsWeekTo is the package's ChartsWeekTo in the language of msgs.
+func (msgs Messages) ChartsWeekTo(day string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsWeekTo(day))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsWeekTo; f != nil {
+			return f(day)
+		}
+		switch lang {
+		case "", "en":
+			return "Week to " + msgs.arg(day)
+		case "zh-Hans":
+			return "截至 " + day + " 的一周"
+		}
+	}
+}
+
+// ChartsVolume says "Volume"
+// in the language the app shows under cx.
+func ChartsVolume(cx *core.Scope) string { return For(cx).ChartsVolume() }
+
+// ChartsVolume is the package's ChartsVolume in the language of msgs.
+func (msgs Messages) ChartsVolume() string { return msgs.text(textChartsVolume) }
+
+// ChartsClose says "Close"
+// in the language the app shows under cx.
+func ChartsClose(cx *core.Scope) string { return For(cx).ChartsClose() }
+
+// ChartsClose is the package's ChartsClose in the language of msgs.
+func (msgs Messages) ChartsClose() string { return msgs.text(textChartsClose) }
+
+// ChartsShares says "Shares"
+// in the language the app shows under cx.
+func ChartsShares(cx *core.Scope) string { return For(cx).ChartsShares() }
+
+// ChartsShares is the package's ChartsShares in the language of msgs.
+func (msgs Messages) ChartsShares() string { return msgs.text(textChartsShares) }
+
+// ChartsVolumePriceLabel says "ORBX volume and close, {span}: {change}, {shares} shares a {unit} on average"
+// in the language the app shows under cx.
+func ChartsVolumePriceLabel(cx *core.Scope, span string, change string, shares string, unit string) string {
+	return For(cx).ChartsVolumePriceLabel(span, change, shares, unit)
+}
+
+// ChartsVolumePriceLabel is the package's ChartsVolumePriceLabel in the language of msgs.
+func (msgs Messages) ChartsVolumePriceLabel(span string, change string, shares string, unit string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVolumePriceLabel(span, change, shares, unit))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsVolumePriceLabel; f != nil {
+			return f(span, change, shares, unit)
+		}
+		switch lang {
+		case "", "en":
+			return "ORBX volume and close, " + msgs.arg(span) + ": " + msgs.arg(change) + ", " + msgs.arg(shares) + " shares a " + msgs.arg(unit) + " on average"
+		case "zh-Hans":
+			return "ORBX 成交量与收盘价，" + span + "：" + change + "，平均每" + unit + " " + shares + " 股"
+		}
+	}
+}
+
+// ChartsVolumePriceValue says "{period}: close {close}, {shares} shares"
+// in the language the app shows under cx.
+func ChartsVolumePriceValue(cx *core.Scope, period string, close_ string, shares string) string {
+	return For(cx).ChartsVolumePriceValue(period, close_, shares)
+}
+
+// ChartsVolumePriceValue is the package's ChartsVolumePriceValue in the language of msgs.
+func (msgs Messages) ChartsVolumePriceValue(period string, close_ string, shares string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVolumePriceValue(period, close_, shares))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsVolumePriceValue; f != nil {
+			return f(period, close_, shares)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(period) + ": close " + msgs.arg(close_) + ", " + msgs.arg(shares) + " shares"
+		case "zh-Hans":
+			return period + "：收盘 " + close_ + "，" + shares + " 股"
+		}
+	}
+}
+
+// ChartsAvgPer says "Avg / {unit}"
+// in the language the app shows under cx.
+func ChartsAvgPer(cx *core.Scope, unit string) string { return For(cx).ChartsAvgPer(unit) }
+
+// ChartsAvgPer is the package's ChartsAvgPer in the language of msgs.
+func (msgs Messages) ChartsAvgPer(unit string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsAvgPer(unit))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsAvgPer; f != nil {
+			return f(unit)
+		}
+		switch lang {
+		case "", "en":
+			return "Avg / " + msgs.arg(unit)
+		case "zh-Hans":
+			return "平均 / " + unit
+		}
+	}
+}
+
+// ChartsMargins says "Revenue and margin"
+// in the language the app shows under cx.
+func ChartsMargins(cx *core.Scope) string { return For(cx).ChartsMargins() }
+
+// ChartsMargins is the package's ChartsMargins in the language of msgs.
+func (msgs Messages) ChartsMargins() string { return msgs.text(textChartsMargins) }
+
+// ChartsMarginsNote says "Quarterly revenue on the left, net margin on the right"
+// in the language the app shows under cx.
+func ChartsMarginsNote(cx *core.Scope) string { return For(cx).ChartsMarginsNote() }
+
+// ChartsMarginsNote is the package's ChartsMarginsNote in the language of msgs.
+func (msgs Messages) ChartsMarginsNote() string { return msgs.text(textChartsMarginsNote) }
+
+// ChartsNetMargin says "Net margin"
+// in the language the app shows under cx.
+func ChartsNetMargin(cx *core.Scope) string { return For(cx).ChartsNetMargin() }
+
+// ChartsNetMargin is the package's ChartsNetMargin in the language of msgs.
+func (msgs Messages) ChartsNetMargin() string { return msgs.text(textChartsNetMargin) }
+
+// ChartsMargin says "Margin"
+// in the language the app shows under cx.
+func ChartsMargin(cx *core.Scope) string { return For(cx).ChartsMargin() }
+
+// ChartsMargin is the package's ChartsMargin in the language of msgs.
+func (msgs Messages) ChartsMargin() string { return msgs.text(textChartsMargin) }
+
+// ChartsCloud says "Cloud"
+// in the language the app shows under cx.
+func ChartsCloud(cx *core.Scope) string { return For(cx).ChartsCloud() }
+
+// ChartsCloud is the package's ChartsCloud in the language of msgs.
+func (msgs Messages) ChartsCloud() string { return msgs.text(textChartsCloud) }
+
+// ChartsDevices says "Devices"
+// in the language the app shows under cx.
+func ChartsDevices(cx *core.Scope) string { return For(cx).ChartsDevices() }
+
+// ChartsDevices is the package's ChartsDevices in the language of msgs.
+func (msgs Messages) ChartsDevices() string { return msgs.text(textChartsDevices) }
+
+// ChartsMarginsLabel says "{segment} revenue and net margin by quarter: {revenue} over the last four, {losses} quarters at a loss"
+// in the language the app shows under cx.
+func ChartsMarginsLabel(cx *core.Scope, segment string, revenue string, losses string) string {
+	return For(cx).ChartsMarginsLabel(segment, revenue, losses)
+}
+
+// ChartsMarginsLabel is the package's ChartsMarginsLabel in the language of msgs.
+func (msgs Messages) ChartsMarginsLabel(segment string, revenue string, losses string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMarginsLabel(segment, revenue, losses))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMarginsLabel; f != nil {
+			return f(segment, revenue, losses)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(segment) + " revenue and net margin by quarter: " + msgs.arg(revenue) + " over the last four, " + msgs.arg(losses) + " quarters at a loss"
+		case "zh-Hans":
+			return segment + "按季度的营收与净利率：近四季 " + revenue + "，" + losses + " 个季度亏损"
+		}
+	}
+}
+
+// ChartsMarginsValue says "{quarter}: revenue {revenue}, net margin {margin}"
+// in the language the app shows under cx.
+func ChartsMarginsValue(cx *core.Scope, quarter string, revenue string, margin string) string {
+	return For(cx).ChartsMarginsValue(quarter, revenue, margin)
+}
+
+// ChartsMarginsValue is the package's ChartsMarginsValue in the language of msgs.
+func (msgs Messages) ChartsMarginsValue(quarter string, revenue string, margin string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMarginsValue(quarter, revenue, margin))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMarginsValue; f != nil {
+			return f(quarter, revenue, margin)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(quarter) + ": revenue " + msgs.arg(revenue) + ", net margin " + msgs.arg(margin)
+		case "zh-Hans":
+			return quarter + "：营收 " + revenue + "，净利率 " + margin
+		}
+	}
+}
+
+// ChartsLast4Q says "Last 4Q"
+// in the language the app shows under cx.
+func ChartsLast4Q(cx *core.Scope) string { return For(cx).ChartsLast4Q() }
+
+// ChartsLast4Q is the package's ChartsLast4Q in the language of msgs.
+func (msgs Messages) ChartsLast4Q() string { return msgs.text(textChartsLast4Q) }
+
+// ChartsBestMargin says "Best margin"
+// in the language the app shows under cx.
+func ChartsBestMargin(cx *core.Scope) string { return For(cx).ChartsBestMargin() }
+
+// ChartsBestMargin is the package's ChartsBestMargin in the language of msgs.
+func (msgs Messages) ChartsBestMargin() string { return msgs.text(textChartsBestMargin) }
+
+// ChartsLossQuarters says "Loss quarters"
+// in the language the app shows under cx.
+func ChartsLossQuarters(cx *core.Scope) string { return For(cx).ChartsLossQuarters() }
+
+// ChartsLossQuarters is the package's ChartsLossQuarters in the language of msgs.
+func (msgs Messages) ChartsLossQuarters() string { return msgs.text(textChartsLossQuarters) }
+
+// ChartsSegment says "Segment"
+// in the language the app shows under cx.
+func ChartsSegment(cx *core.Scope) string { return For(cx).ChartsSegment() }
+
+// ChartsSegment is the package's ChartsSegment in the language of msgs.
+func (msgs Messages) ChartsSegment() string { return msgs.text(textChartsSegment) }
+
+// ChartsRisk says "Risk vs return"
+// in the language the app shows under cx.
+func ChartsRisk(cx *core.Scope) string { return For(cx).ChartsRisk() }
+
+// ChartsRisk is the package's ChartsRisk in the language of msgs.
+func (msgs Messages) ChartsRisk() string { return msgs.text(textChartsRisk) }
+
+// ChartsRiskNote says "Volatility against return, sized by market cap"
+// in the language the app shows under cx.
+func ChartsRiskNote(cx *core.Scope) string { return For(cx).ChartsRiskNote() }
+
+// ChartsRiskNote is the package's ChartsRiskNote in the language of msgs.
+func (msgs Messages) ChartsRiskNote() string { return msgs.text(textChartsRiskNote) }
+
+// ChartsBenchmark says "Benchmark"
+// in the language the app shows under cx.
+func ChartsBenchmark(cx *core.Scope) string { return For(cx).ChartsBenchmark() }
+
+// ChartsBenchmark is the package's ChartsBenchmark in the language of msgs.
+func (msgs Messages) ChartsBenchmark() string { return msgs.text(textChartsBenchmark) }
+
+// ChartsPortfolio says "Portfolio"
+// in the language the app shows under cx.
+func ChartsPortfolio(cx *core.Scope) string { return For(cx).ChartsPortfolio() }
+
+// ChartsPortfolio is the package's ChartsPortfolio in the language of msgs.
+func (msgs Messages) ChartsPortfolio() string { return msgs.text(textChartsPortfolio) }
+
+// ChartsVolSharpe says "{vol} vol · Sharpe {sharpe}"
+// in the language the app shows under cx.
+func ChartsVolSharpe(cx *core.Scope, vol string, sharpe string) string {
+	return For(cx).ChartsVolSharpe(vol, sharpe)
+}
+
+// ChartsVolSharpe is the package's ChartsVolSharpe in the language of msgs.
+func (msgs Messages) ChartsVolSharpe(vol string, sharpe string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVolSharpe(vol, sharpe))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsVolSharpe; f != nil {
+			return f(vol, sharpe)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(vol) + " vol · Sharpe " + msgs.arg(sharpe)
+		case "zh-Hans":
+			return "波动率 " + vol + " · 夏普 " + sharpe
+		}
+	}
+}
+
+// ChartsMeanReturn says "mean annual return · {vol} mean vol"
+// in the language the app shows under cx.
+func ChartsMeanReturn(cx *core.Scope, vol string) string { return For(cx).ChartsMeanReturn(vol) }
+
+// ChartsMeanReturn is the package's ChartsMeanReturn in the language of msgs.
+func (msgs Messages) ChartsMeanReturn(vol string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMeanReturn(vol))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMeanReturn; f != nil {
+			return f(vol)
+		}
+		switch lang {
+		case "", "en":
+			return "mean annual return · " + msgs.arg(vol) + " mean vol"
+		case "zh-Hans":
+			return "平均年化收益 · 平均波动率 " + vol
+		}
+	}
+}
+
+// ChartsHoldingsWeight says "{holdings} holdings, equal weight · risk-free {rate}"
+// in the language the app shows under cx.
+func ChartsHoldingsWeight(cx *core.Scope, holdings string, rate string) string {
+	return For(cx).ChartsHoldingsWeight(holdings, rate)
+}
+
+// ChartsHoldingsWeight is the package's ChartsHoldingsWeight in the language of msgs.
+func (msgs Messages) ChartsHoldingsWeight(holdings string, rate string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsHoldingsWeight(holdings, rate))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsHoldingsWeight; f != nil {
+			return f(holdings, rate)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(holdings) + " holdings, equal weight · risk-free " + msgs.arg(rate)
+		case "zh-Hans":
+			return holdings + " 只持仓，等权 · 无风险利率 " + rate
+		}
+	}
+}
+
+// ChartsTheIndex says "The index the holdings are measured against"
+// in the language the app shows under cx.
+func ChartsTheIndex(cx *core.Scope) string { return For(cx).ChartsTheIndex() }
+
+// ChartsTheIndex is the package's ChartsTheIndex in the language of msgs.
+func (msgs Messages) ChartsTheIndex() string { return msgs.text(textChartsTheIndex) }
+
+// ChartsSectorCap says "{sector} · {cap} market cap"
+// in the language the app shows under cx.
+func ChartsSectorCap(cx *core.Scope, sector string, cap_ string) string {
+	return For(cx).ChartsSectorCap(sector, cap_)
+}
+
+// ChartsSectorCap is the package's ChartsSectorCap in the language of msgs.
+func (msgs Messages) ChartsSectorCap(sector string, cap_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsSectorCap(sector, cap_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsSectorCap; f != nil {
+			return f(sector, cap_)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(sector) + " · " + msgs.arg(cap_) + " market cap"
+		case "zh-Hans":
+			return sector + " · 市值 " + cap_
+		}
+	}
+}
+
+// ChartsReturnAnnualized says "Return, annualized"
+// in the language the app shows under cx.
+func ChartsReturnAnnualized(cx *core.Scope) string { return For(cx).ChartsReturnAnnualized() }
+
+// ChartsReturnAnnualized is the package's ChartsReturnAnnualized in the language of msgs.
+func (msgs Messages) ChartsReturnAnnualized() string { return msgs.text(textChartsReturnAnnualized) }
+
+// ChartsVolatility says "Volatility"
+// in the language the app shows under cx.
+func ChartsVolatility(cx *core.Scope) string { return For(cx).ChartsVolatility() }
+
+// ChartsVolatility is the package's ChartsVolatility in the language of msgs.
+func (msgs Messages) ChartsVolatility() string { return msgs.text(textChartsVolatility) }
+
+// ChartsRiskLabel says "Risk and return of {holdings} holdings, {period}: best Sharpe {best}, {ahead} ahead of the S&P 500"
+// in the language the app shows under cx.
+func ChartsRiskLabel(cx *core.Scope, holdings string, period string, best string, ahead string) string {
+	return For(cx).ChartsRiskLabel(holdings, period, best, ahead)
+}
+
+// ChartsRiskLabel is the package's ChartsRiskLabel in the language of msgs.
+func (msgs Messages) ChartsRiskLabel(holdings string, period string, best string, ahead string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsRiskLabel(holdings, period, best, ahead))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsRiskLabel; f != nil {
+			return f(holdings, period, best, ahead)
+		}
+		switch lang {
+		case "", "en":
+			return "Risk and return of " + msgs.arg(holdings) + " holdings, " + msgs.arg(period) + ": best Sharpe " + msgs.arg(best) + ", " + msgs.arg(ahead) + " ahead of the S&P 500"
+		case "zh-Hans":
+			return holdings + " 只持仓的风险与收益，" + period + "：夏普最高 " + best + "，" + ahead + " 只跑赢标普 500"
+		}
+	}
+}
+
+// ChartsRiskValue says "{name}: {ret} return, {vol} volatility, Sharpe {sharpe}"
+// in the language the app shows under cx.
+func ChartsRiskValue(cx *core.Scope, name string, ret string, vol string, sharpe string) string {
+	return For(cx).ChartsRiskValue(name, ret, vol, sharpe)
+}
+
+// ChartsRiskValue is the package's ChartsRiskValue in the language of msgs.
+func (msgs Messages) ChartsRiskValue(name string, ret string, vol string, sharpe string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsRiskValue(name, ret, vol, sharpe))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsRiskValue; f != nil {
+			return f(name, ret, vol, sharpe)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(name) + ": " + msgs.arg(ret) + " return, " + msgs.arg(vol) + " volatility, Sharpe " + msgs.arg(sharpe)
+		case "zh-Hans":
+			return name + "：收益 " + ret + "，波动率 " + vol + "，夏普 " + sharpe
+		}
+	}
+}
+
+// ChartsLessRisk says "Less risk, more return"
+// in the language the app shows under cx.
+func ChartsLessRisk(cx *core.Scope) string { return For(cx).ChartsLessRisk() }
+
+// ChartsLessRisk is the package's ChartsLessRisk in the language of msgs.
+func (msgs Messages) ChartsLessRisk() string { return msgs.text(textChartsLessRisk) }
+
+// ChartsMoreRisk says "More risk, less return"
+// in the language the app shows under cx.
+func ChartsMoreRisk(cx *core.Scope) string { return For(cx).ChartsMoreRisk() }
+
+// ChartsMoreRisk is the package's ChartsMoreRisk in the language of msgs.
+func (msgs Messages) ChartsMoreRisk() string { return msgs.text(textChartsMoreRisk) }
+
+// ChartsBestSharpe says "Best Sharpe"
+// in the language the app shows under cx.
+func ChartsBestSharpe(cx *core.Scope) string { return For(cx).ChartsBestSharpe() }
+
+// ChartsBestSharpe is the package's ChartsBestSharpe in the language of msgs.
+func (msgs Messages) ChartsBestSharpe() string { return msgs.text(textChartsBestSharpe) }
+
+// ChartsAhead says "Ahead"
+// in the language the app shows under cx.
+func ChartsAhead(cx *core.Scope) string { return For(cx).ChartsAhead() }
+
+// ChartsAhead is the package's ChartsAhead in the language of msgs.
+func (msgs Messages) ChartsAhead() string { return msgs.text(textChartsAhead) }
+
+// ChartsTargets says "Price targets"
+// in the language the app shows under cx.
+func ChartsTargets(cx *core.Scope) string { return For(cx).ChartsTargets() }
+
+// ChartsTargets is the package's ChartsTargets in the language of msgs.
+func (msgs Messages) ChartsTargets() string { return msgs.text(textChartsTargets) }
+
+// ChartsTargetsNote says "Analysts' one-year targets against today's price"
+// in the language the app shows under cx.
+func ChartsTargetsNote(cx *core.Scope) string { return For(cx).ChartsTargetsNote() }
+
+// ChartsTargetsNote is the package's ChartsTargetsNote in the language of msgs.
+func (msgs Messages) ChartsTargetsNote() string { return msgs.text(textChartsTargetsNote) }
+
+// ChartsSemis says "Semis"
+// in the language the app shows under cx.
+func ChartsSemis(cx *core.Scope) string { return For(cx).ChartsSemis() }
+
+// ChartsSemis is the package's ChartsSemis in the language of msgs.
+func (msgs Messages) ChartsSemis() string { return msgs.text(textChartsSemis) }
+
+// ChartsSoftware says "Software"
+// in the language the app shows under cx.
+func ChartsSoftware(cx *core.Scope) string { return For(cx).ChartsSoftware() }
+
+// ChartsSoftware is the package's ChartsSoftware in the language of msgs.
+func (msgs Messages) ChartsSoftware() string { return msgs.text(textChartsSoftware) }
+
+// ChartsBanks says "Banks"
+// in the language the app shows under cx.
+func ChartsBanks(cx *core.Scope) string { return For(cx).ChartsBanks() }
+
+// ChartsBanks is the package's ChartsBanks in the language of msgs.
+func (msgs Messages) ChartsBanks() string { return msgs.text(textChartsBanks) }
+
+// ChartsAnalysts says "{analysts} analysts"
+// in the language the app shows under cx.
+func ChartsAnalysts(cx *core.Scope, analysts string) string { return For(cx).ChartsAnalysts(analysts) }
+
+// ChartsAnalysts is the package's ChartsAnalysts in the language of msgs.
+func (msgs Messages) ChartsAnalysts(analysts string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsAnalysts(analysts))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsAnalysts; f != nil {
+			return f(analysts)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(analysts) + " analysts"
+		case "zh-Hans":
+			return analysts + " 位分析师"
+		}
+	}
+}
+
+// ChartsStocks says "{stocks} stocks"
+// in the language the app shows under cx.
+func ChartsStocks(cx *core.Scope, stocks string) string { return For(cx).ChartsStocks(stocks) }
+
+// ChartsStocks is the package's ChartsStocks in the language of msgs.
+func (msgs Messages) ChartsStocks(stocks string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsStocks(stocks))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsStocks; f != nil {
+			return f(stocks)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(stocks) + " stocks"
+		case "zh-Hans":
+			return stocks + " 只股票"
+		}
+	}
+}
+
+// ChartsFromPrice says "{upside} from {price}"
+// in the language the app shows under cx.
+func ChartsFromPrice(cx *core.Scope, upside string, price string) string {
+	return For(cx).ChartsFromPrice(upside, price)
+}
+
+// ChartsFromPrice is the package's ChartsFromPrice in the language of msgs.
+func (msgs Messages) ChartsFromPrice(upside string, price string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFromPrice(upside, price))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFromPrice; f != nil {
+			return f(upside, price)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(upside) + " from " + msgs.arg(price)
+		case "zh-Hans":
+			return "较 " + price + " " + upside
+		}
+	}
+}
+
+// ChartsMedianUpside says "median upside to the mean target"
+// in the language the app shows under cx.
+func ChartsMedianUpside(cx *core.Scope) string { return For(cx).ChartsMedianUpside() }
+
+// ChartsMedianUpside is the package's ChartsMedianUpside in the language of msgs.
+func (msgs Messages) ChartsMedianUpside() string { return msgs.text(textChartsMedianUpside) }
+
+// ChartsTargetRange says "{low} – {high} · revised {revised} in 3 months"
+// in the language the app shows under cx.
+func ChartsTargetRange(cx *core.Scope, low string, high string, revised string) string {
+	return For(cx).ChartsTargetRange(low, high, revised)
+}
+
+// ChartsTargetRange is the package's ChartsTargetRange in the language of msgs.
+func (msgs Messages) ChartsTargetRange(low string, high string, revised string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTargetRange(low, high, revised))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTargetRange; f != nil {
+			return f(low, high, revised)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(low) + " – " + msgs.arg(high) + " · revised " + msgs.arg(revised) + " in 3 months"
+		case "zh-Hans":
+			return low + " – " + high + " · 3 个月内调整 " + revised
+		}
+	}
+}
+
+// ChartsRaised says "{raised} of {stocks} raised in the last 3 months"
+// in the language the app shows under cx.
+func ChartsRaised(cx *core.Scope, raised string, stocks string) string {
+	return For(cx).ChartsRaised(raised, stocks)
+}
+
+// ChartsRaised is the package's ChartsRaised in the language of msgs.
+func (msgs Messages) ChartsRaised(raised string, stocks string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsRaised(raised, stocks))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsRaised; f != nil {
+			return f(raised, stocks)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(raised) + " of " + msgs.arg(stocks) + " raised in the last 3 months"
+		case "zh-Hans":
+			return "近 3 个月 " + stocks + " 只中 " + raised + " 只上调"
+		}
+	}
+}
+
+// ChartsMeanTarget says "Mean target"
+// in the language the app shows under cx.
+func ChartsMeanTarget(cx *core.Scope) string { return For(cx).ChartsMeanTarget() }
+
+// ChartsMeanTarget is the package's ChartsMeanTarget in the language of msgs.
+func (msgs Messages) ChartsMeanTarget() string { return msgs.text(textChartsMeanTarget) }
+
+// Charts3MonthsAgo says "3 months ago"
+// in the language the app shows under cx.
+func Charts3MonthsAgo(cx *core.Scope) string { return For(cx).Charts3MonthsAgo() }
+
+// Charts3MonthsAgo is the package's Charts3MonthsAgo in the language of msgs.
+func (msgs Messages) Charts3MonthsAgo() string { return msgs.text(textCharts3MonthsAgo) }
+
+// ChartsLowToHigh says "Low to high"
+// in the language the app shows under cx.
+func ChartsLowToHigh(cx *core.Scope) string { return For(cx).ChartsLowToHigh() }
+
+// ChartsLowToHigh is the package's ChartsLowToHigh in the language of msgs.
+func (msgs Messages) ChartsLowToHigh() string { return msgs.text(textChartsLowToHigh) }
+
+// ChartsTargetsLabel says "Analysts' price targets, {list}: a median upside of {upside}, the most for {ticker} at {most}"
+// in the language the app shows under cx.
+func ChartsTargetsLabel(cx *core.Scope, list string, upside string, ticker string, most string) string {
+	return For(cx).ChartsTargetsLabel(list, upside, ticker, most)
+}
+
+// ChartsTargetsLabel is the package's ChartsTargetsLabel in the language of msgs.
+func (msgs Messages) ChartsTargetsLabel(list string, upside string, ticker string, most string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTargetsLabel(list, upside, ticker, most))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTargetsLabel; f != nil {
+			return f(list, upside, ticker, most)
+		}
+		switch lang {
+		case "", "en":
+			return "Analysts' price targets, " + msgs.arg(list) + ": a median upside of " + msgs.arg(upside) + ", the most for " + msgs.arg(ticker) + " at " + msgs.arg(most)
+		case "zh-Hans":
+			return "分析师目标价，" + list + "：中位空间 " + upside + "，" + ticker + " 最高，为 " + most
+		}
+	}
+}
+
+// ChartsTargetsValue says "{ticker}: mean target {target}, {upside} from {price}"
+// in the language the app shows under cx.
+func ChartsTargetsValue(cx *core.Scope, ticker string, target string, upside string, price string) string {
+	return For(cx).ChartsTargetsValue(ticker, target, upside, price)
+}
+
+// ChartsTargetsValue is the package's ChartsTargetsValue in the language of msgs.
+func (msgs Messages) ChartsTargetsValue(ticker string, target string, upside string, price string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTargetsValue(ticker, target, upside, price))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTargetsValue; f != nil {
+			return f(ticker, target, upside, price)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(ticker) + ": mean target " + msgs.arg(target) + ", " + msgs.arg(upside) + " from " + msgs.arg(price)
+		case "zh-Hans":
+			return ticker + "：平均目标价 " + target + "，较 " + price + " " + upside
+		}
+	}
+}
+
+// ChartsToday says "Today"
+// in the language the app shows under cx.
+func ChartsToday(cx *core.Scope) string { return For(cx).ChartsToday() }
+
+// ChartsToday is the package's ChartsToday in the language of msgs.
+func (msgs Messages) ChartsToday() string { return msgs.text(textChartsToday) }
+
+// ChartsMostUpside says "Most upside"
+// in the language the app shows under cx.
+func ChartsMostUpside(cx *core.Scope) string { return For(cx).ChartsMostUpside() }
+
+// ChartsMostUpside is the package's ChartsMostUpside in the language of msgs.
+func (msgs Messages) ChartsMostUpside() string { return msgs.text(textChartsMostUpside) }
+
+// ChartsWidest says "Widest"
+// in the language the app shows under cx.
+func ChartsWidest(cx *core.Scope) string { return For(cx).ChartsWidest() }
+
+// ChartsWidest is the package's ChartsWidest in the language of msgs.
+func (msgs Messages) ChartsWidest() string { return msgs.text(textChartsWidest) }
+
+// ChartsRaisedFigure says "Raised"
+// in the language the app shows under cx.
+func ChartsRaisedFigure(cx *core.Scope) string { return For(cx).ChartsRaisedFigure() }
+
+// ChartsRaisedFigure is the package's ChartsRaisedFigure in the language of msgs.
+func (msgs Messages) ChartsRaisedFigure() string { return msgs.text(textChartsRaisedFigure) }
+
+// ChartsCoverage says "Coverage"
+// in the language the app shows under cx.
+func ChartsCoverage(cx *core.Scope) string { return For(cx).ChartsCoverage() }
+
+// ChartsCoverage is the package's ChartsCoverage in the language of msgs.
+func (msgs Messages) ChartsCoverage() string { return msgs.text(textChartsCoverage) }
+
+// ChartsCorrelation says "Holdings correlation"
+// in the language the app shows under cx.
+func ChartsCorrelation(cx *core.Scope) string { return For(cx).ChartsCorrelation() }
+
+// ChartsCorrelation is the package's ChartsCorrelation in the language of msgs.
+func (msgs Messages) ChartsCorrelation() string { return msgs.text(textChartsCorrelation) }
+
+// ChartsCorrelationNote says "How closely each pair of holdings moves"
+// in the language the app shows under cx.
+func ChartsCorrelationNote(cx *core.Scope) string { return For(cx).ChartsCorrelationNote() }
+
+// ChartsCorrelationNote is the package's ChartsCorrelationNote in the language of msgs.
+func (msgs Messages) ChartsCorrelationNote() string { return msgs.text(textChartsCorrelationNote) }
+
+// ChartsItself says "A holding against itself"
+// in the language the app shows under cx.
+func ChartsItself(cx *core.Scope) string { return For(cx).ChartsItself() }
+
+// ChartsItself is the package's ChartsItself in the language of msgs.
+func (msgs Messages) ChartsItself() string { return msgs.text(textChartsItself) }
+
+// ChartsMoveClosely says "Move together closely"
+// in the language the app shows under cx.
+func ChartsMoveClosely(cx *core.Scope) string { return For(cx).ChartsMoveClosely() }
+
+// ChartsMoveClosely is the package's ChartsMoveClosely in the language of msgs.
+func (msgs Messages) ChartsMoveClosely() string { return msgs.text(textChartsMoveClosely) }
+
+// ChartsMoveTogether says "Move together"
+// in the language the app shows under cx.
+func ChartsMoveTogether(cx *core.Scope) string { return For(cx).ChartsMoveTogether() }
+
+// ChartsMoveTogether is the package's ChartsMoveTogether in the language of msgs.
+func (msgs Messages) ChartsMoveTogether() string { return msgs.text(textChartsMoveTogether) }
+
+// ChartsLooselyRelated says "Loosely related"
+// in the language the app shows under cx.
+func ChartsLooselyRelated(cx *core.Scope) string { return For(cx).ChartsLooselyRelated() }
+
+// ChartsLooselyRelated is the package's ChartsLooselyRelated in the language of msgs.
+func (msgs Messages) ChartsLooselyRelated() string { return msgs.text(textChartsLooselyRelated) }
+
+// ChartsBarelyRelated says "Barely related"
+// in the language the app shows under cx.
+func ChartsBarelyRelated(cx *core.Scope) string { return For(cx).ChartsBarelyRelated() }
+
+// ChartsBarelyRelated is the package's ChartsBarelyRelated in the language of msgs.
+func (msgs Messages) ChartsBarelyRelated() string { return msgs.text(textChartsBarelyRelated) }
+
+// ChartsMoveApart says "Move apart: a hedge"
+// in the language the app shows under cx.
+func ChartsMoveApart(cx *core.Scope) string { return For(cx).ChartsMoveApart() }
+
+// ChartsMoveApart is the package's ChartsMoveApart in the language of msgs.
+func (msgs Messages) ChartsMoveApart() string { return msgs.text(textChartsMoveApart) }
+
+// ChartsHoldings says "{holdings} holdings"
+// in the language the app shows under cx.
+func ChartsHoldings(cx *core.Scope, holdings string) string { return For(cx).ChartsHoldings(holdings) }
+
+// ChartsHoldings is the package's ChartsHoldings in the language of msgs.
+func (msgs Messages) ChartsHoldings(holdings string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsHoldings(holdings))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsHoldings; f != nil {
+			return f(holdings)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(holdings) + " holdings"
+		case "zh-Hans":
+			return holdings + " 只持仓"
+		}
+	}
+}
+
+// ChartsMeanOfPairs says "mean of the {pairs} pairs"
+// in the language the app shows under cx.
+func ChartsMeanOfPairs(cx *core.Scope, pairs string) string { return For(cx).ChartsMeanOfPairs(pairs) }
+
+// ChartsMeanOfPairs is the package's ChartsMeanOfPairs in the language of msgs.
+func (msgs Messages) ChartsMeanOfPairs(pairs string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMeanOfPairs(pairs))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMeanOfPairs; f != nil {
+			return f(pairs)
+		}
+		switch lang {
+		case "", "en":
+			return "mean of the " + msgs.arg(pairs) + " pairs"
+		case "zh-Hans":
+			return pairs + " 对的平均值"
+		}
+	}
+}
+
+// ChartsTheLower says "The lower, the more each holding diversifies the rest"
+// in the language the app shows under cx.
+func ChartsTheLower(cx *core.Scope) string { return For(cx).ChartsTheLower() }
+
+// ChartsTheLower is the package's ChartsTheLower in the language of msgs.
+func (msgs Messages) ChartsTheLower() string { return msgs.text(textChartsTheLower) }
+
+// ChartsDailyOverAYear says "Daily returns over a year"
+// in the language the app shows under cx.
+func ChartsDailyOverAYear(cx *core.Scope) string { return For(cx).ChartsDailyOverAYear() }
+
+// ChartsDailyOverAYear is the package's ChartsDailyOverAYear in the language of msgs.
+func (msgs Messages) ChartsDailyOverAYear() string { return msgs.text(textChartsDailyOverAYear) }
+
+// ChartsDailyOverThreeYears says "Daily returns over three years"
+// in the language the app shows under cx.
+func ChartsDailyOverThreeYears(cx *core.Scope) string { return For(cx).ChartsDailyOverThreeYears() }
+
+// ChartsDailyOverThreeYears is the package's ChartsDailyOverThreeYears in the language of msgs.
+func (msgs Messages) ChartsDailyOverThreeYears() string {
+	return msgs.text(textChartsDailyOverThreeYears)
+}
+
+// ChartsCorrelationLabel says "Correlation of {holdings} holdings over {lookback}: closest {a} and {b} at {r}, best hedge {hedgeA} and {hedgeB} at {hedge}"
+// in the language the app shows under cx.
+func ChartsCorrelationLabel(cx *core.Scope, holdings string, lookback string, a string, b_ string, r string, hedgeA string, hedgeB string, hedge string) string {
+	return For(cx).ChartsCorrelationLabel(holdings, lookback, a, b_, r, hedgeA, hedgeB, hedge)
+}
+
+// ChartsCorrelationLabel is the package's ChartsCorrelationLabel in the language of msgs.
+func (msgs Messages) ChartsCorrelationLabel(holdings string, lookback string, a string, b_ string, r string, hedgeA string, hedgeB string, hedge string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsCorrelationLabel(holdings, lookback, a, b_, r, hedgeA, hedgeB, hedge))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsCorrelationLabel; f != nil {
+			return f(holdings, lookback, a, b_, r, hedgeA, hedgeB, hedge)
+		}
+		switch lang {
+		case "", "en":
+			return "Correlation of " + msgs.arg(holdings) + " holdings over " + msgs.arg(lookback) + ": closest " + msgs.arg(a) + " and " + msgs.arg(b_) + " at " + msgs.arg(r) + ", best hedge " + msgs.arg(hedgeA) + " and " + msgs.arg(hedgeB) + " at " + msgs.arg(hedge)
+		case "zh-Hans":
+			return holdings + " 只持仓在 " + lookback + " 内的相关性：最接近为 " + a + " 与 " + b_ + "，" + r + "；最佳对冲为 " + hedgeA + " 与 " + hedgeB + "，" + hedge
+		}
+	}
+}
+
+// ChartsPairValue says "{a} and {b}: {r}"
+// in the language the app shows under cx.
+func ChartsPairValue(cx *core.Scope, a string, b_ string, r string) string {
+	return For(cx).ChartsPairValue(a, b_, r)
+}
+
+// ChartsPairValue is the package's ChartsPairValue in the language of msgs.
+func (msgs Messages) ChartsPairValue(a string, b_ string, r string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsPairValue(a, b_, r))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsPairValue; f != nil {
+			return f(a, b_, r)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(a) + " and " + msgs.arg(b_) + ": " + msgs.arg(r)
+		case "zh-Hans":
+			return a + " 与 " + b_ + "：" + r
+		}
+	}
+}
+
+// ChartsClosest says "Closest"
+// in the language the app shows under cx.
+func ChartsClosest(cx *core.Scope) string { return For(cx).ChartsClosest() }
+
+// ChartsClosest is the package's ChartsClosest in the language of msgs.
+func (msgs Messages) ChartsClosest() string { return msgs.text(textChartsClosest) }
+
+// ChartsBestHedge says "Best hedge"
+// in the language the app shows under cx.
+func ChartsBestHedge(cx *core.Scope) string { return For(cx).ChartsBestHedge() }
+
+// ChartsBestHedge is the package's ChartsBestHedge in the language of msgs.
+func (msgs Messages) ChartsBestHedge() string { return msgs.text(textChartsBestHedge) }
+
+// ChartsMean says "Mean"
+// in the language the app shows under cx.
+func ChartsMean(cx *core.Scope) string { return For(cx).ChartsMean() }
+
+// ChartsMean is the package's ChartsMean in the language of msgs.
+func (msgs Messages) ChartsMean() string { return msgs.text(textChartsMean) }
+
+// ChartsLookback says "Lookback"
+// in the language the app shows under cx.
+func ChartsLookback(cx *core.Scope) string { return For(cx).ChartsLookback() }
+
+// ChartsLookback is the package's ChartsLookback in the language of msgs.
+func (msgs Messages) ChartsLookback() string { return msgs.text(textChartsLookback) }
+
+// Charts1Year says "1 year"
+// in the language the app shows under cx.
+func Charts1Year(cx *core.Scope) string { return For(cx).Charts1Year() }
+
+// Charts1Year is the package's Charts1Year in the language of msgs.
+func (msgs Messages) Charts1Year() string { return msgs.text(textCharts1Year) }
+
+// Charts3Years says "3 years"
+// in the language the app shows under cx.
+func Charts3Years(cx *core.Scope) string { return For(cx).Charts3Years() }
+
+// Charts3Years is the package's Charts3Years in the language of msgs.
+func (msgs Messages) Charts3Years() string { return msgs.text(textCharts3Years) }
+
+// ChartsSeasonality says "Monthly returns"
+// in the language the app shows under cx.
+func ChartsSeasonality(cx *core.Scope) string { return For(cx).ChartsSeasonality() }
+
+// ChartsSeasonality is the package's ChartsSeasonality in the language of msgs.
+func (msgs Messages) ChartsSeasonality() string { return msgs.text(textChartsSeasonality) }
+
+// ChartsSeasonalityNote says "Every month since 2020, red for a loss"
+// in the language the app shows under cx.
+func ChartsSeasonalityNote(cx *core.Scope) string { return For(cx).ChartsSeasonalityNote() }
+
+// ChartsSeasonalityNote is the package's ChartsSeasonalityNote in the language of msgs.
+func (msgs Messages) ChartsSeasonalityNote() string { return msgs.text(textChartsSeasonalityNote) }
+
+// ChartsTotalReturn says "total return, months compounded"
+// in the language the app shows under cx.
+func ChartsTotalReturn(cx *core.Scope) string { return For(cx).ChartsTotalReturn() }
+
+// ChartsTotalReturn is the package's ChartsTotalReturn in the language of msgs.
+func (msgs Messages) ChartsTotalReturn() string { return msgs.text(textChartsTotalReturn) }
+
+// ChartsSeasonalityLabel says "{symbol} monthly returns since 2020: best {best} at {bestReturn}, worst {worst} at {worstReturn}"
+// in the language the app shows under cx.
+func ChartsSeasonalityLabel(cx *core.Scope, symbol string, best string, bestReturn string, worst string, worstReturn string) string {
+	return For(cx).ChartsSeasonalityLabel(symbol, best, bestReturn, worst, worstReturn)
+}
+
+// ChartsSeasonalityLabel is the package's ChartsSeasonalityLabel in the language of msgs.
+func (msgs Messages) ChartsSeasonalityLabel(symbol string, best string, bestReturn string, worst string, worstReturn string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsSeasonalityLabel(symbol, best, bestReturn, worst, worstReturn))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsSeasonalityLabel; f != nil {
+			return f(symbol, best, bestReturn, worst, worstReturn)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(symbol) + " monthly returns since 2020: best " + msgs.arg(best) + " at " + msgs.arg(bestReturn) + ", worst " + msgs.arg(worst) + " at " + msgs.arg(worstReturn)
+		case "zh-Hans":
+			return symbol + " 2020 年以来的月度收益：最佳 " + best + "，" + bestReturn + "；最差 " + worst + "，" + worstReturn
+		}
+	}
+}
+
+// ChartsBestMonth says "Best month"
+// in the language the app shows under cx.
+func ChartsBestMonth(cx *core.Scope) string { return For(cx).ChartsBestMonth() }
+
+// ChartsBestMonth is the package's ChartsBestMonth in the language of msgs.
+func (msgs Messages) ChartsBestMonth() string { return msgs.text(textChartsBestMonth) }
+
+// ChartsWorstMonth says "Worst month"
+// in the language the app shows under cx.
+func ChartsWorstMonth(cx *core.Scope) string { return For(cx).ChartsWorstMonth() }
+
+// ChartsWorstMonth is the package's ChartsWorstMonth in the language of msgs.
+func (msgs Messages) ChartsWorstMonth() string { return msgs.text(textChartsWorstMonth) }
+
+// ChartsUpMonths says "Up months"
+// in the language the app shows under cx.
+func ChartsUpMonths(cx *core.Scope) string { return For(cx).ChartsUpMonths() }
+
+// ChartsUpMonths is the package's ChartsUpMonths in the language of msgs.
+func (msgs Messages) ChartsUpMonths() string { return msgs.text(textChartsUpMonths) }
+
+// ChartsSymbol says "Symbol"
+// in the language the app shows under cx.
+func ChartsSymbol(cx *core.Scope) string { return For(cx).ChartsSymbol() }
+
+// ChartsSymbol is the package's ChartsSymbol in the language of msgs.
+func (msgs Messages) ChartsSymbol() string { return msgs.text(textChartsSymbol) }
+
+// ChartsActivity says "Trading activity"
+// in the language the app shows under cx.
+func ChartsActivity(cx *core.Scope) string { return For(cx).ChartsActivity() }
+
+// ChartsActivity is the package's ChartsActivity in the language of msgs.
+func (msgs Messages) ChartsActivity() string { return msgs.text(textChartsActivity) }
+
+// ChartsActivityNote says "Trades every half hour of a week"
+// in the language the app shows under cx.
+func ChartsActivityNote(cx *core.Scope) string { return For(cx).ChartsActivityNote() }
+
+// ChartsActivityNote is the package's ChartsActivityNote in the language of msgs.
+func (msgs Messages) ChartsActivityNote() string { return msgs.text(textChartsActivityNote) }
+
+// ChartsTradesPerHalfHour says "Trades per half hour"
+// in the language the app shows under cx.
+func ChartsTradesPerHalfHour(cx *core.Scope) string { return For(cx).ChartsTradesPerHalfHour() }
+
+// ChartsTradesPerHalfHour is the package's ChartsTradesPerHalfHour in the language of msgs.
+func (msgs Messages) ChartsTradesPerHalfHour() string { return msgs.text(textChartsTradesPerHalfHour) }
+
+// ChartsTradesOfDay says "trades · {share} of {day}'s"
+// in the language the app shows under cx.
+func ChartsTradesOfDay(cx *core.Scope, share string, day string) string {
+	return For(cx).ChartsTradesOfDay(share, day)
+}
+
+// ChartsTradesOfDay is the package's ChartsTradesOfDay in the language of msgs.
+func (msgs Messages) ChartsTradesOfDay(share string, day string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTradesOfDay(share, day))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTradesOfDay; f != nil {
+			return f(share, day)
+		}
+		switch lang {
+		case "", "en":
+			return "trades · " + msgs.arg(share) + " of " + msgs.arg(day) + "'s"
+		case "zh-Hans":
+			return "笔 · 占" + day + "的 " + share
+		}
+	}
+}
+
+// ChartsTradesADay says "trades a day"
+// in the language the app shows under cx.
+func ChartsTradesADay(cx *core.Scope) string { return For(cx).ChartsTradesADay() }
+
+// ChartsTradesADay is the package's ChartsTradesADay in the language of msgs.
+func (msgs Messages) ChartsTradesADay() string { return msgs.text(textChartsTradesADay) }
+
+// ChartsHoursHK says "9:30 to 16:00, closed 12:00 to 13:00 for lunch"
+// in the language the app shows under cx.
+func ChartsHoursHK(cx *core.Scope) string { return For(cx).ChartsHoursHK() }
+
+// ChartsHoursHK is the package's ChartsHoursHK in the language of msgs.
+func (msgs Messages) ChartsHoursHK() string { return msgs.text(textChartsHoursHK) }
+
+// ChartsHoursUS says "9:30 to 16:00, one session"
+// in the language the app shows under cx.
+func ChartsHoursUS(cx *core.Scope) string { return For(cx).ChartsHoursUS() }
+
+// ChartsHoursUS is the package's ChartsHoursUS in the language of msgs.
+func (msgs Messages) ChartsHoursUS() string { return msgs.text(textChartsHoursUS) }
+
+// ChartsQuietest says "{trades} quietest"
+// in the language the app shows under cx.
+func ChartsQuietest(cx *core.Scope, trades string) string { return For(cx).ChartsQuietest(trades) }
+
+// ChartsQuietest is the package's ChartsQuietest in the language of msgs.
+func (msgs Messages) ChartsQuietest(trades string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsQuietest(trades))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsQuietest; f != nil {
+			return f(trades)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(trades) + " quietest"
+		case "zh-Hans":
+			return "最清淡 " + trades
+		}
+	}
+}
+
+// ChartsBusiest says "{trades} busiest"
+// in the language the app shows under cx.
+func ChartsBusiest(cx *core.Scope, trades string) string { return For(cx).ChartsBusiest(trades) }
+
+// ChartsBusiest is the package's ChartsBusiest in the language of msgs.
+func (msgs Messages) ChartsBusiest(trades string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsBusiest(trades))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsBusiest; f != nil {
+			return f(trades)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(trades) + " busiest"
+		case "zh-Hans":
+			return "最繁忙 " + trades
+		}
+	}
+}
+
+// ChartsActivityLabel says "Trades per half hour in {market}: busiest {day} at {slot} with {trades}, quietest {quietDay} at {quietSlot}"
+// in the language the app shows under cx.
+func ChartsActivityLabel(cx *core.Scope, market string, day string, slot string, trades string, quietDay string, quietSlot string) string {
+	return For(cx).ChartsActivityLabel(market, day, slot, trades, quietDay, quietSlot)
+}
+
+// ChartsActivityLabel is the package's ChartsActivityLabel in the language of msgs.
+func (msgs Messages) ChartsActivityLabel(market string, day string, slot string, trades string, quietDay string, quietSlot string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsActivityLabel(market, day, slot, trades, quietDay, quietSlot))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsActivityLabel; f != nil {
+			return f(market, day, slot, trades, quietDay, quietSlot)
+		}
+		switch lang {
+		case "", "en":
+			return "Trades per half hour in " + msgs.arg(market) + ": busiest " + msgs.arg(day) + " at " + msgs.arg(slot) + " with " + msgs.arg(trades) + ", quietest " + msgs.arg(quietDay) + " at " + msgs.arg(quietSlot)
+		case "zh-Hans":
+			return market + " 每半小时成交：最繁忙为" + day + " " + slot + "，" + trades + "；最清淡为" + quietDay + " " + quietSlot
+		}
+	}
+}
+
+// ChartsActivityValue says "{day} {slot}: {trades} trades"
+// in the language the app shows under cx.
+func ChartsActivityValue(cx *core.Scope, day string, slot string, trades string) string {
+	return For(cx).ChartsActivityValue(day, slot, trades)
+}
+
+// ChartsActivityValue is the package's ChartsActivityValue in the language of msgs.
+func (msgs Messages) ChartsActivityValue(day string, slot string, trades string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsActivityValue(day, slot, trades))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsActivityValue; f != nil {
+			return f(day, slot, trades)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(day) + " " + msgs.arg(slot) + ": " + msgs.arg(trades) + " trades"
+		case "zh-Hans":
+			return day + " " + slot + "：" + trades + " 笔"
+		}
+	}
+}
+
+// ChartsBusiestFigure says "Busiest"
+// in the language the app shows under cx.
+func ChartsBusiestFigure(cx *core.Scope) string { return For(cx).ChartsBusiestFigure() }
+
+// ChartsBusiestFigure is the package's ChartsBusiestFigure in the language of msgs.
+func (msgs Messages) ChartsBusiestFigure() string { return msgs.text(textChartsBusiestFigure) }
+
+// ChartsQuietestFigure says "Quietest"
+// in the language the app shows under cx.
+func ChartsQuietestFigure(cx *core.Scope) string { return For(cx).ChartsQuietestFigure() }
+
+// ChartsQuietestFigure is the package's ChartsQuietestFigure in the language of msgs.
+func (msgs Messages) ChartsQuietestFigure() string { return msgs.text(textChartsQuietestFigure) }
+
+// ChartsOpenVs says "Open vs 13:30"
+// in the language the app shows under cx.
+func ChartsOpenVs(cx *core.Scope) string { return For(cx).ChartsOpenVs() }
+
+// ChartsOpenVs is the package's ChartsOpenVs in the language of msgs.
+func (msgs Messages) ChartsOpenVs() string { return msgs.text(textChartsOpenVs) }
+
+// ChartsMarket says "Market"
+// in the language the app shows under cx.
+func ChartsMarket(cx *core.Scope) string { return For(cx).ChartsMarket() }
+
+// ChartsMarket is the package's ChartsMarket in the language of msgs.
+func (msgs Messages) ChartsMarket() string { return msgs.text(textChartsMarket) }
+
+// ChartsFactors says "Factor exposure"
+// in the language the app shows under cx.
+func ChartsFactors(cx *core.Scope) string { return For(cx).ChartsFactors() }
+
+// ChartsFactors is the package's ChartsFactors in the language of msgs.
+func (msgs Messages) ChartsFactors() string { return msgs.text(textChartsFactors) }
+
+// ChartsFactorsNote says "A portfolio against its benchmark on six factors"
+// in the language the app shows under cx.
+func ChartsFactorsNote(cx *core.Scope) string { return For(cx).ChartsFactorsNote() }
+
+// ChartsFactorsNote is the package's ChartsFactorsNote in the language of msgs.
+func (msgs Messages) ChartsFactorsNote() string { return msgs.text(textChartsFactorsNote) }
+
+// ChartsPeers says "Peers"
+// in the language the app shows under cx.
+func ChartsPeers(cx *core.Scope) string { return For(cx).ChartsPeers() }
+
+// ChartsPeers is the package's ChartsPeers in the language of msgs.
+func (msgs Messages) ChartsPeers() string { return msgs.text(textChartsPeers) }
+
+// ChartsIndex says "Index"
+// in the language the app shows under cx.
+func ChartsIndex(cx *core.Scope) string { return For(cx).ChartsIndex() }
+
+// ChartsIndex is the package's ChartsIndex in the language of msgs.
+func (msgs Messages) ChartsIndex() string { return msgs.text(textChartsIndex) }
+
+// ChartsFactorsLabel says "Factor exposure against the {benchmark}, leaning most on {factor} at {score}"
+// in the language the app shows under cx.
+func ChartsFactorsLabel(cx *core.Scope, benchmark string, factor string, score string) string {
+	return For(cx).ChartsFactorsLabel(benchmark, factor, score)
+}
+
+// ChartsFactorsLabel is the package's ChartsFactorsLabel in the language of msgs.
+func (msgs Messages) ChartsFactorsLabel(benchmark string, factor string, score string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFactorsLabel(benchmark, factor, score))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFactorsLabel; f != nil {
+			return f(benchmark, factor, score)
+		}
+		switch lang {
+		case "", "en":
+			return "Factor exposure against the " + msgs.arg(benchmark) + ", leaning most on " + msgs.arg(factor) + " at " + msgs.arg(score)
+		case "zh-Hans":
+			return "对比" + benchmark + "的因子暴露，最偏重 " + factor + "，为 " + score
+		}
+	}
+}
+
+// ChartsAllSixFactors says "All six factors"
+// in the language the app shows under cx.
+func ChartsAllSixFactors(cx *core.Scope) string { return For(cx).ChartsAllSixFactors() }
+
+// ChartsAllSixFactors is the package's ChartsAllSixFactors in the language of msgs.
+func (msgs Messages) ChartsAllSixFactors() string { return msgs.text(textChartsAllSixFactors) }
+
+// ChartsScore says "score"
+// in the language the app shows under cx.
+func ChartsScore(cx *core.Scope) string { return For(cx).ChartsScore() }
+
+// ChartsScore is the package's ChartsScore in the language of msgs.
+func (msgs Messages) ChartsScore() string { return msgs.text(textChartsScore) }
+
+// ChartsMeanScore says "mean score"
+// in the language the app shows under cx.
+func ChartsMeanScore(cx *core.Scope) string { return For(cx).ChartsMeanScore() }
+
+// ChartsMeanScore is the package's ChartsMeanScore in the language of msgs.
+func (msgs Messages) ChartsMeanScore() string { return msgs.text(textChartsMeanScore) }
+
+// ChartsSpread says "Spread"
+// in the language the app shows under cx.
+func ChartsSpread(cx *core.Scope) string { return For(cx).ChartsSpread() }
+
+// ChartsSpread is the package's ChartsSpread in the language of msgs.
+func (msgs Messages) ChartsSpread() string { return msgs.text(textChartsSpread) }
+
+// ChartsLead says "Lead"
+// in the language the app shows under cx.
+func ChartsLead(cx *core.Scope) string { return For(cx).ChartsLead() }
+
+// ChartsLead is the package's ChartsLead in the language of msgs.
+func (msgs Messages) ChartsLead() string { return msgs.text(textChartsLead) }
+
+// ChartsVsIndex says "vs Index"
+// in the language the app shows under cx.
+func ChartsVsIndex(cx *core.Scope) string { return For(cx).ChartsVsIndex() }
+
+// ChartsVsIndex is the package's ChartsVsIndex in the language of msgs.
+func (msgs Messages) ChartsVsIndex() string { return msgs.text(textChartsVsIndex) }
+
+// ChartsVsPeers says "vs Peers"
+// in the language the app shows under cx.
+func ChartsVsPeers(cx *core.Scope) string { return For(cx).ChartsVsPeers() }
+
+// ChartsVsPeers is the package's ChartsVsPeers in the language of msgs.
+func (msgs Messages) ChartsVsPeers() string { return msgs.text(textChartsVsPeers) }
+
+// ChartsFlows says "Flows"
+// in the language the app shows under cx.
+func ChartsFlows(cx *core.Scope) string { return For(cx).ChartsFlows() }
+
+// ChartsFlows is the package's ChartsFlows in the language of msgs.
+func (msgs Messages) ChartsFlows() string { return msgs.text(textChartsFlows) }
+
+// ChartsFlowsNote says "A quarter's revenue from its segments to net income"
+// in the language the app shows under cx.
+func ChartsFlowsNote(cx *core.Scope) string { return For(cx).ChartsFlowsNote() }
+
+// ChartsFlowsNote is the package's ChartsFlowsNote in the language of msgs.
+func (msgs Messages) ChartsFlowsNote() string { return msgs.text(textChartsFlowsNote) }
+
+// ChartsOfQuarterRevenue says "{share} of {quarter} revenue"
+// in the language the app shows under cx.
+func ChartsOfQuarterRevenue(cx *core.Scope, share string, quarter string) string {
+	return For(cx).ChartsOfQuarterRevenue(share, quarter)
+}
+
+// ChartsOfQuarterRevenue is the package's ChartsOfQuarterRevenue in the language of msgs.
+func (msgs Messages) ChartsOfQuarterRevenue(share string, quarter string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsOfQuarterRevenue(share, quarter))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsOfQuarterRevenue; f != nil {
+			return f(share, quarter)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(share) + " of " + msgs.arg(quarter) + " revenue"
+		case "zh-Hans":
+			return "占 " + quarter + " 营收 " + share
+		}
+	}
+}
+
+// ChartsFlowsLabel says "Income flows, {quarter}: {revenue} revenue, {net} net income, a net margin of {margin}"
+// in the language the app shows under cx.
+func ChartsFlowsLabel(cx *core.Scope, quarter string, revenue string, net string, margin string) string {
+	return For(cx).ChartsFlowsLabel(quarter, revenue, net, margin)
+}
+
+// ChartsFlowsLabel is the package's ChartsFlowsLabel in the language of msgs.
+func (msgs Messages) ChartsFlowsLabel(quarter string, revenue string, net string, margin string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsFlowsLabel(quarter, revenue, net, margin))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsFlowsLabel; f != nil {
+			return f(quarter, revenue, net, margin)
+		}
+		switch lang {
+		case "", "en":
+			return "Income flows, " + msgs.arg(quarter) + ": " + msgs.arg(revenue) + " revenue, " + msgs.arg(net) + " net income, a net margin of " + msgs.arg(margin)
+		case "zh-Hans":
+			return "收入流向，" + quarter + "：营收 " + revenue + "，净利润 " + net + "，净利率 " + margin
+		}
+	}
+}
+
+// ChartsGrossMargin says "Gross margin"
+// in the language the app shows under cx.
+func ChartsGrossMargin(cx *core.Scope) string { return For(cx).ChartsGrossMargin() }
+
+// ChartsGrossMargin is the package's ChartsGrossMargin in the language of msgs.
+func (msgs Messages) ChartsGrossMargin() string { return msgs.text(textChartsGrossMargin) }
+
+// ChartsMarketMap says "Market map"
+// in the language the app shows under cx.
+func ChartsMarketMap(cx *core.Scope) string { return For(cx).ChartsMarketMap() }
+
+// ChartsMarketMap is the package's ChartsMarketMap in the language of msgs.
+func (msgs Messages) ChartsMarketMap() string { return msgs.text(textChartsMarketMap) }
+
+// ChartsMarketMapNote says "The largest stocks by sector, sized by market cap"
+// in the language the app shows under cx.
+func ChartsMarketMapNote(cx *core.Scope) string { return For(cx).ChartsMarketMapNote() }
+
+// ChartsMarketMapNote is the package's ChartsMarketMapNote in the language of msgs.
+func (msgs Messages) ChartsMarketMapNote() string { return msgs.text(textChartsMarketMapNote) }
+
+// ChartsTop says "Top {stocks}"
+// in the language the app shows under cx.
+func ChartsTop(cx *core.Scope, stocks string) string { return For(cx).ChartsTop(stocks) }
+
+// ChartsTop is the package's ChartsTop in the language of msgs.
+func (msgs Messages) ChartsTop(stocks string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsTop(stocks))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsTop; f != nil {
+			return f(stocks)
+		}
+		switch lang {
+		case "", "en":
+			return "Top " + msgs.arg(stocks)
+		case "zh-Hans":
+			return "前 " + stocks
+		}
+	}
+}
+
+// ChartsAdvancing says "{up} up, {down} down · {cap} in all"
+// in the language the app shows under cx.
+func ChartsAdvancing(cx *core.Scope, up string, down string, cap_ string) string {
+	return For(cx).ChartsAdvancing(up, down, cap_)
+}
+
+// ChartsAdvancing is the package's ChartsAdvancing in the language of msgs.
+func (msgs Messages) ChartsAdvancing(up string, down string, cap_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsAdvancing(up, down, cap_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsAdvancing; f != nil {
+			return f(up, down, cap_)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(up) + " up, " + msgs.arg(down) + " down · " + msgs.arg(cap_) + " in all"
+		case "zh-Hans":
+			return up + " 涨，" + down + " 跌 · 共 " + cap_
+		}
+	}
+}
+
+// ChartsCapWeighted says "{cap} market cap · cap-weighted"
+// in the language the app shows under cx.
+func ChartsCapWeighted(cx *core.Scope, cap_ string) string { return For(cx).ChartsCapWeighted(cap_) }
+
+// ChartsCapWeighted is the package's ChartsCapWeighted in the language of msgs.
+func (msgs Messages) ChartsCapWeighted(cap_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsCapWeighted(cap_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsCapWeighted; f != nil {
+			return f(cap_)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(cap_) + " market cap · cap-weighted"
+		case "zh-Hans":
+			return "市值 " + cap_ + " · 市值加权"
+		}
+	}
+}
+
+// ChartsMarketMapLabel says "Market map of {stocks} stocks in {sectors} sectors, {period}: {up} up"
+// in the language the app shows under cx.
+func ChartsMarketMapLabel(cx *core.Scope, stocks string, sectors string, period string, up string) string {
+	return For(cx).ChartsMarketMapLabel(stocks, sectors, period, up)
+}
+
+// ChartsMarketMapLabel is the package's ChartsMarketMapLabel in the language of msgs.
+func (msgs Messages) ChartsMarketMapLabel(stocks string, sectors string, period string, up string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsMarketMapLabel(stocks, sectors, period, up))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsMarketMapLabel; f != nil {
+			return f(stocks, sectors, period, up)
+		}
+		switch lang {
+		case "", "en":
+			return "Market map of " + msgs.arg(stocks) + " stocks in " + msgs.arg(sectors) + " sectors, " + msgs.arg(period) + ": " + msgs.arg(up) + " up"
+		case "zh-Hans":
+			return sectors + " 个板块 " + stocks + " 只股票的市场地图，" + period + "：" + up + " 只上涨"
+		}
+	}
+}
+
+// ChartsDayPeriod says "Day"
+// in the language the app shows under cx.
+func ChartsDayPeriod(cx *core.Scope) string { return For(cx).ChartsDayPeriod() }
+
+// ChartsDayPeriod is the package's ChartsDayPeriod in the language of msgs.
+func (msgs Messages) ChartsDayPeriod() string { return msgs.text(textChartsDayPeriod) }
+
+// ChartsWeekPeriod says "Week"
+// in the language the app shows under cx.
+func ChartsWeekPeriod(cx *core.Scope) string { return For(cx).ChartsWeekPeriod() }
+
+// ChartsWeekPeriod is the package's ChartsWeekPeriod in the language of msgs.
+func (msgs Messages) ChartsWeekPeriod() string { return msgs.text(textChartsWeekPeriod) }
+
+// ChartsMonthPeriod says "Month"
+// in the language the app shows under cx.
+func ChartsMonthPeriod(cx *core.Scope) string { return For(cx).ChartsMonthPeriod() }
+
+// ChartsMonthPeriod is the package's ChartsMonthPeriod in the language of msgs.
+func (msgs Messages) ChartsMonthPeriod() string { return msgs.text(textChartsMonthPeriod) }
+
+// ChartsAllocation says "Allocation"
+// in the language the app shows under cx.
+func ChartsAllocation(cx *core.Scope) string { return For(cx).ChartsAllocation() }
+
+// ChartsAllocation is the package's ChartsAllocation in the language of msgs.
+func (msgs Messages) ChartsAllocation() string { return msgs.text(textChartsAllocation) }
+
+// ChartsAllocationNote says "Asset classes and their positions, by value"
+// in the language the app shows under cx.
+func ChartsAllocationNote(cx *core.Scope) string { return For(cx).ChartsAllocationNote() }
+
+// ChartsAllocationNote is the package's ChartsAllocationNote in the language of msgs.
+func (msgs Messages) ChartsAllocationNote() string { return msgs.text(textChartsAllocationNote) }
+
+// ChartsPositions says "{positions} positions"
+// in the language the app shows under cx.
+func ChartsPositions(cx *core.Scope, positions string) string {
+	return For(cx).ChartsPositions(positions)
+}
+
+// ChartsPositions is the package's ChartsPositions in the language of msgs.
+func (msgs Messages) ChartsPositions(positions string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsPositions(positions))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsPositions; f != nil {
+			return f(positions)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(positions) + " positions"
+		case "zh-Hans":
+			return positions + " 个持仓"
+		}
+	}
+}
+
+// ChartsOfThePortfolio says "{value} · {weight} of the portfolio"
+// in the language the app shows under cx.
+func ChartsOfThePortfolio(cx *core.Scope, value string, weight string) string {
+	return For(cx).ChartsOfThePortfolio(value, weight)
+}
+
+// ChartsOfThePortfolio is the package's ChartsOfThePortfolio in the language of msgs.
+func (msgs Messages) ChartsOfThePortfolio(value string, weight string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsOfThePortfolio(value, weight))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsOfThePortfolio; f != nil {
+			return f(value, weight)
+		}
+		switch lang {
+		case "", "en":
+			return msgs.arg(value) + " · " + msgs.arg(weight) + " of the portfolio"
+		case "zh-Hans":
+			return value + " · 占组合 " + weight
+		}
+	}
+}
+
+// ChartsAllocationLabel says "Allocation of {total} across {classes} asset classes"
+// in the language the app shows under cx.
+func ChartsAllocationLabel(cx *core.Scope, total string, classes string) string {
+	return For(cx).ChartsAllocationLabel(total, classes)
+}
+
+// ChartsAllocationLabel is the package's ChartsAllocationLabel in the language of msgs.
+func (msgs Messages) ChartsAllocationLabel(total string, classes string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsAllocationLabel(total, classes))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].ChartsAllocationLabel; f != nil {
+			return f(total, classes)
+		}
+		switch lang {
+		case "", "en":
+			return "Allocation of " + msgs.arg(total) + " across " + msgs.arg(classes) + " asset classes"
+		case "zh-Hans":
+			return total + " 在 " + classes + " 个资产类别中的配置"
+		}
+	}
+}
+
+// ChartsView says "View"
+// in the language the app shows under cx.
+func ChartsView(cx *core.Scope) string { return For(cx).ChartsView() }
+
+// ChartsView is the package's ChartsView in the language of msgs.
+func (msgs Messages) ChartsView() string { return msgs.text(textChartsView) }
+
+// ChartsAYearAgo says "A year ago"
+// in the language the app shows under cx.
+func ChartsAYearAgo(cx *core.Scope) string { return For(cx).ChartsAYearAgo() }
+
+// ChartsAYearAgo is the package's ChartsAYearAgo in the language of msgs.
+func (msgs Messages) ChartsAYearAgo() string { return msgs.text(textChartsAYearAgo) }
+
+// ChartsWatchlist says "Watchlist"
+// in the language the app shows under cx.
+func ChartsWatchlist(cx *core.Scope) string { return For(cx).ChartsWatchlist() }
+
+// ChartsWatchlist is the package's ChartsWatchlist in the language of msgs.
+func (msgs Messages) ChartsWatchlist() string { return msgs.text(textChartsWatchlist) }
+
+// ChartsWatchlistNote says "Sparklines that draw in once and stay whole"
+// in the language the app shows under cx.
+func ChartsWatchlistNote(cx *core.Scope) string { return For(cx).ChartsWatchlistNote() }
+
+// ChartsWatchlistNote is the package's ChartsWatchlistNote in the language of msgs.
+func (msgs Messages) ChartsWatchlistNote() string { return msgs.text(textChartsWatchlistNote) }
 
 // EdgesInbox says "Inbox"
 // in the language the app shows under cx.
@@ -27538,264 +31440,6 @@ func DiffStartAgain(cx *core.Scope) string { return For(cx).DiffStartAgain() }
 
 // DiffStartAgain is the package's DiffStartAgain in the language of msgs.
 func (msgs Messages) DiffStartAgain() string { return msgs.text(textDiffStartAgain) }
-
-// ChartsMon says "Mon"
-// in the language the app shows under cx.
-func ChartsMon(cx *core.Scope) string { return For(cx).ChartsMon() }
-
-// ChartsMon is the package's ChartsMon in the language of msgs.
-func (msgs Messages) ChartsMon() string { return msgs.text(textChartsMon) }
-
-// ChartsTue says "Tue"
-// in the language the app shows under cx.
-func ChartsTue(cx *core.Scope) string { return For(cx).ChartsTue() }
-
-// ChartsTue is the package's ChartsTue in the language of msgs.
-func (msgs Messages) ChartsTue() string { return msgs.text(textChartsTue) }
-
-// ChartsWed says "Wed"
-// in the language the app shows under cx.
-func ChartsWed(cx *core.Scope) string { return For(cx).ChartsWed() }
-
-// ChartsWed is the package's ChartsWed in the language of msgs.
-func (msgs Messages) ChartsWed() string { return msgs.text(textChartsWed) }
-
-// ChartsThu says "Thu"
-// in the language the app shows under cx.
-func ChartsThu(cx *core.Scope) string { return For(cx).ChartsThu() }
-
-// ChartsThu is the package's ChartsThu in the language of msgs.
-func (msgs Messages) ChartsThu() string { return msgs.text(textChartsThu) }
-
-// ChartsFri says "Fri"
-// in the language the app shows under cx.
-func ChartsFri(cx *core.Scope) string { return For(cx).ChartsFri() }
-
-// ChartsFri is the package's ChartsFri in the language of msgs.
-func (msgs Messages) ChartsFri() string { return msgs.text(textChartsFri) }
-
-// ChartsSat says "Sat"
-// in the language the app shows under cx.
-func ChartsSat(cx *core.Scope) string { return For(cx).ChartsSat() }
-
-// ChartsSat is the package's ChartsSat in the language of msgs.
-func (msgs Messages) ChartsSat() string { return msgs.text(textChartsSat) }
-
-// ChartsSun says "Sun"
-// in the language the app shows under cx.
-func ChartsSun(cx *core.Scope) string { return For(cx).ChartsSun() }
-
-// ChartsSun is the package's ChartsSun in the language of msgs.
-func (msgs Messages) ChartsSun() string { return msgs.text(textChartsSun) }
-
-// ChartsLastWeek says "Last week"
-// in the language the app shows under cx.
-func ChartsLastWeek(cx *core.Scope) string { return For(cx).ChartsLastWeek() }
-
-// ChartsLastWeek is the package's ChartsLastWeek in the language of msgs.
-func (msgs Messages) ChartsLastWeek() string { return msgs.text(textChartsLastWeek) }
-
-// ChartsThisWeek says "This week"
-// in the language the app shows under cx.
-func ChartsThisWeek(cx *core.Scope) string { return For(cx).ChartsThisWeek() }
-
-// ChartsThisWeek is the package's ChartsThisWeek in the language of msgs.
-func (msgs Messages) ChartsThisWeek() string { return msgs.text(textChartsThisWeek) }
-
-// ChartsVisitorsPerDay says "Visitors per day, from {monday} on Monday to {sunday} on Sunday"
-// in the language the app shows under cx.
-func ChartsVisitorsPerDay(cx *core.Scope, monday string, sunday string) string {
-	return For(cx).ChartsVisitorsPerDay(monday, sunday)
-}
-
-// ChartsVisitorsPerDay is the package's ChartsVisitorsPerDay in the language of msgs.
-func (msgs Messages) ChartsVisitorsPerDay(monday string, sunday string) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsVisitorsPerDay(monday, sunday))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ChartsVisitorsPerDay; f != nil {
-			return f(monday, sunday)
-		}
-		switch lang {
-		case "", "en":
-			return "Visitors per day, from " + msgs.arg(monday) + " on Monday to " + msgs.arg(sunday) + " on Sunday"
-		case "zh-Hans":
-			return "每日访客，从周一的 " + monday + " 到周日的 " + sunday
-		}
-	}
-}
-
-// ChartsHoverValue says "{day}, {visitors} visitors, {other} {week}"
-// in the language the app shows under cx.
-func ChartsHoverValue(cx *core.Scope, day string, visitors string, other string, week string) string {
-	return For(cx).ChartsHoverValue(day, visitors, other, week)
-}
-
-// ChartsHoverValue is the package's ChartsHoverValue in the language of msgs.
-func (msgs Messages) ChartsHoverValue(day string, visitors string, other string, week string) string {
-	if i18n.IsPseudo(msgs.lang) {
-		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.ChartsHoverValue(day, visitors, other, week))
-	}
-	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
-		if f := supplied[lang].ChartsHoverValue; f != nil {
-			return f(day, visitors, other, week)
-		}
-		switch lang {
-		case "", "en":
-			return msgs.arg(day) + ", " + msgs.arg(visitors) + " visitors, " + msgs.arg(other) + " " + msgs.arg(week)
-		case "zh-Hans":
-			return day + "，" + visitors + " 位访客，" + week + " " + other
-		}
-	}
-}
-
-// ChartsBars says "Bars"
-// in the language the app shows under cx.
-func ChartsBars(cx *core.Scope) string { return For(cx).ChartsBars() }
-
-// ChartsBars is the package's ChartsBars in the language of msgs.
-func (msgs Messages) ChartsBars() string { return msgs.text(textChartsBars) }
-
-// ChartsBarsNote says "Stacked and grouped in bands, an ordinal scale's colors, values at the bars' ends"
-// in the language the app shows under cx.
-func ChartsBarsNote(cx *core.Scope) string { return For(cx).ChartsBarsNote() }
-
-// ChartsBarsNote is the package's ChartsBarsNote in the language of msgs.
-func (msgs Messages) ChartsBarsNote() string { return msgs.text(textChartsBarsNote) }
-
-// ChartsBridge says "Bridge"
-// in the language the app shows under cx.
-func ChartsBridge(cx *core.Scope) string { return For(cx).ChartsBridge() }
-
-// ChartsBridge is the package's ChartsBridge in the language of msgs.
-func (msgs Messages) ChartsBridge() string { return msgs.text(textChartsBridge) }
-
-// ChartsBridgeNote says "A base per row: each bar a step from where the last one ended"
-// in the language the app shows under cx.
-func ChartsBridgeNote(cx *core.Scope) string { return For(cx).ChartsBridgeNote() }
-
-// ChartsBridgeNote is the package's ChartsBridgeNote in the language of msgs.
-func (msgs Messages) ChartsBridgeNote() string { return msgs.text(textChartsBridgeNote) }
-
-// ChartsCandles says "Candles"
-// in the language the app shows under cx.
-func ChartsCandles(cx *core.Scope) string { return For(cx).ChartsCandles() }
-
-// ChartsCandles is the package's ChartsCandles in the language of msgs.
-func (msgs Messages) ChartsCandles() string { return msgs.text(textChartsCandles) }
-
-// ChartsCandlesNote says "Rules from low to high under bars from open to close, volumes on a second scale"
-// in the language the app shows under cx.
-func ChartsCandlesNote(cx *core.Scope) string { return For(cx).ChartsCandlesNote() }
-
-// ChartsCandlesNote is the package's ChartsCandlesNote in the language of msgs.
-func (msgs Messages) ChartsCandlesNote() string { return msgs.text(textChartsCandlesNote) }
-
-// ChartsShare says "Share"
-// in the language the app shows under cx.
-func ChartsShare(cx *core.Scope) string { return For(cx).ChartsShare() }
-
-// ChartsShare is the package's ChartsShare in the language of msgs.
-func (msgs Messages) ChartsShare() string { return msgs.text(textChartsShare) }
-
-// ChartsShareNote says "A donut whose slices lift and sweep, with labels on leader lines"
-// in the language the app shows under cx.
-func ChartsShareNote(cx *core.Scope) string { return For(cx).ChartsShareNote() }
-
-// ChartsShareNote is the package's ChartsShareNote in the language of msgs.
-func (msgs Messages) ChartsShareNote() string { return msgs.text(textChartsShareNote) }
-
-// ChartsGauge says "Gauge"
-// in the language the app shows under cx.
-func ChartsGauge(cx *core.Scope) string { return For(cx).ChartsGauge() }
-
-// ChartsGauge is the package's ChartsGauge in the language of msgs.
-func (msgs Messages) ChartsGauge() string { return msgs.text(textChartsGauge) }
-
-// ChartsGaugeNote says "Arcs that sweep round to a new value"
-// in the language the app shows under cx.
-func ChartsGaugeNote(cx *core.Scope) string { return For(cx).ChartsGaugeNote() }
-
-// ChartsGaugeNote is the package's ChartsGaugeNote in the language of msgs.
-func (msgs Messages) ChartsGaugeNote() string { return msgs.text(textChartsGaugeNote) }
-
-// ChartsScatter says "Scatter"
-// in the language the app shows under cx.
-func ChartsScatter(cx *core.Scope) string { return For(cx).ChartsScatter() }
-
-// ChartsScatter is the package's ChartsScatter in the language of msgs.
-func (msgs Messages) ChartsScatter() string { return msgs.text(textChartsScatter) }
-
-// ChartsScatterNote says "Dots whose area is a value, found by the nearest center"
-// in the language the app shows under cx.
-func ChartsScatterNote(cx *core.Scope) string { return For(cx).ChartsScatterNote() }
-
-// ChartsScatterNote is the package's ChartsScatterNote in the language of msgs.
-func (msgs Messages) ChartsScatterNote() string { return msgs.text(textChartsScatterNote) }
-
-// ChartsHeatmap says "Heatmap"
-// in the language the app shows under cx.
-func ChartsHeatmap(cx *core.Scope) string { return For(cx).ChartsHeatmap() }
-
-// ChartsHeatmap is the package's ChartsHeatmap in the language of msgs.
-func (msgs Messages) ChartsHeatmap() string { return msgs.text(textChartsHeatmap) }
-
-// ChartsHeatmapNote says "Cells on two band scales, a diverging ramp about zero; the arrows step across them"
-// in the language the app shows under cx.
-func ChartsHeatmapNote(cx *core.Scope) string { return For(cx).ChartsHeatmapNote() }
-
-// ChartsHeatmapNote is the package's ChartsHeatmapNote in the language of msgs.
-func (msgs Messages) ChartsHeatmapNote() string { return msgs.text(textChartsHeatmapNote) }
-
-// ChartsRadar says "Radar"
-// in the language the app shows under cx.
-func ChartsRadar(cx *core.Scope) string { return For(cx).ChartsRadar() }
-
-// ChartsRadar is the package's ChartsRadar in the language of msgs.
-func (msgs Messages) ChartsRadar() string { return msgs.text(textChartsRadar) }
-
-// ChartsRadarNote says "A radial line closed over its rings and spokes"
-// in the language the app shows under cx.
-func ChartsRadarNote(cx *core.Scope) string { return For(cx).ChartsRadarNote() }
-
-// ChartsRadarNote is the package's ChartsRadarNote in the language of msgs.
-func (msgs Messages) ChartsRadarNote() string { return msgs.text(textChartsRadarNote) }
-
-// ChartsFlows says "Flows"
-// in the language the app shows under cx.
-func ChartsFlows(cx *core.Scope) string { return For(cx).ChartsFlows() }
-
-// ChartsFlows is the package's ChartsFlows in the language of msgs.
-func (msgs Messages) ChartsFlows() string { return msgs.text(textChartsFlows) }
-
-// ChartsFlowsNote says "A sankey of nodes and ribbons that dim away from the hovered node"
-// in the language the app shows under cx.
-func ChartsFlowsNote(cx *core.Scope) string { return For(cx).ChartsFlowsNote() }
-
-// ChartsFlowsNote is the package's ChartsFlowsNote in the language of msgs.
-func (msgs Messages) ChartsFlowsNote() string { return msgs.text(textChartsFlowsNote) }
-
-// ChartsMarket says "Market"
-// in the language the app shows under cx.
-func ChartsMarket(cx *core.Scope) string { return For(cx).ChartsMarket() }
-
-// ChartsMarket is the package's ChartsMarket in the language of msgs.
-func (msgs Messages) ChartsMarket() string { return msgs.text(textChartsMarket) }
-
-// ChartsMarketNote says "A treemap of sectors and their stocks, shaded by the day's change"
-// in the language the app shows under cx.
-func ChartsMarketNote(cx *core.Scope) string { return For(cx).ChartsMarketNote() }
-
-// ChartsMarketNote is the package's ChartsMarketNote in the language of msgs.
-func (msgs Messages) ChartsMarketNote() string { return msgs.text(textChartsMarketNote) }
-
-// ChartsNewData says "New data"
-// in the language the app shows under cx.
-func ChartsNewData(cx *core.Scope) string { return For(cx).ChartsNewData() }
-
-// ChartsNewData is the package's ChartsNewData in the language of msgs.
-func (msgs Messages) ChartsNewData() string { return msgs.text(textChartsNewData) }
 
 // ShaderStartPressed says "Start pressed {count, plural, one {# time} other {# times}}"
 // in the language the app shows under cx.
