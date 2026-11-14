@@ -429,7 +429,11 @@ func (e *PanicError) Unwrap() error {
 }
 
 func (rt *runtime) fail(o *Scope, r any) {
-	err := &PanicError{Value: r, Stack: debug.Stack()}
+	rt.raise(o, &PanicError{Value: r, Stack: debug.Stack()})
+}
+
+// raise sends err to the nearest Catch above o, or to the host's Report without one.
+func (rt *runtime) raise(o *Scope, err error) {
 	for s := o; s != nil; s = s.parent {
 		if s.catch != nil && !s.disposed {
 			s.catch(err)

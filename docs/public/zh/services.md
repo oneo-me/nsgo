@@ -105,6 +105,30 @@ go func() {
 
 `cx.Post` 在响应式图的 goroutine 上运行函数，因此可以在那里设置 signal。Android 的清单默认申请网络权限，图片下载会缓存在磁盘上。
 
+从某个来源加载值时，`core.NewResource` 会替你完成这些：它的 fetcher 在自己的 goroutine 上运行，来源变化时重新加载：
+
+```go
+items := core.NewResource(cx, func() (string, bool) { return query.Get(), query.Get() != "" },
+	func(ctx context.Context, q string, _ core.ResourceInfo) ([]Item, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.example.com/items?q="+url.QueryEscape(q), nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		var list []Item
+		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+			return nil, err
+		}
+		return list, nil
+	})
+```
+
+`items.Get()`、`items.Err()` 和 `items.Loading()` 都是 signal，绑定会跟着它们更新。新的查询会通过 `ctx` 取消仍在进行的请求，迟到的响应不会覆盖较新的结果。`items.Refetch()` 用于重试，加载期间保留上一次的列表；`items.Mutate` 立即设置一个值，用于乐观更新。
+
 ## 语音与生命周期
 
 `cx.StartSpeech` 在 `cx.Env().CanRecognizeSpeech()` 为真时用系统识别器识别语音，并随着转写结果变化返回文本。
