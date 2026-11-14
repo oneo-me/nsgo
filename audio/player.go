@@ -8,6 +8,8 @@ import (
 
 // Player controls long-form audio.
 type Player struct {
+	// calls is held for reading across each call into the backend and for writing while Close releases it, so no call reaches a released native player.
+	calls      sync.RWMutex
 	mu         sync.Mutex
 	backend    playerBackend
 	closed     bool
@@ -95,6 +97,8 @@ func (player *Player) SetLoop(loop bool) error {
 
 // Position returns the backend's current position. It moves back when playback seeks, stops or loops. After Close it returns the last position the player knew.
 func (player *Player) Position() time.Duration {
+	player.calls.RLock()
+	defer player.calls.RUnlock()
 	player.mu.Lock()
 	if player.closed {
 		position := player.position
@@ -109,6 +113,8 @@ func (player *Player) Position() time.Duration {
 // Duration returns the latest known duration, or zero while metadata is not
 // available.
 func (player *Player) Duration() time.Duration {
+	player.calls.RLock()
+	defer player.calls.RUnlock()
 	player.mu.Lock()
 	if player.closed {
 		duration := player.duration
@@ -126,6 +132,8 @@ func (player *Player) Duration() time.Duration {
 
 // Playing says whether the backend is currently producing audio.
 func (player *Player) Playing() bool {
+	player.calls.RLock()
+	defer player.calls.RUnlock()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -176,8 +184,7 @@ func (player *Player) OnEnd(callback func()) error {
 	return nil
 }
 
-// Close releases the native player. It is idempotent and prevents callbacks
-// that have not begun from reaching app code.
+// Close releases the native player. It is idempotent, waits for the player's calls already in progress, and prevents callbacks that have not begun from reaching app code.
 func (player *Player) Close() error {
 	player.mu.Lock()
 	if player.closed {
@@ -188,10 +195,14 @@ func (player *Player) Close() error {
 	player.playing = false
 	backend := player.backend
 	player.mu.Unlock()
+	player.calls.Lock()
+	defer player.calls.Unlock()
 	return backend.close()
 }
 
 func (player *Player) command(command func(playerBackend) error) error {
+	player.calls.RLock()
+	defer player.calls.RUnlock()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()

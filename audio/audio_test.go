@@ -182,6 +182,39 @@ func TestPlayerPausedByTheSystem(t *testing.T) {
 	}
 }
 
+func TestPlayerCloseWaitsForCallsInProgress(t *testing.T) {
+	backend := &fakeBackend{}
+	previous := targetBackend
+	targetBackend = backend
+	t.Cleanup(func() { targetBackend = previous })
+
+	player, err := Open("song.mp3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wait sync.WaitGroup
+	for range 4 {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			for player.Play() == nil {
+				player.Position()
+				player.Playing()
+			}
+		}()
+	}
+	time.Sleep(10 * time.Millisecond)
+	if err := player.Close(); err != nil {
+		t.Fatal(err)
+	}
+	wait.Wait()
+	backend.player.mu.Lock()
+	defer backend.player.mu.Unlock()
+	if backend.player.afterClose != 0 {
+		t.Errorf("%d backend calls after close", backend.player.afterClose)
+	}
+}
+
 type fakeBackend struct {
 	soundOptions   Options
 	playerOptions  Options
@@ -228,15 +261,19 @@ func (sound *fakeSound) close() error {
 }
 
 type fakePlayer struct {
-	mu     sync.Mutex
-	pos    time.Duration
-	dur    time.Duration
-	active bool
-	closed bool
+	mu         sync.Mutex
+	pos        time.Duration
+	dur        time.Duration
+	active     bool
+	closed     bool
+	afterClose int
 }
 
 func (player *fakePlayer) play() error {
 	player.mu.Lock()
+	if player.closed {
+		player.afterClose++
+	}
 	player.active = true
 	player.mu.Unlock()
 	return nil
@@ -266,6 +303,9 @@ func (player *fakePlayer) setLoop(bool) error      { return nil }
 func (player *fakePlayer) position() time.Duration {
 	player.mu.Lock()
 	defer player.mu.Unlock()
+	if player.closed {
+		player.afterClose++
+	}
 	return player.pos
 }
 func (player *fakePlayer) duration() time.Duration {

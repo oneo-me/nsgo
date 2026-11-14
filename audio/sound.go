@@ -4,6 +4,8 @@ import "sync"
 
 // Sound is a short-lived, one-shot audio cue.
 type Sound struct {
+	// calls is held for reading across each call into the backend and for writing while Close releases it, so no call reaches a released native player.
+	calls   sync.RWMutex
 	mu      sync.Mutex
 	backend soundBackend
 	closed  bool
@@ -16,6 +18,8 @@ func (sound *Sound) SetVolume(volume float64) error {
 	if err := validVolume(volume); err != nil {
 		return err
 	}
+	sound.calls.RLock()
+	defer sound.calls.RUnlock()
 	sound.mu.Lock()
 	if sound.closed {
 		sound.mu.Unlock()
@@ -28,6 +32,8 @@ func (sound *Sound) SetVolume(volume float64) error {
 
 // Stop stops the cue. It is safe to call Stop more than once.
 func (sound *Sound) Stop() error {
+	sound.calls.RLock()
+	defer sound.calls.RUnlock()
 	sound.mu.Lock()
 	if sound.closed {
 		sound.mu.Unlock()
@@ -50,7 +56,7 @@ func (sound *Sound) OnEnd(callback func()) error {
 	return nil
 }
 
-// Close releases the native player. It is idempotent.
+// Close releases the native player. It is idempotent and waits for the cue's calls already in progress.
 func (sound *Sound) Close() error {
 	sound.mu.Lock()
 	if sound.closed {
@@ -60,6 +66,8 @@ func (sound *Sound) Close() error {
 	sound.closed = true
 	backend := sound.backend
 	sound.mu.Unlock()
+	sound.calls.Lock()
+	defer sound.calls.Unlock()
 	return backend.close()
 }
 
