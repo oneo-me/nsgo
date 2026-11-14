@@ -56,11 +56,11 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 
 ## Application and windows
 
-What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow` and `OpenPanel` return nil, while supported desktop backends still process `NewTray`, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
+What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenPanel` still lacks tray anchoring and non-activating behavior, while supported desktop backends still process `NewTray`, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | Windows now attaches opened window surfaces; the remaining work is Linux surfaces and panels on both backends that take the keyboard and hide as they lose it |
+| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | Windows and Linux attach opened window surfaces; both backends' panels take focus and hide on blur, with tray anchoring and non-activating behavior remaining |
 | Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
 | Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image and menu and reports clicks; the remaining work is placing a panel with `Shell_NotifyIconGetRect` and rasterizing a drawn icon whenever it changes |
 | Tray icons on Linux | StatusNotifierItem over D-Bus; #988, #1209 | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
