@@ -128,7 +128,6 @@ type fakeData struct {
 }
 
 const (
-	eNotImpl       = 0x80004001
 	dvEFormatEtc   = 0x80040064
 	gmemMoveableT  = 0x0002
 	dropFilesBytes = 20

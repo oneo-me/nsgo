@@ -12,9 +12,11 @@ package windows
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -478,12 +480,23 @@ type webEnvironment struct {
 	err     error
 	done    bool
 	waiting []func(*comObject, error)
+
+	// It starts once the batch that made its first web view is applied (startWebEnvironments), so that it registers the app schemes of all the batch's web views; w reports a failure to start.
+	started    bool
+	w          *window
+	folder     string
+	schemes    []string // asked for until it starts
+	registered []string
 }
 
 // webEnvironments are the UI threads', by thread and profile folder.
 var (
 	webEnvironmentsMu sync.Mutex
 	webEnvironments   = map[webEnvironmentKey]*webEnvironment{}
+	// webFolderSchemes are the app schemes each profile folder's environments register, those of the first to start: WebView2 takes registrations only as it makes an environment, and refuses environments of one folder whose options differ.
+	webFolderSchemes = map[string][]string{}
+	// webSchemesLogged are the schemes reported as served too late.
+	webSchemesLogged = map[string]bool{}
 )
 
 type webEnvironmentKey struct {
@@ -493,34 +506,71 @@ type webEnvironmentKey struct {
 
 var getCurrentThreadID = kernel32.NewProc("GetCurrentThreadId")
 
-// withWebEnvironment calls fn on the calling UI thread once its
-// environment of profile folder is made, or cannot be; w posts the
-// failure to start.
-func withWebEnvironment(w *window, folder string, fn func(*comObject, error)) {
+// withWebEnvironment calls fn on the calling UI thread once its environment of profile folder is made, or cannot be; w posts the failure to start. schemes are the app schemes the web view serves.
+func withWebEnvironment(w *window, folder string, schemes []string, fn func(*comObject, error)) {
 	thread, _, _ := getCurrentThreadID.Call()
 	key := webEnvironmentKey{thread, folder}
 	webEnvironmentsMu.Lock()
 	e := webEnvironments[key]
-	fresh := e == nil
-	if fresh {
-		e = &webEnvironment{}
+	if e == nil {
+		e = &webEnvironment{w: w, folder: folder}
 		webEnvironments[key] = e
 	}
 	webEnvironmentsMu.Unlock()
-	if fresh {
-		e.waiting = append(e.waiting, fn)
-		if err := startWebEnvironment(e, folder); err != nil {
-			// Reported from a message of its own: the view's events may come
-			// later in the batch being applied.
-			w.post(func() { e.finish(nil, err) })
+	if !e.started {
+		for _, name := range schemes {
+			if !slices.Contains(e.schemes, name) {
+				e.schemes = append(e.schemes, name)
+			}
 		}
-		return
+	} else {
+		e.unregistered(schemes)
 	}
 	if e.done {
 		fn(e.env, e.err)
 		return
 	}
 	e.waiting = append(e.waiting, fn)
+}
+
+// startWebEnvironments starts the calling UI thread's environments that wait to, once a batch made their web views.
+func startWebEnvironments() {
+	thread, _, _ := getCurrentThreadID.Call()
+	var start []*webEnvironment
+	webEnvironmentsMu.Lock()
+	for key, e := range webEnvironments {
+		if key.thread == thread && !e.started {
+			e.started = true
+			registered, known := webFolderSchemes[e.folder]
+			if !known {
+				registered = slices.Sorted(slices.Values(e.schemes))
+				webFolderSchemes[e.folder] = registered
+			}
+			e.registered = registered
+			start = append(start, e)
+		}
+	}
+	webEnvironmentsMu.Unlock()
+	for _, e := range start {
+		e.unregistered(e.schemes)
+		e.schemes = nil
+		if err := startWebEnvironment(e, e.folder, e.registered); err != nil {
+			// Reported from a message of its own, as the environment's callbacks come.
+			e.w.post(func() { e.finish(nil, err) })
+		}
+	}
+}
+
+// unregistered logs, once each, the schemes the environment did not register, which its web views cannot load.
+func (e *webEnvironment) unregistered(schemes []string) {
+	webEnvironmentsMu.Lock()
+	defer webEnvironmentsMu.Unlock()
+	for _, name := range schemes {
+		if !slices.Contains(e.registered, name) && !webSchemesLogged[name] {
+			webSchemesLogged[name] = true
+			log.Printf("nsgo: WebView2 cannot load the %q scheme: it registers app schemes only as it starts, and it started before this scheme was served", name)
+		}
+	}
 }
 
 func (e *webEnvironment) finish(env *comObject, err error) {
@@ -542,7 +592,8 @@ func initCOM() error {
 	return nil
 }
 
-func startWebEnvironment(e *webEnvironment, folder string) error {
+// startWebEnvironment starts making the environment of profile folder, registering app schemes.
+func startWebEnvironment(e *webEnvironment, folder string, schemes []string) error {
 	if err := initCOM(); err != nil {
 		return err
 	}
@@ -558,9 +609,19 @@ func startWebEnvironment(e *webEnvironment, folder string) error {
 	if err != nil {
 		return err
 	}
+	var options *webEnvironmentOptions
+	var optionsPtr uintptr
+	if len(schemes) > 0 {
+		options = newWebEnvironmentOptions(schemes)
+		optionsPtr = options.ptr()
+	}
 	var h *comHandler
 	h = newHandler(&iidEnvironmentCompleted, func(hr uintptr, result unsafe.Pointer) {
 		defer h.release()
+		if options != nil {
+			// Held until the environment is made, in case the runtime reads it on the way.
+			options.release()
+		}
 		env := (*comObject)(result)
 		if failed(hr) || env == nil {
 			e.finish(nil, hresultError("WebView2 could not start", hr))
@@ -575,9 +636,12 @@ func startWebEnvironment(e *webEnvironment, folder string) error {
 		e.finish(env, nil)
 	})
 	const checkRunningInstance, installedRuntime = 1, 0
-	hr, _, _ := create.Call(checkRunningInstance, installedRuntime, uintptr(unsafe.Pointer(wide(folder))), 0, h.ptr())
+	hr, _, _ := create.Call(checkRunningInstance, installedRuntime, uintptr(unsafe.Pointer(wide(folder))), optionsPtr, h.ptr())
 	if failed(hr) {
 		h.release()
+		if options != nil {
+			options.release()
+		}
 		return hresultError("WebView2 could not start", hr)
 	}
 	return nil

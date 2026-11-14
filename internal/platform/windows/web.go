@@ -134,7 +134,7 @@ func (w *window) newWeb(v *view, c *driver.WebConfig) *webView {
 		return wv
 	}
 	wv.portal = p
-	withWebEnvironment(w, w.profileFolder(), wv.environmentReady)
+	withWebEnvironment(w, w.profileFolder(), slices.Sorted(maps.Keys(c.SchemeHandlers)), wv.environmentReady)
 	return wv
 }
 
@@ -777,13 +777,15 @@ func (wv *webView) serveHTML() {
 	}))
 }
 
-// serveSchemes answers requests for the app-owned schemes of this view.
+// serveSchemes answers requests for the app-owned schemes of this view. WebView2 raises WebResourceRequested for a custom scheme, and navigates to it, only when its environment registered the scheme (startWebEnvironment).
 func (wv *webView) serveSchemes() {
 	if wv.schemeServing || len(wv.config.SchemeHandlers) == 0 || wv.web == nil {
 		return
 	}
 	wv.schemeServing = true
-	wv.web.call(webAddWebResourceRequestedFilter, uintptr(unsafe.Pointer(wide("*"))), webResourceContextAll)
+	for name := range wv.config.SchemeHandlers {
+		wv.web.call(webAddWebResourceRequestedFilter, uintptr(unsafe.Pointer(wide(name+":*"))), webResourceContextAll)
+	}
 	wv.web.subscribe(webAddWebResourceRequested, newHandler(&iidWebResourceRequested, func(_ uintptr, args unsafe.Pointer) {
 		if wv.closed || wv.env == nil {
 			return
@@ -820,9 +822,8 @@ func (wv *webView) respondResource(args *comObject, body []byte, contentType str
 	s := *(**comObject)(unsafe.Pointer(&stream))
 	defer s.release()
 	var response *comObject
-	header := "Content-Type: " + contentType + "\r\nAccess-Control-Allow-Origin: *"
 	if failed(wv.env.call(envCreateWebResourceResponse, s.ptr(), 200, uintptr(unsafe.Pointer(wide("OK"))),
-		uintptr(unsafe.Pointer(wide(header))), uintptr(unsafe.Pointer(&response)))) {
+		uintptr(unsafe.Pointer(wide("Content-Type: "+contentType))), uintptr(unsafe.Pointer(&response)))) {
 		return
 	}
 	args.call(resourceArgsPutResponse, response.ptr())

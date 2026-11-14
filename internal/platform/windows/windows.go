@@ -1205,6 +1205,8 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.load(v, &v.source, true)
 		}
 	}
+	// The batch's web views asked for their environments' app schemes.
+	startWebEnvironments()
 	// Focus once the batch placed the fields.
 	for _, f := range focus {
 		switch {
