@@ -256,6 +256,12 @@ const (
 	// ItemInstallSettings opens the system's setting that lets the app
 	// install packages; Android answers with EventFiles carrying Count.
 	ItemInstallSettings
+	// ItemCanDrawOverlays asks whether Android lets the app show windows
+	// above other apps; it answers with EventFiles carrying Count.
+	ItemCanDrawOverlays
+	// ItemOverlaySettings opens Android's setting that lets the app show
+	// windows above other apps; it answers with EventFiles carrying Count.
+	ItemOverlaySettings
 	// ItemOpenSurface opens a window, a panel or a tray icon's view
 	// (Surface) for the tree the core numbered Surface.ID, which the
 	// platform attaches to the engine (engine.Engine.Attach). Only the

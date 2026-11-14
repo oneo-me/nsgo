@@ -444,11 +444,14 @@ func TestInstallPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 	started, allowed, opened := false, true, true
+	overlayAllowed, overlaySettings := true, true
 	var installErr error
 	cx.InstallPackage(apk, func(ok bool, err error) { started, installErr = ok, err })
 	cx.CanInstallPackages(func(ok bool) { allowed = ok })
 	cx.OpenInstallSettings(func(ok bool) { opened = ok })
-	if installErr == nil || allowed || opened || len(h.commit().Items) != 0 {
+	cx.CanDrawOverlays(func(ok bool) { overlayAllowed = ok })
+	cx.OpenOverlaySettings(func(ok bool) { overlaySettings = ok })
+	if installErr == nil || allowed || opened || overlayAllowed || overlaySettings || len(h.commit().Items) != 0 {
 		t.Fatalf("off Android: %v, %v, %v", installErr, allowed, opened)
 	}
 
@@ -468,6 +471,18 @@ func TestInstallPackage(t *testing.T) {
 	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
 	if !allowed {
 		t.Fatal("not allowed")
+	}
+	cx.CanDrawOverlays(func(ok bool) { overlayAllowed = ok })
+	it = command(h.commit(), driver.ItemCanDrawOverlays)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if !overlayAllowed {
+		t.Fatal("overlay not allowed")
+	}
+	cx.OpenOverlaySettings(func(ok bool) { overlaySettings = ok })
+	it = command(h.commit(), driver.ItemOverlaySettings)
+	h.tree.Dispatch(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+	if !overlaySettings {
+		t.Fatal("overlay settings did not open")
 	}
 	cx.InstallPackage(filepath.Join(filepath.Dir(apk), "missing.apk"), func(ok bool, err error) { started, installErr = ok, err })
 	if installErr == nil || command(h.commit(), driver.ItemInstallPackage) != nil {

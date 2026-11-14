@@ -65,6 +65,16 @@ type PanelOptions struct {
 	Material WindowMaterial
 }
 
+// FloatingWindowOptions configures a system-level floating window. Android
+// shows it above other apps after the user grants overlay permission; other
+// platforms return nil.
+type FloatingWindowOptions struct {
+	Width, Height Points
+	X, Y Points
+	Focusable   bool
+	TouchThrough bool
+}
+
 // Window is a window or a panel the app opened: the core's part of
 // desktop.Window, which apps use. Its methods do nothing on a nil
 // Window, which OpenWindow returns where the platform opens no windows,
@@ -141,6 +151,18 @@ func (cx *Scope) OpenPanel(opts PanelOptions, content func(cx *Scope) Node) *Win
 	}
 	return rt.openSurface(cx.current(), driver.SurfaceConfig{Kind: driver.SurfacePanel, Width: opts.Width,
 		Height: opts.Height, Hidden: true, HideOnBlur: opts.HideOnBlur, Material: opts.Material}, content)
+}
+
+// OpenFloatingWindow opens a system overlay surface. Its content is a tree of
+// its own and follows the same owner lifetime as ordinary windows.
+func (cx *Scope) OpenFloatingWindow(opts FloatingWindowOptions, content func(cx *Scope) Node) *Window {
+	rt := cx.rt
+	if opts.Width <= 0 || opts.Height <= 0 {
+		opts.Width, opts.Height = 320, 180
+	}
+	return rt.openSurface(cx.current(), driver.SurfaceConfig{Kind: driver.SurfaceOverlay, Overlay: true,
+		Width: opts.Width, Height: opts.Height, Frame: driver.WindowFrame{X: opts.X, Y: opts.Y, Move: true,
+			Width: opts.Width, Height: opts.Height}, Focusable: opts.Focusable, TouchThrough: opts.TouchThrough}, content)
 }
 
 // openSurface opens a surface of cfg's kind showing content under owner:

@@ -89,6 +89,9 @@ const (
 	// msgLiveUpdate starts, updates or ends one of package widget's Live
 	// Activities, JSON (driver.SendLiveUpdate).
 	msgLiveUpdate = 17
+	// msgOverlay asks the Java runtime to attach an Android system overlay
+	// for a surface the core opened.
+	msgOverlay = 18
 
 	// Java to Go.
 	msgStart       = 1
@@ -117,17 +120,20 @@ const (
 )
 
 type surface struct {
-	mu       sync.Mutex // guards out and buf
-	out      *os.File
-	buf      []byte
-	ids      atomic.Uint32 // the last prepared text or layout id
-	measured chan driver.Size
-	laidOut  chan []attachmentBox
-	lines    chan []driver.TextLine
-	carets   chan driver.CaretLayout
-	engine   *engine.Engine
-	started  chan struct{}      // closed once engine is set
-	env      driver.Environment // the last reported, on the reader goroutine
+	mu         sync.Mutex // guards out and buf
+	id         uint32     // core surface ID; zero is the app's main surface
+	out        *os.File
+	buf        []byte
+	ids        atomic.Uint32 // the last prepared text or layout id
+	measured   chan driver.Size
+	laidOut    chan []attachmentBox
+	lines      chan []driver.TextLine
+	carets     chan driver.CaretLayout
+	engine     *engine.Engine
+	attached   map[uint32]*engine.Engine
+	attachedMu sync.RWMutex
+	started    chan struct{}      // closed once engine is set
+	env        driver.Environment // the last reported, on the reader goroutine
 	// frameWanted is set while the app waits for a display frame, from
 	// its request until the runtime's answer.
 	frameWanted atomic.Bool
@@ -212,6 +218,7 @@ func connect(opts Options) *surface {
 
 		components: opts.Components,
 		natives:    map[driver.NodeID]*nativeView{},
+		attached:   map[uint32]*engine.Engine{},
 		host:       newEmbedHost(),
 	}
 	useDNS()
@@ -253,9 +260,20 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 		case msgResize:
 			s.engine.Resize(driver.Size{Width: r.points(), Height: r.points()})
 		case msgEvent:
+			eventKind := r.byte()
+			rawID := r.u32()
+			target := s.engine
+			if sid := rawID >> 20; sid != 0 {
+				s.attachedMu.RLock()
+				e := s.attached[sid]
+				s.attachedMu.RUnlock()
+				if e != nil {
+					target = e
+				}
+			}
 			ev := driver.Event{
-				Kind:  driver.EventKind(r.byte()),
-				ID:    driver.NodeID(r.u32()),
+				Kind:  driver.EventKind(eventKind),
+				ID:    driver.NodeID(rawID & ((1 << 20) - 1)),
 				Count: r.u32(),
 				Point: driver.Point{X: r.points(), Y: r.points()},
 				Text:  r.str(),
@@ -284,7 +302,7 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				break
 			}
 			if ev.Kind == driver.EventInputModality {
-				s.engine.InputModality(ev.Count)
+				target.InputModality(ev.Count)
 				break
 			}
 			if ev.Kind == driver.EventTouch {
@@ -324,9 +342,9 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				// it applies them: while the app waits for a frame, the
 				// report rides with it, where it cost a pass of its own
 				// every frame of an app scrolling in its frames.
-				s.engine.DispatchBeforeFrame(ev)
+				target.DispatchBeforeFrame(ev)
 			} else {
-				s.engine.Dispatch(ev)
+				target.Dispatch(ev)
 			}
 		case msgMeasured:
 			s.measured <- driver.Size{Width: r.points(), Height: r.points()}
@@ -810,7 +828,43 @@ func (s *surface) RequestFrame() {
 
 // Mount implements engine.Platform: one message per commit, then the
 // loads of the image sources it changed.
-func (s *surface) Mount(b *driver.MountBatch) {
+func (s *surface) Mount(b *driver.MountBatch) { s.mount(b) }
+
+// mount sends a batch to Java. Overlay surfaces share the process pipe, but
+// their engine is attached below when their ItemOpenSurface is committed.
+func (s *surface) mount(b *driver.MountBatch) {
+	s.mountAs(s.id, b)
+}
+
+func (s *surface) mountAs(surfaceID uint32, b *driver.MountBatch) {
+	items := make([]driver.MountItem, 0, len(b.Items))
+	for _, it := range b.Items {
+		if it.Kind == driver.ItemOpenSurface && it.Surface != nil && it.Surface.Overlay {
+			cfg := it.Surface
+			if s.engine != nil {
+				e := s.engine.Attach(cfg.ID, &overlayPlatform{surface: s, id: cfg.ID})
+				s.attachedMu.Lock()
+				s.attached[cfg.ID] = e
+				s.attachedMu.Unlock()
+			}
+			s.send(msgOverlay, func(w *writer) {
+				w.u32(cfg.ID)
+				w.points(cfg.Width)
+				w.points(cfg.Height)
+				w.points(cfg.Frame.X)
+				w.points(cfg.Frame.Y)
+				w.flags(cfg.Focusable, cfg.TouchThrough)
+				w.flags(false) // create/update, not close
+			})
+			continue
+		}
+		items = append(items, it)
+	}
+	if len(items) != len(b.Items) {
+		copyBatch := *b
+		copyBatch.Items = items
+		b = &copyBatch
+	}
 	b = s.withoutUpdateChecks(withoutEffects(b))
 	requests, loads := s.trackImages(b)
 	s.stage(b)
@@ -823,7 +877,10 @@ func (s *surface) Mount(b *driver.MountBatch) {
 	shaders := s.trackShaders(b)
 	first := !s.defaultsSent
 	s.defaultsSent = true
-	s.send(msgBatch, func(w *writer) { encode(w, b, first, requests, natives, shaders) })
+	s.send(msgBatch, func(w *writer) {
+		w.u32(surfaceID)
+		encode(w, b, first, surfaceID, requests, natives, shaders)
+	})
 	for _, l := range loads {
 		go s.load(l)
 	}
@@ -834,6 +891,37 @@ func (s *surface) Mount(b *driver.MountBatch) {
 		}
 	}
 }
+
+// overlayPlatform attaches one core surface to the Java overlay root while
+// sharing the parent's text engine and process channel.
+type overlayPlatform struct {
+	surface *surface
+	id      uint32
+}
+
+func (p *overlayPlatform) Prepare(t *driver.AttributedText) driver.PreparedText {
+	return p.surface.Prepare(t)
+}
+
+func (p *overlayPlatform) Mount(b *driver.MountBatch) {
+	for _, it := range b.Items {
+		if it.Kind == driver.ItemWindow && it.Window != nil && it.Window.Action == driver.WindowDestroy {
+			p.surface.send(msgOverlay, func(w *writer) {
+				w.u32(p.id)
+				w.points(0)
+				w.points(0)
+				w.points(0)
+				w.points(0)
+				w.flags(false, false)
+				w.flags(true)
+			})
+			return
+		}
+	}
+	p.surface.mountAs(p.id, b)
+}
+
+func (p *overlayPlatform) RequestFrame() {}
 
 // imageView is what Go keeps of an image view: the sources of its
 // current request and how to stop loading them.
@@ -1056,6 +1144,15 @@ var defaults = sync.OnceValue(func() []byte {
 	return w.buf
 })
 
+// globalNode gives overlay trees disjoint Android node IDs. Core allocates
+// IDs independently per surface, while one NsgoView owns all overlay roots.
+func globalNode(surface uint32, id driver.NodeID) uint32 {
+	if surface == 0 {
+		return uint32(id)
+	}
+	return (surface << 20) | (uint32(id) & ((1 << 20) - 1))
+}
+
 // encode writes a batch in the format NsgoView.mount reads: each item is
 // its kind, its ID and the fields of that kind; requests numbers its
 // ItemImage items in order, and natives says what its ItemNative items
@@ -1063,8 +1160,8 @@ var defaults = sync.OnceValue(func() []byte {
 // ItemWindow and ItemMenu, which Java ignores, have no fields. The batch's
 // layout animation comes before its items, and the first batch's defaults
 // after it.
-func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, natives []nativeItem, shaders []shaderItem) {
-	w.u32(uint32(b.Root))
+func encode(w *writer, b *driver.MountBatch, first bool, surfaceID uint32, requests []uint32, natives []nativeItem, shaders []shaderItem) {
+	w.u32(globalNode(surfaceID, b.Root))
 	writeLayoutAnimation(w, b.LayoutAnimation)
 	w.flags(first)
 	if first {
@@ -1074,18 +1171,18 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 	for i := range b.Items {
 		it := &b.Items[i]
 		w.byte(byte(it.Kind))
-		w.u32(uint32(it.ID))
+		w.u32(globalNode(surfaceID, it.ID))
 		switch it.Kind {
 		case driver.ItemCreate:
 			w.byte(byte(it.View))
 		case driver.ItemInsert:
-			w.u32(uint32(it.Parent))
-			w.u32(uint32(it.Before))
+			w.u32(globalNode(surfaceID, it.Parent))
+			w.u32(globalNode(surfaceID, it.Before))
 		case driver.ItemFrame:
 			w.bounds(it.Frame)
 			writeLayoutTransition(w, it.Transition)
 		case driver.ItemMatch:
-			w.u32(uint32(it.Before))
+			w.u32(globalNode(surfaceID, it.Before))
 		case driver.ItemViewStyle:
 			writeViewStyle(w, it.ViewStyle)
 		case driver.ItemText:
@@ -1105,7 +1202,7 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.byte(byte(in.KeyboardType))
 			w.flags(in.Masked, in.Readonly, in.Disabled)
 			w.bounds(in.Content)
-			w.u32(uint32(in.Accessory))
+			w.u32(globalNode(surfaceID, in.Accessory))
 			writeEditing(w, in)
 		case driver.ItemInputValue:
 			w.str(it.Value)
@@ -1119,10 +1216,10 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 		case driver.ItemStickyCells:
 			w.u32(uint32(len(it.Sticky)))
 			for _, c := range it.Sticky {
-				w.u32(uint32(c.Cell))
+				w.u32(globalNode(surfaceID, c.Cell))
 				w.points(c.Start)
 				w.points(c.End)
-				w.u32(c.Node)
+				w.u32(globalNode(surfaceID, driver.NodeID(c.Node)))
 				w.points(c.Inset)
 			}
 		case driver.ItemEvents:
@@ -1285,7 +1382,8 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.u32(it.Count)
 			w.str(it.Open.Path)
 			w.str(it.Open.Name)
-		case driver.ItemCanInstallPackages, driver.ItemInstallSettings:
+		case driver.ItemCanInstallPackages, driver.ItemInstallSettings,
+			driver.ItemCanDrawOverlays, driver.ItemOverlaySettings:
 			w.u32(it.Count)
 		case driver.ItemShare:
 			// The text, then each file as ItemOpenFile's.
@@ -1369,7 +1467,7 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 				w.u32(uint32(len(it.Native.Bindings)))
 				for _, b := range it.Native.Bindings {
 					w.str(b.Name)
-					w.u32(b.Node)
+					w.u32(globalNode(surfaceID, driver.NodeID(b.Node)))
 					w.flags(b.Color)
 				}
 			}

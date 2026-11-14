@@ -116,6 +116,27 @@ func TestWindowsShareSignals(t *testing.T) {
 	}
 }
 
+func TestFloatingWindowSurface(t *testing.T) {
+	var floating *Window
+	w := newWindows(t, func(cx *Scope) {
+		floating = cx.OpenFloatingWindow(FloatingWindowOptions{Width: 240, Height: 120, X: 12, Y: 18,
+			Focusable: true, TouchThrough: true}, func(*Scope) Node { return View{} })
+	})
+	opened := w.take(0, driver.ItemOpenSurface)
+	if len(opened) != 1 || opened[0].Surface == nil || !opened[0].Surface.Overlay {
+		t.Fatalf("floating surface = %+v", opened)
+	}
+	cfg := opened[0].Surface
+	if cfg.Width != 240 || cfg.Height != 120 || cfg.Frame.X != 12 || cfg.Frame.Y != 18 || !cfg.Focusable || !cfg.TouchThrough {
+		t.Fatalf("floating config = %+v", cfg)
+	}
+	floating.Close()
+	w.commit()
+	if len(w.take(1, driver.ItemWindow)) != 1 {
+		t.Fatal("floating surface did not close")
+	}
+}
+
 // CurrentWindowOf returns the window w's content finds as its own.
 func (w *Window) CurrentWindowOf() *Window { return w.scope.CurrentWindow() }
 

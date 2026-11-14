@@ -111,6 +111,7 @@ var itemNames = map[ItemKind]string{
 	ItemPickFiles: "pick-files", ItemSaveFile: "save-file", ItemDirection: "direction", ItemPickDirectories: "pick-directories", ItemPickScreenColor: "pick-screen-color",
 	ItemOpenFile: "open-file", ItemShare: "share", ItemInstallPackage: "install-package",
 	ItemCanInstallPackages: "can-install-packages", ItemInstallSettings: "install-settings",
+	ItemCanDrawOverlays: "can-draw-overlays", ItemOverlaySettings: "overlay-settings",
 	ItemOpenSurface: "open-surface", ItemTray: "tray", ItemTrayMenu: "tray-menu", ItemHotKeys: "hot-keys",
 	ItemDock: "dock", ItemSetLaunchAtLogin: "set-launch-at-login", ItemLaunchAtLogin: "launch-at-login",
 	ItemShaderTransition: "shader-transition", ItemShaderInput: "shader-input", ItemSpeech: "speech",

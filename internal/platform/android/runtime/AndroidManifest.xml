@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The runtime tells the app the network's DNS servers. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:label="NSGo"
@@ -33,6 +35,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name="dev.oneo.nsgo.OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a user-requested floating window available" />
+        </service>
         <!-- Serves the app's files to the apps it hands them to: the
              clipboard's image, a file it opens and the files it shares;
              nsgo build names its authority after the app's package. -->

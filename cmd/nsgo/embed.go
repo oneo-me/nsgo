@@ -395,7 +395,14 @@ const aarManifest = `<?xml version="1.0" encoding="utf-8"?>
     <uses-sdk android:minSdkVersion="28" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <application android:extractNativeLibs="true">
+        <service android:name="dev.oneo.nsgo.OverlayService" android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a user-requested floating window available" />
+        </service>
         <provider
             android:name="dev.oneo.nsgo.FileProvider"
             android:authorities="${applicationId}.nsgo.files"

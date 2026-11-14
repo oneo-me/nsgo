@@ -200,8 +200,10 @@ const (
 	// whether an app opened the file, ItemShare Count with whether the
 	// share sheet showed, ItemInstallPackage Count with whether the
 	// installer started, ItemCanInstallPackages Count with whether the
-	// app may install packages and ItemInstallSettings Count with whether
-	// the setting opened (all Finished); Text is what failed.
+	// app may install packages, ItemInstallSettings Count with whether
+	// the setting opened, ItemCanDrawOverlays Count with whether Android
+	// allows system overlays, and ItemOverlaySettings Count with whether
+	// its setting opened (all Finished); Text is what failed.
 	EventFiles
 	// EventModalShown and EventModalDismissed report that the platform
 	// finished presenting modal ID and taking it away, where it says so.

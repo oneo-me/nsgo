@@ -768,6 +768,18 @@ func (cx *Scope) OpenInstallSettings(done func(opened bool)) {
 	cx.androidAsk(driver.ItemInstallSettings, done)
 }
 
+// CanDrawOverlays is the core's part of mobile.CanDrawOverlays, which apps
+// use: it asks Android whether the user lets the app show system overlays.
+func (cx *Scope) CanDrawOverlays(done func(allowed bool)) {
+	cx.androidAsk(driver.ItemCanDrawOverlays, done)
+}
+
+// OpenOverlaySettings is the core's part of mobile.OpenOverlaySettings,
+// which apps use: it opens Android's setting for showing system overlays.
+func (cx *Scope) OpenOverlaySettings(done func(opened bool)) {
+	cx.androidAsk(driver.ItemOverlaySettings, done)
+}
+
 // androidAsk sends Android a request of kind that answers yes or no,
 // and answers no elsewhere.
 func (cx *Scope) androidAsk(kind driver.ItemKind, done func(bool)) {
