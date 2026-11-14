@@ -9,6 +9,7 @@
 - Apps can serve custom URL schemes from web views on Apple, Windows and Linux.
 - `Env.CanSendInput` reports whether `Ref.SendInput` can deliver trusted web-view input.
 - `Env.HasWebView` reports whether the target provides a web view host.
+- Apple WebViews can load a `file:` page and its neighboring assets without exposing files outside that directory.
 - Add native backends for macOS, iOS, tvOS, watchOS, Windows, Linux, Android, the web and, experimentally, WeChat, QQ, Alipay and Douyin mini programs, every one built from a Mac with Go and Xcode, linking only what an app uses and downloading its images with the system's HTTP client.
 - Add block, flexbox and grid layout with static, sticky and fixed positions, intrinsic sizes, stacking order, right-to-left subtrees and paddings and margins that follow the safe area and the software keyboard.
 - Add CSS-like styles: corners, borders, outlines, shadows, gradients, filters, backdrop blur, Liquid Glass, masks, blend modes, 3D transforms, state styles down to focus within and a focus that shows only as the keyboard moved it, `aria-*` and `data-*`, the SVG paint canvases draw with, and Tailwind CSS classes with their variants, on elements and every part of `base`'s components.

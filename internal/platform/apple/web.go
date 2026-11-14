@@ -6,6 +6,7 @@ import (
 	"maps"
 	"mime"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -31,6 +32,7 @@ type Web struct {
 	web     objc.ID
 	handler objc.ID
 	config  driver.WebConfig
+	fileDir string
 	made    bool
 }
 
@@ -136,11 +138,18 @@ func loadWebKit() {
 				policy := uintptr(allow)
 				// A restricted view's page goes only where its config
 				// allows at the top level; a new window's has no frame.
-				if w := webHandlers[self]; w != nil && w.config.Restricted {
+				if w := webHandlers[self]; w != nil {
 					frame := action.Send(sel("targetFrame"))
 					if frame == 0 || objc.Send[bool](frame, sel("isMainFrame")) {
 						url := GoString(action.Send(sel("request")).Send(sel("URL")).Send(sel("absoluteString")))
-						if !w.config.Navigable(url) {
+						allowed := true
+						if strings.EqualFold(strings.SplitN(url, ":", 2)[0], "file") {
+							allowed = w.fileDir != "" && fileURLInDir(url, w.fileDir)
+						}
+						if allowed && w.config.Restricted {
+							allowed = w.config.Navigable(url)
+						}
+						if !allowed {
 							CallBlock(decide, cancel)
 							w.Dispatch(driver.Event{Kind: driver.EventError, Text: driver.RefusedNavigation(url),
 								Navigation: &driver.WebNavigation{URL: url}})
@@ -340,6 +349,7 @@ func (w *Web) addScripts() {
 
 func (w *Web) load() {
 	src := w.config.Source
+	w.fileDir = ""
 	switch {
 	case src.HTML != "":
 		base := objc.ID(0)
@@ -350,6 +360,12 @@ func (w *Web) load() {
 	case src.Src != "":
 		// A URL NSURL cannot parse loads nothing.
 		if url := nsURL(src.Src); url != 0 {
+			if path, ok := fileURLPath(src.Src); ok {
+				w.fileDir = filepath.Dir(path)
+				access := url.Send(sel("URLByDeletingLastPathComponent"))
+				w.web.Send(sel("loadFileURL:allowingReadAccessToURL:"), url, access)
+				return
+			}
 			request := objc.ID(Class("NSMutableURLRequest")).Send(sel("requestWithURL:"), url)
 			for name, value := range w.config.Headers {
 				request.Send(sel("setValue:forHTTPHeaderField:"), NSString(value), NSString(name))
@@ -357,6 +373,27 @@ func (w *Web) load() {
 			w.web.Send(sel("loadRequest:"), request)
 		}
 	}
+}
+
+func fileURLPath(raw string) (string, bool) {
+	u, err := neturl.Parse(raw)
+	if err != nil || !strings.EqualFold(u.Scheme, "file") || (u.Host != "" && !strings.EqualFold(u.Host, "localhost")) || u.Path == "" {
+		return "", false
+	}
+	p, err := neturl.PathUnescape(u.EscapedPath())
+	if err != nil || p == "" {
+		return "", false
+	}
+	return filepath.Clean(p), true
+}
+
+func fileURLInDir(raw, dir string) bool {
+	path, ok := fileURLPath(raw)
+	if !ok {
+		return false
+	}
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func nsURL(s string) objc.ID {
