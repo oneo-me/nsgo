@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -52,10 +53,12 @@ type propertyKey struct {
 	pid   uint32
 }
 
-type propVariantString struct {
+// propVariant is a PROPVARIANT holding a pointer (propidlbase.h): vt and three reserved words, then a union whose largest members, a count and a pointer such as BLOB's, make it 16 bytes on 386 and 24 on amd64 and arm64. value is an unsafe.Pointer so the collector sees what it points to.
+type propVariant struct {
 	vt       uint16
 	reserved [3]uint16
-	value    uintptr
+	value    unsafe.Pointer
+	_        uintptr
 }
 
 // toastActivatorCLSID is stable for an app ID and does not need to be
@@ -348,14 +351,17 @@ func setToastActivatorShortcut(path, id string) {
 		return
 	}
 	appID := syscall.StringToUTF16(id)
-	appIDVariant := propVariantString{vt: 31, value: uintptr(unsafe.Pointer(&appID[0]))} // VT_LPWSTR
-	if failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelID)), uintptr(unsafe.Pointer(&appIDVariant)))) {
-		return
+	appIDVariant := propVariant{vt: 31, value: unsafe.Pointer(&appID[0])} // VT_LPWSTR
+	clsidVariant := propVariant{vt: 72, value: unsafe.Pointer(&clsid)}    // VT_CLSID
+	stored := !failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelID)), uintptr(unsafe.Pointer(&appIDVariant)))) &&
+		!failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelToastActivator)), uintptr(unsafe.Pointer(&clsidVariant)))) &&
+		!failed(store.call(propertyStoreCommit))
+	// The variants, and appID and clsid they point at, outlive the calls that read them.
+	runtime.KeepAlive(&appIDVariant)
+	runtime.KeepAlive(&clsidVariant)
+	runtime.KeepAlive(appID)
+	runtime.KeepAlive(&clsid)
+	if stored {
+		persist.call(persistFileSave, uintptr(unsafe.Pointer(file)), 1)
 	}
-	clsidVariant := propVariantString{vt: 72, value: uintptr(unsafe.Pointer(&clsid))} // VT_CLSID
-	if failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelToastActivator)), uintptr(unsafe.Pointer(&clsidVariant)))) ||
-		failed(store.call(propertyStoreCommit)) {
-		return
-	}
-	persist.call(persistFileSave, uintptr(unsafe.Pointer(file)), 1)
 }

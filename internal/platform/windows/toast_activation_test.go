@@ -2,7 +2,11 @@
 
 package windows
 
-import "testing"
+import (
+	"runtime"
+	"testing"
+	"unsafe"
+)
 
 func TestToastActivatorCLSIDStable(t *testing.T) {
 	a := toastActivatorCLSID("com.example.notes")
@@ -33,5 +37,19 @@ func TestParseToastActivationArgs(t *testing.T) {
 		if got := parseToastActivationArgs(test.args); got != test.want {
 			t.Errorf("parseToastActivationArgs(%q) = %q, want %q", test.args, got, test.want)
 		}
+	}
+}
+
+// propVariant is as large as PROPVARIANT (propidlbase.h): 16 bytes on 386 and 24 on 64-bit Windows.
+func TestPropVariantSize(t *testing.T) {
+	want := uintptr(24)
+	if runtime.GOARCH == "386" {
+		want = 16
+	}
+	if got := unsafe.Sizeof(propVariant{}); got != want {
+		t.Fatalf("propVariant is %d bytes, want %d", got, want)
+	}
+	if got := unsafe.Offsetof(propVariant{}.value); got != 8 {
+		t.Fatalf("propVariant's value is at %d, want 8", got)
 	}
 }
