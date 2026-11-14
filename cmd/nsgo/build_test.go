@@ -1,6 +1,7 @@
 package main
 
 import (
+	"debug/pe"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -122,17 +123,24 @@ func TestBuildJobs(t *testing.T) {
 	}
 }
 
+// The companion is a console program, which the shell waits for and whose streams and exit code it keeps; the app stays a GUI one.
 func TestBuildWindowsCommand(t *testing.T) {
 	dir := t.TempDir()
 	p := &project{Name: "tool"}
 	if err := buildWindowsCommand(t.Context(), p, dir, "amd64"); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "tool.com"))
+	f, err := pe.Open(filepath.Join(dir, "tool.com"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(data) < 2 || string(data[:2]) != "MZ" {
-		t.Fatalf("tool.com is not a Windows executable: header %q", data[:min(len(data), 2)])
+	defer f.Close()
+	header, ok := f.OptionalHeader.(*pe.OptionalHeader64)
+	if !ok {
+		t.Fatalf("tool.com has no 64-bit optional header: %T", f.OptionalHeader)
+	}
+	if header.Subsystem != pe.IMAGE_SUBSYSTEM_WINDOWS_CUI {
+		t.Fatalf("tool.com's subsystem is %d, want the console's, %d", header.Subsystem, pe.IMAGE_SUBSYSTEM_WINDOWS_CUI)
 	}
 }
+
