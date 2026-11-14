@@ -29,8 +29,7 @@ type WebView struct {
 	// Headers are sent with the initial URL request where the platform
 	// supports custom request headers. HTML sources do not make one.
 	Headers map[string]string
-	// Incognito keeps website data in memory for this view. It is read when
-	// the native view is first made; changing it afterwards has no effect.
+	// Incognito keeps website data in memory for this view, apart from the app's other web views, on Apple platforms, Windows and Linux. Android has one cookie store and one set of website data per app, so there it only keeps the view from the HTTP cache, DOM storage and saved form data. It is read when the native view is first made; changing it afterwards has no effect.
 	Incognito bool
 	// NoScroll keeps the user from scrolling the page; NoJavaScript keeps
 	// pages from running scripts.
