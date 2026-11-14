@@ -24,6 +24,10 @@ go tool nsgo test    # 运行所有包的测试
 
 为改动加上测试：用户看到的内容用 `nsgotest`，其余用包自己的测试。在改动涉及的平台上运行 Gallery（[开发环境](../contributing.md#gallery)）。
 
+## Pull request
+
+标题使用 Conventional Commits 格式，例如 `fix(linux): keep the caret after a paste`：squash 合并时标题会成为提交信息，格式不对时检查会失败。模板会要求写明改动涉及的目标平台、可见改动的前后截图，以及实际跑过的检查。
+
 ## 文档与更新日志
 
 - 更新事实发生变化的文档：NSGo 如何工作写在 `docs/architecture/` 的专题里，应用和组件如何使用它写在 `docs/public/` 的页面里（[文档与网站](docs.md)）。

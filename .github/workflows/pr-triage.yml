@@ -1,0 +1,126 @@
+name: Pull request triage
+
+# Path labels, a Conventional Commit title check and a size label for every pull request, forks included.
+#
+# pull_request_target runs with a write token so that fork pull requests can be labelled, and in exchange it must never check out or run the pull request's code. No job here checks anything out: the labeler reads .github/labeler.yml from the base branch through the API, and the title reaches the script only through the environment, never through ${{ }} interpolation.
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+concurrency:
+  # Editing the title or body must not cancel the path and size jobs of a new push; each kind still replaces its own older run.
+  group: pr-triage-${{ github.event.pull_request.number }}-${{ github.event.action == 'edited' && 'edited' || 'head' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  paths:
+    name: Path labels
+    # An edit of the title or body cannot change which files the pull request touches.
+    if: github.event.action != 'edited'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          # Keep labels a maintainer added by hand; "documentation" in particular may come from a docs: title too.
+          sync-labels: false
+
+  title:
+    name: Conventional title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        with:
+          script: |
+            // A squash merge uses the pull request's title as the commit subject, so the title is what lands in main's history.
+            const marker = '<!-- pr-triage:title -->';
+            const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^()\s]+\))?(!)?: \S/;
+            const typeLabels = { feat: 'enhancement', fix: 'bug' };
+            const title = process.env.TITLE;
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number, per_page: 100 });
+            const previous = comments.find((c) => c.user.type === 'Bot' && c.body.includes(marker));
+            const match = pattern.exec(title);
+
+            if (!match) {
+              const body = [
+                marker,
+                "This pull request's title is not a Conventional Commit. A squash merge uses the title as the commit subject, so please write it as `type(scope): summary`, for example:",
+                '',
+                '- `fix(linux): keep the caret after a paste`',
+                '- `feat(ui): add a rating component`',
+                '- `docs: explain how to run the gallery on Android`',
+                '',
+                'Types: `feat` `fix` `docs` `style` `refactor` `perf` `test` `build` `ci` `chore` `revert`. Mark a breaking change with `!` before the colon. This comment goes away once the title is fixed.',
+              ].join('\n');
+              if (previous) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number, body });
+              }
+              core.setFailed(`Title is not a Conventional Commit: ${title}`);
+              return;
+            }
+
+            if (previous) {
+              await github.rest.issues.deleteComment({ owner, repo, comment_id: previous.id });
+            }
+
+            // Keep one type label in step with the title, so retitling feat to fix does not leave "enhancement" behind; "breaking" follows the "!" marker the same way. Read the live labels rather than the payload's, as the size job explains.
+            const live = await github.paginate(github.rest.issues.listLabelsOnIssue, { owner, repo, issue_number, per_page: 100 });
+            const current = new Set(live.map((l) => l.name));
+            const wanted = new Set();
+            if (typeLabels[match[1]]) wanted.add(typeLabels[match[1]]);
+            if (match[3]) wanted.add('breaking');
+            for (const name of [...Object.values(typeLabels), 'breaking']) {
+              if (current.has(name) && !wanted.has(name)) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number, name });
+              }
+            }
+            const add = [...wanted].filter((name) => !current.has(name));
+            if (add.length) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: add });
+            }
+
+  size:
+    name: Size label
+    if: github.event.action != 'edited'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // Lock files and generated code stay out of the count: a dependency bump that rewrites go.sum or a regenerated icon pack is still a small review.
+            const ignored = [/(^|\/)go\.sum$/, /(^|\/)bun\.lock$/, /_gen\.go$/, /(^|\/)testdata\//];
+            const sizes = [['size/XS', 10], ['size/S', 100], ['size/M', 500], ['size/L', 1000], ['size/XL', Infinity]];
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number, per_page: 100 });
+            const changed = files
+              .filter((f) => !ignored.some((re) => re.test(f.filename)))
+              .reduce((sum, f) => sum + f.additions + f.deletions, 0);
+            const label = sizes.find(([, limit]) => changed < limit)[0];
+            core.info(`${changed} changed lines -> ${label}`);
+
+            // Read the labels now rather than from the event payload: a re-run replays the original payload, whose labels may be gone already, and removing a missing label fails with 404.
+            const live = await github.paginate(github.rest.issues.listLabelsOnIssue, { owner, repo, issue_number: pull_number, per_page: 100 });
+            const current = live.map((l) => l.name);
+            for (const name of current.filter((n) => n.startsWith('size/') && n !== label)) {
+              await github.rest.issues.removeLabel({ owner, repo, issue_number: pull_number, name });
+            }
+            if (!current.includes(label)) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: [label] });
+            }

@@ -1,0 +1,97 @@
+name: Release
+
+# Publishes a GitHub release when a version tag is pushed. A maintainer decides the version: they turn CHANGELOG.md's `## [Unreleased]` into `## [X.Y.Z] - YYYY-MM-DD` above a fresh `## [Unreleased]`, merge that to main, then push the tag vX.Y.Z on main's commit. This workflow refuses a tag that is not on main or has no changelog section, runs test.yml, publishes the section as the release's notes (a prerelease for a version with a suffix such as -rc.1) and asks the Go module proxy for the version so pkg.go.dev lists it.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  notes:
+    name: Check the tag and its notes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.notes.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Check the tag is on main
+        run: |
+          set -euo pipefail
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main. Tag a commit of main."
+            exit 1
+          fi
+      - name: Extract the changelog section
+        id: notes
+        run: |
+          set -euo pipefail
+          version=${GITHUB_REF_NAME#v}
+          # The section runs from its heading to the next version's heading, without either.
+          awk -v heading="## [$version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::CHANGELOG.md has no '## [$version]' section with notes. Add it on main before tagging."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: notes.md
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    name: Test
+    needs: notes
+    uses: ./.github/workflows/test.yml
+
+  publish:
+    name: Publish the release
+    needs: [notes, test]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.notes.outputs.version }}
+        run: |
+          set -euo pipefail
+          prerelease=()
+          case "$VERSION" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "NSGo $VERSION" --notes-file notes.md "${prerelease[@]}"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache: false
+      - name: Announce the version to the Go module proxy
+        run: |
+          set -euo pipefail
+          # The proxy fetches the tag on first request, after which pkg.go.dev picks the version up. Retry, since the proxy may not see a tag pushed seconds ago.
+          for _ in 1 2 3 4 5; do
+            GOPROXY=https://proxy.golang.org GOFLAGS=-mod=mod go list -m "github.com/${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}" && exit 0
+            sleep 30
+          done
+          echo "::warning::The module proxy did not list $GITHUB_REF_NAME yet; it will on the first request that needs it."

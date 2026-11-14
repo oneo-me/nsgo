@@ -1,0 +1,64 @@
+name: Conflict label
+
+# Labels pull requests that conflict with their base branch and removes the label once the conflict is resolved. Every push to main can make open pull requests conflict, so a push to main checks them all; a pull request's own push checks again so the label comes off promptly.
+#
+# Whether a pull request conflicts is GitHub's mergeable field. Right after a push it may still be null while GitHub computes it in the background; the job reads it again a few times and leaves what stays unknown to the next run.
+#
+# pull_request_target gives fork pull requests a write token for labels; the job never checks out or runs a pull request's code and only calls GitHub's API.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  # Each run checks every open pull request, so only the newest run of one source matters: pushes are grouped by branch and pull requests by number. One group for all of them would let a pull request's run cancel a push's run on the same commit and leave a cancelled check behind. Two groups now and then scanning at once is harmless, since both read the current labels before changing them.
+  group: conflict-label-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    name: Label conflicting pull requests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: conflict
+    steps:
+      - name: Ensure the label exists
+        run: gh label create "$LABEL" --color B60205 --description "Conflicts with the base branch; resolve it first" --force
+
+      - name: Label pull requests by their mergeable state
+        run: |
+          set -euo pipefail
+          # Lists, GraphQL's included, never make GitHub compute mergeable and keep it UNKNOWN; only GET /pulls/{number} does. So list the numbers first, then read each one, again after 10 seconds while it is null, at most 4 times.
+          # The API now and then answers with an error page that is not JSON. Retry the list a few times, and treat a pull request that fails to read as not computed yet rather than failing the whole job.
+          for attempt in 1 2 3 4; do
+            gh pr list --state open --limit 500 --json number,labels \
+              --jq '.[] | "\(.number) \(any(.labels[]; .name == env.LABEL))"' > prs.txt && break
+            [ "$attempt" = 4 ] && exit 1
+            sleep 10
+          done
+          while read -r number labelled; do
+            mergeable=null
+            for attempt in 1 2 3 4; do
+              mergeable=$(gh api "repos/$GH_REPO/pulls/$number" --jq '.mergeable') || mergeable=null
+              [ "$mergeable" != null ] && break
+              [ "$attempt" = 4 ] || sleep 10
+            done
+            if [ "$mergeable" = false ] && [ "$labelled" = false ]; then
+              gh pr edit "$number" --add-label "$LABEL" >/dev/null && echo "#$number conflicts; added $LABEL"
+            elif [ "$mergeable" = true ] && [ "$labelled" = true ]; then
+              gh pr edit "$number" --remove-label "$LABEL" >/dev/null && echo "#$number no longer conflicts; removed $LABEL"
+            elif [ "$mergeable" = null ]; then
+              echo "#$number: mergeable state not computed yet; leaving it to the next run"
+            fi
+          done < prs.txt

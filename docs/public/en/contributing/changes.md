@@ -24,6 +24,10 @@ go tool nsgo test    # every package's tests
 
 Add a test for what you change: `nsgotest` for what a user sees, a package's own tests for the rest. Run the gallery on the platforms you touched ([Development setup](../contributing.md#the-gallery)).
 
+## The pull request
+
+Title it as a Conventional Commit, such as `fix(linux): keep the caret after a paste`: a squash merge makes the title the commit's subject, and a check fails until it fits. The template asks for the targets the change touches, before and after screenshots of anything visible, and the checks you ran.
+
 ## Docs and the changelog
 
 - Update the document whose facts change: a subject in `docs/architecture/` for how NSGo works, a page in `docs/public/` for how apps and components use it ([Docs and the website](docs.md)).

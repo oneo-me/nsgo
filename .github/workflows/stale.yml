@@ -1,0 +1,39 @@
+name: Stale
+
+# Nudges issues and pull requests that have gone quiet and closes them only after two more weeks without a reply. What a maintainer has claimed stays open: assigned items, drafts and anything labelled pinned, security, blocked, help wanted or good first issue; a single comment resets the clock. Dependabot's pull requests are exempt too, since nobody updates the actions' SHA pins by hand.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: stale
+  cancel-in-progress: false
+
+jobs:
+  stale:
+    name: Mark and close stale items
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        with:
+          days-before-issue-stale: 60
+          days-before-pr-stale: 30
+          days-before-close: 14
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: pinned,security,blocked,accessibility,help wanted,good first issue
+          exempt-pr-labels: pinned,security,blocked,dependencies
+          exempt-all-assignees: true
+          exempt-draft-pr: true
+          close-issue-reason: not_planned
+          stale-issue-message: "This issue has had no activity for 60 days. If it still happens, please reply with the NSGo commit and target you see it on; without a reply it closes in 14 days, and it can be reopened at any time."
+          close-issue-message: "Closing for lack of new information. If it still happens, please reopen it with a fresh reproduction."
+          stale-pr-message: "This pull request has had no activity for 30 days. If you are still working on it, push a commit or reply; without either it closes in 14 days, and the branch is kept."
+          close-pr-message: "Closing for lack of activity; the branch is kept. Reopen it whenever you continue."
