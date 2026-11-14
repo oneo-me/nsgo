@@ -227,6 +227,12 @@ var (
 	webDownloadSerial uint64
 )
 
+// report reports dl as it is now. The engine reads the event after the backend has gone on, so it gets a copy rather than the item later signals change.
+func (dl *webDownload) report() {
+	item := dl.item
+	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &item})
+}
+
 // webWarned is the warning, once, that web views show a placeholder.
 var webWarned sync.Once
 
@@ -491,7 +497,7 @@ func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
 	dir := filepath.Join(dl.view.web.config.DownloadDir, dl.item.ID)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		dl.item.State, dl.item.Message = driver.WebDownloadFailed, err.Error()
-		dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+		dl.report()
 		delete(webDownloads, download)
 		webkitDownloadCancel(download)
 		return 1
@@ -499,7 +505,7 @@ func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
 	dl.item.Filename = name
 	dl.item.Path = filepath.Join(dir, name)
 	webkitDownloadSetDestination(download, cstr(dl.item.Path))
-	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	dl.report()
 	return 1
 }
 
@@ -526,7 +532,7 @@ func webDownloadFinishedCallback(download, data uintptr) {
 	if dest := webkitDownloadGetDestination(download); dest != 0 {
 		dl.item.Path = goString(dest)
 	}
-	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	dl.report()
 	delete(webDownloads, download)
 }
 
@@ -539,7 +545,7 @@ func webDownloadFailedCallback(download, gerr, data uintptr) {
 	if gerr != 0 {
 		dl.item.Message = goString((*gError)(cPointer(gerr)).message)
 	}
-	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	dl.report()
 	delete(webDownloads, download)
 }
 

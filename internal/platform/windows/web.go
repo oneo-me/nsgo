@@ -329,7 +329,7 @@ func (wv *webView) downloadStarted(args *comObject) {
 	dl := &webDownload{view: wv, op: op, item: driver.WebDownload{State: driver.WebDownloadStarted,
 		ID: id, URL: op.getString(downloadGetURI), Filename: name, Path: path}}
 	wv.downloads = append(wv.downloads, dl)
-	wv.report(driver.Event{Kind: driver.EventDownload, Data: &dl.item})
+	wv.reportDownload(dl)
 	op.subscribe(downloadAddBytesChanged, newHandler(&iidBytesReceivedChanged, func(uintptr, unsafe.Pointer) {
 		// The public event model reports the byte count when the download
 		// reaches its terminal state, matching the Apple and Linux hosts.
@@ -337,6 +337,12 @@ func (wv *webView) downloadStarted(args *comObject) {
 	op.subscribe(downloadAddStateChanged, newHandler(&iidDownloadStateChanged, func(uintptr, unsafe.Pointer) {
 		wv.downloadStateChanged(dl)
 	}))
+}
+
+// reportDownload reports dl as it is now. The engine reads the event after the backend has gone on, so it gets a copy rather than the item later state changes overwrite.
+func (wv *webView) reportDownload(dl *webDownload) {
+	item := dl.item
+	wv.report(driver.Event{Kind: driver.EventDownload, Data: &item})
 }
 
 func (wv *webView) downloadStateChanged(dl *webDownload) {
@@ -364,7 +370,7 @@ func (wv *webView) downloadStateChanged(dl *webDownload) {
 	default:
 		return
 	}
-	wv.report(driver.Event{Kind: driver.EventDownload, Data: &dl.item})
+	wv.reportDownload(dl)
 	dl.op.release()
 	dl.op = nil
 	for i, active := range wv.downloads {
