@@ -288,6 +288,10 @@ var nsisTemplate = template.Must(template.New("nsi").Funcs(template.FuncMap{
 	"path": func(variable string, names ...string) string {
 		return `"` + variable + nsisEscape(strings.Join(names, "")) + `"`
 	},
+	// cmd is a command line for Exec and ExecWait, its parts joined in an NSIS single-quoted string, in which a quote of the app's name is $\'.
+	"cmd": func(parts ...string) string {
+		return "'" + strings.ReplaceAll(strings.Join(parts, ""), "'", `$\'`) + "'"
+	},
 	"quad":  nsisVersion,
 	"close": func() string { return nsisCloseApp },
 	"amp":   func(s string) string { return strings.ReplaceAll(s, "&", "&&") },
@@ -379,7 +383,7 @@ Section
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortCut {{path "$SMPROGRAMS\\" .Name ".lnk"}} {{path "$INSTDIR\\" .Exe}}
   ; Give desktop toasts a COM activator CLSID on the Start menu shortcut.
-  ExecWait '{{path "$INSTDIR\\" .Exe}} --register-toast {{path "$SMPROGRAMS\\" .Name ".lnk"}}'
+  ExecWait {{cmd (path "$INSTDIR\\" .Exe) " --register-toast " (path "$SMPROGRAMS\\" .Name ".lnk")}}
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayName" {{q .Name}}
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayVersion" {{q .Version}}
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayIcon" {{path "$INSTDIR\\" .Exe}}
@@ -394,7 +398,7 @@ Section
   ClearErrors
   ${GetOptions} $0 "/RELAUNCH" $1
   ${IfNot} ${Errors}
-    Exec '{{path "$INSTDIR\\" .Exe}}'
+    Exec {{cmd (path "$INSTDIR\\" .Exe)}}
   ${EndIf}
 SectionEnd
 
@@ -407,7 +411,7 @@ FunctionEnd
 Section "Uninstall"
   Call un.CloseApp
   ; Remove the per-user toast COM registration before deleting the EXE.
-  ExecWait '{{path "$INSTDIR\\" .Exe}} --unregister-toast'
+  ExecWait {{cmd (path "$INSTDIR\\" .Exe) " --unregister-toast"}}
   Delete {{path "$SMPROGRAMS\\" .Name ".lnk"}}
   Delete {{path "$DESKTOP\\" .Name ".lnk"}}
   DeleteRegKey HKCU {{q .UninstallKey}}

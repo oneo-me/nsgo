@@ -113,6 +113,15 @@ func TestNSISScript(t *testing.T) {
 			t.Errorf("script holds %s", unwanted)
 		}
 	}
+	// A quote in the name stays inside the command lines the installer runs.
+	d.Name = "Bob's `Notes`"
+	out.Reset()
+	if err := nsisTemplate.Execute(&out, d); err != nil {
+		t.Fatal(err)
+	}
+	if want := "ExecWait '\"$INSTDIR\\MyApp.exe\" --register-toast \"$SMPROGRAMS\\Bob$\\'s `Notes`.lnk\"'"; !strings.Contains(out.String(), want) {
+		t.Errorf("script lacks %s", want)
+	}
 	for v, want := range map[string]string{"1.2.3": "1.2.3.0", "v2": "2.0.0.0", "1.2.3.4.5": "1.2.3.4"} {
 		if got := nsisVersion(v); got != want {
 			t.Errorf("nsisVersion(%q) = %s, want %s", v, got, want)
@@ -120,7 +129,8 @@ func TestNSISScript(t *testing.T) {
 	}
 }
 
-// makensis compiles the script, which reaches every file.
+// makensis compiles the script, which reaches every file, for a name with
+// quotes in it.
 func TestNSISCompiles(t *testing.T) {
 	compiler := nsisCompiler()
 	if compiler == "" {
@@ -128,7 +138,10 @@ func TestNSISCompiles(t *testing.T) {
 	}
 	dir := t.TempDir()
 	writeFiles(t, dir, map[string]string{"App.exe": "exe", "fonts/a.ttf": "font"})
+	locales := t.TempDir()
+	writeFiles(t, locales, map[string]string{"en.yaml": "appName: \"Bob's `Notes`\"\n"})
 	p := &project{Dir: dir, Name: "App", ID: "dev.example.app", Version: "1.0.0", Release: true}
+	p.I18n.Dir, p.I18n.Source = locales, "en"
 	if _, err := buildNSIS(t.Context(), p, dir, "x64"); err != nil {
 		t.Fatal(err)
 	}
