@@ -158,6 +158,7 @@ const (
 	wsClipChildren     = 0x02000000
 	wsVisible          = 0x10000000
 	wsExNoRedirect     = 0x00200000           // no redirection bitmap, for a composition surface
+	wsExToolWindow     = 0x00000080           // no taskbar button or Alt+Tab entry
 	cwUseDefault       = ^uintptr(0x7FFFFFFF) // CW_USEDEFAULT as a uintptr
 	gwlStyle           = ^uintptr(15)         // -16
 	swShow             = 5
@@ -799,8 +800,13 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	child.visible = !opts.Hidden
 	child.chrome.constraints = opts.Constraints
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
+	var ex uintptr
 	if cfg.Kind == driver.SurfacePanel {
 		style = wsPopup | wsClipChildren
+	}
+	if cfg.Kind != driver.SurfaceWindow {
+		// Panels, as tray flyouts, have no taskbar button or Alt+Tab entry.
+		ex = wsExToolWindow
 	}
 	frame := rect{Right: child.px(opts.Width), Bottom: child.px(opts.Height)}
 	if cfg.Kind == driver.SurfaceWindow {
@@ -811,7 +817,7 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	// would make wndProc's callback initialization recursive.
 	instance, _, _ := getModuleHandleW.Call(0)
 	className := wide("NsgoWindow")
-	hwnd, _, _ := createWindowExW.Call(0, uintptr(unsafe.Pointer(className)),
+	hwnd, _, _ := createWindowExW.Call(ex, uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(wide(opts.Title))), style,
 		cwUseDefault, cwUseDefault, uintptr(frame.Right-frame.Left), uintptr(frame.Bottom-frame.Top),
 		0, 0, instance, 0)
