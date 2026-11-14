@@ -55,8 +55,8 @@ func (t *Tree) mountSuspense(cx *Scope, parent *node, s Suspense) {
 		} else {
 			delete(t.suspended, b.content)
 		}
-		// Content's own views hide and show; what is under them follows.
-		for _, n := range appendNative(nil, b.content.children) {
+		// Content's own views hide and show; what is under them follows. They are those suspendedIn finds Content above, hoisted ones too, which a host places apart from the views around them.
+		for _, n := range ownViews(nil, b.content.children) {
 			if t.restyle(n) {
 				t.markLayout(n)
 			}
@@ -90,6 +90,18 @@ func suspend(r suspender, owner *Scope) {
 }
 
 func (b *suspense) bump() { b.changed.Update(func(n uint64) uint64 { return n + 1 }) }
+
+// ownViews appends the views children holds, through its regions, including the overlays, modals and fixed views it hoists, which appendNative leaves out.
+func ownViews(out []*node, children []*node) []*node {
+	for _, c := range children {
+		if c.kind == 0 {
+			out = ownViews(out, c.children)
+		} else {
+			out = append(out, c)
+		}
+	}
+	return out
+}
 
 // suspendedIn reports whether n is one of a waiting Suspense's Content's own views: the regions between it and the view it sits in hold one.
 func (t *Tree) suspendedIn(n *node) bool {

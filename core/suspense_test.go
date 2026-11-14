@@ -129,3 +129,43 @@ func TestSuspenseInsideContentTakesWhatIsReadUnderIt(t *testing.T) {
 		t.Fatal("the outer suspense waited for what the inner one holds")
 	}
 }
+
+func TestSuspenseHidesTheViewsContentHoists(t *testing.T) {
+	fetch, next, _ := loads(t)
+	var open *Signal[bool]
+	h := newHost(t, Size{Width: 200, Height: 200}, func(cx *Scope) Node {
+		open = NewSignal(cx, false)
+		return Suspense{Content: func(cx *Scope) Node {
+			r := NewResource[int](cx, nil, fetch)
+			return Group{
+				Text{ContentFunc: func() string { v, _ := r.Get(); return v }, TestID: "content"},
+				Overlay{TestID: "overlay", Children: []Node{Text{Content: "over"}}},
+				View{TestID: "fixed", Style: Style{Position: Fixed, Bottom: Pt(0)}, Children: []Node{Text{Content: "bar"}}},
+				Show{When: open.Get, Then: func(*Scope) Node {
+					return Modal{TestID: "modal", Children: []Node{Text{Content: "dialog"}}}
+				}},
+			}
+		}}
+	})
+	h.commit()
+	l := next()
+	// Mounted with Content, before the suspense first waited.
+	for _, id := range []string{"content", "overlay", "fixed"} {
+		if !h.find(id).hidden {
+			t.Fatalf("%s showed while the first value loaded", id)
+		}
+	}
+	// Mounted while it waits.
+	open.Set(true)
+	h.commit()
+	if !h.find("modal").hidden {
+		t.Fatal("a modal content opened while waiting showed")
+	}
+	h.end(l, loadReply{v: "ready"})
+	h.commit()
+	for _, id := range []string{"content", "overlay", "fixed", "modal"} {
+		if h.find(id).hidden {
+			t.Fatalf("%s stayed hidden once the suspense was ready", id)
+		}
+	}
+}
