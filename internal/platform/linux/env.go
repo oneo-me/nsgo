@@ -99,10 +99,21 @@ func displays() []driver.DisplayInfo {
 		if monitor == 0 {
 			continue
 		}
-		var frame, visible gdkMonitorRectangle
+		watchMonitor(monitor)
+		var frame gdkMonitorRectangle
 		gdkMonitorGetGeometry(monitor, &frame)
-		gdkMonitorGetWorkarea(monitor, &visible)
-		scale := float32(gdkMonitorGetScaleFactor(monitor))
+		// Wayland reports no work area, so there the whole monitor is the visible one.
+		visible := frame
+		if gdkX11MonitorGetWorkarea != nil && gTypeIsA(monitor, gdkX11MonitorGetType()) != 0 {
+			gdkX11MonitorGetWorkarea(monitor, &visible)
+		}
+		// The fractional scale, as PixelRatio's: the scale factor is its ceiling.
+		var scale float32
+		if gdkMonitorGetScale != nil {
+			scale = float32(gdkMonitorGetScale(monitor))
+		} else {
+			scale = float32(gdkMonitorGetScaleFactor(monitor))
+		}
 		if scale <= 0 {
 			scale = 1
 		}
@@ -131,6 +142,18 @@ func watchDisplays(model uintptr) {
 	}
 	watchedDisplays = model
 	gSignalConnect(model, "items-changed", cbDisplaysChanged, 0)
+}
+
+// watchMonitor rereads the displays when monitor moves, resizes or changes its scale, which GDK reports on the monitor rather than as a change to the model's items. The mark it leaves on the monitor goes with it.
+func watchMonitor(monitor uintptr) {
+	key := cstr("nsgo-displays-watched")
+	if gObjectGetData(monitor, key) != 0 {
+		return
+	}
+	gObjectSetData(monitor, key, 1)
+	for _, signal := range []string{"notify::geometry", "notify::scale", "notify::scale-factor", "invalidate"} {
+		gSignalConnect(monitor, signal, cbDisplaysChanged, 0)
+	}
 }
 
 func displaysChangedCallback(_, _, _, _ uintptr) {
