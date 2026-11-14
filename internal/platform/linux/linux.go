@@ -778,9 +778,18 @@ func (w *window) apply(b *driver.MountBatch) {
 			w.applyTray(*it.Tray)
 			continue
 		case driver.ItemTrayMenu:
-			// StatusNotifierItem's ContextMenu call reports the secondary
-			// click. A host without a DBus menu closes this request here.
-			w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: it.Count})
+			tr := (*linuxTray)(nil)
+			if it.Tray != nil {
+				tr = w.trays[it.Tray.ID]
+			}
+			if tr == nil || tr.menuID == 0 {
+				// A host without a DBus menu closes this request here.
+				w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: it.Count})
+				continue
+			}
+			tr.menu = slices.Clone(it.Menu)
+			tr.revision++
+			tr.popupID = it.Count
 			continue
 		case driver.ItemOpenSurface:
 			if it.Surface != nil {

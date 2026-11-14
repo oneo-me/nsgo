@@ -18,6 +18,7 @@ var (
 	gVariantNewArray               func(childType uintptr, children *uintptr, n uintptr) uintptr
 	gVariantNewDictEntry           func(key, value uintptr) uintptr
 	gVariantNewVariant             func(v uintptr) uintptr
+	gVariantGetInt32               func(v uintptr) int32
 	gVariantGetUint32              func(v uintptr) uint32
 	gVariantTypeNew                func(t *byte) uintptr
 	gVariantTypeFree               func(t uintptr)
@@ -30,6 +31,7 @@ var (
 		purego.RegisterLibFunc(&gVariantNewArray, glibLib, "g_variant_new_array")
 		purego.RegisterLibFunc(&gVariantNewDictEntry, glibLib, "g_variant_new_dict_entry")
 		purego.RegisterLibFunc(&gVariantNewVariant, glibLib, "g_variant_new_variant")
+		purego.RegisterLibFunc(&gVariantGetInt32, glibLib, "g_variant_get_int32")
 		purego.RegisterLibFunc(&gVariantGetUint32, glibLib, "g_variant_get_uint32")
 		purego.RegisterLibFunc(&gVariantTypeNew, glibLib, "g_variant_type_new")
 		purego.RegisterLibFunc(&gVariantTypeFree, glibLib, "g_variant_type_free")

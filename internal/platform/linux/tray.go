@@ -24,6 +24,7 @@ import (
 const (
 	trayServicePrefix = "org.freedesktop.StatusNotifierItem-"
 	trayItemInterface = "org.freedesktop.StatusNotifierItem"
+	trayMenuInterface = "com.canonical.dbusmenu"
 	trayProperties    = "org.freedesktop.DBus.Properties"
 	trayWatcher       = "org.kde.StatusNotifierWatcher"
 	trayWatcherAlt    = "org.freedesktop.StatusNotifierWatcher"
@@ -49,6 +50,20 @@ const trayIntrospection = `
     <property name="ToolTip" type="(sa(iiay)ss)" access="read"/>
     <property name="Menu" type="o" access="read"/>
   </interface>
+  <interface name="com.canonical.dbusmenu">
+    <method name="GetLayout"><arg name="parentId" type="i" direction="in"/><arg name="recursionDepth" type="i" direction="in"/><arg name="propertyNames" type="as" direction="in"/><arg name="revision" type="u" direction="out"/><arg name="layout" type="(ia{sv}av)" direction="out"/></method>
+    <method name="GetGroupProperties"><arg name="ids" type="ai" direction="in"/><arg name="propertyNames" type="as" direction="in"/><arg name="properties" type="a(ia{sv})" direction="out"/></method>
+    <method name="GetProperty"><arg name="id" type="i" direction="in"/><arg name="name" type="s" direction="in"/><arg name="value" type="v" direction="out"/></method>
+    <method name="Event"><arg name="id" type="i" direction="in"/><arg name="eventId" type="s" direction="in"/><arg name="data" type="v" direction="in"/><arg name="timestamp" type="u" direction="in"/></method>
+    <method name="AboutToShow"><arg name="id" type="i" direction="in"/><arg name="needUpdate" type="b" direction="out"/></method>
+    <method name="AboutToShowGroup"><arg name="ids" type="ai" direction="in"/><arg name="updatesNeeded" type="ai" direction="out"/><arg name="idErrors" type="ai" direction="out"/></method>
+    <signal name="ItemsPropertiesUpdated"><arg name="updatedProps" type="a(ia{sv})"/><arg name="removedProps" type="a(ias)"/></signal>
+    <signal name="LayoutUpdated"><arg name="revision" type="u"/><arg name="parentId" type="i"/></signal>
+    <property name="Version" type="u" access="read"/>
+    <property name="TextDirection" type="s" access="read"/>
+    <property name="Status" type="s" access="read"/>
+    <property name="IconThemePath" type="s" access="read"/>
+  </interface>
   <interface name="org.freedesktop.DBus.Properties">
     <method name="Get"><arg name="interface" type="s" direction="in"/><arg name="property" type="s" direction="in"/><arg name="value" type="v" direction="out"/></method>
     <method name="GetAll"><arg name="interface" type="s" direction="in"/><arg name="properties" type="a{sv}" direction="out"/></method>
@@ -64,12 +79,17 @@ type gDBusInterfaceVTable struct {
 }
 
 type linuxTray struct {
-	cfg     driver.TrayConfig
-	bus     uintptr
-	name    string
-	owner   uint32
-	itemID  uint32
-	propsID uint32
+	cfg      driver.TrayConfig
+	bus      uintptr
+	name     string
+	owner    uint32
+	itemID   uint32
+	propsID  uint32
+	menuID   uint32
+	menuPath string
+	menu     []driver.MenuEntry
+	revision uint32
+	popupID  uint32
 }
 
 var (
@@ -104,7 +124,11 @@ var (
 )
 
 func trayObjectPath(id uint32) string {
-	return "/StatusNotifierItem"
+	return fmt.Sprintf("/StatusNotifierItem/%d", id)
+}
+
+func trayMenuPath(id uint32) string {
+	return trayObjectPath(id) + "/Menu"
 }
 
 func init() {
@@ -145,10 +169,11 @@ func (w *window) applyTray(cfg driver.TrayConfig) {
 	}
 	itemInfo := gDBusNodeInfoLookupInterface(trayNodeInfo, cstr(trayItemInterface))
 	propsInfo := gDBusNodeInfoLookupInterface(trayNodeInfo, cstr(trayProperties))
-	if itemInfo == 0 || propsInfo == 0 {
+	menuInfo := gDBusNodeInfoLookupInterface(trayNodeInfo, cstr(trayMenuInterface))
+	if itemInfo == 0 || propsInfo == 0 || menuInfo == 0 {
 		return
 	}
-	tr = &linuxTray{cfg: cfg, bus: bus, name: fmt.Sprintf("%s%d-%d", trayServicePrefix, os.Getpid(), cfg.ID)}
+	tr = &linuxTray{cfg: cfg, bus: bus, name: fmt.Sprintf("%s%d-%d", trayServicePrefix, os.Getpid(), cfg.ID), menuPath: trayMenuPath(cfg.ID)}
 	tr.owner = gBusOwnNameOnConnection(bus, cstr(tr.name), 0, cbTrayAcquired, 0, w.handle, 0)
 	var err uintptr
 	path := trayObjectPath(cfg.ID)
@@ -166,6 +191,10 @@ func (w *window) applyTray(cfg driver.TrayConfig) {
 	if err != 0 {
 		gErrorFree(err)
 	}
+	tr.menuID = gDBusConnectionRegisterObject(bus, cstr(tr.menuPath), menuInfo, &trayVTable, w.handle, 0, &err)
+	if err != 0 {
+		gErrorFree(err)
+	}
 	w.trays[cfg.ID] = tr
 }
 
@@ -175,6 +204,9 @@ func (w *window) removeTray(tr *linuxTray) {
 	}
 	if tr.itemID != 0 {
 		gDBusConnectionUnregisterObject(tr.bus, tr.itemID)
+	}
+	if tr.menuID != 0 {
+		gDBusConnectionUnregisterObject(tr.bus, tr.menuID)
 	}
 	if tr.owner != 0 {
 		gBusUnownName(tr.owner)
@@ -226,8 +258,17 @@ func trayMethodCall(conn, sender, path, iface, method, params, invocation, data 
 		returnTray(invocation)
 		return
 	}
-	if methodString(iface) == trayProperties {
-		gDBusMethodInvocationReturnValue(invocation, trayPropertiesMethod(w, id, methodString(method), params))
+	interfaceName := methodString(iface)
+	if interfaceName == trayProperties {
+		if strings.HasSuffix(goString(path), "/Menu") {
+			gDBusMethodInvocationReturnValue(invocation, trayMenuPropertiesMethod(w, id, methodString(method), params))
+		} else {
+			gDBusMethodInvocationReturnValue(invocation, trayPropertiesMethod(w, id, methodString(method), params))
+		}
+		return
+	}
+	if interfaceName == trayMenuInterface {
+		gDBusMethodInvocationReturnValue(invocation, trayMenuMethod(w, id, methodString(method), params))
 		return
 	}
 	switch methodString(method) {
@@ -243,6 +284,9 @@ func trayGetProperty(conn, sender, path, iface, property uintptr, err, data uint
 	w := trayWindow(data)
 	if w == nil {
 		return 0
+	}
+	if strings.HasSuffix(goString(path), "/Menu") {
+		return menuProperty(goString(property))
 	}
 	return trayProperty(w, trayID(w, path), goString(property))
 }
@@ -265,13 +309,18 @@ func methodString(p uintptr) string {
 }
 
 func trayID(w *window, path uintptr) uint32 {
-	if goString(path) != "/StatusNotifierItem" {
+	p := goString(path)
+	const prefix = "/StatusNotifierItem/"
+	if !strings.HasPrefix(p, prefix) {
 		return 0
 	}
-	for id := range w.trays {
-		return id
+	value := strings.TrimPrefix(p, prefix)
+	value = strings.TrimSuffix(value, "/Menu")
+	id, err := strconv.ParseUint(value, 10, 32)
+	if err != nil {
+		return 0
 	}
-	return 0
+	return uint32(id)
 }
 
 func trayProperty(w *window, id uint32, property string) uintptr {
@@ -299,7 +348,154 @@ func trayProperty(w *window, id uint32, property string) uintptr {
 		children := []uintptr{gVariantNewString(cstr(w.opts.ID)), trayPixmap(cfg.Icon), gVariantNewString(cstr(cfg.Tooltip)), gVariantNewString(cstr(""))}
 		return gVariantNewTuple(&children[0], uintptr(len(children)))
 	case "Menu":
-		return gVariantNewObjectPath(cstr("/"))
+		return gVariantNewObjectPath(cstr(tr.menuPath))
+	}
+	return 0
+}
+
+func trayMenuMethod(w *window, id uint32, method string, params uintptr) uintptr {
+	tr := w.trays[id]
+	if tr == nil {
+		return gVariantNewTuple(nil, 0)
+	}
+	switch method {
+	case "GetLayout":
+		// The method's output is (u(ia{sv}av)).
+		children := []uintptr{gVariantNewUint32(tr.revision), menuNode(0, nil, tr.menu)}
+		return gVariantNewTuple(&children[0], uintptr(len(children)))
+	case "GetGroupProperties":
+		return menuGroupProperties(tr.menu)
+	case "GetProperty":
+		name := variantString(params, 1)
+		value := menuProperty(name)
+		v := gVariantNewVariant(value)
+		return gVariantNewTuple(&v, 1)
+	case "Event":
+		if variantString(params, 1) == "clicked" {
+			child := gVariantGetChildValue(params, 0)
+			itemID := uint32(gVariantGetInt32(child))
+			gVariantUnref(child)
+			if itemID != 0 {
+				w.engine.Dispatch(driver.Event{Kind: driver.EventMenu, Count: itemID})
+			}
+			if tr.popupID != 0 {
+				w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: tr.popupID})
+				tr.popupID = 0
+			}
+		}
+		return gVariantNewTuple(nil, 0)
+	case "AboutToShow":
+		v := gVariantNewBoolean(1)
+		return gVariantNewTuple(&v, 1)
+	case "AboutToShowGroup":
+		return menuEmptyIntArrays()
+	}
+	return gVariantNewTuple(nil, 0)
+}
+
+func trayMenuPropertiesMethod(w *window, id uint32, method string, params uintptr) uintptr {
+	switch method {
+	case "Get":
+		v := gVariantNewVariant(menuProperty(variantString(params, 1)))
+		return gVariantNewTuple(&v, 1)
+	case "GetAll":
+		entries := make([]uintptr, 0, 4)
+		for _, name := range []string{"Version", "TextDirection", "Status", "IconThemePath"} {
+			entries = append(entries, menuDictEntry(name, menuProperty(name)))
+		}
+		value := menuDict(entries)
+		return gVariantNewTuple(&value, 1)
+	}
+	return gVariantNewTuple(nil, 0)
+}
+
+func menuProperty(name string) uintptr {
+	switch name {
+	case "Version":
+		return gVariantNewUint32(3)
+	case "TextDirection":
+		return gVariantNewString(cstr("ltr"))
+	case "Status":
+		return gVariantNewString(cstr("normal"))
+	case "IconThemePath":
+		return gVariantNewString(cstr(""))
+	default:
+		return gVariantNewString(cstr(""))
+	}
+}
+
+func menuNode(id int32, entry *driver.MenuEntry, children []driver.MenuEntry) uintptr {
+	properties := menuEntryProperties(entry)
+	childValues := make([]uintptr, len(children))
+	for i := range children {
+		childValues[i] = gVariantNewVariant(menuNode(int32(children[i].ID), &children[i], children[i].Items))
+	}
+	childArray := menuArray("v", childValues)
+	node := []uintptr{gVariantNewInt32(id), properties, childArray}
+	return gVariantNewTuple(&node[0], uintptr(len(node)))
+}
+
+func menuEntryProperties(entry *driver.MenuEntry) uintptr {
+	props := []uintptr{}
+	if entry != nil {
+		props = append(props, menuDictEntry("label", gVariantNewString(cstr(entry.Label))))
+		props = append(props, menuDictEntry("enabled", gVariantNewBoolean(menuBool(!entry.Disabled))))
+		props = append(props, menuDictEntry("visible", gVariantNewBoolean(1)))
+		if entry.Separator {
+			props = append(props, menuDictEntry("type", gVariantNewString(cstr("separator"))))
+		}
+		if len(entry.Items) != 0 {
+			props = append(props, menuDictEntry("children-display", gVariantNewString(cstr("submenu"))))
+		}
+		if entry.Checkable {
+			props = append(props, menuDictEntry("toggle-type", gVariantNewString(cstr("checkmark"))))
+			state := int32(0)
+			if entry.Checked {
+				state = 1
+			}
+			props = append(props, menuDictEntry("toggle-state", gVariantNewInt32(state)))
+		}
+	}
+	return menuDict(props)
+}
+
+func menuGroupProperties(entries []driver.MenuEntry) uintptr {
+	values := make([]uintptr, len(entries))
+	for i := range entries {
+		children := []uintptr{gVariantNewInt32(int32(entries[i].ID)), menuEntryProperties(&entries[i])}
+		values[i] = gVariantNewTuple(&children[0], uintptr(len(children)))
+	}
+	return menuArray("(ia{sv})", values)
+}
+
+func menuEmptyIntArrays() uintptr {
+	empty := menuArray("i", nil)
+	values := []uintptr{empty, menuArray("i", nil)}
+	return gVariantNewTuple(&values[0], uintptr(len(values)))
+}
+
+func menuDictEntry(key string, value uintptr) uintptr {
+	return gVariantNewDictEntry(gVariantNewString(cstr(key)), gVariantNewVariant(value))
+}
+
+func menuDict(entries []uintptr) uintptr {
+	return menuArray("{sv}", entries)
+}
+
+func menuArray(signature string, values []uintptr) uintptr {
+	t := gVariantTypeNew(cstr(signature))
+	var ptr *uintptr
+	if len(values) != 0 {
+		ptr = &values[0]
+	}
+	v := gVariantNewArray(t, ptr, uintptr(len(values)))
+	gVariantTypeFree(t)
+	return v
+}
+
+func menuBool(v bool) int32 {
+	if v {
+		return 1
 	}
 	return 0
 }
