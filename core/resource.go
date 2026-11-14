@@ -144,11 +144,15 @@ func (r *Resource[T]) load(ctx context.Context, run uint64, fetch func(context.C
 	})
 }
 
-// Get returns the latest value, kept while loading again and after a failure, with ok false before the first; it subscribes the running computation.
+// Get returns the latest value, kept while loading again and after a failure, with ok false before the first; it subscribes the running computation, and has a Suspense around it wait while the first value loads.
 func (r *Resource[T]) Get() (v T, ok bool) {
+	suspend(r, r.owner)
 	rv := r.value.Get()
 	return rv.v, rv.ok
 }
+
+// loadingFirst reports whether it loads with no value yet, for the Suspense around a computation that read it.
+func (r *Resource[T]) loadingFirst() bool { return r.state.Get() == ResourcePending }
 
 // Err returns the last load's error, nil once a load gave a value; it subscribes the running computation.
 func (r *Resource[T]) Err() error { return r.err.Get() }

@@ -174,6 +174,8 @@ type Tree struct {
 	// record, while DevTools record a test, hears what the user does; devScrolls holds each scroll view's offset until the scroll is a step (devFlushScrolls).
 	record     func(devtools.Step)
 	devScrolls map[*node]Point
+	// suspended holds the regions of the Contents of the Suspenses that wait, whose views hide.
+	suspended map[*node]bool
 }
 
 // report is a handler to run under owner after the commit.
@@ -1076,6 +1078,9 @@ func (t *Tree) restyle(n *node) bool {
 		}
 	}
 	if n.screen != nil && n.screen.hidden {
+		n.style.Display = DisplayNone
+	}
+	if len(t.suspended) > 0 && t.suspendedIn(n) {
 		n.style.Display = DisplayNone
 	}
 	// Roots are placed by style the layout leaves out of theirs.
