@@ -508,6 +508,9 @@ func Run(app engine.App, opts Options) {
 	if registerToastShortcutCommand(opts.ID) {
 		return
 	}
+	if unregisterToastCommand(opts.ID) {
+		return
+	}
 	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.
 	var single *instance
 	if opts.ID != "" && opts.test == nil {

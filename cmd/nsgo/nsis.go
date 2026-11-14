@@ -406,6 +406,8 @@ FunctionEnd
 
 Section "Uninstall"
   Call un.CloseApp
+  ; Remove the per-user toast COM registration before deleting the EXE.
+  ExecWait '{{path "$INSTDIR\\" .Exe}} --unregister-toast'
   Delete {{path "$SMPROGRAMS\\" .Name ".lnk"}}
   Delete {{path "$DESKTOP\\" .Name ".lnk"}}
   DeleteRegKey HKCU {{q .UninstallKey}}

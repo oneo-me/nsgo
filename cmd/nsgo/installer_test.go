@@ -95,6 +95,7 @@ func TestNSISScript(t *testing.T) {
 		`LangString NSGO_RUNNING ${LANG_Japanese} "My App は実行中です。終了して続行しますか？"`,
 		`CreateShortCut "$SMPROGRAMS\My App.lnk" "$INSTDIR\MyApp.exe"`,
 		`ExecWait '"$INSTDIR\MyApp.exe" --register-toast "$SMPROGRAMS\My App.lnk"'`,
+		`ExecWait '"$INSTDIR\MyApp.exe" --unregister-toast'`,
 		`Delete "$INSTDIR\fonts\a$$b.ttf"`,
 		`RMDir "$INSTDIR\fonts"`,
 		`${IfNot} ${IsNativeARM64}`,

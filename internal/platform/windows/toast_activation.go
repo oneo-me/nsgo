@@ -24,6 +24,7 @@ import (
 var (
 	coRegisterClassObject = ole32.NewProc("CoRegisterClassObject")
 	coRevokeClassObject   = ole32.NewProc("CoRevokeClassObject")
+	regDeleteTreeW        = advapi32.NewProc("RegDeleteTreeW")
 
 	iidClassFactory                = parseGUID("00000001-0000-0000-c000-000000000046")
 	iidNotificationActivation      = parseGUID("53e31837-6600-4a81-9395-75cffe746f94")
@@ -100,6 +101,10 @@ func setUserRegistryString(path, name, value string) error {
 		return syscall.Errno(r)
 	}
 	return nil
+}
+
+func deleteUserRegistryTree(path string) {
+	regDeleteTreeW.Call(uintptr(syscall.HKEY_CURRENT_USER), uintptr(unsafe.Pointer(wide(path))))
 }
 
 func registerToastActivator(id string) {
@@ -315,6 +320,21 @@ func registerToastShortcutCommand(id string) bool {
 	for i, arg := range os.Args {
 		if arg == "--register-toast" && i+1 < len(os.Args) {
 			setToastActivatorShortcut(os.Args[i+1], id, toastActivatorCLSID(id))
+			return true
+		}
+	}
+	return false
+}
+
+func unregisterToastCommand(id string) bool {
+	for _, arg := range os.Args {
+		if arg == "--unregister-toast" {
+			if id == "" {
+				id = "dev.nsgo.app"
+			}
+			clsid := toastActivatorCLSID(id)
+			deleteUserRegistryTree(`Software\Classes\CLSID\` + formatGUID(clsid))
+			deleteUserRegistryTree(`Software\Classes\AppUserModelId\` + id)
 			return true
 		}
 	}
