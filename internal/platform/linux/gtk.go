@@ -95,6 +95,9 @@ var (
 	gFree              func(uintptr)
 	gErrorFree         func(uintptr)
 	gObjectUnref       func(uintptr)
+	gObjectGetData     func(uintptr, *byte) uintptr
+	gObjectSetData     func(uintptr, *byte, uintptr)
+	gTypeIsA           func(uintptr, uintptr) int32
 	gObjectRefSink     func(uintptr) uintptr
 	gSignalConnectData func(uintptr, *byte, uintptr, uintptr, uintptr, uint32) uint64
 	gSignalEmitByName  func(uintptr, *byte, ...any)
@@ -201,13 +204,21 @@ var (
 
 	// GDK, in libgtk-4.
 	gdkDisplayGetDefault       func() uintptr
+	gdkDisplayGetMonitors      func(uintptr) uintptr
 	gdkDisplayGetClipboard     func(uintptr) uintptr
 	gdkClipboardSetText        func(uintptr, *byte)
 	gdkClipboardReadTextAsync  func(uintptr, uintptr, uintptr, uintptr)
 	gdkClipboardReadTextFinish func(uintptr, uintptr, uintptr) uintptr
 	gdkSurfaceGetScale         func(uintptr) float64
+	gdkMonitorGetGeometry      func(uintptr, *gdkMonitorRectangle)
+	gdkMonitorGetScaleFactor   func(uintptr) int32
+	gdkMonitorGetConnector     func(uintptr) uintptr
 	gdkToplevelBeginMove       func(uintptr, uintptr, int32, float64, float64, uint32)
 	gtkGestureGetDevice        func(uintptr) uintptr
+	// Optional GDK functions, nil where GTK lacks them: the fractional monitor scale (GTK 4.14), and the work area GTK 4 has only for X11 monitors, where GTK was built with X11.
+	gdkMonitorGetScale       func(uintptr) float64
+	gdkX11MonitorGetType     func() uintptr
+	gdkX11MonitorGetWorkarea func(uintptr, *gdkMonitorRectangle)
 
 	// GIO.
 	gMenuNew                   func() uintptr
@@ -339,6 +350,8 @@ var (
 	cairoSurfaceWriteToPNG     func(uintptr, *byte) int32
 )
 
+type gdkMonitorRectangle struct{ X, Y, Width, Height int32 }
+
 // newCallback returns a C function pointer for the package-level
 // callback fn. purego keeps the function for the process's life.
 func newCallback(fn any) uintptr { return purego.NewCallback(fn) }
@@ -424,6 +437,9 @@ func bind() {
 	purego.RegisterLibFunc(&gVariantNewBoolean, glibLib, "g_variant_new_boolean")
 	purego.RegisterLibFunc(&gVariantUnref, glibLib, "g_variant_unref")
 	purego.RegisterLibFunc(&gObjectUnref, gobjectLib, "g_object_unref")
+	purego.RegisterLibFunc(&gObjectGetData, gobjectLib, "g_object_get_data")
+	purego.RegisterLibFunc(&gObjectSetData, gobjectLib, "g_object_set_data")
+	purego.RegisterLibFunc(&gTypeIsA, gobjectLib, "g_type_check_instance_is_a")
 	purego.RegisterLibFunc(&gObjectRefSink, gobjectLib, "g_object_ref_sink")
 	purego.RegisterLibFunc(&gSignalConnectData, gobjectLib, "g_signal_connect_data")
 	purego.RegisterLibFunc(&gSignalEmitByName, gobjectLib, "g_signal_emit_by_name")
@@ -529,11 +545,24 @@ func bind() {
 
 	// GDK.
 	purego.RegisterLibFunc(&gdkDisplayGetDefault, gtkLib, "gdk_display_get_default")
+	purego.RegisterLibFunc(&gdkDisplayGetMonitors, gtkLib, "gdk_display_get_monitors")
 	purego.RegisterLibFunc(&gdkDisplayGetClipboard, gtkLib, "gdk_display_get_clipboard")
 	purego.RegisterLibFunc(&gdkClipboardSetText, gtkLib, "gdk_clipboard_set_text")
 	purego.RegisterLibFunc(&gdkClipboardReadTextAsync, gtkLib, "gdk_clipboard_read_text_async")
 	purego.RegisterLibFunc(&gdkClipboardReadTextFinish, gtkLib, "gdk_clipboard_read_text_finish")
 	purego.RegisterLibFunc(&gdkSurfaceGetScale, gtkLib, "gdk_surface_get_scale")
+	purego.RegisterLibFunc(&gdkMonitorGetGeometry, gtkLib, "gdk_monitor_get_geometry")
+	purego.RegisterLibFunc(&gdkMonitorGetScaleFactor, gtkLib, "gdk_monitor_get_scale_factor")
+	purego.RegisterLibFunc(&gdkMonitorGetConnector, gtkLib, "gdk_monitor_get_connector")
+	if _, err := purego.Dlsym(gtkLib, "gdk_monitor_get_scale"); err == nil {
+		purego.RegisterLibFunc(&gdkMonitorGetScale, gtkLib, "gdk_monitor_get_scale")
+	}
+	if _, err := purego.Dlsym(gtkLib, "gdk_x11_monitor_get_workarea"); err == nil {
+		if _, err := purego.Dlsym(gtkLib, "gdk_x11_monitor_get_type"); err == nil {
+			purego.RegisterLibFunc(&gdkX11MonitorGetType, gtkLib, "gdk_x11_monitor_get_type")
+			purego.RegisterLibFunc(&gdkX11MonitorGetWorkarea, gtkLib, "gdk_x11_monitor_get_workarea")
+		}
+	}
 	purego.RegisterLibFunc(&gdkToplevelBeginMove, gtkLib, "gdk_toplevel_begin_move")
 
 	// GIO.

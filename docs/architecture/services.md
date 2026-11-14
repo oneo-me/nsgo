@@ -159,6 +159,19 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 `core.App`, NSH's `appInfo()` and TSX's too, is the app's ID, name, version and build number as `nsgo.yaml` gives them, which the tool builds into `core` with `-X`, and whether it is a development build: any but `nsgo build`'s. It is the binary's, not an engine's, so every view a host embeds reads the host build's.
 
+## Displays and locale settings
+
+`Env.Displays` is the desktop's list of `DisplayInfo` values. `Frame` is a display's whole area and `VisibleFrame` the area left for windows after the menu bar, Dock or taskbar; both use the same top-left, y-down screen coordinates as `desktop.SetWindowFrame`. `Scale` is device pixels per point and `Main` marks the primary display. On Windows a display's top left is its pixel offset from the primary display divided by the smallest display scale, and points within a display are its own scale's, so displays with different scales never overlap. The list changes when the platform reports a display arrangement change; on Linux a change only to an X11 work area, as a panel resized, shows at the next environment change. Phones and the web leave it empty; a view embedded in a desktop host reports the host machine's displays.
+
+| Target | Display source | Locale settings source |
+| --- | --- | --- |
+| macOS | `NSScreen.screens`, converted from AppKit's bottom-left coordinates | `NSLocale` and its calendar and date format preferences |
+| Windows | `EnumDisplayMonitors`, monitor work areas and per-monitor DPI | `GetLocaleInfoEx` for first weekday, hour cycle and measurement |
+| Linux | GDK's monitor model; X11 work areas, the whole monitor on Wayland, which reports none | the session's locale categories and GTK settings |
+| iOS, Android, Web | no desktop displays | platform or browser locale settings where available |
+
+`LocaleSettings` reports `FirstDayOfWeek`, `HourCycle` and `MeasurementSystem` independently of `Env.Locale`, so a localized app can follow the user's calendar, clock and measurement choices. A zero field means the platform did not report that choice.
+
 ## Appearance and quitting
 
 `SetAppearance` forces light or dark, and `nsgo.Appearance` starts the app in it. The core keeps the system's appearance beside the forced one and reports the one shown as `Env.Dark`, so platforms may report either. A subtree forces its own with `SetSubtreeAppearance` ([themes](themes.md#scope)).
@@ -174,7 +187,7 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 `Quit` ends the app. On desktops `nsgo.Run` returns once the engine stopped and storage was written, as NSH's `run_app`: macOS cancels `applicationShouldTerminate:` and stops AppKit's loop, posting an event to wake it. Android finishes its task; iOS apps never quit themselves. `mobile.ExitApp`, NSH's `BackHandler.exitApp`, does what Android's back does when nothing in the app takes it (`ItemBackUnhandled`): the task's root goes to the background, another activity finishes.
 
-`desktop.Restart`, NSH's `Application.restart()`, quits as `Quit` does with `ItemQuit`'s `On` set, and `nsgo.Run`, once the app has ended, starts the program again with the arguments it started with, its launch flags among them. The two never run side by side: on macOS and Linux a shell waits up to 10 seconds for the old process to exit, then starts the new one, a macOS bundle through `open -n` as the user opens it; on Windows the new process waits for the one `NSGO_RESTART_AFTER` names before `Run` starts. Under `nsgo dev`, which ends with the app it started, it only quits.
+`desktop.Restart`, NSH's `Application.restart()`, quits as `Quit` does with `ItemQuit`'s `On` set, and `nsgo.Run`, once the app has ended, starts the program again with the arguments it started with, its launch flags among them. The two never run side by side: on macOS and Linux a shell waits up to 10 seconds for the old process to exit, then starts the new one, a macOS bundle through `open -n` as the user opens it; on Windows the new process waits for the one `NSGO_RESTART_AFTER` names before `Run` starts. A release process started by a restart carries `NSGO_RESTART_GUARD`, so an app that restarts again within 10 seconds of its restart, as one restarting itself at launch does, logs one refusal instead of looping, while a restart the user asks for later still runs. Under `nsgo dev`, which ends with the app it started, it only quits.
 
 When the app ends by itself, and which of its windows a close keeps, is its shutdown mode's and its windows' `OnClosing` ([application and windows](application.md#lifecycle)).
 

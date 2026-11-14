@@ -33,6 +33,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 
 - `OpenWindow`, `OpenPanel` and a drawn tray icon make a tree under a scope of the opener's owner, so the window closes when that owner goes. Every scope under it knows its tree (`Scope.surf`), so services, key bindings and `desktop`'s window functions act on the window the code is in, and the app's own scope on the first tree.
 - Each tree has its own `Env`: size, scale, safe area and title bar. What the app forces, its locale, appearance and host tokens, is one signal shared by every window's.
+- On desktops, `Env.Displays` reports each display's whole and visible frame, scale and primary flag in the same coordinates as `desktop.SetWindowFrame`, so a saved frame can be placed on a chosen display.
 - Opening sends `ItemOpenSurface` to the app's surface. The platform makes the window and attaches it: `engine.Engine.Attach(id, platform)` returns the surface's `Engine`, which reports its size, environment and events as the first surface's does.
 - The engine commits every attached tree after each wake-up, the first first, and asks a window's platform for display frames, since the app's surface has no display. A tree waits uncommitted until it is attached.
 - A closed window's tree ends: the engine sends its platform one batch, `WindowDestroy`, and forgets it, or sends it to a platform that attaches after the close.

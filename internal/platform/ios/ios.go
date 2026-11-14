@@ -635,7 +635,7 @@ func (s *surface) refresh() {
 	if s == nil || s.engine == nil {
 		return
 	}
-	if env := s.environment(); env != s.env {
+	if env := s.environment(); !env.Equal(s.env) {
 		s.env = env
 		s.engine.SetEnvironment(env)
 	}

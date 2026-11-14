@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/nsgo-dev/nsgo/base"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/examples/gallery/locales"
@@ -33,6 +35,9 @@ func (g *gallery) showSettings() {
 func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 	categories := []ui.SettingsCategory{{ID: "general", Title: locales.SettingsGeneral(cx), Icon: lucide.Settings,
 		Groups: []ui.SettingsGroup{{ID: "general", Items: []ui.SettingsItem{{
+			ID: "app-info", Title: locales.SettingsAppInfo(cx), Description: locales.SettingsAppInfoDetail(cx),
+			Keywords: []string{"app", "version", "build", "development"}, Control: appInfoControl(cx),
+		}, {
 			ID: "language", Title: locales.Language(cx), Description: locales.SettingsLanguageDetail(cx),
 			Keywords: append([]string{"language", languageName(cx, "")}, languageNames()...),
 			Control:  g.languageSelect(cx),
@@ -51,6 +56,11 @@ func (g *gallery) settingsCategories(cx *core.Scope) []ui.SettingsCategory {
 			Keywords: []string{"statistics", "analytics", "privacy", "telemetry", locales.SettingsStats(cx)},
 			Control:  statsSwitch(cx),
 		}}}}})
+}
+
+func appInfoControl(cx *core.Scope) core.Node {
+	info := core.App()
+	return core.Text{Content: locales.SettingsAppInfoValue(cx, info.Version, info.Build, strconv.FormatBool(info.Development)), MaxLines: 2}
 }
 
 // statsSwitch turns the usage statistics on or off.

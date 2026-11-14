@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -8,6 +9,9 @@ import (
 // Environment is what the platform reports about where the app runs. The
 // surface size is not part of it: Tree.Resize reports that.
 type Environment struct {
+	// Displays are the desktop's displays, in screen coordinates. They are
+	// empty on targets without desktop displays.
+	Displays []DisplayInfo
 	// SafeArea is the part of each edge that system bars, notches and
 	// rounded corners cover.
 	SafeArea Edges
@@ -51,7 +55,7 @@ type Environment struct {
 	// LocaleSettings are how the user reads weeks, times and measures,
 	// apart from the language, where the platform says.
 	LocaleSettings LocaleSettings
-	OS     OS
+	OS             OS
 	// OSVersion is the system's version: major and minor on Apple
 	// platforms, Windows and Linux (the kernel's), Android's API level
 	// as Major, and zero on the web.
@@ -73,6 +77,10 @@ type Environment struct {
 	AppClip   bool
 	OpenedURL string
 }
+
+// Equal reports whether two platform environments have the same values.
+// Environment includes a slice of displays, so it cannot use ==.
+func (e Environment) Equal(other Environment) bool { return reflect.DeepEqual(e, other) }
 
 // LocaleSettings are the regional preferences the user set, in Intl's
 // names: FirstDayOfWeek 1 for Monday to 7 for Sunday (ISO 8601),

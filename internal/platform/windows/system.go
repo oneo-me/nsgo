@@ -761,6 +761,16 @@ func (w *window) windowFrame() driver.WindowFrame {
 	var r rect
 	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&r)))
 	corner, size := w.point(r.Left, r.Top), w.point(r.Right-r.Left, r.Bottom-r.Top)
+	// Through the window's monitor, in the points Env.Displays uses.
+	if monitor, _, _ := monitorFromWindow.Call(w.hwnd, monitorDefaultNear); monitor != 0 {
+		for _, placement := range monitorLayout() {
+			if placement.monitor == monitor {
+				corner = placement.point(r.Left, r.Top)
+				size = driver.Point{X: driver.Points(float64(r.Right-r.Left) / placement.scale), Y: driver.Points(float64(r.Bottom-r.Top) / placement.scale)}
+				break
+			}
+		}
+	}
 	return driver.WindowFrame{X: corner.X, Y: corner.Y, Move: true, Width: size.X, Height: size.Y}
 }
 
@@ -777,16 +787,22 @@ func (w *window) setWindowFrame(f driver.WindowFrame) {
 	var r rect
 	getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&r)))
 	x, y, cx, cy := r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top
+	px := w.px
 	if f.Move {
 		x, y = w.px(f.X), w.px(f.Y)
+		// Through the monitor the frame is on, as windowFrame reads it.
+		if placement, ok := placementForFrame(f); ok {
+			x, y = placement.pixel(f.X, f.Y)
+			px = placement.px
+		}
 	}
 	if f.Width > 0 {
-		cx = w.px(f.Width)
+		cx = px(f.Width)
 	}
 	if f.Height > 0 {
-		cy = w.px(f.Height)
+		cy = px(f.Height)
 	}
-	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), swpNoZOrder|swpNoActivate)
+	w.setWindowPosAt(x, y, cx, cy)
 }
 
 func isIconicWindow(hwnd uintptr) bool {

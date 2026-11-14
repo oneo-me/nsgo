@@ -128,6 +128,8 @@ const (
 	wmPaint         = 0x000F
 	wmEraseBkgnd    = 0x0014
 	wmSettingChange = 0x001A
+	wmDisplayChange = 0x007E
+	wmDPIChanged    = 0x02E0
 	wmShowWindow    = 0x0018
 	wmActivateApp   = 0x001C
 	wmKeyDown       = 0x0100
@@ -347,6 +349,8 @@ type window struct {
 	engine   *engine.Engine
 	batches  queue.Batches
 	scale    float64 // pixels per point
+	// placing is set while setWindowPosAt moves the window to pixels it chose (wmDPIChanged).
+	placing bool
 
 	// What other goroutines hand the main thread.
 	mu    sync.Mutex
@@ -625,6 +629,16 @@ func (w *window) placeNew(width, height driver.Points, fit bool) {
 // placeAt moves the new window to frame f, kept on the monitor nearest it.
 // That monitor's scale may be another one than the window started with.
 func (w *window) placeAt(f driver.WindowFrame) {
+	// Through the monitor the frame is on, as windowFrame reported it, kept in that monitor's work area.
+	if placement, ok := placementForFrame(f); ok {
+		f = f.OnScreen([]driver.Bounds{placement.display.VisibleFrame})
+		x, y := placement.pixel(f.X, f.Y)
+		w.setWindowPosAt(x, y, placement.px(f.Width), placement.px(f.Height))
+		if dpi, _, _ := getDpiForWindow.Call(w.hwnd); dpi != 0 {
+			w.scale = float64(dpi) / 96
+		}
+		return
+	}
 	r := rect{Left: w.px(f.X), Top: w.px(f.Y), Right: w.px(f.X + f.Width), Bottom: w.px(f.Y + f.Height)}
 	var mi monitorInfo
 	mi.Size = uint32(unsafe.Sizeof(mi))
@@ -638,6 +652,13 @@ func (w *window) placeAt(f driver.WindowFrame) {
 	if dpi, _, _ := getDpiForWindow.Call(w.hwnd); dpi != 0 {
 		w.scale = float64(dpi) / 96
 	}
+}
+
+// setWindowPosAt moves and sizes the window to a rect in the virtual desktop's pixels that it chose itself, so a DPI change the move causes keeps it (wmDPIChanged).
+func (w *window) setWindowPosAt(x, y, cx, cy int32) {
+	w.placing = true
+	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), uintptr(cx), uintptr(cy), swpNoZOrder|swpNoActivate)
+	w.placing = false
 }
 
 // newWindow returns the state of a window showing an app.
@@ -1819,6 +1840,30 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmSettingChange:
 		// Theme ("ImmersiveColorSet"), locale and accessibility changes.
 		w.updateEnvironment()
+	case wmDisplayChange:
+		for _, other := range windows {
+			if other.engine != nil {
+				other.updateEnvironment()
+			}
+		}
+	case wmDPIChanged:
+		// Under per-monitor awareness Windows leaves the window its pixels: it takes the rect Windows suggests for the new DPI, unless the move is one of the window's own (setWindowPosAt), which chose its pixels already. Either way the engine then lays out the client area in the new points, whether or not a WM_SIZE came before this.
+		if dpi := uint32(wParam & 0xffff); dpi != 0 {
+			w.scale = float64(dpi) / 96
+		}
+		if !w.placing && lParam != 0 {
+			r := *(**rect)(unsafe.Pointer(&lParam)) // the message's, valid while it is handled
+			setWindowPos.Call(hwnd, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpNoZOrder|swpNoActivate)
+		}
+		if w.engine != nil {
+			var client rect
+			getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+			if size := w.point(client.Right, client.Bottom); size.X > 0 && size.Y > 0 {
+				w.engine.Resize(driver.Size{Width: size.X, Height: size.Y})
+			}
+			w.updateEnvironment()
+		}
+		return 0
 	case wmActivateApp:
 		// Sent to each top-level window of the thread: the embedded views
 		// on it follow too.

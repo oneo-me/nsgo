@@ -19,13 +19,14 @@ func restart(args []string) error {
 		return err
 	}
 	cmd := exec.Command(exe, args...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=%d", restartAfter, os.Getpid()))
+	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=%d", restartAfter, os.Getpid()), restartGuardEnv+"=1")
 	return cmd.Start()
 }
 
 // awaitRestarted waits, at most 10 seconds, for the process that
 // restarted the app to exit, so the two never run side by side.
 func awaitRestarted() {
+	markRestarted()
 	pid, err := strconv.ParseUint(os.Getenv(restartAfter), 10, 32)
 	os.Unsetenv(restartAfter)
 	if err != nil {

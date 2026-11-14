@@ -3,6 +3,8 @@
 package windows
 
 import (
+	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"syscall"
@@ -11,13 +13,25 @@ import (
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
+// displayPlacement is a monitor as monitorLayout lays it out: origin is its top left in points.
+type displayPlacement struct {
+	monitor uintptr
+	info    monitorInfoEx
+	scale   float64
+	origin  driver.Point
+	display driver.DisplayInfo
+}
+
 var (
 	dwmapi = syscall.NewLazyDLL("dwmapi.dll")
+	shcore = syscall.NewLazyDLL("shcore.dll")
 
 	systemParametersInfoW    = user32.NewProc("SystemParametersInfoW")
 	getUserDefaultLocaleName = kernel32.NewProc("GetUserDefaultLocaleName")
 	getLocaleInfoEx          = kernel32.NewProc("GetLocaleInfoEx")
 	dwmSetWindowAttribute    = dwmapi.NewProc("DwmSetWindowAttribute")
+	enumDisplayMonitors      = user32.NewProc("EnumDisplayMonitors")
+	getDpiForMonitor         = shcore.NewProc("GetDpiForMonitor")
 
 	isWindowVisible          = user32.NewProc("IsWindowVisible")
 	getForegroundWindow      = user32.NewProc("GetForegroundWindow")
@@ -38,6 +52,14 @@ const (
 	dwmwaUseImmersiveDarkModeOld = 19 // before Windows 10 20H1
 )
 
+type monitorInfoEx struct {
+	Size    uint32
+	Monitor rect
+	Work    rect
+	Flags   uint32
+	Device  [32]uint16
+}
+
 // environment reads what Windows says about where the app runs, with
 // what the hidden title bar's window controls cover. There is no
 // software keyboard, so its inset stays 0.
@@ -52,6 +74,7 @@ func (w *window) environment() driver.Environment {
 		PixelRatio:     float32(w.scale),
 		Locale:         locale,
 		LocaleSettings: localeSettings(),
+		Displays:       w.displays(),
 		OS:             driver.OSWindows,
 		OSVersion:      osVersion(),
 		Idiom:          driver.IdiomDesktop,
@@ -62,6 +85,134 @@ func (w *window) environment() driver.Environment {
 		WindowFrame:    w.windowFrame(),
 		Lifecycle:      w.lifecycle(),
 	}
+}
+
+// displays reads the monitors in the virtual desktop, in the points monitorLayout lays them out in, as WindowFrame uses.
+func (w *window) displays() []driver.DisplayInfo {
+	placements := monitorLayout()
+	out := make([]driver.DisplayInfo, 0, len(placements))
+	for _, placement := range placements {
+		out = append(out, placement.display)
+	}
+	return out
+}
+
+// monitorLayout reads the monitors, in physical pixels, with their DPI, and lays them out in points (layoutMonitors).
+func monitorLayout() []displayPlacement {
+	monitorsFound.mu.Lock()
+	monitorsFound.all = nil
+	enumDisplayMonitors.Call(0, 0, monitorFound, 0)
+	all := monitorsFound.all
+	monitorsFound.all = nil
+	monitorsFound.mu.Unlock()
+	scales := make([]float64, len(all))
+	for i, item := range all {
+		scales[i] = 1
+		var dpi, dpiY uint32
+		if r, _, _ := getDpiForMonitor.Call(item.monitor, 0, uintptr(unsafe.Pointer(&dpi)), uintptr(unsafe.Pointer(&dpiY))); r == 0 && dpi > 0 {
+			scales[i] = float64(dpi) / 96
+		}
+	}
+	return layoutMonitors(all, scales)
+}
+
+// layoutMonitors gives each monitor its place in one point space. A monitor's top left is its pixel offset from the primary monitor's top left divided by the smallest scale of all monitors, and within a monitor a point is that monitor's own scale's. Monitors never overlap in pixels, and no monitor's scale is below the smallest, so their frames never overlap in points either, and at one shared scale they tile as their pixels do. Dividing every offset by its own monitor's scale would not: a 200% monitor right of a 100% one would start halfway across it.
+func layoutMonitors(all []foundMonitor, scales []float64) []displayPlacement {
+	if len(all) == 0 {
+		return nil
+	}
+	primary := 0
+	for i := range all {
+		if all[i].info.Flags&1 != 0 {
+			primary = i
+			break
+		}
+	}
+	base := all[primary].info.Monitor
+	least := scales[0]
+	for _, scale := range scales {
+		least = min(least, scale)
+	}
+	out := make([]displayPlacement, 0, len(all))
+	for i, item := range all {
+		p := displayPlacement{monitor: item.monitor, info: item.info, scale: scales[i]}
+		p.origin = driver.Point{X: driver.Points(float64(item.info.Monitor.Left-base.Left) / least), Y: driver.Points(float64(item.info.Monitor.Top-base.Top) / least)}
+		bounds := func(r rect) driver.Bounds {
+			return driver.Bounds{Origin: p.point(r.Left, r.Top), Size: driver.Size{Width: driver.Points(float64(r.Right-r.Left) / p.scale), Height: driver.Points(float64(r.Bottom-r.Top) / p.scale)}}
+		}
+		id := syscall.UTF16ToString(item.info.Device[:])
+		if id == "" {
+			id = fmt.Sprintf("%x", item.monitor)
+		}
+		p.display = driver.DisplayInfo{ID: id, Frame: bounds(item.info.Monitor), VisibleFrame: bounds(item.info.Work), Scale: float32(p.scale), Main: item.info.Flags&1 != 0}
+		out = append(out, p)
+	}
+	return out
+}
+
+// point converts a virtual desktop pixel position to points through the monitor.
+func (p displayPlacement) point(x, y int32) driver.Point {
+	return driver.Point{X: p.origin.X + driver.Points(float64(x-p.info.Monitor.Left)/p.scale), Y: p.origin.Y + driver.Points(float64(y-p.info.Monitor.Top)/p.scale)}
+}
+
+// pixel converts a position in points to the virtual desktop's pixels through the monitor, as point's inverse.
+func (p displayPlacement) pixel(x, y driver.Points) (int32, int32) {
+	return p.info.Monitor.Left + int32(math.Round(float64(x-p.origin.X)*p.scale)), p.info.Monitor.Top + int32(math.Round(float64(y-p.origin.Y)*p.scale))
+}
+
+// px converts a length in points to the monitor's pixels.
+func (p displayPlacement) px(v driver.Points) int32 { return int32(math.Round(float64(v) * p.scale)) }
+
+// monitorsFound collects what EnumDisplayMonitors reports, through the one callback monitorFound: Go makes at most about 2000 callbacks in a process, and windows read the layout on every move.
+var monitorsFound struct {
+	mu  sync.Mutex
+	all []foundMonitor
+}
+
+type foundMonitor struct {
+	monitor uintptr
+	info    monitorInfoEx
+}
+
+var monitorFound = syscall.NewCallback(func(monitor, _, _, _ uintptr) uintptr {
+	var info monitorInfoEx
+	info.Size = uint32(unsafe.Sizeof(info))
+	if ok, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&info))); ok != 0 {
+		monitorsFound.all = append(monitorsFound.all, foundMonitor{monitor: monitor, info: info})
+	}
+	return 1
+})
+
+func displayContains(d driver.Bounds, p driver.Point) bool {
+	return p.X >= d.Origin.X && p.X < d.Origin.X+d.Size.Width && p.Y >= d.Origin.Y && p.Y < d.Origin.Y+d.Size.Height
+}
+
+// placementForFrame chooses the monitor that owns the frame's center. A frame copied from Env.Displays therefore uses that display's scale when it is passed back to SetWindowFrame, even before the window has moved there.
+func placementForFrame(f driver.WindowFrame) (displayPlacement, bool) {
+	return choosePlacement(monitorLayout(), f)
+}
+
+// choosePlacement is placementForFrame on placements: the one whose frame holds f's center, which layoutMonitors keeps to at most one, or else the nearest.
+func choosePlacement(placements []displayPlacement, f driver.WindowFrame) (displayPlacement, bool) {
+	p := driver.Point{X: f.X + f.Width/2, Y: f.Y + f.Height/2}
+	for _, placement := range placements {
+		if displayContains(placement.display.Frame, p) {
+			return placement, true
+		}
+	}
+	if len(placements) == 0 {
+		return displayPlacement{}, false
+	}
+	// If a frame is outside every display, keep the nearest monitor's scale.
+	best, distance := placements[0], math.Inf(1)
+	for _, placement := range placements {
+		dx := max(max(float64(placement.display.Frame.Origin.X-p.X), float64(p.X-(placement.display.Frame.Origin.X+placement.display.Frame.Size.Width))), 0)
+		dy := max(max(float64(placement.display.Frame.Origin.Y-p.Y), float64(p.Y-(placement.display.Frame.Origin.Y+placement.display.Frame.Size.Height))), 0)
+		if d := dx*dx + dy*dy; d < distance {
+			best, distance = placement, d
+		}
+	}
+	return best, true
 }
 
 // appActive is whether the app is the active one, as the last
@@ -95,7 +246,7 @@ func (w *window) lifecycle() driver.Lifecycle {
 // a settings change, and reports it when it changed.
 func (w *window) updateEnvironment() {
 	env := w.environment()
-	if env == w.env {
+	if env.Equal(w.env) {
 		return
 	}
 	dark := w.shownDark()

@@ -25,6 +25,17 @@ type Bounds struct {
 	Size   Size
 }
 
+// DisplayInfo is one physical display in the desktop's screen coordinate space.
+// Frame is its whole area; VisibleFrame is the area available to windows.
+// Scale is device pixels per point, and Main marks the primary display.
+type DisplayInfo struct {
+	ID           string
+	Frame        Bounds
+	VisibleFrame Bounds
+	Scale        float32
+	Main         bool
+}
+
 // Contains reports whether p lies inside b.
 func (b Bounds) Contains(p Point) bool {
 	return p.X >= b.Origin.X && p.Y >= b.Origin.Y &&

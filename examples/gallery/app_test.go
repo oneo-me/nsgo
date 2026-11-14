@@ -1405,6 +1405,14 @@ func TestLanguageSetting(t *testing.T) {
 	app.WaitForGone("id:settings-dialog", time.Second)
 }
 
+// TestAppInfoSetting shows the app identity in the settings area, including
+// the development marker that a go tool nsgo dev run should expose.
+func TestAppInfoSetting(t *testing.T) {
+	app := startDesktop(t)
+	app.Press("id:settings")
+	app.Find("id:settings-general-app-info >> text:development true")
+}
+
 // TestSettingsSearch finds the language setting by a language's name and
 // says when nothing matches.
 func TestSettingsSearch(t *testing.T) {

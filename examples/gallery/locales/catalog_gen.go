@@ -44,6 +44,7 @@ func For(cx *core.Scope) Messages {
 // its method, for the TSX declarations of the messages
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
+	"SettingsAppInfoValue":      {"version", "build", "development"},
 	"MenusViewState":            {"sidebar", "statusBar", "zoom"},
 	"SystemFolderItems":         {"count"},
 	"SystemCounted":             {"n"},
@@ -235,6 +236,7 @@ var Parameters = map[string][]string{
 // catalog.
 type Translation struct {
 	Texts                     map[string]string
+	SettingsAppInfoValue      func(version string, build string, development string) string
 	MenusViewState            func(sidebar string, statusBar string, zoom string) string
 	SystemFolderItems         func(count int) string
 	SystemCounted             func(n int) string
@@ -450,6 +452,8 @@ const (
 	textTabBasics
 	textAppSections
 	textSettingsGeneral
+	textSettingsAppInfo
+	textSettingsAppInfoDetail
 	textSettingsHelp
 	textSettingsStats
 	textSettingsStatsSend
@@ -2658,6 +2662,8 @@ var keyOfText = [numTexts]string{
 	"tabBasics",
 	"appSections",
 	"settingsGeneral",
+	"settingsAppInfo",
+	"settingsAppInfoDetail",
 	"settingsHelp",
 	"settingsStats",
 	"settingsStatsSend",
@@ -4864,6 +4870,8 @@ var textsEn = i18n.NewTexts(""+
 	"Basics"+
 	"Sections"+
 	"General"+
+	"App"+
+	"The version, build number and development status from nsgo.yaml."+
 	"Help"+
 	"Statistics"+
 	"Send usage statistics"+
@@ -7067,6 +7075,8 @@ var textsEn = i18n.NewTexts(""+
 		6,
 		8,
 		7,
+		3,
+		64,
 		4,
 		10,
 		21,
@@ -9273,6 +9283,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"基础"+
 	"分区"+
 	"通用"+
+	"应用"+
+	"nsgo.yaml 中的版本、构建号和开发状态。"+
 	"帮助"+
 	"统计"+
 	"发送使用统计"+
@@ -11476,6 +11488,8 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
+		6,
+		52,
 		6,
 		6,
 		18,
@@ -13708,6 +13722,9 @@ func Supply(lang string, t Translation) {
 		}
 	}
 	s := supplied[lang]
+	if t.SettingsAppInfoValue != nil {
+		s.SettingsAppInfoValue = t.SettingsAppInfoValue
+	}
 	if t.MenusViewState != nil {
 		s.MenusViewState = t.MenusViewState
 	}
@@ -14469,6 +14486,44 @@ func SettingsGeneral(cx *core.Scope) string { return For(cx).SettingsGeneral() }
 
 // SettingsGeneral is the package's SettingsGeneral in the language of msgs.
 func (msgs Messages) SettingsGeneral() string { return msgs.text(textSettingsGeneral) }
+
+// SettingsAppInfo says "App"
+// in the language the app shows under cx.
+func SettingsAppInfo(cx *core.Scope) string { return For(cx).SettingsAppInfo() }
+
+// SettingsAppInfo is the package's SettingsAppInfo in the language of msgs.
+func (msgs Messages) SettingsAppInfo() string { return msgs.text(textSettingsAppInfo) }
+
+// SettingsAppInfoDetail says "The version, build number and development status from nsgo.yaml."
+// in the language the app shows under cx.
+func SettingsAppInfoDetail(cx *core.Scope) string { return For(cx).SettingsAppInfoDetail() }
+
+// SettingsAppInfoDetail is the package's SettingsAppInfoDetail in the language of msgs.
+func (msgs Messages) SettingsAppInfoDetail() string { return msgs.text(textSettingsAppInfoDetail) }
+
+// SettingsAppInfoValue says "version {version} · build {build} · development {development}"
+// in the language the app shows under cx.
+func SettingsAppInfoValue(cx *core.Scope, version string, build string, development string) string {
+	return For(cx).SettingsAppInfoValue(version, build, development)
+}
+
+// SettingsAppInfoValue is the package's SettingsAppInfoValue in the language of msgs.
+func (msgs Messages) SettingsAppInfoValue(version string, build string, development string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.SettingsAppInfoValue(version, build, development))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].SettingsAppInfoValue; f != nil {
+			return f(version, build, development)
+		}
+		switch lang {
+		case "", "en":
+			return "version " + msgs.arg(version) + " · build " + msgs.arg(build) + " · development " + msgs.arg(development)
+		case "zh-Hans":
+			return "版本 " + version + " · 构建 " + build + " · 开发版本 " + development
+		}
+	}
+}
 
 // SettingsHelp says "Help"
 // in the language the app shows under cx.

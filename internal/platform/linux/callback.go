@@ -61,6 +61,7 @@ var (
 	cbVideoProgress    uintptr
 
 	cbSettingsChanged uintptr
+	cbDisplaysChanged uintptr
 	cbMenuActivate    uintptr
 	cbTick            uintptr
 	cbYield           uintptr
@@ -130,6 +131,7 @@ func init() {
 	cbVideoProgress = newCallback(videoProgressCallback)
 
 	cbSettingsChanged = newCallback(settingsChangedCallback)
+	cbDisplaysChanged = newCallback(displaysChangedCallback)
 	cbMenuActivate = newCallback(menuActivateCallback)
 	cbTick = newCallback(tickCallback)
 	cbYield = newCallback(yieldCallback)
