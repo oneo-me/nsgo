@@ -159,7 +159,7 @@ func (w *window) trayRect(id uint32) (rect, bool) {
 	}
 	identifier := notifyIconIdentifier{Size: uint32(unsafe.Sizeof(notifyIconIdentifier{})), Hwnd: root.hwnd, ID: id}
 	var bounds rect
-	if ok, _, _ := shellNotifyIconGetRect.Call(uintptr(unsafe.Pointer(&identifier)), uintptr(unsafe.Pointer(&bounds))); ok != 0 && !bounds.empty() {
+	if hr, _, _ := shellNotifyIconGetRect.Call(uintptr(unsafe.Pointer(&identifier)), uintptr(unsafe.Pointer(&bounds))); hr == 0 && !bounds.empty() {
 		return bounds, true
 	}
 	return rect{}, false
