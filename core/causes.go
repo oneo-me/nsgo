@@ -66,11 +66,20 @@ func (rt *runtime) takeCauses() *driver.Causes {
 	return c
 }
 
-// nsgoPackage is the import path of NSGo's core and internal packages, whose frames a write's site skips.
+// nsgoPackage is the prefix of NSGo's packages' import paths.
 const nsgoPackage = "github.com/nsgo-dev/nsgo/"
 
-// causeSite is the first caller outside core and NSGo's internal packages, as dir/file.go:line; with none, as an animation's write has, the outermost of NSGo's functions it saw.
-func causeSite(pcs []uintptr) string {
+// runsApps reports whether fn, a function's full name, is in core, NSGo's internal packages, nsgotest or the nsgo package, which run apps rather than being them.
+func runsApps(fn string) bool {
+	return strings.HasPrefix(fn, "github.com/nsgo-dev/nsgo.") || strings.HasPrefix(fn, nsgoPackage+"core.") ||
+		strings.HasPrefix(fn, nsgoPackage+"internal/") || strings.HasPrefix(fn, nsgoPackage+"nsgotest.")
+}
+
+// causeSite is the first caller outside the packages that run apps (runsApps), as dir/file.go:line; with none, as an animation's write has, the outermost of NSGo's functions it saw.
+func causeSite(pcs []uintptr) string { return appFrame(pcs, fileSite) }
+
+// appFrame is the first of pcs outside the packages that run apps (runsApps), as site formats it; with none, the outermost of NSGo's functions among them.
+func appFrame(pcs []uintptr, site func(file string, line int) string) string {
 	frames := goruntime.CallersFrames(pcs)
 	last := ""
 	for {
@@ -78,11 +87,11 @@ func causeSite(pcs []uintptr) string {
 		if f.Function == "" {
 			break
 		}
-		if !strings.HasPrefix(f.Function, nsgoPackage+"core.") && !strings.HasPrefix(f.Function, nsgoPackage+"internal/") && !strings.HasPrefix(f.Function, "runtime.") {
-			return filepath.Base(filepath.Dir(f.File)) + "/" + filepath.Base(f.File) + ":" + strconv.Itoa(f.Line)
+		if !runsApps(f.Function) && !strings.HasPrefix(f.Function, "runtime.") {
+			return site(f.File, f.Line)
 		}
-		if strings.HasPrefix(f.Function, nsgoPackage) {
-			last = strings.TrimPrefix(f.Function, nsgoPackage)
+		if strings.HasPrefix(f.Function, "github.com/nsgo-dev/nsgo") {
+			last = strings.TrimPrefix(strings.TrimPrefix(f.Function, nsgoPackage), "github.com/nsgo-dev/")
 		}
 		if !more {
 			break
@@ -93,3 +102,11 @@ func causeSite(pcs []uintptr) string {
 	}
 	return last
 }
+
+// fileSite is a line of a file as traces and DevTools name it: dir/file.go:line.
+func fileSite(file string, line int) string {
+	return filepath.Base(filepath.Dir(file)) + "/" + filepath.Base(file) + ":" + strconv.Itoa(line)
+}
+
+// pathSite is a line of a file as DevTools send it, whole, so the page can open it in an editor.
+func pathSite(file string, line int) string { return file + ":" + strconv.Itoa(line) }

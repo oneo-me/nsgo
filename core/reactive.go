@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
 )
 
@@ -83,6 +84,9 @@ func NewRoot(opts RootOptions) *Scope {
 		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir,
 		requestFrame: opts.RequestFrame, windows: opts.Windows}
 	rt.root = &Scope{rt: rt}
+	if devtools.Enabled {
+		rt.dev = newDevState()
+	}
 	if opts.Host != nil {
 		rt.attachHost(opts.Host)
 	}
@@ -131,6 +135,8 @@ type runtime struct {
 	speech *SpeechSession
 	// causes are what ran since a tree last committed, while driver.TraceCauses is set.
 	causes causes
+	// dev is what DevTools read, while devtools.Enabled.
+	dev *devState
 	// quits are the OnQuit handlers, oldest first.
 	quits []*quitHandler
 	// notificationPresses hear notifications pressed, and pressesPending
@@ -262,6 +268,9 @@ func (cx *Scope) disposeOwned() {
 func (cx *Scope) disposeDetached() {
 	cx.disposeOwned()
 	cx.disposed = true
+	if cx.rt != nil && cx.rt.dev != nil {
+		cx.rt.dev.forget(cx)
+	}
 	if cx.comp != nil {
 		cx.comp.unlink()
 	}
@@ -520,6 +529,9 @@ func newComputation(owner *Scope, kind compKind, fn func() bool) *computation {
 	c := &computation{fn: fn, kind: kind}
 	c.comp = c
 	owner.adopt(&c.Scope)
+	if c.rt.dev != nil {
+		c.rt.dev.computation(c)
+	}
 	return c
 }
 
@@ -574,6 +586,9 @@ func (c *computation) update() {
 func (c *computation) run() {
 	if driver.TraceCauses {
 		c.rt.noteRun(c.kind)
+	}
+	if c.rt.dev != nil {
+		c.rt.dev.ran(c)
 	}
 	c.disposeOwned()
 	c.unlink()
@@ -722,13 +737,21 @@ type Signal[T any] struct {
 // NewSignal returns a signal holding v. Setting an equal value does
 // nothing.
 func NewSignal[T comparable](cx *Scope, v T) *Signal[T] {
-	return &Signal[T]{rt: cx.rt, value: v, equal: func(a, b T) bool { return a == b }}
+	s := &Signal[T]{rt: cx.rt, value: v, equal: func(a, b T) bool { return a == b }}
+	if cx.rt.dev != nil {
+		devSignal(cx.current(), s)
+	}
+	return s
 }
 
 // NewSignalFunc returns a signal holding v that compares values with
 // equal; with a nil equal every Set notifies, as slices and maps need.
 func NewSignalFunc[T any](cx *Scope, v T, equal func(a, b T) bool) *Signal[T] {
-	return &Signal[T]{rt: cx.rt, value: v, equal: equal}
+	s := &Signal[T]{rt: cx.rt, value: v, equal: equal}
+	if cx.rt.dev != nil {
+		devSignal(cx.current(), s)
+	}
+	return s
 }
 
 // Get returns the value and subscribes the running computation to it.
