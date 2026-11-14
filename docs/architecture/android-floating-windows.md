@@ -67,7 +67,7 @@ The implementation is complete only when these checks exist:
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These decisions need confirmation before an implementation chooses them; [ARCHITECTURE.md](../../ARCHITECTURE.md#open-questions) lists them among its open questions:
 
 1. Is the first release one overlay surface per app, or a collection of independently owned surfaces?
 2. Which foreground-service type and notification policy keep the overlay valid on Android 14 and later?
