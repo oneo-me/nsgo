@@ -400,6 +400,11 @@ func (cx *Scope) OnReopen(fn func()) {
 
 func (rt *runtime) reopen() {
 	if len(rt.reopens) == 0 {
+		if rt.windows == nil {
+			// Where the platform opens no windows of the app's (Windows and Linux hand a second launch here), the app's one surface is its main window: bring its window to the front, restored if minimized.
+			rt.root.OrderFront()
+			return
+		}
 		rt.main.Focus()
 		return
 	}

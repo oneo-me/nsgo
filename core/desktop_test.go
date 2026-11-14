@@ -86,6 +86,35 @@ func TestWindowCommands(t *testing.T) {
 	}
 }
 
+// TestReopenOrdersTheOneSurfaceFront: where the platform opens no windows of the app's, as on Windows and Linux, a reopen no handler hears brings the app's one window to the front, and one a handler hears leaves it to the handler.
+func TestReopenOrdersTheOneSurfaceFront(t *testing.T) {
+	var cx0 *Scope
+	h := newHost(t, Size{Width: 200, Height: 100}, func(cx *Scope) Node {
+		cx0 = cx
+		return Text{Content: "main"}
+	})
+	h.commit()
+	orders := func() int {
+		n := 0
+		for _, it := range h.commit().Items {
+			if it.Kind == driver.ItemWindow && it.Window.Action == WindowOrderFront {
+				n++
+			}
+		}
+		return n
+	}
+	h.tree.Dispatch(driver.Event{Kind: driver.EventReopen})
+	if n := orders(); n != 1 {
+		t.Fatalf("a reopen without a handler ordered the window front %d times, want 1", n)
+	}
+	heard := 0
+	cx0.OnReopen(func() { heard++ })
+	h.tree.Dispatch(driver.Event{Kind: driver.EventReopen})
+	if n := orders(); n != 0 || heard != 1 {
+		t.Fatalf("a reopen with a handler: %d orders front, heard %d times", n, heard)
+	}
+}
+
 func TestApplicationMenuFollowsItsOwner(t *testing.T) {
 	var log []string
 	var open *Signal[bool]

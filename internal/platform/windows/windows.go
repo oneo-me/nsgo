@@ -503,6 +503,15 @@ func wide(s string) *uint16 {
 // Run opens a window showing app and runs the message loop. Call it from
 // main; it does not return until the window closes.
 func Run(app engine.App, opts Options) {
+	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.
+	var single *instance
+	if opts.ID != "" && opts.test == nil {
+		var alreadyRunning bool
+		if single, alreadyRunning = claimInstance(opts.ID, engine.LaunchFiles()); alreadyRunning {
+			return
+		}
+		defer single.close()
+	}
 	if opts.Width == 0 {
 		opts.Width, opts.Height = 480, 640
 	}
@@ -567,6 +576,16 @@ func Run(app engine.App, opts Options) {
 	getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
 	size := w.point(client.Right, client.Bottom)
 	w.startEngine(app, opts, driver.Size{Width: size.X, Height: size.Y})
+	if single != nil {
+		single.setDelivery(func(paths []string) {
+			w.post(func() {
+				w.engine.Dispatch(driver.Event{Kind: driver.EventReopen})
+				if len(paths) > 0 {
+					w.engine.Dispatch(driver.Event{Kind: driver.EventOpenFiles, Data: paths})
+				}
+			})
+		})
+	}
 	showWindow.Call(hwnd, swShow)
 	if opts.test != nil {
 		opts.test.ready <- w
