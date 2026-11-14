@@ -45,9 +45,7 @@ type playerBackend interface {
 	close() error
 }
 
-// targetBackend is replaced by a target's native implementation in a later
-// stage. Keeping the boundary here lets the public API and its lifecycle tests
-// remain unchanged as those implementations arrive.
+// targetBackend is replaced by a target's native implementation, in this package's files for that target, in a later stage. Those files reach the system through purego or syscall, as microphone's do, which is why audio is not among layering_test.go's portable packages; the public API and its lifecycle tests stay unchanged as they arrive.
 var targetBackend backend = unsupportedBackend{}
 
 type unsupportedBackend struct{}
