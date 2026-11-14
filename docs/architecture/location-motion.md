@@ -19,7 +19,7 @@ Geofencing, significant-location-change monitoring, step counting, activity reco
 
 Sensor callbacks never run user code on a platform thread. The backend copies a sample, acknowledges the provider callback promptly and posts the sample to the engine goroutine. A scope stopping a stream removes it before later samples are delivered. A pending one-shot location is canceled when its owner ends.
 
-The default policy stops continuous streams when the app becomes inactive or backgrounded. A separate background policy may opt in to location updates or a bounded motion session after the Android engine/view lifetime design is complete. The core must not keep a process or a radio alive merely because a handler remains registered.
+The default policy follows `Env.Lifecycle` ([the app's lifecycle](services.md#the-apps-lifecycle)): streams keep running while the app is `inactive`, which still shows it (another app frontmost on a Mac, the other half of Android's split screen, Control Center over an iPhone app), and pause when it turns `background`. A paused stream stays the app's until its scope ends or the app stops it; the backend restarts the provider when the app shows again, and the first sample after the pause says it follows a gap, so the app can tell a cold fix from a continuous track. A one-shot request waits through the pause rather than failing. A separate background policy may opt in to location updates or a bounded motion session after the Android engine/view lifetime design is complete. The core must not keep a process or a radio alive merely because a handler remains registered.
 
 ## Location
 
@@ -51,7 +51,7 @@ Location and motion data use a dedicated capability, distinct from network, cont
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover authorization, one-shot versus stream ownership, cancellation, sample ordering, missing fields, rate clamping and bounded back-pressure;
+- headless `core` tests cover authorization, one-shot versus stream ownership, cancellation, pausing in the background and resuming with a gap, sample ordering, missing fields, rate clamping and bounded back-pressure;
 - `internal/driver` tests cover coordinate encoding, timestamps, empty sensor sets and large batches;
 - Apple tests use fake location and motion managers for permission changes, reduced accuracy, unavailable sensors, a face-up device reading +9.81 m/s² on z and stop-on-disposal;
 - Android tests use fake location and sensor providers for coarse/fine permission, provider changes, sensor accuracy and API-level differences; and
