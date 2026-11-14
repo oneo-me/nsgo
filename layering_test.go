@@ -96,7 +96,7 @@ var layers = []struct {
 var platformShared = []string{
 	"internal/platform/apple", "internal/platform/canvas2d", "internal/platform/canvastest", "internal/platform/field", "internal/platform/finger",
 	"internal/platform/fontfile", "internal/platform/hover", "internal/platform/imagedecode", "internal/platform/imageload", "internal/platform/menutext", "internal/platform/perfhud", "internal/platform/picked", "internal/platform/queue", "internal/platform/scrollbar",
-	"internal/platform/textselect", "internal/platform/updates", "internal/platform/webstyle", "internal/shaderir/",
+	"internal/platform/ops", "internal/platform/textruns", "internal/platform/textselect", "internal/platform/updates", "internal/platform/webstyle", "internal/shaderir/",
 }
 
 // portable lists the packages that build unchanged for every target: no

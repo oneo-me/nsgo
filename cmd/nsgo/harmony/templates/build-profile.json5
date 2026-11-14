@@ -1,0 +1,18 @@
+{
+  "app": {
+    "products": [
+      {
+        "name": "default",
+        "compileSdkVersion": "26.0.0",
+        "compatibleSdkVersion": 20,
+        "targetSdkVersion": "26.0.0",
+        "runtimeOS": "OpenHarmony"
+      }
+    ],
+    "buildModeSet": [ { "name": "debug" }, { "name": "release" } ],
+    "signingConfigs": []
+  },
+  "modules": [
+    { "name": "entry", "srcPath": "./entry", "targets": [ { "name": "default", "applyToProducts": ["default"] } ] }
+  ]
+}

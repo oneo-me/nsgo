@@ -1,6 +1,8 @@
-//go:build !darwin
+//go:build !darwin && !js
 
 package widget
 
-func containerDir() (string, error) { return "", ErrUnsupported }
-func reload(string) error           { return nil }
+import "time"
+
+func publish(string, []Entry, time.Time) error { return ErrUnsupported }
+func available() bool                          { return false }

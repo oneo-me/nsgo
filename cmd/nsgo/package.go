@@ -17,6 +17,8 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/nsgo-dev/nsgo/cmd/nsgo/harmony"
 )
 
 // writeIPA packs app, a built .app, as the IPA at dst: its bundle under
@@ -207,6 +209,9 @@ func runnable(target string) bool {
 	switch target {
 	case "web", "android_arm64", "android_x64":
 		return true
+	case "harmonyos":
+		_, err := exec.LookPath("hdc")
+		return err == nil
 	case "ios", "ios_simulator", "tvos", "tvos_simulator", "watchos", "watchos_simulator":
 		return runtime.GOOS == "darwin"
 	case "macos_" + arch:
@@ -222,6 +227,40 @@ func runnable(target string) bool {
 	return false
 }
 
+// runHarmony installs the HAP on the device hdc reaches, -device or the only
+// one connected, and starts its ability, the bundle the HAP names. flags are
+// the engine's launch flags, passed as the ability's Want parameters so a
+// second launch can change them without rebuilding the HAP.
+func runHarmony(ctx context.Context, p *project, dir string, flags []string) error {
+	hap := filepath.Join(dir, p.Name+".hap")
+	bundle, err := harmony.BundleOf(hap)
+	if err != nil {
+		return err
+	}
+	device := []string(nil)
+	if p.Build.device != "" {
+		device = []string{"-t", p.Build.device}
+	}
+	// A running install keeps its page: replacing the HAP under it leaves the
+	// old process drawing a page that no longer loads, and aa start brings that
+	// window back black instead of starting the new one. Stop it first; on a
+	// first run nothing is installed, which hdc reports and this ignores.
+	_ = run(ctx, "hdc", append(append([]string{}, device...), "shell", "aa", "force-stop", bundle)...)
+	if err := run(ctx, "hdc", append(append([]string{}, device...), "install", "-r", hap)...); err != nil {
+		return err
+	}
+	start := []string{"shell", "aa", "start", "-a", "EntryAbility", "-b", bundle}
+	for _, f := range flags {
+		name, value, hasValue := strings.Cut(strings.TrimPrefix(f, "--"), "=")
+		if hasValue {
+			start = append(start, "--ps", name, value)
+		} else {
+			start = append(start, "--pb", name, "true")
+		}
+	}
+	return run(ctx, "hdc", append(append([]string{}, device...), start...)...)
+}
+
 // runPackage starts the package built for target in dir, as -run asks:
 // the app opens here, in the simulator or on the device -device names
 // or the only one connected, or the site is served. An iPhone's package
@@ -230,6 +269,8 @@ func runnable(target string) bool {
 func runPackage(ctx context.Context, p *project, target, dir string) error {
 	event("run %s", target)
 	switch {
+	case target == "harmonyos":
+		return runHarmony(ctx, p, dir, harmonyFlags())
 	case target == "web":
 		return serveSite(ctx, dir)
 	case strings.HasPrefix(target, "miniprogram_"):
