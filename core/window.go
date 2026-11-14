@@ -438,7 +438,7 @@ type TrayOptions struct {
 
 // Tray is a tray icon: the core's part of desktop.Tray, which apps use.
 // Its methods do nothing on a nil Tray, which NewTray returns where the
-// platform opens no windows.
+// platform has no tray support.
 type Tray struct {
 	rt      *runtime
 	owner   *Scope
@@ -448,12 +448,10 @@ type Tray struct {
 	removed bool
 }
 
-// NewTray is the core's part of desktop.NewTray, which apps use: it adds
-// a tray icon, the macOS menu bar's or the Windows notification area's,
-// which the current owner keeps.
+// NewTray is the core's part of desktop.NewTray, which apps use: it adds a tray icon, the macOS menu bar's or the Windows notification area's, which the current owner keeps.
 func (cx *Scope) NewTray(opts TrayOptions) *Tray {
 	rt := cx.rt
-	if rt.windows == nil {
+	if rt.windows == nil && !rt.tray {
 		return nil
 	}
 	owner := cx.current()

@@ -56,15 +56,16 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 
 ## Application and windows
 
-What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
+What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): on Linux `OpenWindow`, `OpenPanel` and `NewTray` return nil and the main view fills the one window; Windows opens windows, panels and tray icons for `nsgo.Run(App)`, but its panels activate the app and its drawn tray icons do not draw. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Surfaces on Windows and Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | The backends run the app on a surface in no window and attach each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Surfaces on Linux | macOS's `own` surface; NSH's `Window.open` (#989, #1011, #1137) | The backend runs the app on a surface in no window and attaches each one the app opens: windows, and panels that take the keyboard and hide as they lose it |
+| Panels that do not activate on Windows | `WS_EX_NOACTIVATE`; macOS's `NsgoPanel` | A panel takes the keyboard without activating the app or taking the foreground from the app in front, as macOS's do |
 | Window limits on Linux | `XSetWMNormalHints` on X11, `xdg_toplevel.set_max_size` on Wayland; `GtkHeaderBar`'s decoration layout | GTK 4 reaches neither from its API: a maximum other than a fixed size holds, and `NoMinimize` and `NoMaximize` take the system title bar's buttons |
-| Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image, its panel above or under it (`Shell_NotifyIconGetRect`) and its menu; a drawn icon is an element rasterized into the icon whenever it changes |
+| Tray icons on Windows | `Shell_NotifyIcon`; #988 | An icon shows its image and menu, reports clicks and anchors a panel with `Shell_NotifyIconGetRect`; rasterizing a drawn icon whenever it changes remains |
 | Tray icons on Linux | StatusNotifierItem over D-Bus; #988, #1209 | KDE and GNOME with its AppIndicator extension show the icon and its menu; GNOME without one shows none |
-| Global shortcuts on Windows and Linux | `RegisterHotKey`; `XGrabKey`, the GlobalShortcuts portal; #988 | A shortcut shows a panel from any app, on Wayland once the user grants it |
+| Global shortcuts on Linux | `XGrabKey`, the GlobalShortcuts portal; #988 | A shortcut shows a panel from any app, on Wayland once the user grants it |
 | One instance on Windows and Linux | A named mutex and pipe; a Unix socket; #1563 | A second launch hands its arguments to the running app, which hears `OnReopen`, and the files it names `OnOpenFiles`; the mutex/pipe and socket handoff is implemented, while surfaces, tray icons and global shortcuts remain |
 | File types on Windows, Linux and iOS | `HKCU\Software\Classes` and `SHChangeNotify`; a `.desktop` entry's `MimeType` with a shared MIME-info package; `CFBundleDocumentTypes` with `scene:openURLContexts:`; #1565 | Their packages register `file_types` as the macOS app does, and opening such a file reaches `OnOpenFiles`, which on Windows and Linux now hears only the files named at launch |
 | Launch at login on Windows and Linux | The `Run` registry key; an XDG autostart entry | `SetLaunchAtLogin` starts the app at login and `LaunchAtLogin` reads it |

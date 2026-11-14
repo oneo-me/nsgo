@@ -318,6 +318,25 @@ func TestMainViewWithoutWindows(t *testing.T) {
 	}
 }
 
+func TestTrayWithoutWindows(t *testing.T) {
+	root := NewRoot(RootOptions{Post: func(func()) {}, Clock: NewManualClock(time.Unix(0, 0)), Tray: true})
+	tree := NewTree(root, ApproxTextEngine{})
+	var tray *Tray
+	tree.Mount(AppRoot(func(cx *Scope) {
+		tray = cx.NewTray(TrayOptions{Tooltip: "tray"})
+	}))
+	b := tree.Commit()
+	if tray == nil {
+		t.Fatal("tray capability returned nil")
+	}
+	if b == nil || !slices.ContainsFunc(b.Items, func(it driver.MountItem) bool {
+		return it.Kind == driver.ItemTray && it.Tray != nil && it.Tray.Tooltip == "tray"
+	}) {
+		t.Fatalf("tray mount batch: %+v", b)
+	}
+	root.Dispose()
+}
+
 func TestWindowConstraints(t *testing.T) {
 	var cx *Scope
 	w := newWindows(t, func(app *Scope) {

@@ -97,6 +97,26 @@ func TestKeyNamesMatchOnKeys(t *testing.T) {
 	}
 }
 
+func TestGlobalHotKey(t *testing.T) {
+	for _, test := range []struct {
+		key        string
+		mods, want uintptr
+		ok         bool
+	}{
+		{"mod+shift+s", modControl | modShift, 'S', true},
+		{"meta+alt+f12", modWin | modAlt, 0x7B, true},
+		{"ctrl+plus", modControl, 0xBB, true},
+		{"pageup", 0, 0x21, true},
+		{"unknown+a", 0, 0, false},
+		{"shift", 0, 0, false},
+	} {
+		mods, vk, ok := globalHotKey(test.key)
+		if mods != uint32(test.mods) || vk != test.want || ok != test.ok {
+			t.Errorf("globalHotKey(%q) = (%#x, %#x, %v), want (%#x, %#x, %v)", test.key, mods, vk, ok, test.mods, test.want, test.ok)
+		}
+	}
+}
+
 func TestShortcutLabelsUseWindowsNames(t *testing.T) {
 	for _, c := range []struct{ key, want string }{
 		{"mod+shift+n", "Ctrl+Shift+N"},
@@ -1111,6 +1131,29 @@ func TestMonitorLayoutKeepsMixedScalesApart(t *testing.T) {
 		x, y := got.pixel(f.X, f.Y)
 		if back := (rect{x, y, x + got.px(f.Width), y + got.px(f.Height)}); back != c.win {
 			t.Fatalf("window %+v came back as %+v", c.win, back)
+		}
+	}
+}
+
+// TestTrayEventsDecodeVersion4 checks that a NOTIFYICON_VERSION_4 callback is read with the event in LOWORD(lParam) and the icon in HIWORD(lParam), and that a click counts once: by NIN_SELECT or WM_CONTEXTMENU, not the raw button-up that comes before it.
+func TestTrayEventsDecodeVersion4(t *testing.T) {
+	const id = 3
+	for _, c := range []struct {
+		event uint32
+		index int
+		ok    bool
+	}{
+		{ninSelect, 0, true},
+		{ninKeySelect, 0, true},
+		{wmContextMenu, 1, true},
+		{wmMButtonUp, 0, true},
+		{wmLButtonUp, 0, false},
+		{wmRButtonUp, 0, false},
+		{0x0200, 0, false}, // WM_MOUSEMOVE
+	} {
+		gotID, index, ok := trayEvent(uintptr(id<<16 | c.event))
+		if ok != c.ok || ok && (gotID != id || index != c.index) {
+			t.Errorf("event %#x: id %d, index %d, ok %v; want id %d, index %d, ok %v", c.event, gotID, index, ok, id, c.index, c.ok)
 		}
 	}
 }

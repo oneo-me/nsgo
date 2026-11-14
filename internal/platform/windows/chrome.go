@@ -83,6 +83,7 @@ const (
 	swMaximize = 3
 	swMinimize = 6
 	swRestore  = 9
+	swShowNA   = 8 // SW_SHOWNA: shown in its state, not activated
 
 	wsPopup            = 0x80000000
 	monitorDefaultNear = 2
@@ -257,6 +258,10 @@ func (w *window) chromeChanged() {
 // windowCommand carries out an ItemWindow.
 func (w *window) windowCommand(c *driver.WindowCommand) {
 	switch c.Action {
+	case driver.WindowDestroy:
+		w.destroying = true
+		w.visible = false
+		destroyWindow.Call(w.hwnd)
 	case driver.WindowSetTitleBar:
 		if c.TitleBar != w.chrome.titleBar || c.Height != w.chrome.height {
 			w.chrome.titleBar, w.chrome.height = c.TitleBar, c.Height
@@ -270,12 +275,31 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 	case driver.WindowToggleFullScreen:
 		w.toggleFullScreen()
 	case driver.WindowClose:
+		w.destroying = true
+		w.visible = false
 		postMessageW.Call(w.hwnd, wmClose, 0, 0)
+	case driver.WindowShow:
+		w.visible, w.focused = true, false
+		if w.kind == driver.SurfacePanel {
+			w.anchor = c.Anchor
+			w.placePanel(c.Anchor)
+			w.orderFront()
+		} else {
+			// Without taking the focus from another app (core.Window.Show).
+			showWindow.Call(w.hwnd, swShowNA)
+		}
+	case driver.WindowHide:
+		w.visible = false
+		showWindow.Call(w.hwnd, swHide)
 	case driver.WindowSetFrame:
 		w.setWindowFrame(c.Frame)
 	case driver.WindowSetLevel:
 		w.setLevel(c.Level)
 	case driver.WindowOrderFront:
+		w.visible, w.focused = true, false
+		if w.kind == driver.SurfacePanel {
+			w.placePanel(w.anchor)
+		}
 		w.orderFront()
 	case driver.WindowSetMenuBar:
 		w.setMenuBar(c.MenuBar)
@@ -906,7 +930,14 @@ func (w *window) menuShortcut(key string) bool {
 // chooseMenu carries out an item's role and tells the app about it.
 func (w *window) chooseMenu(ref menuRef) {
 	switch ref.role {
-	case driver.MenuQuit, driver.MenuClose:
+	case driver.MenuQuit:
+		// The app's root window, whose closing ends the loop, even from a window the app opened.
+		root := w
+		if w.hostWindow != nil {
+			root = w.hostWindow
+		}
+		postMessageW.Call(root.hwnd, wmClose, 0, 0)
+	case driver.MenuClose:
 		postMessageW.Call(w.hwnd, wmClose, 0, 0)
 	case driver.MenuMinimize:
 		w.minimize()

@@ -106,6 +106,9 @@ type RootOptions struct {
 	// window's options (SetMainView): the first tree is then the app's
 	// own surface, which shows no view.
 	Windows *WindowOptions
+	// Tray is set where the platform supports app-level tray icons without
+	// opening additional windows.
+	Tray bool
 }
 
 // NewRoot returns the root scope of a new graph.
@@ -115,7 +118,7 @@ func NewRoot(opts RootOptions) *Scope {
 	}
 	rt := &runtime{post: opts.Post, clock: opts.Clock, report: opts.Report,
 		store: opts.Storage, dataDir: opts.DataDir, cacheDir: opts.CacheDir,
-		requestFrame: opts.RequestFrame, windows: opts.Windows}
+		requestFrame: opts.RequestFrame, windows: opts.Windows, tray: opts.Tray}
 	rt.root = &Scope{rt: rt}
 	if devtools.Enabled {
 		rt.dev = newDevState()
@@ -182,6 +185,7 @@ type runtime struct {
 	// windows (RootOptions.Windows); surfaces the trees of the windows,
 	// panels and tray views opened, keyed those opened with a key.
 	windows   *WindowOptions
+	tray      bool
 	surfaces  []*Tree
 	surfaceID uint32
 	keyed     map[string]*Window

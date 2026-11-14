@@ -57,6 +57,10 @@ func init() {
 type Options struct {
 	Title         string
 	Width, Height driver.Points
+	// Hidden keeps the backend's root window off the screen as the app's
+	// own surface (nsgo.Run(App)), which opens the windows the app shows
+	// and shows only as an alert's window.
+	Hidden bool
 	// Frame is where the window opens (nsgo.WindowFrame).
 	Frame driver.WindowFrame
 	// ID names the app's directories and storage (engine.AppDirs).
@@ -150,14 +154,19 @@ const (
 	wmRun           = 0x8000 + 2 // functions are queued
 	wmAlert         = 0x8000 + 3 // alerts are queued
 	wmFrame         = 0x8000 + 4 // the app waits for a display frame
+	wmSysCommand    = 0x0112
+	scClose         = 0xF060 // SC_CLOSE, in WM_SYSCOMMAND's wParam
 
 	wsOverlappedWindow = 0x00CF0000
+	wsCaption          = 0x00C00000
+	wsSysMenu          = 0x00080000
 	wsThickFrame       = 0x00040000
 	wsMinimizeBox      = 0x00020000
 	wsMaximizeBox      = 0x00010000
 	wsClipChildren     = 0x02000000
 	wsVisible          = 0x10000000
 	wsExNoRedirect     = 0x00200000           // no redirection bitmap, for a composition surface
+	wsExToolWindow     = 0x00000080           // no taskbar button or Alt+Tab entry
 	cwUseDefault       = ^uintptr(0x7FFFFFFF) // CW_USEDEFAULT as a uintptr
 	gwlStyle           = ^uintptr(15)         // -16
 	swShow             = 5
@@ -331,6 +340,17 @@ type window struct {
 	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
+	// primary is the backend's own surface. Opened surfaces share its engine
+	// and message loop, but closing one must not end the process.
+	primary    bool
+	hostWindow *window // root window for services shared by an opened surface
+	kind       driver.SurfaceKind
+	destroying bool
+	hideOnBlur bool
+	visible    bool
+	focused    bool
+	// anchor is the tray icon a panel last showed under, 0 for none.
+	anchor uint32
 	// language is what the menus say (driver.ItemDirection).
 	language string
 	// rtl is the app's direction (driver.ItemDirection), which the menus
@@ -374,6 +394,8 @@ type window struct {
 	alertShown   driver.AlertConfig
 	alert        *shownAlert
 	alertRestore *textInput
+	// alertWindow is set while a hidden root window shows as an app-level alert's own window.
+	alertWindow bool
 	// The open and save dialogs and context menus waiting for a message
 	// of their own, and whether one shows.
 	dialogs  []func()
@@ -388,10 +410,16 @@ type window struct {
 	popupChoice *uint32
 	// popupShown are the items of the context menu tracking.
 	popupShown []driver.MenuEntry
+	trays      map[uint32]*trayIcon
+	// menuOwner is the hidden window that owns the tray icons' menus of a shown root window.
+	menuOwner uintptr
+	// ownPerf is the performance monitor of a hidden root window, which the first window it opens shows.
+	ownPerf *engine.PerfMonitor
 	// appearance is the one the app forces, or the system's; host the one
 	// an embedding host sets in place of the system's.
 	appearance, host driver.Appearance
 	keys             []driver.KeyBinding // the keyboard shortcuts
+	hotKeys          map[uint32]struct{} // the registered global shortcuts
 	animating        []*view
 	ticking          bool
 	clock            *frameClock // made as it first ticks
@@ -534,15 +562,10 @@ func Run(app engine.App, opts Options) {
 	setDpiAwareness.Call(perMonitorAwareV2)
 	registerFonts(opts.Fonts)
 	w := newWindow(opts)
-	if opts.Material != driver.WindowMaterialNone {
-		switch {
-		case !systemBackdrops():
-			log.Printf("nsgo: window materials need Windows 11 22H2 or later: the window stays opaque")
-		case !compositionAvailable():
-			log.Printf("nsgo: window materials need DirectComposition: the window stays opaque")
-		default:
-			w.baseComposed, w.backdrop = true, backdropFor(opts.Material)
-		}
+	w.primary, w.app, w.opts = true, app, opts
+	if !opts.Hidden {
+		// A hidden root shows nothing: the windows it opens take the material.
+		w.composeFor(opts.Material)
 	}
 	if dpi, _, _ := getDpiForSystem.Call(); dpi != 0 {
 		w.scale = float64(dpi) / 96
@@ -554,6 +577,11 @@ func Run(app engine.App, opts Options) {
 	// corrects.
 	w.chrome.constraints = opts.Constraints
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
+	if opts.Hidden {
+		// It only ever shows as an alert's window (showAlertWindow): a caption and a close button, without the main window's limits, which the window the app opens for it takes.
+		w.chrome.constraints = driver.WindowConstraints{}
+		style = wsCaption | wsSysMenu | wsClipChildren
+	}
 	var ex uintptr
 	if w.baseComposed {
 		ex = wsExNoRedirect
@@ -623,12 +651,12 @@ func Run(app engine.App, opts Options) {
 			engine.SyncStorage()
 			return
 		}
-		// Shortcuts take key presses before they become characters.
-		if m.Hwnd == hwnd {
-			w.reportModality(m.Message, m.WParam)
-		}
-		if (m.Message == wmKeyDown || m.Message == wmSysKeyDown) && m.Hwnd == hwnd && w.shortcut(m.WParam, m.LParam) {
-			continue
+		// Shortcuts take key presses before they become characters, in the window the keys go to: this one or a surface the app opened.
+		if t := windows[m.Hwnd]; t != nil && (t == w || t.hostWindow == w) {
+			t.reportModality(m.Message, m.WParam)
+			if (m.Message == wmKeyDown || m.Message == wmSysKeyDown) && t.shortcut(m.WParam, m.LParam) {
+				continue
+			}
 		}
 		translateMessage.Call(uintptr(unsafe.Pointer(&m)))
 		dispatchMessageW.Call(uintptr(unsafe.Pointer(&m)))
@@ -698,9 +726,24 @@ func (w *window) setWindowPosAt(x, y, cx, cy int32) {
 	w.placing = false
 }
 
+// composeFor has a window opening with material m draw through DirectComposition behind its backdrop, where the system has both.
+func (w *window) composeFor(m driver.WindowMaterial) {
+	if m == driver.WindowMaterialNone {
+		return
+	}
+	switch {
+	case !systemBackdrops():
+		log.Printf("nsgo: window materials need Windows 11 22H2 or later: the window stays opaque")
+	case !compositionAvailable():
+		log.Printf("nsgo: window materials need DirectComposition: the window stays opaque")
+	default:
+		w.baseComposed, w.backdrop = true, backdropFor(m)
+	}
+}
+
 // newWindow returns the state of a window showing an app.
 func newWindow(opts Options) *window {
-	w := &window{title: opts.Title, scale: 1, webs: map[*webView]bool{}, touchWebs: map[uint32]*webView{},
+	w := &window{title: opts.Title, scale: 1, webs: map[*webView]bool{}, touchWebs: map[uint32]*webView{}, trays: map[uint32]*trayIcon{},
 		epoch: time.Now(), components: opts.Components, hosts: map[*component]bool{}, missing: map[string]bool{},
 		drops: map[*view]bool{}}
 	w.animator = driver.NewAnimator(func(ev driver.Event) { w.engine.Dispatch(ev) })
@@ -741,6 +784,11 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Environment: w.env,
 		Appearance:  opts.Appearance,
 		Host:        opts.Host,
+		Tray:        !w.embedded,
+	}
+	if opts.Hidden {
+		eopts.Windows = &engine.WindowOptions{Title: opts.Title, Width: opts.Width, Height: opts.Height,
+			Frame: opts.Frame, Material: opts.Material, Constraints: opts.Constraints}
 	}
 	data, cache := engine.AppDirs(opts.ID)
 	eopts.SetDirs(data, cache)
@@ -751,9 +799,115 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 	imageload.UseDiskCache(cache)
 	w.cacheDir = cache
 	if opts.Perf && opts.test == nil || opts.test != nil && opts.test.options.FPS {
-		eopts.Perf = w.startPerf()
+		if opts.Hidden {
+			// Shown by the first window the app opens, as on macOS.
+			w.ownPerf = engine.NewPerfMonitor()
+			eopts.Perf = w.ownPerf
+		} else {
+			eopts.Perf = w.startPerf()
+		}
 	}
 	w.engine = engine.Start(w, app, eopts)
+}
+
+// openSurface creates an opened window on the backend's message loop and
+// attaches its tree to the same engine. The root window owns the loop; a
+// child surface only owns its HWND and engine surface.
+func (w *window) openSurface(cfg driver.SurfaceConfig) {
+	opts := w.opts
+	if cfg.Title != "" {
+		opts.Title = cfg.Title
+	}
+	if cfg.Width > 0 {
+		opts.Width = cfg.Width
+	}
+	if cfg.Height > 0 {
+		opts.Height = cfg.Height
+	}
+	opts.Frame, opts.Material, opts.Constraints, opts.Hidden = cfg.Frame, cfg.Material, cfg.Constraints, cfg.Hidden
+	if cfg.Kind == driver.SurfaceTrayIcon {
+		// The notification-area icon does not yet host a drawn surface on
+		// Windows, so keep its attached tree out of sight.
+		opts.Hidden = true
+	}
+	child := newWindow(opts)
+	child.opts, child.hostWindow, child.kind, child.hideOnBlur = opts, w, cfg.Kind, cfg.HideOnBlur
+	child.visible = !opts.Hidden
+	child.chrome.constraints = opts.Constraints
+	child.composeFor(opts.Material)
+	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
+	var ex uintptr
+	if child.baseComposed {
+		ex = wsExNoRedirect
+	}
+	if cfg.Kind == driver.SurfacePanel {
+		style = wsPopup | wsClipChildren
+	}
+	if cfg.Kind != driver.SurfaceWindow {
+		// Panels, as tray flyouts, have no taskbar button or Alt+Tab entry.
+		ex |= wsExToolWindow
+	}
+	frame := rect{Right: child.px(opts.Width), Bottom: child.px(opts.Height)}
+	if cfg.Kind == driver.SurfaceWindow {
+		adjustWindowRect.Call(uintptr(unsafe.Pointer(&frame)), style, 0)
+	}
+	// Run and NewView register the class before the engine can open a
+	// surface. Reuse it directly here; calling registerClass from this path
+	// would make wndProc's callback initialization recursive.
+	instance, _, _ := getModuleHandleW.Call(0)
+	className := wide("NsgoWindow")
+	hwnd, _, _ := createWindowExW.Call(ex, uintptr(unsafe.Pointer(className)),
+		uintptr(unsafe.Pointer(wide(opts.Title))), style,
+		cwUseDefault, cwUseDefault, uintptr(frame.Right-frame.Left), uintptr(frame.Bottom-frame.Top),
+		0, 0, instance, 0)
+	if hwnd == 0 {
+		return
+	}
+	child.hwnd = hwnd
+	if cfg.Kind == driver.SurfaceWindow {
+		child.placeNew(opts.Width, opts.Height, true)
+		if opts.Frame.Move {
+			child.placeAt(opts.Frame)
+		}
+	} else {
+		// At its monitor's scale, as placeNew sizes a window.
+		if dpi, _, _ := getDpiForWindow.Call(hwnd); dpi != 0 {
+			child.scale = float64(dpi) / 96
+		}
+		setWindowPos.Call(hwnd, 0, 0, 0, uintptr(child.px(opts.Width)), uintptr(child.px(opts.Height)), swpNoActivate|swpNoZOrder)
+	}
+	windows[hwnd] = child
+	child.updateIME()
+	child.configureGestures()
+	if child.baseComposed {
+		if child.applyMaterial() {
+			child.material = opts.Material
+		} else {
+			child.backdrop = backdropNone
+		}
+	}
+	if w.ownPerf != nil && cfg.Kind == driver.SurfaceWindow {
+		child.showPerf(w.ownPerf)
+		w.ownPerf = nil
+	}
+	child.env = child.environment()
+	child.appearance = opts.Appearance
+	child.darkTitleBar(child.shownDark())
+	darkMenus(child.appearance)
+	var client rect
+	getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+	size := child.point(client.Right, client.Bottom)
+	child.engine = w.engine.Attach(cfg.ID, child)
+	child.engine.Resize(driver.Size{Width: size.X, Height: size.Y})
+	child.engine.SetEnvironment(child.env)
+	if !opts.Hidden {
+		if cfg.Kind == driver.SurfacePanel {
+			child.placePanel(0)
+			child.orderFront()
+		} else {
+			showWindow.Call(hwnd, swShow)
+		}
+	}
 }
 
 // View is an app in a child window of an embedding host's window, which
@@ -954,8 +1108,16 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
 			w.engine.Dispatch(driver.NoBiometric(it))
 			continue
+		case driver.ItemOpenSurface:
+			if it.Surface != nil {
+				w.openSurface(*it.Surface)
+			}
+			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
+			continue
+		case driver.ItemHotKeys:
+			w.hotKeysApply(it.Keys)
 			continue
 		case driver.ItemCheckForUpdates:
 			w.checkForUpdates(it.On, it.Count)
@@ -980,6 +1142,19 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemPopupMenu:
 			w.popupMenu(it.Menu, it.Point, it.Count)
+			continue
+		case driver.ItemTray:
+			w.applyTray(*it.Tray)
+			continue
+		case driver.ItemTrayMenu:
+			w.trayMenu(it.Tray.ID, it.Menu, it.Count)
+			continue
+		case driver.ItemLaunchAtLogin:
+			// No login item yet (roadmap): the app hears that it does not start at login.
+			w.engine.Dispatch(driver.Event{Kind: driver.EventLaunchAtLogin, Count: it.Count})
+			continue
+		case driver.ItemSetLaunchAtLogin, driver.ItemDock:
+			// No login item yet (roadmap), and no Dock.
 			continue
 		case driver.ItemAppearance:
 			w.setAppearance(it.Appearance)
@@ -1798,6 +1973,21 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		r, _, _ := defWindowProcW.Call(hwnd, uintptr(message), wParam, lParam)
 		return r
 	}
+	if message == wmClose && !w.primary && !w.embedded && !w.destroying {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
+		return 0
+	}
+	// Closing an alert's window cancels the alert, if it can be, rather than ending the app.
+	if message == wmSysCommand && wParam&0xfff0 == scClose && w.alertWindow {
+		if s := w.alert; s != nil && s.cancelable {
+			w.answerAlert(s.cancel)
+		}
+		return 0
+	}
+	if message == taskbarCreated && taskbarCreated != 0 {
+		w.readdTrays()
+		return 0
+	}
 	w.reportModality(message, wParam)
 	// An alert takes the pointer and the keys while it shows.
 	if w.alert != nil {
@@ -1855,11 +2045,20 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmRun:
 		w.runTasks()
 		return 0
+	case wmHotKey:
+		id := uint32(wParam)
+		if _, registered := w.hotKeys[id]; registered && w.engine != nil {
+			w.engine.Dispatch(driver.Event{Kind: driver.EventHotKey, Count: id})
+		}
+		return 0
 	case wmFrame:
 		w.startClock()
 		return 0
 	case wmAlert:
 		w.showAlert()
+		return 0
+	case trayCallbackMessage:
+		w.trayMessage(lParam)
 		return 0
 	case wmDialog:
 		w.showDialog()
@@ -2158,6 +2357,8 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 			return r
 		}
 	case wmDestroy:
+		w.removeTrays()
+		w.unregisterHotKeys()
 		// Clients let the window's providers go.
 		if uiaReturnRawElementProvider.Find() == nil {
 			uiaReturnRawElementProvider.Call(hwnd, 0, 0, 0)
@@ -2169,7 +2370,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		for c := range w.hosts {
 			w.closeComponent(c)
 		}
-		if !w.embedded {
+		if w.primary {
 			postQuitMessage.Call(0)
 			return 0
 		}
