@@ -85,11 +85,7 @@ until a target lacks a native codec that the API promises.
 
 ## Testing and delivery
 
-`nsgotest` records `PlayFile`, `PlayBytes`, player commands, progress and end
-events. Its fake advances time only when a test asks it to, so tests can assert
-pause, seek, loop and close without sleeping. The portable package currently
-covers source and option validation, lifecycle behavior and explicit fallback
-errors; the fake and native backends remain subsequent stages.
+`nsgotest` records `PlayFile`, `PlayBytes`, player commands, progress and end events. Its fake advances time only when a test asks it to, so tests can assert pause, seek, loop and close without sleeping. The portable package currently covers source and option validation, lifecycle behavior and explicit fallback errors, and on macOS plays silent WAVs through `AVAudioPlayer` to cover the end of playback, loops, seeks, stop and the error kinds, with its test's main thread running the run loop as an app's does; the `nsgotest` fake and the other native backends remain subsequent stages.
 
 The implementation is staged so each change remains reviewable:
 
