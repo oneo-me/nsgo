@@ -18,7 +18,7 @@ Reminders, accounts, contact groups, event attachments and continuous background
 
 `core` owns provider-neutral value types, asynchronous requests and scoped callbacks. `internal/driver` carries request IDs and serialized values. Apple uses `CNContactStore` and `EKEventStore`; Android uses `ContactsContract` and `CalendarContract` through the runtime. None of those platform records cross the driver boundary.
 
-Every request runs off the engine's goroutine where the platform can block or prompt. The callback returns on the engine goroutine, and a request whose owner is disposed is canceled or has its answer dropped. Values are copied, and a caller cannot retain a provider cursor, URI permission or mutable platform record through the API.
+A request is a command in the batch, as every service is ([services](services.md#requests-and-answers)), so the platform receives it on its main thread. Pickers and editors show there, but store work runs off it: Contacts and EventKit fetches and saves on a background queue, where `CNContactStore` recommends them, and Android's `ContentResolver` calls on a worker thread, so a large address book or a wide range never freezes the UI or causes an ANR. The answer comes back through `Engine.Dispatch`, and its callback runs on the engine's goroutine, and a request whose owner is disposed is canceled or has its answer dropped. Values are copied, and a caller cannot retain a provider cursor, URI permission or mutable platform record through the API.
 
 ## Contacts
 
