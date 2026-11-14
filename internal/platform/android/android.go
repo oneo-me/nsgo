@@ -49,6 +49,7 @@ import (
 	"github.com/nsgo-dev/nsgo/internal/platform/imagedecode"
 	"github.com/nsgo-dev/nsgo/internal/platform/imageload"
 	"github.com/nsgo-dev/nsgo/internal/platform/updates"
+	"github.com/nsgo-dev/nsgo/internal/recording"
 	"github.com/nsgo-dev/nsgo/internal/testhost"
 )
 
@@ -88,6 +89,10 @@ const (
 	// msgLiveUpdate starts, updates or ends one of package widget's Live
 	// Activities, JSON (driver.SendLiveUpdate).
 	msgLiveUpdate = 17
+	// msgMicrophoneStart and msgMicrophoneStop control the AudioRecord
+	// foreground service. The service reports samples as msgMicrophone.
+	msgMicrophoneStart = 18
+	msgMicrophoneStop  = 19
 
 	// Java to Go.
 	msgStart       = 1
@@ -107,6 +112,7 @@ const (
 	// msgLiveReport is what the runtime reports of Live Activities, JSON
 	// (driver.ReportLiveUpdate).
 	msgLiveReport = 15
+	msgMicrophone = 16
 )
 
 // The parts of an image view's request msgImage carries.
@@ -166,6 +172,62 @@ type surface struct {
 	testReply func(r *reader)
 	// host is the channel to the app embedding the view.
 	host *embedHost
+
+	// recordings are owned by the Go process; the Java service only carries
+	// PCM chunks over the pipe and can continue while the activity is hidden.
+	recordMu   sync.Mutex
+	recordings map[uint32]*androidRecording
+	recordID   atomic.Uint32
+}
+
+type androidRecording struct {
+	samples  func([]int16)
+	level    func(float32)
+	started  chan androidRecordingInfo
+	ended    chan struct{}
+	startErr chan error
+	stopOnce sync.Once
+}
+
+type androidRecordingInfo struct {
+	rate, channels int
+}
+
+// Recording is the Android recorder returned to the public microphone
+// package. Its fields deliberately mirror microphone.Stream's semantics.
+type Recording struct {
+	Stop       func()
+	Ended      <-chan struct{}
+	SampleRate int
+	Channels   int
+}
+
+type androidRecordingBackend struct{}
+
+func (androidRecordingBackend) Capture(rate int, samples func([]int16), level func(float32)) (*recording.Session, error) {
+	r, err := CaptureMicrophone(rate, samples, level)
+	if err != nil {
+		return nil, err
+	}
+	return &recording.Session{Stop: r.Stop, Ended: r.Ended, SampleRate: r.SampleRate, Channels: r.Channels}, nil
+}
+
+func (androidRecordingBackend) Allowed() bool    { return MicrophoneAllowed() }
+func (androidRecordingBackend) Authorize() error { return AuthorizeMicrophone() }
+
+// MicrophoneAllowed reports whether the Android runtime can service a
+// recording request. The actual dangerous permission is checked immediately
+// before starting AudioRecord, where Android can show its prompt.
+func MicrophoneAllowed() bool { return activeSurface.Load() != nil }
+
+// AuthorizeMicrophone is intentionally non-blocking: Android permission
+// prompts must run on the activity's UI thread and CaptureMicrophone performs
+// that request as part of its start handshake.
+func AuthorizeMicrophone() error {
+	if activeSurface.Load() == nil {
+		return errors.New("microphone: Android runtime is not connected")
+	}
+	return nil
 }
 
 // Options configures Run.
@@ -212,7 +274,10 @@ func connect(opts Options) *surface {
 		components: opts.Components,
 		natives:    map[driver.NodeID]*nativeView{},
 		host:       newEmbedHost(),
+		recordings: map[uint32]*androidRecording{},
 	}
+	activeSurface.Store(s)
+	recording.Register(androidRecordingBackend{})
 	useDNS()
 	s.sendFonts(opts.Fonts)
 	driver.ConnectLiveUpdates(func(msg []byte) {
@@ -230,6 +295,14 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 		kind, payload, err := readMessage(in)
 		if err != nil {
 			// The runtime is gone, and the app with it.
+			activeSurface.CompareAndSwap(s, nil)
+			recording.Register(nil)
+			s.recordMu.Lock()
+			for id, rec := range s.recordings {
+				close(rec.ended)
+				delete(s.recordings, id)
+			}
+			s.recordMu.Unlock()
 			if s.engine != nil {
 				s.engine.Close()
 			}
@@ -372,7 +445,86 @@ func (s *surface) serve(app engine.App, opts Options, test *testOpen) {
 				servers[i] = r.str()
 			}
 			dnsServers.Store(&servers)
+		case msgMicrophone:
+			s.microphoneMessage(&r)
 		}
+	}
+}
+
+// activeSurface is the one runtime endpoint in an Android app process.
+var activeSurface atomic.Pointer[surface]
+
+// CaptureMicrophone starts Android's AudioRecord service and waits until it
+// has either opened a device or reported a permission/error result.
+func CaptureMicrophone(rate int, samples func([]int16), level func(float32)) (*Recording, error) {
+	s := activeSurface.Load()
+	if s == nil {
+		return nil, errors.New("microphone: Android runtime is not connected")
+	}
+	if rate <= 0 {
+		rate = 44100
+	}
+	id := s.recordID.Add(1)
+	r := &androidRecording{samples: samples, level: level, started: make(chan androidRecordingInfo, 1), ended: make(chan struct{}), startErr: make(chan error, 1)}
+	s.recordMu.Lock()
+	s.recordings[id] = r
+	s.recordMu.Unlock()
+	s.send(msgMicrophoneStart, func(w *writer) { w.u32(id); w.u32(uint32(rate)) })
+	select {
+	case info := <-r.started:
+		return &Recording{Stop: func() { s.stopMicrophone(id, r) }, Ended: r.ended, SampleRate: info.rate, Channels: info.channels}, nil
+	case err := <-r.startErr:
+		s.recordMu.Lock()
+		delete(s.recordings, id)
+		s.recordMu.Unlock()
+		return nil, err
+	case <-time.After(15 * time.Second):
+		s.stopMicrophone(id, r)
+		return nil, errors.New("microphone: Android recorder start timed out")
+	}
+}
+
+func (s *surface) stopMicrophone(id uint32, r *androidRecording) {
+	r.stopOnce.Do(func() {
+		s.send(msgMicrophoneStop, func(w *writer) { w.u32(id) })
+	})
+}
+
+func (s *surface) microphoneMessage(r *reader) {
+	id := r.u32()
+	s.recordMu.Lock()
+	rec := s.recordings[id]
+	s.recordMu.Unlock()
+	if rec == nil {
+		return
+	}
+	switch r.byte() {
+	case 1: // opened: actual sample rate and channels
+		rec.started <- androidRecordingInfo{rate: int(r.u32()), channels: int(r.u32())}
+	case 2: // samples: level, count, PCM16
+		level := r.float()
+		samples := make([]int16, r.u32())
+		for i := range samples {
+			samples[i] = int16(r.u16())
+		}
+		if rec.level != nil {
+			rec.level(level)
+		}
+		if rec.samples != nil {
+			rec.samples(samples)
+		}
+	case 3: // ended: error string, empty on a normal stop
+		errText := r.str()
+		if errText != "" {
+			select {
+			case rec.startErr <- errors.New(errText):
+			default:
+			}
+		}
+		close(rec.ended)
+		s.recordMu.Lock()
+		delete(s.recordings, id)
+		s.recordMu.Unlock()
 	}
 }
 

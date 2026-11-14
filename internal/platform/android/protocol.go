@@ -247,6 +247,15 @@ func (r *reader) byte() byte {
 	return b
 }
 
+func (r *reader) u16() uint16 {
+	if len(r.buf) < 2 {
+		return 0
+	}
+	v := binary.BigEndian.Uint16(r.buf)
+	r.buf = r.buf[2:]
+	return v
+}
+
 func (r *reader) u32() uint32 {
 	if len(r.buf) < 4 {
 		return 0

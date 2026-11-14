@@ -217,10 +217,36 @@ public class NsgoView extends FrameLayout {
     private final Host host = new Host(this);
     /** Downloads the app's images, as its Go process asks. */
     private final Downloads downloads = new Downloads(this::write);
+    /** AudioRecord's service callback, forwarding bounded chunks to Go. */
+    private final RecordingService.Callback recordingCallback = new RecordingService.Callback() {
+        @Override public void opened(int id, int rate, int channels) {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            try { DataOutputStream d = new DataOutputStream(b); d.writeInt(id); d.writeByte(1); d.writeInt(rate); d.writeInt(channels); }
+            catch (IOException impossible) { throw new AssertionError(impossible); }
+            write(Protocol.MICROPHONE, b.toByteArray());
+        }
+        @Override public void samples(int id, short[] data, int count, float level) {
+            ByteArrayOutputStream b = new ByteArrayOutputStream(13 + count * 2);
+            try {
+                DataOutputStream d = new DataOutputStream(b);
+                d.writeInt(id); d.writeByte(2); d.writeFloat(level); d.writeInt(count);
+                for (int i = 0; i < count; i++) d.writeShort(data[i]);
+            } catch (IOException impossible) { throw new AssertionError(impossible); }
+            write(Protocol.MICROPHONE, b.toByteArray());
+        }
+        @Override public void ended(int id, String error) {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            try { DataOutputStream d = new DataOutputStream(b); d.writeInt(id); d.writeByte(3); Protocol.writeString(d, error); }
+            catch (IOException impossible) { throw new AssertionError(impossible); }
+            write(Protocol.MICROPHONE, b.toByteArray());
+        }
+    };
     private java.util.Locale hostLocale;
     private float hostFontScale;
     private int hostAppearance;
     private File storage;
+    private final java.util.HashMap<Integer, Integer> microphonePermission = new java.util.HashMap<>();
+    private boolean microphonePermissionRequesting;
 
     /** The appearances setAppearance takes. */
     public static final int APPEARANCE_SYSTEM = 0, APPEARANCE_LIGHT = 1, APPEARANCE_DARK = 2;
@@ -259,6 +285,7 @@ public class NsgoView extends FrameLayout {
         ime = context.getSystemService(InputMethodManager.class);
         accessibility = context.getSystemService(AccessibilityManager.class);
         gestures = new Gestures(context);
+        RecordingService.setCallback(recordingCallback);
         setOnApplyWindowInsetsListener((v, insets) -> {
             insets(insets);
             environment();
@@ -503,6 +530,7 @@ public class NsgoView extends FrameLayout {
         decoder.shutdownNow();
         folders.shutdownNow();
         if (process != null) process.destroy();
+        RecordingService.stopAll(getContext().getApplicationContext());
         destroyComponents();
     }
 
@@ -560,6 +588,12 @@ public class NsgoView extends FrameLayout {
                             LiveUpdates.apply(getContext(), activity(), payload);
                             write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
                         });
+                        break;
+                    case Protocol.MICROPHONE_START:
+                        startRecording(message.readInt(), message.readInt());
+                        break;
+                    case Protocol.MICROPHONE_STOP:
+                        RecordingService.stop(getContext().getApplicationContext(), message.readInt());
                         break;
                     case Protocol.WANT_FRAME:
                         ui.post(() -> {
@@ -777,6 +811,22 @@ public class NsgoView extends FrameLayout {
             permissionAsks.clear();
             return;
         }
+        if (request == Services.MICROPHONE_PERMISSION_REQUEST) {
+            java.util.HashMap<Integer, Integer> pending;
+            synchronized (microphonePermission) {
+                pending = new java.util.HashMap<>(microphonePermission);
+                microphonePermission.clear();
+                microphonePermissionRequesting = false;
+            }
+            boolean granted = results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            if (!granted) {
+                for (int id : pending.keySet()) recordingCallback.ended(id, "microphone access denied");
+            } else {
+                for (java.util.Map.Entry<Integer, Integer> e : pending.entrySet())
+                    RecordingService.start(getContext().getApplicationContext(), e.getKey(), e.getValue());
+            }
+            return;
+        }
         if (request != Services.CAMERA_PERMISSION_REQUEST || photo == null) return;
         Activity activity = activity();
         boolean granted = results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -787,6 +837,27 @@ public class NsgoView extends FrameLayout {
         Services.Pick p = photo;
         photo = null;
         answerPick(p, "", "camera access denied");
+    }
+
+    private void startRecording(int id, int rate) {
+        Activity activity = activity();
+        if (activity == null) {
+            recordingCallback.ended(id, "no activity can request microphone access");
+            return;
+        }
+        if (activity.checkSelfPermission(Services.MICROPHONE_PERMISSION)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            RecordingService.start(getContext().getApplicationContext(), id, rate);
+            return;
+        }
+        boolean ask;
+        synchronized (microphonePermission) {
+            microphonePermission.put(id, rate);
+            ask = !microphonePermissionRequesting;
+            microphonePermissionRequesting = true;
+        }
+        if (ask) activity.runOnUiThread(() -> activity.requestPermissions(
+                new String[] {Services.MICROPHONE_PERMISSION}, Services.MICROPHONE_PERMISSION_REQUEST));
     }
 
     /** Prepares the photo the camera app wrote off the UI thread, then deletes its file. */

@@ -395,12 +395,19 @@ const aarManifest = `<?xml version="1.0" encoding="utf-8"?>
     <uses-sdk android:minSdkVersion="28" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <application android:extractNativeLibs="true">
         <provider
             android:name="dev.oneo.nsgo.FileProvider"
             android:authorities="${applicationId}.nsgo.files"
             android:exported="false"
             android:grantUriPermissions="true" />
+        <service
+            android:name="dev.oneo.nsgo.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
 </manifest>
 `

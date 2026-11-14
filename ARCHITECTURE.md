@@ -34,7 +34,7 @@ Apps import the public packages; `internal/` holds the implementation, which onl
 | `tsx/pkg` | `nsh-package` | Signed packages of TSX apps: keys, certificates, revocation lists and the `Trust` that verifies them for `tsx.View` ([signed packages](docs/architecture/tsx.md#signed-packages)) |
 | `i18n`, `*/locales`, `internal/cldr` | — | The language the app shows, and what the code `nsgo` writes from a package's catalogs runs on, formatting by CLDR's data; `base`'s own catalogs ([languages](docs/architecture/languages.md)) |
 | `icons/lucide`, `tools/lucidegen` | — (NSH loads SVG as images) | The bundled Lucide pack, an accessor per icon, and its generator ([icons](docs/architecture/icons.md)) |
-| `microphone` | — | Recording the default input on macOS and iOS, reporting `ErrUnsupported` elsewhere |
+| `microphone` | — | Recording the default input on macOS, iOS and Android, with streamed PCM, level callbacks and Android's foreground service; reporting `ErrUnsupported` elsewhere |
 | `updater`, `updater/locales` | `nsh/updater` | Updating the app the way its platform and channel do: Sparkle, WinSparkle, the appcast `nsgo build` signs, or the App Store ([updates](docs/architecture/updates.md)) |
 | `widget` | — | Timelines of views that macOS and iOS widgets show, drawn by a SwiftUI extension the tool compiles, and Live Activities, which the extension draws on iOS and Android's runtime posts as Live Updates ([widgets](docs/architecture/tool.md#widgets)) |
 | `nsgotest` | `nsh-testing` | App tests, headless or on a platform ([testing](docs/architecture/testing.md)) |

@@ -59,6 +59,8 @@ final class Services {
 
     /** The request codes of the camera's activity and of the camera permission's prompt. */
     static final int PHOTO_REQUEST = 0x6e77, CAMERA_PERMISSION_REQUEST = 0x6e78;
+    static final int MICROPHONE_PERMISSION_REQUEST = 0x6e79;
+    static final String MICROPHONE_PERMISSION = "android.permission.RECORD_AUDIO";
 
     /** The directory in the app's cache the camera writes photos to, which FileProvider lets it write. */
     static final String CAMERA_DIR = "nsgo-camera";

@@ -17,6 +17,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The runtime tells the app the network's DNS servers. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
     <application
         android:label="NSGo"
@@ -33,6 +36,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name="dev.oneo.nsgo.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
         <!-- Serves the app's files to the apps it hands them to: the
              clipboard's image, a file it opens and the files it shares;
              nsgo build names its authority after the app's package. -->

@@ -4,6 +4,7 @@ package microphone
 
 import (
 	"fmt"
+	"math"
 	"structs"
 	"sync"
 	"sync/atomic"
@@ -200,5 +201,38 @@ func Capture(rate int, samples func([]int16)) (*Stream, error) {
 		stop()
 		return nil, fmt.Errorf("microphone: AudioQueueStart: %d", status)
 	}
-	return &Stream{stop, ended}, nil
+	return &Stream{stop: stop, ended: ended, SampleRate: rate, Channels: 1}, nil
+}
+
+// CaptureWithOptions is Capture with the actual format and optional level
+// reporting. AudioQueue supplies PCM; calculating RMS here keeps the public
+// API identical on Apple and Android.
+func CaptureWithOptions(o CaptureOptions) (*Stream, CaptureInfo, error) {
+	if o.Rate <= 0 {
+		o.Rate = 44100
+	}
+	stream, err := Capture(o.Rate, func(samples []int16) {
+		if o.Samples != nil {
+			o.Samples(samples)
+		}
+		if o.Level != nil {
+			o.Level(rms(samples))
+		}
+	})
+	if err != nil {
+		return nil, CaptureInfo{}, err
+	}
+	return stream, CaptureInfo{SampleRate: stream.SampleRate, Channels: stream.Channels}, nil
+}
+
+func rms(samples []int16) float32 {
+	if len(samples) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, sample := range samples {
+		v := float64(sample) / 32768
+		sum += v * v
+	}
+	return float32(math.Sqrt(sum / float64(len(samples))))
 }
