@@ -24,7 +24,9 @@ A request is a command in the batch, as every service is ([services](services.md
 
 A contact has an opaque provider ID, a display name, structured names, organization, phones, email addresses, postal addresses, birthday and image data only when the request asks for each field. The model distinguishes an absent field from an empty value and keeps labels such as “work” or “home”. The API must not assume one phone or one email is primary.
 
-The picker returns the provider ID and the fields the user chose. A query takes a search string and a field mask, and returns a bounded page with a continuation token; it does not read the entire address book by default. A read by provider ID may fail after the user deletes or merges the contact, which is a normal not-found result.
+The provider ID is `CNContact.identifier` on Apple and, on Android, the `LOOKUP_KEY` and `_ID` pair `Contacts.getLookupUri` joins, because `_ID` alone changes when the provider joins or splits contacts. Apple's unified contacts may come back under another identifier too, so a read by provider ID may fail after the user or the provider deletes, merges or splits the contact, which is a normal not-found result.
+
+The picker returns the provider ID and the fields the user chose. A query takes a search string and a field mask, and returns a bounded page with a continuation token; it does not read the entire address book by default.
 
 Writing a contact is a separate operation from reading. It must say whether it creates a new record or applies a revision to an existing provider ID, and it must report conflicts instead of overwriting a newer edit silently. The first implementation may leave writes out if both platforms cannot provide the same conflict semantics; a picker and read-only API must not imply write support.
 
@@ -34,7 +36,11 @@ The permission reads as not asked, granted, limited, denied or restricted. Apple
 
 A calendar entry has an opaque calendar ID, title, account/source label, color and whether it is writable. An event has an opaque event ID, calendar ID, title, notes, location, start and end with an explicit time zone or all-day flag, recurrence, alarms and attendee display data where the provider exposes them. Date-time values are not converted to the device's current zone on the bridge.
 
-Queries require a bounded start and end and may filter by calendar IDs. The backend returns pages or a provider-sized bounded result, never an unbounded event dump. Creating, updating and deleting an event use an explicit calendar ID and a revision token where available. An update with a stale revision fails with a conflict; deletion of an already-deleted event is idempotent.
+Queries require a bounded start and end and may filter by calendar IDs. The backend returns pages or a provider-sized bounded result, never an unbounded event dump. A query returns occurrences, not series: each carries its event ID, its original start (EventKit's `occurrenceDate`, Android's `Instances.BEGIN`) and whether it was detached from its series. Android queries `CalendarContract.Instances`, whose `_ID` is not an event's, and returns `Instances.EVENT_ID`.
+
+Creating an event takes an explicit calendar ID; updating and deleting take the event ID and a revision token where available. An update with a stale revision fails with a conflict. A change to a recurring event names the occurrence and a span, this occurrence or this and the following ones, as EventKit's `EKSpanThisEvent` and `EKSpanFutureEvents`; Android changes one occurrence through an exception on `Events.CONTENT_EXCEPTION_URI`, and the following ones by ending the series' rule and inserting a new series. A change to a recurring event without a span fails rather than changing the whole series.
+
+An event ID does not survive every change: EventKit's `eventIdentifier` will likely change when the event moves to another calendar, on this device or through a sync from another. An update or delete whose ID no longer resolves fails with not-found, never reports success, so the app can query again rather than believe the event is gone.
 
 Apple distinguishes full event access from write-only access on newer systems and uses `EKEventStore`'s access request. Android separates `READ_CALENDAR` and `WRITE_CALENDAR`. A calendar picker is optional and must be an app choice; the system permission prompt is not a substitute for asking which calendar to use.
 
@@ -48,10 +54,10 @@ The tool adds only the declarations an app requests: Apple usage descriptions an
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, conflicts, limited and denied access;
+- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited and denied access;
 - `internal/driver` tests cover request IDs, empty versus absent fields, bounded results and large notes or payloads;
-- Apple tests use fake contact and event stores for limited access, picker results, authorization changes and stale records;
-- Android tests use fake `ContentResolver` providers for permission separation, cursors, account changes and revision conflicts; and
+- Apple tests use fake contact and event stores for limited access, picker results, authorization changes, stale records and changed identifiers;
+- Android tests use fake `ContentResolver` providers for permission separation, cursors, `Instances` versus `Events` IDs, lookup keys, account changes and revision conflicts; and
 - target tests use fixture stores containing no real personal data and verify that a denied request produces no observable record metadata.
 
 ## Open decisions
