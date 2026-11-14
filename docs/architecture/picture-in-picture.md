@@ -40,7 +40,7 @@ Apple's usual flow dismisses the player's page as PiP starts and shows it again 
 
 A backgrounded app can receive lifecycle callbacks, but it cannot assume the engine will run continuously. Custom content must keep enough state in the session adapter to answer AVKit while the engine is suspended, or declare that PiP ends when the app backgrounds.
 
-Audio follows the existing video audio-session rules. The PiP design does not add a second audio mixer or silently request microphone access. A session that has no audio must say so so iOS does not keep an unnecessary playback category active.
+PiP needs the shared `AVAudioSession` in the playback category and the `audio` background mode (Apple's "Configuring your app for media playback"). The existing video rules (`apple/audiosession_ios.go`) set that category only while a video whose `AudioSession` is not the default plays, and deactivate the session and restore the previous category once none plays, a pause included. A video with PiP enabled therefore takes the playback category as `AudioSessionPlayback` does even with the default `AudioSession`, from when PiP is enabled so that it can become possible, and keeps the session active, paused or not, until PiP's stop callback. Custom content needs the category too, with or without sound; whether a silent session can mix with other apps' audio, so that a countdown does not stop the user's music, is checked on a device before the implementation chooses. The PiP design does not add a second audio mixer or silently request microphone access.
 
 ## Configuration and privacy
 
