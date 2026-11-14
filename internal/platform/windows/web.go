@@ -49,7 +49,9 @@ package windows
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"unicode/utf16"
 	"unsafe"
 
@@ -100,7 +102,17 @@ type webView struct {
 	lastDown              uint32
 	lastDownAt            point
 	lastButton, downCount int
+
+	downloads []*webDownload
 }
+
+type webDownload struct {
+	view *webView
+	op   *comObject
+	item driver.WebDownload
+}
+
+var webDownloadSerial atomic.Uint64
 
 type webCommand struct {
 	command driver.WebCommand
@@ -226,6 +238,7 @@ func (wv *webView) controllerReady(comp *comObject) {
 	}
 	wv.addScript(webBridge, func(string) bool { return true })
 	wv.listen()
+	wv.listenDownloads()
 	wv.listenInput()
 	wv.executed = newHandler(&iidExecuteScriptCompleted, nil)
 	wv.ready = true
@@ -243,6 +256,105 @@ func (wv *webView) controllerReady(comp *comObject) {
 	// The root visual target shows once the composition commits: the
 	// next frame does.
 	wv.w.redrawAll()
+}
+
+func (wv *webView) listenDownloads() {
+	web4 := wv.web.query(&iidWeb4)
+	if web4 == nil {
+		return
+	}
+	web4.subscribe(webAddDownloadStarting, newHandler(&iidDownloadStarting, func(_ uintptr, args unsafe.Pointer) {
+		wv.downloadStarted((*comObject)(args))
+	}))
+	web4.release()
+}
+
+func (wv *webView) downloadStarted(args *comObject) {
+	if args == nil {
+		return
+	}
+	if wv.config.DownloadDir == "" {
+		args.call(downloadArgsPutCancel, 1)
+		return
+	}
+	var op *comObject
+	if failed(args.call(downloadArgsGetOperation, uintptr(unsafe.Pointer(&op)))) || op == nil {
+		args.call(downloadArgsPutCancel, 1)
+		return
+	}
+	name := "download"
+	if defaultPath := args.getString(downloadArgsGetResultPath); defaultPath != "" {
+		name = webDownloadFilename(defaultPath)
+	}
+	id := strconv.FormatUint(webDownloadSerial.Add(1), 36)
+	dir := filepath.Join(wv.config.DownloadDir, id)
+	path := filepath.Join(dir, name)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		args.call(downloadArgsPutCancel, 1)
+		op.release()
+		return
+	}
+	if failed(args.call(downloadArgsPutResultPath, uintptr(unsafe.Pointer(wide(path))))) ||
+		failed(args.call(downloadArgsPutHandled, 1)) {
+		args.call(downloadArgsPutCancel, 1)
+		op.release()
+		return
+	}
+	dl := &webDownload{view: wv, op: op, item: driver.WebDownload{State: driver.WebDownloadStarted,
+		ID: id, URL: op.getString(downloadGetURI), Filename: name, Path: path}}
+	wv.downloads = append(wv.downloads, dl)
+	wv.report(driver.Event{Kind: driver.EventDownload, Data: &dl.item})
+	op.subscribe(downloadAddBytesChanged, newHandler(&iidBytesReceivedChanged, func(uintptr, unsafe.Pointer) {
+		// The public event model reports the byte count when the download
+		// reaches its terminal state, matching the Apple and Linux hosts.
+	}))
+	op.subscribe(downloadAddStateChanged, newHandler(&iidDownloadStateChanged, func(uintptr, unsafe.Pointer) {
+		wv.downloadStateChanged(dl)
+	}))
+}
+
+func (wv *webView) downloadStateChanged(dl *webDownload) {
+	if wv.closed || dl == nil || dl.op == nil {
+		return
+	}
+	var state int32
+	if failed(dl.op.call(downloadGetState, uintptr(unsafe.Pointer(&state)))) {
+		return
+	}
+	switch state {
+	case 2: // COREWEBVIEW2_DOWNLOAD_STATE_COMPLETED
+		dl.item.State = driver.WebDownloadFinished
+		var bytes int64
+		if !failed(dl.op.call(downloadGetBytes, uintptr(unsafe.Pointer(&bytes)))) {
+			dl.item.Bytes = bytes
+		}
+	case 1: // COREWEBVIEW2_DOWNLOAD_STATE_INTERRUPTED
+		dl.item.State = driver.WebDownloadFailed
+		dl.item.Message = "The download was interrupted."
+		var reason int32
+		if !failed(dl.op.call(downloadGetInterrupt, uintptr(unsafe.Pointer(&reason)))) {
+			dl.item.Message += " Reason " + strconv.FormatInt(int64(reason), 10) + "."
+		}
+	default:
+		return
+	}
+	wv.report(driver.Event{Kind: driver.EventDownload, Data: &dl.item})
+	dl.op.release()
+	dl.op = nil
+	for i, active := range wv.downloads {
+		if active == dl {
+			wv.downloads = append(wv.downloads[:i], wv.downloads[i+1:]...)
+			break
+		}
+	}
+}
+
+func webDownloadFilename(path string) string {
+	name := filepath.Base(path)
+	if name == "." || name == ".." || name == string(filepath.Separator) || name == "" {
+		return "download"
+	}
+	return name
 }
 
 // listen reports the page's navigations and messages.
@@ -773,6 +885,14 @@ func (wv *webView) close() {
 	}
 	wv.closed = true
 	wv.commands = nil
+	for _, dl := range wv.downloads {
+		if dl.op != nil {
+			dl.op.call(downloadCancel)
+			dl.op.release()
+			dl.op = nil
+		}
+	}
+	wv.downloads = nil
 	if wv.controller != nil {
 		wv.controller.call(controllerClose)
 	}

@@ -10,6 +10,7 @@ func TestWebDownloadFilenameStaysInDownloadDirectory(t *testing.T) {
 		"../../report.pdf": "report.pdf",
 		"":                 "download",
 		".":                "download",
+		"..":               "download",
 		"/":                "download",
 	}
 	for suggested, want := range tests {

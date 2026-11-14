@@ -413,7 +413,7 @@ func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
 
 func webDownloadFilename(suggested string) string {
 	name := filepath.Base(suggested)
-	if name == "." || name == string(filepath.Separator) || name == "" {
+	if name == "." || name == ".." || name == string(filepath.Separator) || name == "" {
 		return "download"
 	}
 	return name

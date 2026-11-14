@@ -49,7 +49,7 @@ type WebView struct {
 	// OnDownload follows what the page downloads, which only a web view
 	// with one saves, to downloads/<id>/ in the app's data directory:
 	// files WebKit cannot show and links that ask for a download, on
-	// Apple platforms and Linux.
+	// Apple platforms, Linux and Windows.
 	OnDownload func(WebDownload)
 	OnLayout   func(Bounds)
 	Ref        *Ref
