@@ -64,7 +64,9 @@ The implementation is complete only when these checks exist:
 - headless `core` tests cover authorization, one-shot versus stream ownership, cancellation, pausing in the background and resuming with a gap, sample ordering, missing fields, rate clamping and bounded back-pressure;
 - `internal/driver` tests cover coordinate encoding, timestamps, empty sensor sets and large batches;
 - Apple tests use fake location and motion managers for permission changes, reduced accuracy, unavailable sensors, a face-up device reading +9.81 m/s² on z and stop-on-disposal;
-- Android tests use fake location and sensor providers for coarse/fine permission, provider changes, sensor accuracy and API-level differences; and
+- Android tests use fake location and sensor providers for coarse/fine permission, provider changes, sensor accuracy and API-level differences;
+- `nsgotest` keeps a location and motion model, as it keeps `NotificationPermission` and `NotificationAnswer`: the permission the platform reports, the answer a prompt gets, and fixes and samples a test feeds, so apps test location headless;
+- `examples/gallery`'s System page shows a fix and live motion samples and checks them with that model; and
 - target tests use recorded fixtures or simulator providers, never a user's live location, and verify no sample reaches a disposed scope.
 
 ## Open decisions
