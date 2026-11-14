@@ -594,6 +594,7 @@ func (s *surface) environment() driver.Environment {
 		Speech:           apple.SpeechAvailable(),
 		Camera:           cameraAvailable(),
 		CanSendInput:     false,
+		HasWebView:       idiom != driver.IdiomTV,
 		Lifecycle:        appLifecycle(),
 		AppClip:          appClip(),
 		OpenedURL:        openedURL,

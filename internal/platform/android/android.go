@@ -207,7 +207,7 @@ func connect(opts Options) *surface {
 		lines:    make(chan []driver.TextLine, 1),
 		carets:   make(chan driver.CaretLayout, 1),
 		started:  make(chan struct{}),
-		env:      driver.Environment{OS: driver.OSAndroid},
+		env:      driver.Environment{OS: driver.OSAndroid, HasWebView: true},
 		images:   map[driver.NodeID]*imageView{},
 
 		components: opts.Components,
@@ -541,6 +541,7 @@ func (s *surface) unstage(save uint32) {
 func readEnvironment(r *reader) driver.Environment {
 	env := driver.Environment{
 		OS:             driver.OSAndroid,
+		HasWebView:     true,
 		SafeArea:       driver.Edges{Top: r.points(), Right: r.points(), Bottom: r.points(), Left: r.points()},
 		KeyboardHeight: r.points(),
 		FontScale:      r.float(),

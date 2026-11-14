@@ -927,6 +927,7 @@ func (s *surface) environment() driver.Environment {
 		ScreenColor:    true,
 		Speech:         apple.SpeechAvailable(),
 		CanSendInput:   true,
+		HasWebView:     true,
 		RTL:            rtl,
 		PixelRatio:     s.backingScale(),
 		Locale:         locale,

@@ -48,6 +48,8 @@ type Environment struct {
 	Camera bool
 	// CanSendInput says Ref.SendInput can deliver trusted input to web views.
 	CanSendInput bool
+	// HasWebView says this target provides a web view host.
+	HasWebView bool
 	// RTL lays the app out right to left.
 	RTL bool
 	// PixelRatio is device pixels per point; 0 means 1.

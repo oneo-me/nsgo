@@ -99,6 +99,20 @@ func TestSendInputUsesEnvironmentCapability(t *testing.T) {
 	}
 }
 
+func TestEnvironmentWebViewCapability(t *testing.T) {
+	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
+		if cx.Env().HasWebView() || cx.Env().CanSendInput() {
+			t.Fatal("test environment unexpectedly has web capabilities")
+		}
+		return View{}
+	})
+	h.commit()
+	h.tree.SetEnvironment(Environment{HasWebView: true, CanSendInput: true})
+	if !h.root.Env().HasWebView() || !h.root.Env().CanSendInput() {
+		t.Fatalf("environment capabilities: web=%v input=%v", h.root.Env().HasWebView(), h.root.Env().CanSendInput())
+	}
+}
+
 func TestJSString(t *testing.T) {
 	for in, want := range map[string]string{
 		`a"b\c` + "\nd": `"a\"b\\c\nd"`,
