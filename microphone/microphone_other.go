@@ -1,4 +1,4 @@
-//go:build !darwin
+//go:build !darwin && !android
 
 package microphone
 
@@ -13,3 +13,8 @@ func Authorize() error { return ErrUnsupported }
 
 // Capture reports ErrUnsupported.
 func Capture(int, func([]int16)) (*Stream, error) { return nil, ErrUnsupported }
+
+// CaptureWithOptions reports that this target has no native recorder.
+func CaptureWithOptions(CaptureOptions) (*Stream, CaptureInfo, error) {
+	return nil, CaptureInfo{}, ErrUnsupported
+}

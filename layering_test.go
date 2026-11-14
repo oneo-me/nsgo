@@ -20,7 +20,8 @@ var layers = []struct {
 	imports []string
 }{
 	{"internal/layout", nil},
-	{"microphone", nil},
+	{"microphone", []string{"internal/recording"}},
+	{"internal/recording", nil},
 	// Widgets take core's colors, edges and fonts, and reach WidgetKit
 	// through the files and the library the tool's extension shares, and
 	// Android's runtime through the driver's Live Updates.
@@ -54,7 +55,7 @@ var layers = []struct {
 	{"internal/platform/textselect", []string{"internal/driver"}},
 	{"internal/platform/updates", []string{"internal/driver", "internal/platform/imageload"}},
 	{"internal/platform/webstyle", []string{"internal/driver"}},
-	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales"}, platformShared...)},
+	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales", "internal/recording"}, platformShared...)},
 	{"nsgotest", []string{"core", "internal/devtools", "internal/driver", "internal/testhost"}},
 	{"", []string{"core", "internal/devtools", "internal/engine", "internal/platform/", "updater"}},
 	// The code nsgo writes from catalogs runs on i18n.

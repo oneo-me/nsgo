@@ -30,6 +30,8 @@ final class Protocol {
     static final int FETCH = 16;
     /** Starts, updates or ends a Live Activity: JSON (LiveUpdates). */
     static final int LIVE_UPDATE = 17;
+    static final int MICROPHONE_START = 18;
+    static final int MICROPHONE_STOP = 19;
 
     // Java to Go.
     static final int START = 1;
@@ -48,6 +50,8 @@ final class Protocol {
     static final int FETCHED = 14;
     /** What LiveUpdates reports: JSON. */
     static final int LIVE_REPORT = 15;
+    /** AudioRecord replies: opened, samples, ended. */
+    static final int MICROPHONE = 16;
 
     // What a FOLDER message asks, as folders.go has them.
     static final int FOLDER_LIST = 0;

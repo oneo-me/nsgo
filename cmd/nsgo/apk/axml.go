@@ -85,8 +85,46 @@ var androidAttrs = map[string]attrSpec{
 
 	"extractNativeLibs":           {0x010104ea, typeBool, parseBool},
 	"enableOnBackInvokedCallback": {0x0101066c, typeBool, parseBool},
+	"foregroundServiceType":       {0x010105ad, typeHex, parseForegroundServiceType},
 	"configChanges":               {0x0101001f, typeHex, parseConfigChanges},
 	"windowSoftInputMode":         {0x0101022b, typeHex, parseSoftInputMode},
+}
+
+func parseForegroundServiceType(s string) (uint32, error) {
+	var v uint32
+	for _, name := range strings.Split(s, "|") {
+		switch strings.TrimSpace(name) {
+		case "dataSync":
+			v |= 0x1
+		case "mediaPlayback":
+			v |= 0x2
+		case "phoneCall":
+			v |= 0x4
+		case "location":
+			v |= 0x8
+		case "connectedDevice":
+			v |= 0x10
+		case "mediaProjection":
+			v |= 0x20
+		case "camera":
+			v |= 0x40
+		case "microphone":
+			v |= 0x80
+		case "health":
+			v |= 0x100
+		case "remoteMessaging":
+			v |= 0x200
+		case "systemExempted":
+			v |= 0x400
+		case "shortService":
+			v |= 0x800
+		case "specialUse":
+			v |= 0x4000
+		default:
+			return 0, fmt.Errorf("unknown foreground service type %q", name)
+		}
+	}
+	return v, nil
 }
 
 // styles are the framework styles a manifest may name. A reference needs
