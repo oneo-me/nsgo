@@ -46,6 +46,8 @@ type Environment struct {
 	Speech bool
 	// Camera says ItemTakePhoto shows a camera here.
 	Camera bool
+	// CanSendInput says Ref.SendInput can deliver trusted input to web views.
+	CanSendInput bool
 	// RTL lays the app out right to left.
 	RTL bool
 	// PixelRatio is device pixels per point; 0 means 1.

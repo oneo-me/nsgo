@@ -81,6 +81,24 @@ func TestWebViewConfiguresLoadsAndReports(t *testing.T) {
 	}
 }
 
+func TestSendInputUsesEnvironmentCapability(t *testing.T) {
+	var ref Ref
+	h := newHost(t, Size{Width: 100, Height: 100}, func(*Scope) Node {
+		return WebView{Ref: &ref, Source: WebHTML("<button>go</button>", "")}
+	})
+	h.commit()
+	ref.SendInput(WebClick(10, 10))
+	if b := h.commit(); len(b.Items) != 0 {
+		t.Fatalf("unsupported input sent %v", b.Items)
+	}
+	h.tree.SetEnvironment(Environment{CanSendInput: true})
+	ref.SendInput(WebClick(10, 10))
+	b := h.commit()
+	if len(b.Items) != 1 || b.Items[0].Kind != driver.ItemWebCommand || b.Items[0].WebCommand != driver.WebSendInput {
+		t.Fatalf("supported input sent %v", b.Items)
+	}
+}
+
 func TestJSString(t *testing.T) {
 	for in, want := range map[string]string{
 		`a"b\c` + "\nd": `"a\"b\\c\nd"`,

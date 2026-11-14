@@ -926,6 +926,7 @@ func (s *surface) environment() driver.Environment {
 		ScreenReader:   objc.Send[bool](ws, sel("isVoiceOverEnabled")),
 		ScreenColor:    true,
 		Speech:         apple.SpeechAvailable(),
+		CanSendInput:   true,
 		RTL:            rtl,
 		PixelRatio:     s.backingScale(),
 		Locale:         locale,

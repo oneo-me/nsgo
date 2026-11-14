@@ -250,13 +250,16 @@ func (r *Ref) InjectJavaScript(script string) { r.webCommand(driver.WebInjectJav
 // SendInput gives the web view's page input as the user's own, whose
 // events are trusted and carry user activation, which no script the page
 // runs can make: a click, typed text or a key. It takes the keyboard focus
-// first; macOS has it, other platforms drop it.
+// first. It does nothing where Env.CanSendInput is false.
 func (r *Ref) SendInput(in WebInput) {
 	if r.n == nil || r.n.deleted || r.n.web == nil {
 		return
 	}
 	if r.t.rt.restricted && refusal(accessOf(r.n.owner), AccessRequest{Permission: AccessWebView, Method: AccessInput}) != nil {
 		log.Printf("nsgo: a web view's trusted input needs the %q capability's input", AccessWebView)
+		return
+	}
+	if !Untracked(r.n.owner, r.n.owner.Env().CanSendInput) {
 		return
 	}
 	r.t.commands = append(r.t.commands, driver.MountItem{Kind: driver.ItemWebCommand, ID: r.n.id, WebCommand: driver.WebSendInput, Data: &in})
