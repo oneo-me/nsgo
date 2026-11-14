@@ -103,6 +103,7 @@ func Find(ctx context.Context, c Config) driver.Update {
 		var item Item
 		if item, err = ParseAppcast(body); err == nil && Newer(item.Build, c.build()) {
 			u.Version, u.URL = item.Version, item.Link
+			u.Download, u.Signature, u.SHA256, u.Key, u.Size = item.Download, item.Signature, item.SHA256, c.Key, item.Size
 		}
 	}
 	if err != nil {
@@ -189,6 +190,9 @@ type Item struct {
 	Version, Build string
 	// Link is the release's page, else its download.
 	Link string
+	// Download and its integrity metadata name the package itself.
+	Download, Signature, SHA256 string
+	Size                        int64
 }
 
 // appcast is the part of Sparkle's feed the backends read. An item's
@@ -201,6 +205,9 @@ type appcast struct {
 		ShortVersion string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle shortVersionString"`
 		Enclosure    struct {
 			URL          string `xml:"url,attr"`
+			Length       int64  `xml:"length,attr"`
+			Signature    string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle edSignature,attr"`
+			SHA256       string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle sha256,attr"`
 			Version      string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle version,attr"`
 			ShortVersion string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle shortVersionString,attr"`
 		} `xml:"enclosure"`
@@ -216,7 +223,11 @@ func ParseAppcast(data []byte) (Item, error) {
 	}
 	var newest Item
 	for _, it := range feed.Items {
-		item := Item{Build: first(it.Version, it.Enclosure.Version)}
+		item := Item{
+			Build:    first(it.Version, it.Enclosure.Version),
+			Download: webURL(it.Enclosure.URL), Signature: strings.TrimSpace(it.Enclosure.Signature),
+			SHA256: strings.TrimSpace(it.Enclosure.SHA256), Size: it.Enclosure.Length,
+		}
 		item.Version = first(it.ShortVersion, it.Enclosure.ShortVersion, item.Build)
 		item.Link = first(webURL(it.Link), webURL(it.Enclosure.URL))
 		if item.Build != "" && item.Link != "" && (newest.Build == "" || Newer(item.Build, newest.Build)) {

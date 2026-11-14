@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -20,8 +21,59 @@ type UpdateCheck struct {
 	// and URL the page that gets it: the App Store's on iOS, the
 	// release's elsewhere.
 	Version, URL string
+	// Download is the signed package for Version, when this target can
+	// install it itself. Signature and SHA256 authenticate its bytes; Key is
+	// the public Ed25519 key from the app's update configuration.
+	Download, Signature, SHA256, Key string
+	Size                             int64
 	// Err says why the updater could not check.
 	Err error
+}
+
+// UpdateDownloadProgress reports bytes received by DownloadUpdate.
+type UpdateDownloadProgress struct{ Loaded, Total int64 }
+
+// DownloadUpdate stages an update through the platform's HTTP client.
+func DownloadUpdate(ctx context.Context, update UpdateCheck, dir string, progress func(UpdateDownloadProgress)) (string, error) {
+	if driver.UpdateDownload == nil {
+		return "", errors.New("core: update download is unavailable")
+	}
+	d := driver.Update{App: update.App, Current: update.Current, Version: update.Version, URL: update.URL,
+		Download: update.Download, Signature: update.Signature, SHA256: update.SHA256, Key: update.Key, Size: update.Size}
+	path, err := driver.UpdateDownload(ctx, d, dir, func(p driver.UpdateDownloadProgress) {
+		if progress != nil {
+			progress(UpdateDownloadProgress(p))
+		}
+	})
+	return path, err
+}
+
+// InstallUpdate hands a verified package to the platform's installer.
+func InstallUpdate(cx *Scope, path string, done func(error)) {
+	if cx.Env().OS() == OSAndroid {
+		cx.InstallPackage(path, func(started bool, err error) {
+			if err == nil && !started {
+				err = errors.New("core: Android installer did not start")
+			}
+			if done != nil {
+				done(err)
+			}
+		})
+		return
+	}
+	if driver.UpdateInstall == nil {
+		if done != nil {
+			done(errors.New("core: update installer is unavailable"))
+		}
+		return
+	}
+	driver.UpdateInstall(path, func(err error) {
+		cx.Post(func() {
+			if done != nil {
+				done(err)
+			}
+		})
+	})
 }
 
 // CheckForUpdates is the core's part of updater.Check and
@@ -38,6 +90,7 @@ func (cx *Scope) CheckForUpdates(background bool, done func(UpdateCheck)) {
 		c := UpdateCheck{Shown: ev.Finished}
 		if u, ok := ev.Data.(*driver.Update); ok && u != nil {
 			c.App, c.Current, c.Version, c.URL = u.App, u.Current, u.Version, u.URL
+			c.Download, c.Signature, c.SHA256, c.Key, c.Size = u.Download, u.Signature, u.SHA256, u.Key, u.Size
 			if u.Err != "" {
 				c.Err = errors.New(u.Err)
 			}

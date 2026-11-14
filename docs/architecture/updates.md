@@ -16,7 +16,7 @@ NSH's `nsh/updater` downloads, verifies and swaps in the next version itself. NS
 | --- | --- |
 | macOS | Sparkle's `SPUStandardUpdaterController`, started when Info.plist names a feed. Installing, it quits the app as `Quit` does |
 | Windows | WinSparkle from beside the executable; its shutdown request closes the main window as `Quit` does |
-| Linux, Android | `internal/platform/updates` reads the target's appcast with the backend's HTTP client, comparing versions as Sparkle does |
+| Linux, Android | `internal/platform/updates` reads the target's appcast with the backend's HTTP client, verifies the package's SHA-256 and Ed25519 signature, then `updater` stages it and hands it to the platform installer |
 | iOS | The App Store's lookup by the bundle's ID in the locale's country, against `CFBundleShortVersionString` |
 
 ## Schedule
@@ -60,7 +60,7 @@ Linux cannot tell a distribution's package from a downloaded one, so its package
 - The direct channel reads `releases/latest/download/` by default, so every release must carry the appcast of each target it updates: a target a release leaves out answers 404 until one carries it again.
 - WinSparkle saves `updates.automatic` as the user's choice on the first start, so a later change in `nsgo.yaml` reaches only new installs.
 - An app that closes its main window into the tray keeps running through WinSparkle's shutdown request; the installer then stops it.
-- Linux and Android offer the release's page rather than installing; the [roadmap](../roadmap.md#updates) lists that and the store packages.
+- Linux installs the appcast's Debian or Arch package through `pkexec`; Android hands its APK to `mobile.InstallPackage`, which asks the user and keeps store installs out of the direct channel.
 
 ## Verification
 
@@ -69,4 +69,5 @@ Linux cannot tell a distribution's package from a downloaded one, so its package
 - WinSparkle on Windows 11 x64 offered 0.2.0, verified the download, ran the setup with `/S /RELAUNCH` and started 0.2.0 (2026-11-11).
 - Linux under Wayland offered 0.2.0 in `updater`'s alert as the app started, and with `SNAP` set asked nothing. iOS's check reaches the App Store from the simulator, and a development build on an iPhone, whose receipt is `sandboxReceipt`, checked nothing.
 - Android's emulators, API 29 and 34, checked an APK installed by adb or the package installer and left one installed as Google Play's alone; Android refuses cleartext, so an appcast has not been read there.
+- Direct Linux and Android packages now download only after the user chooses Update, verify the appcast's length, SHA-256 and Ed25519 signature, and stage the file atomically before installation; Linux restarts after its package manager succeeds.
 - Not run yet: a Developer ID or notarized macOS update, Windows on arm64, a Flatpak, a TestFlight build, Android reading an `https` appcast, and a native test that installs an update.
