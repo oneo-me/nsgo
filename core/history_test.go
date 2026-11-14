@@ -110,3 +110,17 @@ func TestHistoryKeepsItsLimit(t *testing.T) {
 		t.Fatalf("a history without a limit undid %d", n)
 	}
 }
+
+func TestHistoryStepRunsItsReadersOnce(t *testing.T) {
+	cx := NewRoot(RootOptions{})
+	h := NewHistory(cx, 0, HistoryOptions{})
+	runs := 0
+	cx.renderEffect(func() { h.Get(); h.CanUndo(); runs++ })
+	for _, step := range []func(){func() { h.Set(1) }, func() { h.Undo() }, func() { h.Redo() }} {
+		runs = 0
+		step()
+		if runs != 1 {
+			t.Fatalf("a reader of the value and CanUndo ran %d times, want 1", runs)
+		}
+	}
+}

@@ -6,7 +6,7 @@ import "time"
 //
 // Like a signal's, its methods belong to the graph's goroutine.
 type History[T any] struct {
-	rt    *runtime
+	owner *Scope
 	equal func(a, b T) bool
 	opts  HistoryOptions
 	value *Signal[T]
@@ -37,7 +37,7 @@ func NewHistoryFunc[T any](cx *Scope, v T, equal func(a, b T) bool, opts History
 	if opts.Limit == 0 {
 		opts.Limit = 100
 	}
-	return &History[T]{rt: cx.rt, equal: equal, opts: opts,
+	return &History[T]{owner: cx.current(), equal: equal, opts: opts,
 		value: NewSignalFunc(cx, v, equal), steps: NewSignal(cx, uint64(0)), broken: true}
 }
 
@@ -53,7 +53,7 @@ func (h *History[T]) Set(v T) {
 	if h.equal != nil && h.equal(cur, v) {
 		return
 	}
-	now := h.rt.clock.Now()
+	now := h.owner.rt.clock.Now()
 	merge := h.group > 0 && h.grouped ||
 		h.group == 0 && !h.broken && h.opts.Merge > 0 && now.Sub(h.lastAt) < h.opts.Merge
 	if !merge {
@@ -68,8 +68,7 @@ func (h *History[T]) Set(v T) {
 	h.broken = false
 	h.lastAt = now
 	h.future = nil
-	h.value.Set(v)
-	h.bump()
+	h.commit(v)
 }
 
 // Update sets what fn returns for the current value, as Set does.
@@ -101,8 +100,7 @@ func (h *History[T]) Undo() bool {
 	h.past = h.past[:len(h.past)-1]
 	h.future = append(h.future, h.value.GetUntracked())
 	h.broken = true
-	h.value.Set(v)
-	h.bump()
+	h.commit(v)
 	return true
 }
 
@@ -115,8 +113,7 @@ func (h *History[T]) Redo() bool {
 	h.future = h.future[:len(h.future)-1]
 	h.past = append(h.past, h.value.GetUntracked())
 	h.broken = true
-	h.value.Set(v)
-	h.bump()
+	h.commit(v)
 	return true
 }
 
@@ -137,6 +134,14 @@ func (h *History[T]) Clear() {
 	h.past, h.future = nil, nil
 	h.broken = true
 	h.bump()
+}
+
+// commit sets the value and the steps in one batch, so a computation reading both runs once.
+func (h *History[T]) commit(v T) {
+	h.owner.Batch(func() {
+		h.value.Set(v)
+		h.bump()
+	})
 }
 
 func (h *History[T]) bump() { h.steps.Update(func(n uint64) uint64 { return n + 1 }) }
