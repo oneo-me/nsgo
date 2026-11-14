@@ -925,7 +925,14 @@ func (w *window) menuShortcut(key string) bool {
 // chooseMenu carries out an item's role and tells the app about it.
 func (w *window) chooseMenu(ref menuRef) {
 	switch ref.role {
-	case driver.MenuQuit, driver.MenuClose:
+	case driver.MenuQuit:
+		// The app's root window, whose closing ends the loop, even from a window the app opened.
+		root := w
+		if w.hostWindow != nil {
+			root = w.hostWindow
+		}
+		postMessageW.Call(root.hwnd, wmClose, 0, 0)
+	case driver.MenuClose:
 		postMessageW.Call(w.hwnd, wmClose, 0, 0)
 	case driver.MenuMinimize:
 		w.minimize()
