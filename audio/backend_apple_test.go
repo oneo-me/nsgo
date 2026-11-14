@@ -8,17 +8,25 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/ebitengine/purego/objc"
 )
 
+// init keeps the main goroutine, and so TestMain, on the main thread.
+func init() { runtime.LockOSThread() }
+
 // TestMain runs the main thread's run loop, as an app does: AVAudioPlayer
 // reports to its delegate there.
 func TestMain(m *testing.M) {
+	// Foundation is loaded with AVFoundation, which nothing else links.
+	if err := loadAppleAudio(); err != nil {
+		panic(err)
+	}
 	go func() { os.Exit(m.Run()) }()
-	loop := objc.ID(objc.GetClass("NSRunLoop")).Send(objc.RegisterName("currentRunLoop"))
+	loop := objc.ID(objc.GetClass("NSRunLoop")).Send(objc.RegisterName("mainRunLoop"))
 	// A run loop with no port to wait on returns at once.
 	port := objc.ID(objc.GetClass("NSMachPort")).Send(objc.RegisterName("port"))
 	loop.Send(objc.RegisterName("addPort:forMode:"), port, objc.ID(objc.GetClass("NSString")).Send(objc.RegisterName("stringWithUTF8String:"), "kCFRunLoopDefaultMode"))
