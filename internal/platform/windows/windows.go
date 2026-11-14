@@ -1153,8 +1153,8 @@ func (w *window) apply(b *driver.MountBatch) {
 			// No login item yet (roadmap): the app hears that it does not start at login.
 			w.engine.Dispatch(driver.Event{Kind: driver.EventLaunchAtLogin, Count: it.Count})
 			continue
-		case driver.ItemSetLaunchAtLogin, driver.ItemDock, driver.ItemHotKeys:
-			// No login item or global shortcuts yet (roadmap), and no Dock.
+		case driver.ItemSetLaunchAtLogin, driver.ItemDock:
+			// No login item yet (roadmap), and no Dock.
 			continue
 		case driver.ItemAppearance:
 			w.setAppearance(it.Appearance)
