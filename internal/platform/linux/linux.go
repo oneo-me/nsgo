@@ -52,6 +52,9 @@ import (
 type Options struct {
 	Title         string
 	Width, Height driver.Points
+	// Hidden keeps the backend's root window out of the screen while it
+	// hosts app-level services such as tray icons.
+	Hidden bool
 	// ID names the app's directories and storage (engine.AppDirs).
 	ID string
 	// Components are the native components Native elements name.
@@ -433,7 +436,9 @@ func (w *window) toplevel() uintptr {
 
 // run presents the window and runs GTK's main loop until it closes.
 func (w *window) run() {
-	gtkWindowPresent(w.win)
+	if !w.opts.Hidden {
+		gtkWindowPresent(w.win)
+	}
 	gMainLoopRun(w.loop)
 }
 
