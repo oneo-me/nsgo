@@ -40,11 +40,13 @@ go tool nsgo dev -devtools
 
 `-devtools` opens DevTools in the browser, served by `nsgo dev` for every target, a phone's app too. It shows the running app as it runs:
 
-- **Elements**: the views in a tree, each with the component that built it, a link to its line in your editor, the selector a test finds it by, its bounds and the style it sets. Hovering a row outlines its view in the app, and **Pick** lets you press a view in the app to find it in the tree.
-- **State**: the signals your code made, under the components and computations that own them, with their values. Strings, booleans and numbers can be edited, so you can try a state without a code change. Values NSGo made for itself are behind **NSGo's own**.
-- **Profiler**: each commit's time, the lines whose writes caused it and what ran, and the bindings, effects and memos that ran most in the last second, by the line that made them.
-- **Recorder**: what you press, type and clear in the app, written as an `nsgotest` test to copy into a `_test.go` file.
+- **Elements**: the views in a tree. Each shows the component that built it, a link to its line in your editor, the selector a test finds it by, its classes, its bounds, its margin, border and padding as laid out, and the style it sets. Hovering a row draws its margin, padding and content in the app, as a browser's DevTools do, and **Pick** lets you press a view in the app to find it in the tree.
+- **State**: the signals your code made, under the components and computations that own them, with their values, memos' values, and how many computations read each. A value no computation reads changes nothing on screen. Strings, booleans and numbers can be edited, so you can try a state without a code change. Values NSGo made for itself are behind **NSGo's own**.
+- **Profiler**: each commit's time, split into your code before it, the commit with its layout, and applying it on the platform's main thread. It also shows the lines whose writes caused the commit, and opens on the computations it ran, the longest first. A second list names the computations that ran most in the last second, by the line that made them. Android's runtime applies batches in its own Java code, so Android commits have no platform time.
+- **Recorder**: what you press, type, clear and scroll in the app, written as an `nsgotest` test file to copy into a `_test.go` file. In Elements, **Assert shown** and **Assert text** add a check of the selected view. A text check holds the text in the language the app showed it in, so record with the language your tests run in.
 - **Highlight updates** outlines each view a commit changes, as `-highlight` does.
+
+A TSX app's state, computations and writes are named by their TSX lines, through the bundles' source maps, and link to the files in your app.
 
 DevTools read the app through `nsgo dev`'s server, which listens on your network so phones reach it: anyone there can open DevTools and change the app's state while it runs.
 
