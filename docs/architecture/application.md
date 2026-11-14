@@ -63,7 +63,9 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 
 ## Linux
 
-- Global shortcuts use the XDG `GlobalShortcuts` portal on Wayland, where the compositor asks the user to bind them, and passive `XGrabKey` grabs on X11. Both paths dispatch the same `EventHotKey`; when neither backend is available, the shortcut is ignored.
+- Global shortcuts are passive `XGrabKey` grabs on the X11 root window, made inside GDK's error trap so that a combination another client holds is skipped rather than ending the app; GdkX11Display's `xevent` signal takes their presses, as GTK 4 has no display filters. A press matches on Shift, Control, Alt and Super alone, whatever its locks, buttons and layout group.
+- On Wayland, and on X11 where no grab succeeds, they use the XDG `GlobalShortcuts` portal, where the compositor asks the user to bind them. The portal knows an unsandboxed app by the ID it registers (`Registry.Register`), which must name its `.desktop` entry and comes before any other portal call on the connection; GTK calls the portal as it starts, so the shortcuts have a session bus connection of their own, whose calls run in order off the main thread.
+- Both paths dispatch the same `EventHotKey`; when neither backend is available, the shortcut is ignored. A host's `NewView` takes none.
 
 ## Configuration
 
