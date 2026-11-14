@@ -9,10 +9,10 @@ Background scanning and connections depend on the Android engine/view lifetime w
 The service has three layers:
 
 1. `core` owns a provider-neutral session and the app-visible state machine. It exposes stable handles for a scan, connection, service, characteristic and subscription, runs callbacks on the engine goroutine and closes handles with their scope.
-2. `internal/driver` carries commands and events with numeric handles, opaque device IDs, UUIDs and byte payloads. It does not expose CoreBluetooth objects, Android `BluetoothGatt` instances or platform addresses.
-3. A backend owns the platform queue and translates state and errors into driver events. `internal/platform/apple`, which macOS and iOS share, uses `CBCentralManager` and `CBPeripheral`; Android uses `BluetoothLeScanner` and `BluetoothGatt`.
+2. `internal/driver` carries commands and events as Go values with numeric handles, opaque device IDs, UUIDs and byte payloads. It does not expose CoreBluetooth objects, Android `BluetoothGatt` instances or platform addresses.
+3. A backend owns the platform queue and translates state and errors into driver events. `internal/platform/apple`, which macOS and iOS share, uses `CBCentralManager` and `CBPeripheral`; Android uses `BluetoothLeScanner` and `BluetoothGatt` in the Java runtime, which serializes commands and events through the pipe's encoding (`internal/platform/android/protocol.go`).
 
-Every operation is asynchronous. A backend never blocks the engine goroutine while scanning, connecting, discovering, reading, writing or subscribing. Bytes are copied at the driver boundary, so an app may reuse its input after a write returns. Notifications preserve their arrival order per characteristic; events from different characteristics may interleave.
+Every operation is asynchronous. A backend never blocks the engine goroutine while scanning, connecting, discovering, reading, writing or subscribing. `core` copies the bytes a write takes and gives each value event a slice of its own, so an app may reuse its input after a write returns and keep a value it received. Notifications preserve their arrival order per characteristic; events from different characteristics may interleave.
 
 ## Targets
 
@@ -70,10 +70,9 @@ Bluetooth bytes are untrusted input. The API does not decode a characteristic as
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover handle ownership, scan filters, coalesced results, connection state, operation cancellation, stale events, subscription cleanup and byte preservation;
-- `internal/driver` tests cover protocol encoding, operation IDs, UUIDs, empty values and payloads larger than one bridge frame;
+- headless `core` tests cover handle ownership, scan filters, coalesced results, connection state, operation IDs, operation cancellation, stale events, subscription cleanup, empty values and byte preservation;
 - Apple tests use fake central and peripheral delegates to cover authorization read without a manager, the `unknown` state before the first update, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
-- Android tests use a fake scanner and GATT client to cover API 31 permissions, the install-time permissions and location-gated scans before it, adapter state, reconnect and cleanup without a device; and
+- Android tests cover the pipe's encoding of UUIDs, empty values and large payloads, `protocol_test.go` holds the new kinds in `Protocol.java` to the driver's, and a fake scanner and GATT client cover API 31 permissions, the install-time permissions and location-gated scans before it, adapter state, reconnect and cleanup without a device; and
 - target tests use a controlled peripheral or provider simulator, never a user's nearby device, and verify that no callback runs after its owning scope is disposed.
 
 ## Open decisions
