@@ -401,6 +401,8 @@ type window struct {
 	// popupShown are the items of the context menu tracking.
 	popupShown []driver.MenuEntry
 	trays      map[uint32]*trayIcon
+	// menuOwner is the hidden window that owns the tray icons' menus of a shown root window.
+	menuOwner uintptr
 	// appearance is the one the app forces, or the system's; host the one
 	// an embedding host sets in place of the system's.
 	appearance, host driver.Appearance

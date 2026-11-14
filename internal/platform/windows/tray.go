@@ -165,6 +165,10 @@ func (w *window) removeTrays() {
 	for _, tr := range w.trays {
 		w.removeTray(tr)
 	}
+	if w.menuOwner != 0 {
+		destroyWindow.Call(w.menuOwner)
+		w.menuOwner = 0
+	}
 }
 
 // trayRect returns the notification area's screen rectangle. The shell can
@@ -184,6 +188,23 @@ func (w *window) trayRect(id uint32) (rect, bool) {
 		return bounds, true
 	}
 	return rect{}, false
+}
+
+// trayMenuOwner returns the hidden window that owns the icons' menus: the root window when it is hidden, else one made for them.
+func (w *window) trayMenuOwner() uintptr {
+	if w.primary && w.opts.Hidden {
+		return w.hwnd
+	}
+	if w.menuOwner == 0 {
+		// Of the class Run registered, as openSurface's windows; no window state, so its messages go to DefWindowProc.
+		instance, _, _ := getModuleHandleW.Call(0)
+		w.menuOwner, _, _ = createWindowExW.Call(wsExToolWindow, uintptr(unsafe.Pointer(wide("NsgoWindow"))), 0, wsPopup,
+			0, 0, 0, 0, 0, 0, instance, 0)
+		if w.menuOwner == 0 {
+			return w.hwnd
+		}
+	}
+	return w.menuOwner
 }
 
 // readdTrays adds the icons again after Explorer started again, which forgot them.

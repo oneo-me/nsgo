@@ -688,16 +688,19 @@ func (w *window) showPopup() {
 	if menu != 0 {
 		w.appendMenuTo(menu, p.entries, &refs)
 		at := point{w.px(p.at.X), w.px(p.at.Y)}
+		owner := w.hwnd
 		if !p.screen {
 			clientToScreen.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
 		} else {
 			at = point{int32(p.at.X), int32(p.at.Y)}
-			setForegroundWindow.Call(w.hwnd)
+			// The menu closes as it loses the focus only when its owner is in front, which a shown window of the app's must not be brought for.
+			owner = w.trayMenuOwner()
+			setForegroundWindow.Call(owner)
 		}
 		w.popupTracking, w.popupShown = true, p.entries
-		chosen, _, _ := trackPopupMenuEx.Call(menu, w.popupFlags(), uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
+		chosen, _, _ := trackPopupMenuEx.Call(menu, w.popupFlags(), uintptr(at.X), uintptr(at.Y), owner, 0)
 		if p.screen {
-			postMessageW.Call(w.hwnd, wmNull, 0, 0)
+			postMessageW.Call(owner, wmNull, 0, 0)
 		}
 		w.popupTracking, w.popupShown = false, nil
 		destroyMenu.Call(menu)
