@@ -76,7 +76,7 @@ The implementation is complete only when these checks exist:
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These are an [open question](../../ARCHITECTURE.md#open-questions), whose answers need the user's confirmation before an implementation chooses them:
 
 1. Should the public API expose one `OnPush` callback with the payload's JSON, or separate token and message objects with a typed acknowledgement?
 2. Does `nsgo build` package a prebuilt FCM adapter, committed beside `classes.dex`, into standalone apps, or does FCM stay with embedding hosts, which supply their own?
