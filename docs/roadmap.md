@@ -73,6 +73,16 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 | Transparent windows and the taskbar on Windows | #987 | A window opens transparent, showing what is behind it where the app draws nothing, and `SkipTaskbar` keeps it off the taskbar |
 | Panels of windows out of sight on macOS | `macos.md`, #1488 | An open or save panel or an alert shows in a window of its own while the window it belongs to is hidden, minimized or off every screen, as a tray app's often is, where it is a sheet of that window now and stays out of sight with it |
 
+## Foldable displays
+
+What NSGo's issue [#49](https://github.com/nsgo-dev/nsgo/issues/49) asks for foldable and dual-screen phones, which NSH has no equivalent of ([foldable displays](architecture/foldable.md)); its open decisions come first.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Fold geometry | `androidx.window.extensions`' `WindowLayoutComponent`; UIKit's `reservedRegionsOfKind:` and `UIHingeInteraction` (iOS 27.1) | A surface reports its regions and obstructions with its size in one resize, each obstruction's occlusion, separation and state apart, from a foldable Android emulator or device and an iOS 27.1 fold simulator or device, and the gallery has a page that splits on the hinge with a test on both, while components choose any adaptive layout explicitly |
+| An edge-adaptable tab bar | `UIVerticalBarEdge` | An app places a tab bar on a phone's leading or trailing edge, drawn vertically, or lets the system choose and reads the edge it chose from `Env` on iOS 27.1, in the home [decision 5](architecture/foldable.md#open-decisions) gives it |
+| iOS multitasking and `Info.plist` values | `UIRequiresFullScreen`, `UIApplicationSupportsMultipleScenes` | `apple.requires_full_screen` and `apple.multiple_scenes` set what `cmd/nsgo/ios.go` hardcodes to true and false, keeping those defaults, so an iPad build multitasks, and `apple.info` takes booleans, numbers, arrays and dictionaries as well as strings, so keys such as `CFBundleURLTypes` need no fork of the tool |
+
 ## Terminal
 
 What `base/terminal` still lacks of a terminal app's features, Ghostty's the reference ([terminal](architecture/terminal.md)), in the order to build them.
