@@ -61,6 +61,10 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Global shortcuts are Carbon's `RegisterEventHotKey` on the application's event target, which needs no accessibility permission; a key names its ANSI virtual key code.
 - An alert asked from the app's own surface, which has no window to hold a sheet, runs app-modal.
 
+## Windows
+
+The Windows backend supports notification-area icons, click events and menus. Panels, additional surfaces and drawn tray views remain in the surfaces slice of the roadmap.
+
 ## Configuration
 
 `nsgo.yaml` keeps what the package needs before any code runs: the name, the ID, the version and the launch screen's appearance. Windows are sized and limited in Go, `nsgo.WindowSize` and `nsgo.WindowConstraints` for the main window and `WindowOptions` for others; `nsgo.HideDock` and the shutdown mode are Go's too. A `window` in `nsgo.yaml` fails the tool, naming `nsgo.WindowSize`.

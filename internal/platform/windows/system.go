@@ -636,6 +636,8 @@ type popupRequest struct {
 	entries []driver.MenuEntry
 	at      driver.Point
 	id      uint32
+	screen  bool
+	tray    uint32
 }
 
 // popupMenu queues a context menu: TrackPopupMenuEx's loop must not run
@@ -644,7 +646,19 @@ func (w *window) popupMenu(entries []driver.MenuEntry, at driver.Point, id uint3
 	if w.popupTracking {
 		endMenu.Call()
 	}
-	w.popups = append(w.popups, popupRequest{entries, at, id})
+	w.popups = append(w.popups, popupRequest{entries: entries, at: at, id: id})
+	postMessageW.Call(w.hwnd, wmPopup, 0, 0)
+}
+
+// trayMenu queues a menu for the shell icon. Its coordinates are already in
+// screen pixels because the shell callback does not belong to the client.
+func (w *window) trayMenu(id uint32, entries []driver.MenuEntry, popup uint32) {
+	if w.popupTracking {
+		endMenu.Call()
+	}
+	var at point
+	getCursorPos.Call(uintptr(unsafe.Pointer(&at)))
+	w.popups = append(w.popups, popupRequest{entries: entries, at: driver.Point{X: driver.Points(at.X), Y: driver.Points(at.Y)}, id: popup, screen: true, tray: id})
 	postMessageW.Call(w.hwnd, wmPopup, 0, 0)
 }
 
@@ -656,6 +670,13 @@ func (w *window) showPopup() {
 	}
 	p := w.popups[0]
 	w.popups = w.popups[1:]
+	if p.tray != 0 && w.trays[p.tray] == nil {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: p.id})
+		if len(w.popups) > 0 {
+			postMessageW.Call(w.hwnd, wmPopup, 0, 0)
+		}
+		return
+	}
 	if len(w.popups) > 0 {
 		// Replaced before it showed.
 		w.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: p.id})
@@ -667,9 +688,17 @@ func (w *window) showPopup() {
 	if menu != 0 {
 		w.appendMenuTo(menu, p.entries, &refs)
 		at := point{w.px(p.at.X), w.px(p.at.Y)}
-		clientToScreen.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
+		if !p.screen {
+			clientToScreen.Call(w.hwnd, uintptr(unsafe.Pointer(&at)))
+		} else {
+			at = point{int32(p.at.X), int32(p.at.Y)}
+			setForegroundWindow.Call(w.hwnd)
+		}
 		w.popupTracking, w.popupShown = true, p.entries
 		chosen, _, _ := trackPopupMenuEx.Call(menu, w.popupFlags(), uintptr(at.X), uintptr(at.Y), w.hwnd, 0)
+		if p.screen {
+			postMessageW.Call(w.hwnd, wmNull, 0, 0)
+		}
 		w.popupTracking, w.popupShown = false, nil
 		destroyMenu.Call(menu)
 		if c := w.popupChoice; c != nil {
