@@ -46,6 +46,14 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Package settings | #1654, #1548, #1460 | `nsgo.yaml` raises an Apple package's minimum system version, never below the runtime's, gives Windows, Linux and Android icons of their own, and lets an Android app load plain HTTP |
 | Store uploads | `tooling.md` (Releases), #1052, #1054 | A command uploads the store packages `build -channel store` makes to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
 
+## Remote push
+
+NSGo's own, beyond NSH's notifications: a server reaching the app ([remote push](architecture/remote-push.md), [#59](https://github.com/nsgo-dev/nsgo/issues/59)), waiting on its [open question](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Remote push notifications | APNs, Firebase Cloud Messaging | An iOS app, a macOS app and an Android app register, report their token and receive a data push and a pressed notification's payload from APNs' sandbox or a test FCM project, through one provider-neutral `core` API |
+
 ## Keyboard, popups and screen readers
 
 What 0.5.0 changed in how the keyboard's focus, popups and assistive technology behave, which NSGo's `core` and `base` follow from 0.4.0 still ([interaction](architecture/interaction.md), [components](architecture/components.md)).
