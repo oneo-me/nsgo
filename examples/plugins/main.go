@@ -19,6 +19,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
@@ -71,20 +72,12 @@ func Root(cx *core.Scope) core.Node {
 	}}
 }
 
-// verified is what a Trust said of a package.
-type verified struct {
-	p   *pkg.Package
-	err error
-}
-
-// verify verifies data off the engine's goroutine, into a signal.
-func verify(cx *core.Scope, data []byte, trust *pkg.Trust) *core.Signal[verified] {
-	s := core.NewSignalFunc(cx, verified{}, func(a, b verified) bool { return a == b })
-	go func() {
-		p, err := trust.Verify(data)
-		cx.Post(func() { s.Set(verified{p, err}) })
-	}()
-	return s
+// verify verifies data off the engine's goroutine: the resource holds the
+// package, or the error of a package trust refused.
+func verify(cx *core.Scope, data []byte, trust *pkg.Trust) *core.Resource[*pkg.Package] {
+	return core.NewResource(cx, nil, func(context.Context, struct{}, core.ResourceInfo) (*pkg.Package, error) {
+		return trust.Verify(data)
+	})
 }
 
 // Host shows the package data once trust verifies it and the user grants
@@ -92,22 +85,27 @@ func verify(cx *core.Scope, data []byte, trust *pkg.Trust) *core.Signal[verified
 // web does), and accepts its build once it loaded.
 func Host(cx *core.Scope, data []byte, trust *pkg.Trust, dir string) core.Node {
 	result := verify(cx, data, trust)
+	failed := core.NewSignalFunc[error](cx, nil, nil)
 	granted := core.NewSignal(cx, false)
 	// The plugin's channel to the app: the handlers it may call, as its
 	// capabilities and the user allow.
 	channel := core.NewHost()
 	channel.Handle("greet", func(c *core.HostCall) { c.Resolve("Hello from the host") })
 	return core.Dynamic(func(cx *core.Scope) core.Node {
-		r := result.Get()
+		p, _ := result.Get()
+		err := result.Err()
+		if f := failed.Get(); f != nil {
+			err = f
+		}
 		switch {
-		case r.err != nil:
-			return refused(r.err)
-		case r.p == nil:
+		case err != nil:
+			return refused(err)
+		case p == nil:
 			return core.Text{TestID: "status", Class: "text-sm text-neutral-500", Content: "Verifying…"}
 		case !granted.Get():
-			return consent(r.p, func() {
-				if err := install(dir, r.p, data); err != nil {
-					result.Set(verified{err: err})
+			return consent(p, func() {
+				if err := install(dir, p, data); err != nil {
+					failed.Set(err)
 					return
 				}
 				granted.Set(true)
@@ -115,8 +113,8 @@ func Host(cx *core.Scope, data []byte, trust *pkg.Trust, dir string) core.Node {
 		}
 		return core.Catch{
 			Try: func(cx *core.Scope) core.Node {
-				n := tsx.View{Package: r.p, Sandbox: tsx.Sandbox{Host: channel}}.Render(cx)
-				go trust.Accept(r.p)
+				n := tsx.View{Package: p, Sandbox: tsx.Sandbox{Host: channel}}.Render(cx)
+				go trust.Accept(p)
 				return n
 			},
 			Fallback: func(cx *core.Scope, err error, _ func()) core.Node { return refused(err) },
@@ -177,12 +175,11 @@ func Search(cx *core.Scope, data []byte, trust *pkg.Trust) core.Node {
 	result := verify(cx, data, trust)
 	found := core.NewSignal(cx, "Searching…")
 	return core.Dynamic(func(cx *core.Scope) core.Node {
-		r := result.Get()
-		if r.err != nil {
-			return refused(r.err)
+		if err := result.Err(); err != nil {
+			return refused(err)
 		}
-		if r.p != nil {
-			plugin, err := tsx.Load(cx, r.p, tsx.Sandbox{})
+		if p, ok := result.Get(); ok {
+			plugin, err := tsx.Load(cx, p, tsx.Sandbox{})
 			if err != nil {
 				return refused(err)
 			}

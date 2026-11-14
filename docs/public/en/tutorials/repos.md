@@ -26,6 +26,7 @@ Replace the whole of `app.go`:
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -44,9 +45,14 @@ type repo struct {
 	Stars       int    `json:"stargazers_count"`
 }
 
-// fetch runs on its own goroutine, never the engine's.
-func fetch() ([]repo, error) {
-	resp, err := http.Get(api)
+// fetch runs on its own goroutine, never the engine's. ctx is cancelled
+// once its answer no longer counts.
+func fetch(ctx context.Context) ([]repo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, api, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -64,27 +70,20 @@ func fetch() ([]repo, error) {
 func main() { nsgo.Run(Root) }
 
 func Root(cx *core.Scope) core.Node {
-	repos := core.NewSignalFunc(cx, []repo(nil), nil)
-	loading := core.NewSignal(cx, false)
-	failure := core.NewSignal(cx, "")
-	colors := ui.ColorsOf(cx)
-
-	load := func() {
-		loading.Set(true)
-		failure.Set("")
-		go func() {
-			list, err := fetch()
-			cx.Post(func() {
-				loading.Set(false)
-				if err != nil {
-					failure.Set(err.Error())
-					return
-				}
-				repos.Set(list)
-			})
-		}()
+	repos := core.NewResource(cx, nil, func(ctx context.Context, _ struct{}, _ core.ResourceInfo) ([]repo, error) {
+		return fetch(ctx)
+	})
+	list := func() []repo {
+		list, _ := repos.Get()
+		return list
 	}
-	load()
+	failure := func() string {
+		if err := repos.Err(); err != nil {
+			return err.Error()
+		}
+		return ""
+	}
+	colors := ui.ColorsOf(cx)
 
 	return core.View{
 		Style:     core.Style{FlexGrow: 1, FlexShrink: 1, PaddingEnv: core.EnvAll(core.EnvSafeArea)},
@@ -92,24 +91,24 @@ func Root(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Padding: core.All(16)}, Children: []core.Node{
 				ui.Text("Popular Go repositories", 22, ui.Bold, colors.Text),
-				core.Show{When: loading.Get, Then: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} }},
+				core.Show{When: repos.Loading, Then: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} }},
 			}},
 			core.Show{
-				When: func() bool { return failure.Get() != "" },
+				When: func() bool { return repos.State() == core.ResourceErrored },
 				Then: func(*core.Scope) core.Node {
 					return core.View{Style: core.Style{Padding: core.All(16), Gap: 12, AlignItems: core.AlignStart}, Children: []core.Node{
-						ui.Textf(failure.Get, 14, ui.Regular, colors.Muted),
-						ui.Button{Text: "Try again", OnPress: load},
+						ui.Textf(failure, 14, ui.Regular, colors.Muted),
+						ui.Button{Text: "Try again", OnPress: repos.Refetch},
 					}}
 				},
 				Else: func(*core.Scope) core.Node {
 					return core.List{
-						Count:         func() int { return len(repos.Get()) },
-						Key:           func(i int) any { return repos.Get()[i].Name },
+						Count:         func() int { return len(list()) },
+						Key:           func(i int) any { return list()[i].Name },
 						EstimatedSize: 64,
 						Style:         core.Style{FlexGrow: 1},
 						Row: func(cx *core.Scope, row core.ListRow) core.Node {
-							r := repos.Get()[row.Index()]
+							r := list()[row.Index()]
 							return core.View{Style: core.Style{Padding: core.Symmetric(10, 16), Gap: 2}, Children: []core.Node{
 								core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifySpaceBetween, Gap: 8}, Children: []core.Node{
 									ui.Text(r.Name, 15, ui.Medium, colors.Text),
@@ -132,9 +131,9 @@ The spinner shows while the request runs, then the list fills in.
 
 **Go's own networking.** `net/http` works on every target, with the system's TLS and proxy settings, so `fetch` is plain Go.
 
-**Off the engine's goroutine.** Components and signals belong to the engine's goroutine, which must never wait on the network. `load` starts the request with `go`, and `cx.Post` brings the result back to the engine, where it sets the signals.
+**Off the engine's goroutine.** Components and signals belong to the engine's goroutine, which must never wait on the network. `core.NewResource` runs `fetch` on a goroutine of its own and brings the result back to the engine. Its source is nil, so it loads once, and **Try again** calls `Refetch` to load again. Only the latest load counts: leaving the screen cancels the request through `ctx`, and a late answer never replaces a newer one.
 
-**One signal per state.** `loading`, `failure` and `repos` each hold one part of the state. `core.Show` shows the spinner while loading is true, and either the error with **Try again** or the list, rebuilding only that part when its condition changes.
+**State as signals.** `repos.Get`, `repos.Err`, `repos.State` and `repos.Loading` are signals, so bindings that read them follow each load. `core.Show` shows the spinner while it loads, and either the error with **Try again** or the list, rebuilding only that part when its condition changes. A retry keeps the last list until the new one arrives.
 
 **A list of any length.** `core.List` builds only the rows near the screen, keyed by the repository's name, so a new result reuses the rows of the same repositories.
 
