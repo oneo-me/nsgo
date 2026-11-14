@@ -4,6 +4,7 @@ package audio
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -22,6 +23,8 @@ var appleFramework struct {
 	once     sync.Once
 	err      error
 	delegate objc.ID
+	poolPush func() uintptr
+	poolPop  func(uintptr)
 }
 
 // appleDelegates maps each open AVAudioPlayer to what its delegate reports
@@ -50,6 +53,13 @@ func loadAppleAudio() error {
 			appleFramework.err = err
 			return
 		}
+		runtimeLib, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			appleFramework.err = err
+			return
+		}
+		purego.RegisterLibFunc(&appleFramework.poolPush, runtimeLib, "objc_autoreleasePoolPush")
+		purego.RegisterLibFunc(&appleFramework.poolPop, runtimeLib, "objc_autoreleasePoolPop")
 		var protocols []*objc.Protocol
 		if protocol := objc.GetProtocol("AVAudioPlayerDelegate"); protocol != nil {
 			protocols = append(protocols, protocol)
@@ -75,6 +85,22 @@ func loadAppleAudio() error {
 		appleDelegates.players = map[objc.ID]appleEvents{}
 	})
 	return appleFramework.err
+}
+
+// applePool pushes an autorelease pool on the calling goroutine's thread,
+// which it locks, and returns what pops it. The backend runs on goroutines
+// whose threads never exit, so nothing drains the objects AVFoundation and
+// Foundation autorelease there, such as the NSData copy of a byte source,
+// unless each call into them has a pool of its own:
+//
+//	defer applePool()()
+func applePool() func() {
+	runtime.LockOSThread()
+	pool := appleFramework.poolPush()
+	return func() {
+		appleFramework.poolPop(pool)
+		runtime.UnlockOSThread()
+	}
 }
 
 // appleWatch makes the shared delegate report player's events to events.
@@ -116,6 +142,7 @@ func (appleBackend) openSound(src source, options Options, ended func()) (soundB
 	if err := loadAppleAudio(); err != nil {
 		return nil, ErrUnsupported
 	}
+	defer applePool()()
 	// Sounds are always one-shot; WithLoop only applies to Player.
 	options.Loop = false
 	player, err := newApplePlayer(src, options)
@@ -142,6 +169,7 @@ func (appleBackend) openPlayer(src source, options Options, callbacks playerCall
 	if err := loadAppleAudio(); err != nil {
 		return nil, ErrUnsupported
 	}
+	defer applePool()()
 	player, err := newApplePlayer(src, options)
 	if err != nil {
 		return nil, err
@@ -204,6 +232,7 @@ type appleSound struct {
 }
 
 func (sound *appleSound) setVolume(volume float64) error {
+	defer applePool()()
 	sound.mu.Lock()
 	defer sound.mu.Unlock()
 	if sound.closed {
@@ -214,6 +243,7 @@ func (sound *appleSound) setVolume(volume float64) error {
 }
 
 func (sound *appleSound) stop() error {
+	defer applePool()()
 	sound.mu.Lock()
 	defer sound.mu.Unlock()
 	if sound.closed {
@@ -224,6 +254,7 @@ func (sound *appleSound) stop() error {
 }
 
 func (sound *appleSound) close() error {
+	defer applePool()()
 	sound.mu.Lock()
 	if sound.closed {
 		sound.mu.Unlock()
@@ -252,6 +283,7 @@ type applePlayer struct {
 }
 
 func (player *applePlayer) play() error {
+	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -274,6 +306,7 @@ func (player *applePlayer) play() error {
 }
 
 func (player *applePlayer) pause() error {
+	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -286,6 +319,7 @@ func (player *applePlayer) pause() error {
 }
 
 func (player *applePlayer) stop() error {
+	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -299,6 +333,7 @@ func (player *applePlayer) stop() error {
 }
 
 func (player *applePlayer) seek(position time.Duration) error {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -309,6 +344,7 @@ func (player *applePlayer) seek(position time.Duration) error {
 }
 
 func (player *applePlayer) setVolume(volume float64) error {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -319,6 +355,7 @@ func (player *applePlayer) setVolume(volume float64) error {
 }
 
 func (player *applePlayer) setRate(rate float64) error {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -330,6 +367,7 @@ func (player *applePlayer) setRate(rate float64) error {
 }
 
 func (player *applePlayer) setLoop(loop bool) error {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -344,6 +382,7 @@ func (player *applePlayer) setLoop(loop bool) error {
 }
 
 func (player *applePlayer) position() time.Duration {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -353,6 +392,7 @@ func (player *applePlayer) position() time.Duration {
 }
 
 func (player *applePlayer) duration() time.Duration {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	if player.closed {
@@ -362,12 +402,14 @@ func (player *applePlayer) duration() time.Duration {
 }
 
 func (player *applePlayer) playing() bool {
+	defer applePool()()
 	player.mu.Lock()
 	defer player.mu.Unlock()
 	return !player.closed && objc.Send[bool](player.player, appleSel("isPlaying"))
 }
 
 func (player *applePlayer) close() error {
+	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -393,6 +435,7 @@ func (player *applePlayer) close() error {
 // finished reports the end of playback: the final position, then the end,
 // or an error when a decoding error cut playback short.
 func (player *applePlayer) finished(ok bool) {
+	defer applePool()()
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -446,8 +489,10 @@ func (player *applePlayer) progressLoop(stop <-chan struct{}, done chan<- struct
 				player.mu.Unlock()
 				return
 			}
+			pop := applePool()
 			position := time.Duration(objc.Send[float64](player.player, appleSel("currentTime")) * float64(time.Second))
 			duration := time.Duration(objc.Send[float64](player.player, appleSel("duration")) * float64(time.Second))
+			pop()
 			// Reported under the lock, so a seek cannot slip in between
 			// reading the position and Player recording it. Player only
 			// queues app callbacks and never calls the backend while it
