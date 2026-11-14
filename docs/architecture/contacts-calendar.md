@@ -14,9 +14,19 @@ The first design covers:
 
 Reminders, accounts, contact groups, event attachments and continuous background synchronization are separate until their data and lifecycle rules are defined. NSGo never becomes the source of truth: an app owns the server or local database it synchronizes with.
 
+## Targets
+
+| Target | Contact picker | Contacts | Event editor | Calendar |
+| --- | --- | --- | --- | --- |
+| iOS | `CNContactPickerViewController` | `CNContactStore` | `EKEventEditViewController` | `EKEventStore` |
+| macOS | `CNContactPicker` | `CNContactStore` | None: the SDK has no EventKitUI | `EKEventStore` |
+| Android | `ACTION_PICK` on `ContactsContract.Contacts` | `ContactsContract` | `ACTION_INSERT` on `CalendarContract.Events` | `CalendarContract` |
+
+tvOS has neither Contacts nor EventKit, and watchOS has both but neither ContactsUI nor EventKitUI; this design leaves both out, with Windows, Linux, the web and mini programs. `internal/platform/apple` serves tvOS and watchOS too, so it loads these frameworks only on iOS and macOS. `Env` flags, as `Env.CanTakePhoto` does, say where each of the four columns exists; elsewhere a request answers unavailable without asking, which an app can tell from denied.
+
 ## Layers
 
-`core` owns provider-neutral value types, asynchronous requests and scoped callbacks. `internal/driver` carries request IDs and serialized values. Apple uses `CNContactStore` and `EKEventStore`; Android uses `ContactsContract` and `CalendarContract` through the runtime. None of those platform records cross the driver boundary.
+`core` owns provider-neutral value types, asynchronous requests and scoped callbacks. `internal/driver` carries request IDs and serialized values. Platform records, cursors and URIs never cross the driver boundary.
 
 A request is a command in the batch, as every service is ([services](services.md#requests-and-answers)), so the platform receives it on its main thread. Pickers and editors show there, but store work runs off it: Contacts and EventKit fetches and saves on a background queue, where `CNContactStore` recommends them, and Android's `ContentResolver` calls on a worker thread, so a large address book or a wide range never freezes the UI or causes an ANR. The answer comes back through `Engine.Dispatch`, and its callback runs on the engine's goroutine under the owner that asked, or the root's when that owner is gone, as for every service. Nothing is canceled once sent: a store cannot take back a write it committed, and its answer, carrying the new ID, must still reach the app. Values are copied, and a caller cannot retain a provider cursor, URI permission or mutable platform record through the API.
 
@@ -58,7 +68,7 @@ The tool adds the declarations an app asks for in `nsgo.yaml`: Apple usage descr
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited, write-only and denied access;
+- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited, write-only and denied access, and unavailable targets;
 - `internal/driver` tests cover request IDs, empty versus absent fields, bounded results and large notes or payloads;
 - Apple tests use fake contact and event stores for limited and write-only access, picker results, authorization changes, stale records and changed identifiers;
 - Android tests use fake `ContentResolver` providers for permission separation, cursors, `Instances` versus `Events` IDs, lookup keys, account changes and revision conflicts;
