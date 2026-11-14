@@ -42,7 +42,11 @@ Creating an event takes an explicit calendar ID; updating and deleting take the 
 
 An event ID does not survive every change: EventKit's `eventIdentifier` will likely change when the event moves to another calendar, on this device or through a sync from another. An update or delete whose ID no longer resolves fails with not-found, never reports success, so the app can query again rather than believe the event is gone.
 
-Apple distinguishes full event access from write-only access on newer systems and uses `EKEventStore`'s access request. Android separates `READ_CALENDAR` and `WRITE_CALENDAR`. A calendar picker is optional and must be an app choice; the system permission prompt is not a substitute for asking which calendar to use.
+The permission reads as not asked, write-only, full, denied or restricted. From iOS 17 and macOS 14, Apple asks with `requestWriteOnlyAccessToEventsWithCompletion:` or `requestFullAccessToEventsWithCompletion:` and needs `NSCalendarsWriteOnlyAccessUsageDescription` or `NSCalendarsFullAccessUsageDescription`; on iOS 17 an app with only `NSCalendarsUsageDescription` is denied without a prompt. Below them, `requestAccessToEntityType:` asks for the one level there is, with `NSCalendarsUsageDescription`, so an app that supports both declares both keys.
+
+Write-only access lets an app create events and nothing else: listing calendars returns one virtual calendar that is no real one, a query returns nothing, not even the events the app created, and the user chooses the calendar a new event goes to. Under it the calendar list holds that one entry, marked as the system's choice, creating into it saves where the user chooses, and queries, updates and deletes fail with a permission error rather than answering empty or not-found. Android has no write-only level: choosing a calendar reads `CalendarContract.Calendars`, which needs `READ_CALENDAR`, so creating, updating or deleting needs `READ_CALENDAR` and `WRITE_CALENDAR` together.
+
+A calendar picker is optional and must be an app choice; the system permission prompt is not a substitute for asking which calendar to use.
 
 ## Privacy and capability
 
@@ -54,9 +58,9 @@ The tool adds only the declarations an app requests: Apple usage descriptions an
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited and denied access;
+- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited, write-only and denied access;
 - `internal/driver` tests cover request IDs, empty versus absent fields, bounded results and large notes or payloads;
-- Apple tests use fake contact and event stores for limited access, picker results, authorization changes, stale records and changed identifiers;
+- Apple tests use fake contact and event stores for limited and write-only access, picker results, authorization changes, stale records and changed identifiers;
 - Android tests use fake `ContentResolver` providers for permission separation, cursors, `Instances` versus `Events` IDs, lookup keys, account changes and revision conflicts; and
 - target tests use fixture stores containing no real personal data and verify that a denied request produces no observable record metadata.
 
