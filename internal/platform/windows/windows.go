@@ -636,12 +636,12 @@ func Run(app engine.App, opts Options) {
 			engine.SyncStorage()
 			return
 		}
-		// Shortcuts take key presses before they become characters.
-		if m.Hwnd == hwnd {
-			w.reportModality(m.Message, m.WParam)
-		}
-		if (m.Message == wmKeyDown || m.Message == wmSysKeyDown) && m.Hwnd == hwnd && w.shortcut(m.WParam, m.LParam) {
-			continue
+		// Shortcuts take key presses before they become characters, in the window the keys go to: this one or a surface the app opened.
+		if t := windows[m.Hwnd]; t != nil && (t == w || t.hostWindow == w) {
+			t.reportModality(m.Message, m.WParam)
+			if (m.Message == wmKeyDown || m.Message == wmSysKeyDown) && t.shortcut(m.WParam, m.LParam) {
+				continue
+			}
 		}
 		translateMessage.Call(uintptr(unsafe.Pointer(&m)))
 		dispatchMessageW.Call(uintptr(unsafe.Pointer(&m)))
