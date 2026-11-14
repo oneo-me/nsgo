@@ -71,7 +71,7 @@ The implementation is complete only when these checks exist:
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These decisions block the implementation and are recorded in [Open questions](../../ARCHITECTURE.md#open-questions); confirm each with the user before choosing it:
 
 1. Can a one-shot location use a cached fix, and what maximum age is acceptable?
 2. Does the first release offer background location at all, through When In Use with the background mode on Apple and a location foreground service or `ACCESS_BACKGROUND_LOCATION` on Android, or only foreground fixes?
