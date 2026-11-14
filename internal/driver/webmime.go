@@ -28,27 +28,33 @@ func WebMIME(path string, body []byte) string {
 	}
 
 signatures:
+	// The BOMs' patterns are four bytes long, of which WHATWG's masks compare only the BOM.
 	if len(body) >= 4 {
 		switch {
-		case bytes.HasPrefix(body, []byte("\xfe\xff\x00\x00")):
+		case bytes.HasPrefix(body, []byte("\xfe\xff")):
 			return "text/plain; charset=utf-16be"
-		case bytes.HasPrefix(body, []byte("\xff\xfe\x00\x00")):
+		case bytes.HasPrefix(body, []byte("\xff\xfe")):
 			return "text/plain; charset=utf-16le"
 		case bytes.HasPrefix(body, []byte("\xef\xbb\xbf")):
 			return "text/plain; charset=utf-8"
 		}
 	}
+	rest := body[first:]
 	for _, sig := range webHTMLSignatures {
-		if len(body) >= len(sig)+1 && bytes.EqualFold(body[first:first+len(sig)], sig) && webTagEnd(body[first+len(sig)]) {
+		if len(rest) > len(sig) && bytes.EqualFold(rest[:len(sig)], sig) && webTagEnd(rest[len(sig)]) {
 			return "text/html; charset=utf-8"
 		}
+	}
+	// A comment needs no tag-terminating byte.
+	if bytes.HasPrefix(rest, []byte("<!--")) {
+		return "text/html; charset=utf-8"
 	}
 	for _, sig := range webExactSignatures {
 		if bytes.HasPrefix(body, sig.prefix) {
 			return sig.mime
 		}
 	}
-	if len(body) >= 5 && bytes.EqualFold(body[first:first+5], []byte("<?xml")) {
+	if bytes.HasPrefix(rest, []byte("<?xml")) {
 		return "text/xml; charset=utf-8"
 	}
 	if len(body) >= 12 && bytes.Equal(body[4:8], []byte("ftyp")) {
@@ -76,7 +82,7 @@ signatures:
 	if len(body) >= 12 && bytes.Equal(body[:4], []byte("FORM")) && bytes.Equal(body[8:12], []byte("AIFF")) {
 		return "audio/aiff"
 	}
-	if webText(body[first:]) {
+	if webText(rest) {
 		return "text/plain; charset=utf-8"
 	}
 	return "application/octet-stream"
@@ -88,7 +94,7 @@ var webHTMLSignatures = [][]byte{
 	[]byte("<!DOCTYPE HTML"), []byte("<HTML"), []byte("<HEAD"), []byte("<SCRIPT"),
 	[]byte("<IFRAME"), []byte("<H1"), []byte("<DIV"), []byte("<FONT"), []byte("<TABLE"),
 	[]byte("<A"), []byte("<STYLE"), []byte("<TITLE"), []byte("<B"), []byte("<BODY"),
-	[]byte("<BR"), []byte("<P"), []byte("<!--"),
+	[]byte("<BR"), []byte("<P"),
 }
 
 var webExactSignatures = []struct {
