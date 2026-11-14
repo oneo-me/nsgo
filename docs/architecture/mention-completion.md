@@ -8,6 +8,8 @@ The proposed state is a `core.Suggest` owned by the app and passed to `core.Inpu
 
 Its rules are those of `base/richeditor`'s `Suggestion`, the precedent #46 names, on a plain field's text, and its options are `SuggestionOptions`' `Char` (as `Trigger`), `AllowSpaces` and `AllowedPrefixes`. The trigger is valid at the start of a line or after one of the allowed prefixes. A selection, a deleted trigger, a disallowed space or a caret that leaves the query closes the list. The query is the text between the trigger and the caret, counted in UTF-16 units so an emoji before the trigger does not shift the insertion point incorrectly.
 
+Escape and `Close` dismiss the trigger they close, as `Suggestion`'s `dismissedFrom` does: the state keeps that trigger's offset, moved by edits before it, and stays closed on it while its match holds, however the query grows or the caret moves within it. It opens again only once the match ends or a trigger is typed elsewhere. `Accept` dismisses the same way, so an `Insert` that starts with the trigger, such as `@alice`, does not reopen the list on the text it inserted.
+
 ## The list
 
 The proposed list is a `base.SuggestList`, given the state and the app's `Items(query)`, which shows the rows in a `core.Overlay` anchored to the caret while the state is open. It takes a provider-neutral row:
@@ -42,7 +44,7 @@ The final API must choose whether `Items` is synchronous, an app-owned resource,
 
 The implementation is complete only when these checks exist:
 
-- `core` tests cover trigger prefixes, spaces, UTF-16 offsets, selection and caret changes, acceptance and owner cleanup;
+- `core` tests cover trigger prefixes, spaces, UTF-16 offsets, selection and caret changes, acceptance, a list that stays closed after Escape and after accepting an `Insert` that starts with the trigger, and owner cleanup;
 - `base` tests cover the list's scoped keys, empty results, stale generations, the field's focus and the roles while the list is open, the highlight's announcement while a screen reader runs, and the field's normal keys after it closes;
 - `ui` or `ui/chat` tests cover the anchored overlay, scrolling rows, disabled items and an empty state; and
 - an end-to-end composer test types `@re`, chooses a row with Down and Return, verifies one draft change and confirms the rows are gone.
