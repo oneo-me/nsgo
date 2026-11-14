@@ -17,12 +17,12 @@ NSH records what its hot paths cost (`data-table.md` (Performance), `performance
 
 ## Services and components since 0.4.0
 
-What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build it.
+What NSH added between 0.4.0 and 0.5.0 that NSGo has not, and services of NSGo's own, in the order to build it.
 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Bluetooth Low Energy | #58, [Bluetooth design](architecture/bluetooth.md) | A provider-neutral central-role API covers scanning, GATT discovery, reads, writes and subscriptions on iOS, macOS and Android, every other target reporting it unavailable through `Env`, with background behavior following the Android lifecycle decision |
+| Bluetooth Low Energy | NSGo's own ([Bluetooth design](architecture/bluetooth.md), [#58](https://github.com/nsgo-dev/nsgo/issues/58)) | A provider-neutral central-role API covers scanning, GATT discovery, reads, writes and subscriptions on iOS, macOS and Android, every other target reporting it unavailable through `Env`, with background behavior following the Android lifecycle decision; so far only the design exists, its questions open (2026-11-15) |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
