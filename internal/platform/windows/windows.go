@@ -1144,7 +1144,7 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemWeb:
 			if v.kind == driver.KindWeb && it.Web != nil {
 				if v.web == nil {
-					v.web = w.newWeb(v)
+					v.web = w.newWeb(v, it.Web)
 				}
 				v.web.configure(it.Web)
 			}

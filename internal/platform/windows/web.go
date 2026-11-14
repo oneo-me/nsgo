@@ -123,9 +123,9 @@ type webCommand struct {
 	value   string
 }
 
-// newWeb makes v's portal and starts making its controller.
-func (w *window) newWeb(v *view) *webView {
-	wv := &webView{w: w, v: v}
+// newWeb makes v's portal and starts making its controller for config c, which the controller's creation reads (Incognito): an environment already made calls back before configure.
+func (w *window) newWeb(v *view, c *driver.WebConfig) *webView {
+	wv := &webView{w: w, v: v, config: *c}
 	w.webs[wv] = true
 	p, err := w.newPortal()
 	if err != nil {

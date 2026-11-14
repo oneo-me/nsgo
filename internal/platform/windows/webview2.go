@@ -74,12 +74,12 @@ const (
 	comAddRef         = 1
 	comRelease        = 2
 
-	// ICoreWebView2Environment, then ICoreWebView2Environment3
+	// ICoreWebView2Environment, then ICoreWebView2Environment3 and 10
 	envCreateWebResourceResponse   = 4
 	envCreateCompositionController = 9
 	envCreatePointerInfo           = 10
-	env10CreateCompositionWithOpts = 20
-	env10CreateControllerOptions   = 21
+	env10CreateControllerOptions   = 20
+	env10CreateCompositionWithOpts = 22
 
 	// ICoreWebView2CompositionController
 	compPutRootVisualTarget = 4
@@ -103,7 +103,7 @@ const (
 	controllerPutShouldDetectMonitorScaleChanges = 31
 
 	// ICoreWebView2ControllerOptions.
-	controllerOptionsPutIsInPrivateModeEnabled = 4
+	controllerOptionsPutIsInPrivateModeEnabled = 6
 
 	// ICoreWebView2
 	webGetSettings                   = 3
