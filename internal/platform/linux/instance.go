@@ -14,11 +14,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/nsgo-dev/nsgo/internal/engine"
 )
 
-// instance is what the first copy of an app holds: an exclusive lock on instance.lock, which ends with the process however it ends, and the Unix socket later launches hand their files to. Messages received before the GTK window exists wait in pending until Run installs the delivery function.
+// instance is what the first copy of an app holds: an exclusive lock on its lock file (instancePath), which ends with the process however it ends, and the Unix socket later launches hand their files to. Messages received before the GTK window exists wait in pending until Run installs the delivery function.
 type instance struct {
 	lock     *os.File
 	listener *net.UnixListener
@@ -68,23 +66,42 @@ func claimInstance(id string, args []string) (*instance, bool) {
 	return i, false
 }
 
+// instancePath is the socket of app id, beside its lock (the path with ".lock"), in a directory only this user may write and only this host sees: $XDG_RUNTIME_DIR, or a private directory in the temporary one. A directory another user could write would let them take the launches, and one on a network share, as a home directory can be, would let a copy on another host hold the lock. The name is a digest of id, as Linux limits a Unix socket's address to 108 bytes.
 func instancePath(id string) (string, error) {
-	data, _ := engine.AppDirs(id)
-	if data == "" {
-		return "", errors.New("no data directory")
+	dir := os.Getenv("XDG_RUNTIME_DIR")
+	if dir == "" || privateDir(dir) != nil {
+		dir = filepath.Join(os.TempDir(), fmt.Sprintf("nsgo-%d", os.Getuid()))
+		if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
+			return "", err
+		}
+		if err := privateDir(dir); err != nil {
+			return "", err
+		}
 	}
-	if err := os.MkdirAll(data, 0o700); err != nil {
-		return "", err
+	digest := sha256.Sum256([]byte(id))
+	path := filepath.Join(dir, fmt.Sprintf("nsgo-%x.sock", digest[:12]))
+	if len(path) >= 100 {
+		return "", fmt.Errorf("%s: too long for a socket address", path)
 	}
-	path := filepath.Join(data, "instance.sock")
-	// Linux limits Unix socket addresses to about 108 bytes. Keep the stable
-	// app directory where it fits, and use a per-user temporary pathname for
-	// unusually long XDG paths.
-	if len(path) < 100 {
-		return path, nil
+	return path, nil
+}
+
+// privateDir reports why dir is not a directory, not a symbolic link, of this user's that no one else may enter.
+func privateDir(dir string) error {
+	info, err := os.Lstat(dir)
+	if err != nil {
+		return err
 	}
-	digest := sha256.Sum256([]byte(id + "\x00" + data))
-	return filepath.Join(os.TempDir(), fmt.Sprintf("nsgo-%d-%x.sock", os.Getuid(), digest[:8])), nil
+	st, ok := info.Sys().(*syscall.Stat_t)
+	switch {
+	case !info.IsDir():
+		return fmt.Errorf("%s: not a directory", dir)
+	case !ok || int(st.Uid) != os.Getuid():
+		return fmt.Errorf("%s: not owned by this user", dir)
+	case info.Mode().Perm()&0o077 != 0:
+		return fmt.Errorf("%s: open to other users (%v)", dir, info.Mode().Perm())
+	}
+	return nil
 }
 
 // sendInstance hands args to the owner, retrying while the owner, which already holds the lock, may not be listening yet.
