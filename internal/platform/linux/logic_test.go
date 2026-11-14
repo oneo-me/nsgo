@@ -33,6 +33,42 @@ func TestKeyNamesMatchOnKeys(t *testing.T) {
 	}
 }
 
+func TestPortalTriggersUseXDGNames(t *testing.T) {
+	for _, test := range []struct {
+		key, want string
+		ok        bool
+	}{
+		{"mod+shift+s", "CTRL+SHIFT+s", true},
+		{"meta+alt+space", "LOGO+ALT+space", true},
+		{"ctrl+f12", "CTRL+F12", true},
+		{"ctrl+plus", "CTRL+plus", true},
+		{"pageup", "Page_Up", true},
+		{"unknown+a", "", false},
+		{"shift", "", false},
+	} {
+		got, ok := portalTrigger(test.key)
+		if got != test.want || ok != test.ok {
+			t.Errorf("portalTrigger(%q) = (%q, %v), want (%q, %v)", test.key, got, ok, test.want, test.ok)
+		}
+	}
+}
+
+func TestPortalQuoteEscapesGVariantStrings(t *testing.T) {
+	if got := portalQuote("a'b\\c"); got != "'a\\'b\\\\c'" {
+		t.Fatalf("portalQuote = %q", got)
+	}
+}
+
+func TestX11TriggerModifiers(t *testing.T) {
+	mods, ok := x11TriggerModifiers([]string{"CTRL", "ALT", "SHIFT", "LOGO"})
+	if !ok || mods != x11ControlMask|x11Mod1Mask|x11ShiftMask|x11Mod4Mask {
+		t.Fatalf("x11TriggerModifiers = (%#x, %v)", mods, ok)
+	}
+	if _, ok := x11TriggerModifiers([]string{"NOPE"}); ok {
+		t.Fatal("unknown X11 modifier was accepted")
+	}
+}
+
 func TestUnshiftedFindsTheTypingKey(t *testing.T) {
 	if got := unshifted('?'); got != '/' {
 		t.Fatalf("? types / on a US layout, got %q", got)

@@ -1,6 +1,6 @@
 # Application and windows
 
-An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens them; the [roadmap](../roadmap.md#application-and-windows) orders Windows and Linux.
+An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens the full set; Linux also handles global shortcuts; the [roadmap](../roadmap.md#application-and-windows) orders the remaining Windows and Linux work.
 
 ## Model
 
@@ -60,6 +60,10 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - A drawn icon is a surface in the button: an embedded surface whose hit test lets clicks through to the button, the item as wide as the view.
 - Global shortcuts are Carbon's `RegisterEventHotKey` on the application's event target, which needs no accessibility permission; a key names its ANSI virtual key code.
 - An alert asked from the app's own surface, which has no window to hold a sheet, runs app-modal.
+
+## Linux
+
+- Global shortcuts use the XDG `GlobalShortcuts` portal on Wayland, where the compositor asks the user to bind them, and passive `XGrabKey` grabs on X11. Both paths dispatch the same `EventHotKey`; when neither backend is available, the shortcut is ignored.
 
 ## Configuration
 

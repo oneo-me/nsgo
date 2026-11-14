@@ -82,4 +82,4 @@ Themes give `ui`'s components their look in light and dark.
 
 ## Desktop apps
 
-`nsgo.Run(Root)` shows one root view. A desktop app can open what it shows itself instead: `nsgo.Run(App)` runs `func App(app *core.Scope)` once, and it opens windows, panels, tray icons and global shortcuts with `desktop`, which share its signals. This works on macOS for now; `examples/tray` keeps out of the Dock and lives in the menu bar.
+`nsgo.Run(Root)` shows one root view. A desktop app can open what it shows itself instead: `nsgo.Run(App)` runs `func App(app *core.Scope)` once, and it opens windows, panels, tray icons and global shortcuts with `desktop`, which share its signals. Windows, panels and tray icons work on macOS for now; Linux global shortcuts use its X11 or compositor portal backend. `examples/tray` keeps out of the Dock and lives in the menu bar.
