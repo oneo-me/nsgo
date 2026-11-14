@@ -34,7 +34,7 @@ On iOS, `CBCentralManager` reports the manager state before a scan starts, and t
 
 After connecting, the app asks for service and characteristic discovery. The backend reports the UUID, service type and characteristic properties without exposing platform objects. Reads and writes carry the characteristic handle and bytes. A write says whether it requests a response; the backend rejects a request the characteristic's properties do not allow before calling the platform.
 
-Subscriptions are explicit. The core reports whether notifications or indications were enabled, and the backend writes the platform's client-characteristic configuration descriptor. Each value event carries the characteristic handle and a copied byte slice. Unsubscribing is idempotent and is also performed when the connection closes.
+Subscriptions are explicit, and each backend enables them the platform's way. Android calls `setCharacteristicNotification` and writes the client characteristic configuration descriptor (0x2902), choosing indications or notifications as the characteristic allows. Apple cannot write that descriptor: `writeValue:forDescriptor:` refuses it, so the backend calls `setNotifyValue:forCharacteristic:`, which enables notifications whenever the characteristic allows both. The app therefore never requests indications: the core only reports which were enabled. Each value event carries the characteristic handle and a copied byte slice. Unsubscribing is idempotent and is also performed when the connection closes.
 
 Provider-specific limits stay in the backend: maximum write length, prepare-write support, MTU negotiation, retry behavior and descriptor ordering. The core may expose a negotiated maximum later, but it must not silently split an application message into writes without an API that reports boundaries and failure.
 
@@ -58,7 +58,7 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover handle ownership, scan filters, coalesced results, connection state, operation cancellation, stale events, subscription cleanup and byte preservation;
 - `internal/driver` tests cover protocol encoding, operation IDs, UUIDs, empty values and payloads larger than one bridge frame;
-- Apple tests use fake central and peripheral delegates to cover authorization, powered-off state, discovery, read/write ordering, notifications and disconnects;
+- Apple tests use fake central and peripheral delegates to cover authorization, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
 - Android tests use a fake scanner and GATT client to cover API 31 permissions, location-gated older scans, adapter state, reconnect and cleanup without a device; and
 - target tests use a controlled peripheral or provider simulator, never a user's nearby device, and verify that no callback runs after its owning scope is disposed.
 
