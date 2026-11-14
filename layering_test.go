@@ -104,12 +104,13 @@ var platformShared = []string{
 // portable lists the packages that build unchanged for every target: no
 // purego, syscall or unsafe.
 var portable = []string{"core", "internal/driver", "internal/layout", "internal/shader", "internal/shader/wgsl", "internal/shaderir/", "internal/engine",
-	"internal/testhost", "internal/cldr", "audio", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx", "tsx/websrc", "updater", "updater/locales"}
+	"internal/testhost", "internal/cldr", "base/", "ui/", "i18n", "mobile", "desktop", "desktop/locales", "icons/", "nsgotest", "tsx", "tsx/websrc", "updater", "updater/locales"}
 
-// unportable are the packages among portable's that reach the system: the
-// terminal loads libghostty-vt and runs programs, on macOS, Linux and
-// Windows, and builds elsewhere to report that it cannot.
-var unportable = []string{"base/terminal/"}
+// unportable are the packages among portable's that reach the system: audio
+// loads AVFoundation on Apple targets, while the terminal loads libghostty-vt
+// and runs programs on macOS, Linux and Windows; both build elsewhere to
+// report that they cannot.
+var unportable = []string{"audio", "base/terminal/"}
 
 // layerTargets are the GOOS/GOARCH pairs the nsgo tool builds for.
 var layerTargets = [][2]string{

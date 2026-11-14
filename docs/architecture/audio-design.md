@@ -1,9 +1,10 @@
 # Audio playback
 
 This document is the design for issue #36. It describes the API and the
-backend contract. The portable API and lifecycle wrappers exist; playback
-stays unavailable until target backends and their verification land. The
-roadmap stays open until that implementation and target verification land.
+backend contract. The portable API and lifecycle wrappers exist, and macOS
+and iOS now use AVAudioPlayer for local cues and players. Other targets still
+return `ErrUnsupported`; shared audio-session coordination and the remaining
+backends are still open work.
 
 ## The API
 
@@ -85,7 +86,7 @@ of 50 ms and is coalesced while the app is not consuming it.
 
 | Target | Native path | First implementation boundary |
 | --- | --- | --- |
-| macOS and iOS | `AVAudioPlayer` for cues; `AVAudioFile` plus `AVAudioEngine` or `AVPlayer` for streaming players | Purego bindings and the shared Apple audio-session coordinator |
+| macOS and iOS | `AVAudioPlayer` for cues and local players | Purego bindings; shared Apple audio-session coordination remains open |
 | Windows | Media Foundation source reader and audio renderer | A worker-owned `IMFMediaEngine` or `IMFSourceReader`, with COM initialized on that worker |
 | Linux | GStreamer through GTK's loaded libraries, or a small purego GStreamer binding | A worker-owned pipeline using `playbin`, with bus messages translated to the callback queue |
 | Android | `MediaPlayer` for files and the existing Java runtime boundary | A Java `AudioPlayer` that reports state over the checked-in protocol; rebuild `classes.dex` and `classes.jar` |
@@ -109,8 +110,8 @@ errors; the fake and native backends remain subsequent stages.
 The implementation is staged so each change remains reviewable:
 
 1. Add the portable API, errors, session values and `nsgotest` fake.
-2. Add the Apple cue and player plus audio-session sharing, with a macOS
-   fixture and an iOS simulator check.
+2. Add the Apple cue and player, with macOS and iOS target checks; share the
+   audio session with video, speech and microphone in a follow-up.
 3. Add Windows and Linux workers and their format/error tests.
 4. Add the Android runtime protocol and rebuild the committed runtime.
 5. Add the web and mini-program host paths, then a gallery cue and player

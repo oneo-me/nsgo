@@ -8,7 +8,9 @@ import (
 )
 
 func TestUnsupportedBackendReportsStableError(t *testing.T) {
+	previous := targetBackend
 	targetBackend = unsupportedBackend{}
+	t.Cleanup(func() { targetBackend = previous })
 	if _, err := Open("tone.wav"); !errors.Is(err, ErrUnsupported) {
 		t.Fatalf("Open error %v, want ErrUnsupported", err)
 	}
