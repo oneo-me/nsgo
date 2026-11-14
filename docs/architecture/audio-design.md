@@ -56,11 +56,9 @@ when the last player pauses, ends or closes. A cue defaults to mixing so it
 does not interrupt a video or speech session; an app can request playback
 explicitly for a long-form player.
 
-The session is process-wide but its ownership is reference counted. Video,
-speech and `microphone` must share the same iOS audio-session coordinator
-rather than each setting `AVAudioSession` independently. Android maps
-playback to transient audio focus and mixing to no focus request. Desktops
-and the web use the system mixer and do not pause other applications.
+The session is process-wide but its ownership is reference counted. Video, speech and `microphone` must share the same iOS audio-session coordinator rather than each setting `AVAudioSession` independently. Android maps playback to transient audio focus and mixing to no focus request. Desktops and the web use the system mixer and do not pause other applications.
+
+Until that coordinator exists, iOS does not meet these goals: a cue or player plays in the app's current category, by default the solo ambient one, which stops other apps' audio and is muted by the silent switch, and a `Session` other than the default returns `ErrUnsupported` rather than being ignored. macOS accepts every `Session`, as its system mixer already plays alongside other apps.
 
 ## Backend contract
 

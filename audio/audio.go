@@ -78,7 +78,8 @@ func WithProgressInterval(interval time.Duration) Option {
 // Errors returned by this package. Backends may wrap these values with
 // details from the target API; callers can use errors.Is to classify them.
 var (
-	// ErrUnsupported says this target has no audio backend.
+	// ErrUnsupported says this target has no audio backend, or cannot give
+	// the requested Session.
 	ErrUnsupported = errors.New("audio: not supported on this platform")
 	// ErrUnreadableSource says a path or encoded byte source could not be read.
 	ErrUnreadableSource = errors.New("audio: source cannot be read")

@@ -206,3 +206,14 @@ func TestApplePlayerStopsAndPlaysAgain(t *testing.T) {
 		t.Fatalf("second Close: %v", err)
 	}
 }
+
+func TestAppleMacOSAcceptsEverySession(t *testing.T) {
+	for _, session := range []Session{AudioSessionDefault, AudioSessionPlayback, AudioSessionMixWithOthers} {
+		player, err := OpenBytes(tone(100*time.Millisecond), "audio/wav", WithSession(session))
+		if err != nil {
+			t.Errorf("session %d: %v", session, err)
+			continue
+		}
+		player.Close()
+	}
+}

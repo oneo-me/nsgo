@@ -141,6 +141,9 @@ func appleRelease(player objc.ID) {
 }
 
 func (appleBackend) openSound(src source, options Options, ended func()) (soundBackend, error) {
+	if err := appleSession(options.Session); err != nil {
+		return nil, err
+	}
 	if err := loadAppleAudio(); err != nil {
 		return nil, ErrUnsupported
 	}
@@ -168,6 +171,9 @@ func (appleBackend) openSound(src source, options Options, ended func()) (soundB
 }
 
 func (appleBackend) openPlayer(src source, options Options, callbacks playerCallbacks) (playerBackend, error) {
+	if err := appleSession(options.Session); err != nil {
+		return nil, err
+	}
 	if err := loadAppleAudio(); err != nil {
 		return nil, ErrUnsupported
 	}
@@ -179,6 +185,19 @@ func (appleBackend) openPlayer(src source, options Options, callbacks playerCall
 	result := &applePlayer{player: player, options: options, callbacks: callbacks}
 	appleWatch(player, appleEvents{finished: result.finished, failed: result.failed})
 	return result, nil
+}
+
+// appleSession reports a session the backend cannot give. macOS has no
+// audio session: its system mixer plays alongside other apps, whichever
+// session is asked for. iOS needs the audio-session coordinator the design
+// shares with video, speech and microphone, which does not exist yet, so
+// there a cue or player plays in the app's current category and a session
+// other than the default is refused rather than ignored.
+func appleSession(session Session) error {
+	if runtime.GOOS == "ios" && session != AudioSessionDefault {
+		return fmt.Errorf("%w: iOS audio sessions are not coordinated yet", ErrUnsupported)
+	}
+	return nil
 }
 
 func newApplePlayer(src source, options Options) (objc.ID, error) {
