@@ -30,28 +30,34 @@ A view searches the texts it builds: paragraphs, headings, code blocks' code, ta
 
 ## Highlights
 
-`TextView` gains a search state and an optional stable key. The state carries the query, matches, and selected match; a view registers its matches in render order. The renderer splits spans at match boundaries and adds `PartSearch` to every match and `PartSearchSelected` to the selected one. `base` supplies no colors: the app's `Styles` or `StyleOf` chooses them, and code-block highlighting merges with search parts.
+The renderer splits spans at match boundaries and adds `PartSearch` to every match and `PartSearchSelected` to the selected one. `base` supplies no colors: the app's `Styles` or `StyleOf` chooses them, and code-block highlighting merges with search parts.
 
 Search highlights are not a text selection. A selectable view keeps its selection and copy behavior, while a search can mark a different range.
 
 ## One search across views
 
-An app creates a search state under a scope and shares it with several `TextView`s. Each view registers a stable key and replaces only that key's matches when its document changes. The state keeps the keys' order and exposes:
-
 ```go
 func NewSearch(cx *core.Scope) *Search
+func ProvideSearch(cx *core.Scope, s *Search)
+func (s *Search) Open()
+func (s *Search) Close()
+func (s *Search) IsOpen() bool
 func (s *Search) SetQuery(string)
 func (s *Search) Query() string
-func (s *Search) Open() bool
-func (s *Search) Close()
+func (s *Search) SetOptions(FindOptions)
 func (s *Search) Count() int
 func (s *Search) Selected() int // one-based, zero when there is none
+func (s *Search) SelectedMatch() (Match, bool)
 func (s *Search) Next()
 func (s *Search) Previous()
 func (s *Search) SelectedBounds() (core.Bounds, bool)
 ```
 
-`SelectedBounds` comes from the selected text range's boxes, not from the block frame. A transcript owns scrolling, so it calls its own reveal operation with those bounds and keeps the selected match clear of a find bar. A view that is removed unregisters its key and cannot leave stale matches.
+A `TextView` joins the search in its `Search` field, else the one `ProvideSearch` gives every `TextView` below cx's owner, as `Provide` gives plugins. A view registers itself while it is mounted, with no key: it replaces its matches when its document or the query changes, and they go when it unmounts, so none go stale. The search orders views by tree order (`Ref.Before` on each view's root), not by when they registered, so a view mounted late, such as one in a disclosure just opened, takes its place in reading order; within a view, matches follow their texts' paths and offsets. `Next` and `Previous` wrap. When the matches change, the selected match stays selected while it exists, else the selection moves to the next match after it.
+
+`Open` and `Close` are the app's too, so a toolbar button can open the search on a phone with no keyboard. While the search is closed, views show no search parts and `Count` is zero; the query and options stay, so opening it again finds the same matches.
+
+`SelectedBounds` comes from the selected text range's boxes, not from the block frame. A transcript owns scrolling, so it calls its own reveal operation with those bounds and keeps the selected match clear of a find bar.
 
 ## Chat integration
 
@@ -63,7 +69,7 @@ The implementation is complete only when these checks exist:
 
 - `base/textview` tests cover a three-block document, case and whole-word options, a match at an inline span boundary, code and math TeX, a table cell, a details' summary, a closed details opening, paths into lists, tables, details and footnotes, a `CustomSpan` and a `RenderMath` attachment, UTF-16 offsets past a character outside the BMP, and the result cap;
 - `TextView` tests cover search parts, selected parts, syntax-highlight merging, stale registrations and selection remaining independent;
-- shared-search tests cover registration order, replacement, removal, next/previous wrapping and selected bounds across three views; and
+- shared-search tests cover tree order with a view mounted late, replacement, removal, opening and closing, next/previous wrapping and selected bounds across three views; and
 - `ui/chat` tests type a query over three turns, show the count, navigate and reveal the selected match, then close without changing the transcript selection.
 
 ## Open decisions
@@ -71,7 +77,7 @@ The implementation is complete only when these checks exist:
 These decisions need confirmation before an implementation chooses them:
 
 1. Should matches stay within one text initially, or should a document-level plain-text view join blocks?
-2. Should `ProvideSearch` automatically include every descendant `TextView`, or must each view opt in with a key?
+2. Should `ProvideSearch` automatically include every descendant `TextView`, or must each view opt in through its `Search` field?
 3. Is matching each text synchronously as the view builds it acceptable for large transcripts, or should the API expose an asynchronous index from the start?
 4. Should regular expressions and accent/Unicode-insensitive matching be later options, or belong to a separate search package?
 5. Does `SelectedBounds` leave scrolling to the owning transcript, or should `TextView` reveal its own match?
