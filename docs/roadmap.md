@@ -22,7 +22,6 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Remote push notifications | #59, [remote push design](architecture/remote-push.md) | APNs and FCM registration and delivery share a provider-neutral core protocol, with the Android adapter boundary and background policy decided before implementation |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
@@ -45,6 +44,14 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Packaged Apple apps' logs | `macos.md` (Packaged apps' logs), #1655 | A macOS or iOS app opened from Finder, the Dock or the Home screen writes its warnings and errors to the unified log under its bundle ID, reached through purego, where its stderr goes nowhere now |
 | Package settings | #1654, #1548, #1460 | `nsgo.yaml` raises an Apple package's minimum system version, never below the runtime's, gives Windows, Linux and Android icons of their own, and lets an Android app load plain HTTP |
 | Store uploads | `tooling.md` (Releases), #1052, #1054 | A command uploads the store packages `build -channel store` makes to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
+
+## Remote push
+
+NSGo's own, beyond NSH's notifications: a server reaching the app ([remote push](architecture/remote-push.md), [#59](https://github.com/nsgo-dev/nsgo/issues/59)), waiting on its [open question](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Remote push notifications | APNs, Firebase Cloud Messaging | An iOS app, a macOS app and an Android app register, report their token and receive a data push and a pressed notification's payload from APNs' sandbox or a test FCM project, through one provider-neutral `core` API |
 
 ## Keyboard, popups and screen readers
 
