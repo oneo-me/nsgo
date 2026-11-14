@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"mime"
 	"net/http"
+	"net/url"
 )
 
 // devtoolsPage is the DevTools page nsgo dev -devtools serves: plain HTML and JavaScript, so it opens at once and builds with nothing.
@@ -25,7 +27,9 @@ func (s *devServer) serveDevTools() {
 			http.Error(w, "POST the app's messages", http.StatusMethodNotAllowed)
 			return
 		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if !fromDevServer(w, r, "application/x-ndjson") {
+			return
+		}
 		sc := bufio.NewScanner(r.Body)
 		sc.Buffer(make([]byte, 1<<16), 64<<20)
 		for sc.Scan() {
@@ -45,6 +49,9 @@ func (s *devServer) serveDevTools() {
 			http.Error(w, "POST a command", http.StatusMethodNotAllowed)
 			return
 		}
+		if !fromDevServer(w, r, "application/json") {
+			return
+		}
 		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
 		var compact bytes.Buffer
 		if err == nil {
@@ -56,6 +63,21 @@ func (s *devServer) serveDevTools() {
 		}
 		s.send("devtools", compact.String())
 	})
+}
+
+// fromDevServer reports whether r may reach the app through DevTools, answering it when it may not: it must carry contentType, which a web page of another site cannot send without asking first, as the server never allows, and come from no web page or from the server's own. The app posts from Go, the DevTools page and a web app from the server's origin.
+func fromDevServer(w http.ResponseWriter, r *http.Request, contentType string) bool {
+	if t, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || t != contentType {
+		http.Error(w, "send "+contentType, http.StatusUnsupportedMediaType)
+		return false
+	}
+	if origin := r.Header.Get("Origin"); origin != "" {
+		if u, err := url.Parse(origin); err != nil || u.Host != r.Host {
+			http.Error(w, "DevTools take commands from their own page only", http.StatusForbidden)
+			return false
+		}
+	}
+	return true
 }
 
 // toPages sends every DevTools page msg, dropping it for a page that has not taken the last ones: the page asks again for what it lacks.

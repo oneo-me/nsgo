@@ -87,22 +87,34 @@ func TestDevToolsServerPassesMessagesBothWays(t *testing.T) {
 		t.Fatalf("the app heard %q", got)
 	}
 
+	// Another site's page cannot drive the app or speak for it: it sends neither JSON without asking first, which the server never allows, nor its own origin.
 	for _, c := range []struct {
-		method, path, body string
-		want               int
+		method, path, body, contentType, origin string
+		want                                    int
 	}{
-		{"GET", "/_nsgo/devtools/command", "", http.StatusMethodNotAllowed},
-		{"POST", "/_nsgo/devtools/command", "not json", http.StatusBadRequest},
-		{"GET", "/_nsgo/devtools/out", "", http.StatusMethodNotAllowed},
+		{"GET", "/_nsgo/devtools/command", "", "", "", http.StatusMethodNotAllowed},
+		{"POST", "/_nsgo/devtools/command", "not json", "application/json", "", http.StatusBadRequest},
+		{"GET", "/_nsgo/devtools/out", "", "", "", http.StatusMethodNotAllowed},
+		{"POST", "/_nsgo/devtools/command", `{"op":"pick","on":true}`, "text/plain", "", http.StatusUnsupportedMediaType},
+		{"POST", "/_nsgo/devtools/command", `{"op":"pick","on":true}`, "application/json", "https://evil.example", http.StatusForbidden},
+		{"POST", "/_nsgo/devtools/command", `{"op":"surfaces"}`, "application/json; charset=utf-8", base, http.StatusOK},
+		{"POST", "/_nsgo/devtools/out", `{"type":"step"}`, "text/plain", "", http.StatusUnsupportedMediaType},
+		{"POST", "/_nsgo/devtools/out", `{"type":"step"}`, "application/x-ndjson", "null", http.StatusForbidden},
 	} {
 		req, _ := http.NewRequest(c.method, base+c.path, strings.NewReader(c.body))
+		if c.contentType != "" {
+			req.Header.Set("Content-Type", c.contentType)
+		}
+		if c.origin != "" {
+			req.Header.Set("Origin", c.origin)
+		}
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
 		resp.Body.Close()
 		if resp.StatusCode != c.want {
-			t.Errorf("%s %s %q = %d, want %d", c.method, c.path, c.body, resp.StatusCode, c.want)
+			t.Errorf("%s %s %q from %q = %d, want %d", c.method, c.path, c.body, c.origin, resp.StatusCode, c.want)
 		}
 	}
 }

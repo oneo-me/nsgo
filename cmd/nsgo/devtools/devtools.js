@@ -21,7 +21,7 @@ function el(tag, props, ...children) {
 }
 
 function send(cmd) {
-  return fetch("/_nsgo/devtools/command", { method: "POST", body: JSON.stringify({ surface: state.surface, ...cmd }) });
+  return fetch("/_nsgo/devtools/command", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ surface: state.surface, ...cmd }) });
 }
 
 // A site names a file and a line: whole for Go, relative to the app's directory for TSX through its source maps.
@@ -126,7 +126,8 @@ function renderDetails() {
     el("table", {}, rows.map(([k, v]) => el("tr", {}, el("th", {}, k), el("td", {}, v)))),
     n.selector ? el("div", { class: "toolbar" },
       el("button", { onclick: () => addStep({ action: "AssertExists", selector: n.selector }), title: "Add a check that this view shows to the recorded test" }, "Assert shown"),
-      n.text ? el("button", { onclick: () => addStep({ action: "AssertText", selector: n.selector, text: n.text }), title: "Add a check of this view's text to the recorded test" }, "Assert text") : null) : null,
+      // A clipped text is checked by what it starts with: the page has only its first 200 bytes and an ellipsis.
+      n.text ? el("button", { onclick: () => addStep({ action: "AssertText", selector: n.selector, text: n.clipped ? n.text.slice(0, -1) : n.text, prefix: !!n.clipped }), title: "Add a check of this view's text to the recorded test" }, "Assert text") : null) : null,
     boxModel(n),
     el("h4", {}, "Style"),
     style.length ? el("table", {}, style) : el("p", { class: "hint" }, "No style of its own."),
@@ -244,30 +245,45 @@ function renderHot(hot) {
 
 // Recorder.
 
+// stepActions are the steps the recorder writes: a step of any other action, which only something else posting to the server sends, is left out, so nothing but the escaped selector, text and numbers reaches the code.
+const stepActions = new Set(["Press", "Clear", "Type", "ScrollTo", "AssertText", "AssertExists"]);
+
+// goNumber is v as a Go number, 0 for what is not a finite number.
+const goNumber = (v) => (Number.isFinite(Number(v)) ? String(Number(v)) : "0");
+
 // testCode writes the steps as a test file: consecutive typing in one field is one Type.
 function testCode() {
   const steps = [];
-  for (const s of state.steps) {
+  for (const s of state.steps.filter((s) => stepActions.has(s.action))) {
     const last = steps[steps.length - 1];
     if (s.action === "Type" && last && last.action === "Type" && last.selector === s.selector) last.text += s.text;
     else steps.push({ ...s });
   }
-  let core = false;
+  let core = false, strs = false;
   const lines = steps.flatMap((s) => {
     if (!s.selector) return [`\t// a ${s.action.toLowerCase()} on a view with no selector: give it a TestID`];
-    const sel = JSON.stringify(s.selector);
+    const sel = JSON.stringify(String(s.selector));
+    const text = JSON.stringify(String(s.text ?? ""));
     switch (s.action) {
-      case "Type": return [`\tapp.Type(${sel}, ${JSON.stringify(s.text)})`];
-      case "ScrollTo": core = true; return [`\tapp.ScrollTo(${sel}, core.Point{X: ${s.offset[0]}, Y: ${s.offset[1]}})`];
-      case "AssertText": return [
-        `\tif got := app.Find(${sel}).Text; got != ${JSON.stringify(s.text)} {`,
-        `\t\tt.Errorf("%s shows %q, want %q", ${sel}, got, ${JSON.stringify(s.text)})`,
-        "\t}"];
+      case "Type": return [`\tapp.Type(${sel}, ${text})`];
+      case "ScrollTo": core = true; return [`\tapp.ScrollTo(${sel}, core.Point{X: ${goNumber(s.offset?.[0])}, Y: ${goNumber(s.offset?.[1])}})`];
+      case "AssertText":
+        if (s.prefix) {
+          strs = true;
+          return [
+            `\tif got := app.Find(${sel}).Text; !strings.HasPrefix(got, ${text}) {`,
+            `\t\tt.Errorf("%s shows %q, want it to start with %q", ${sel}, got, ${text})`,
+            "\t}"];
+        }
+        return [
+          `\tif got := app.Find(${sel}).Text; got != ${text} {`,
+          `\t\tt.Errorf("%s shows %q, want %q", ${sel}, got, ${text})`,
+          "\t}"];
       case "AssertExists": return [`\tif !app.Exists(${sel}) {`, `\t\tt.Errorf("%s is not shown", ${sel})`, "\t}"];
       default: return [`\tapp.${s.action}(${sel})`];
     }
   });
-  const imports = ['\t"testing"', "", ...(core ? ['\t"github.com/nsgo-dev/nsgo/core"'] : []), '\t"github.com/nsgo-dev/nsgo/nsgotest"'];
+  const imports = [...(strs ? ['\t"strings"'] : []), '\t"testing"', "", ...(core ? ['\t"github.com/nsgo-dev/nsgo/core"'] : []), '\t"github.com/nsgo-dev/nsgo/nsgotest"'];
   return ["package main", "", "import (", ...imports, ")", "", "func TestRecorded(t *testing.T) {", "\tapp := nsgotest.Start(t, Root)", ...lines, "}", ""].join("\n");
 }
 

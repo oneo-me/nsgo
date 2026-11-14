@@ -48,7 +48,7 @@ go tool nsgo dev -devtools
 
 A TSX app's state, computations and writes are named by their TSX lines, through the bundles' source maps, and link to the files in your app.
 
-DevTools read the app through `nsgo dev`'s server, which listens on your network so phones reach it: anyone there can open DevTools and change the app's state while it runs.
+DevTools read the app through `nsgo dev`'s server, which listens on your network so phones reach it: anyone there can open DevTools, change the app's state while it runs, and add steps to the test the Recorder writes, so read a recorded test before you run it. Web pages of other sites you visit cannot: the server takes DevTools' commands and the app's messages only as JSON, which another site's page cannot send it, and only from its own page.
 
 ## Updates
 
