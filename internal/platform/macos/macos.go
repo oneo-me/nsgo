@@ -2724,17 +2724,19 @@ func (s *surface) applyBatches(budget time.Duration, alone bool) {
 	defer func() { s.applying = false }()
 	start := time.Now()
 	n := 0
-	for n < len(s.waiting) {
-		b := s.waiting[n]
-		n++
-		if s.perf != nil && !b.Sent.IsZero() {
-			s.perf.RecordLatency(time.Since(b.Sent))
+	apple.Transaction(func() {
+		for n < len(s.waiting) {
+			b := s.waiting[n]
+			n++
+			if s.perf != nil && !b.Sent.IsZero() {
+				s.perf.RecordLatency(time.Since(b.Sent))
+			}
+			s.apply(b)
+			if budget > 0 && time.Since(start) >= budget {
+				break
+			}
 		}
-		s.apply(b)
-		if budget > 0 && time.Since(start) >= budget {
-			break
-		}
-	}
+	})
 	rest := copy(s.waiting, s.waiting[n:])
 	clear(s.waiting[rest:])
 	s.waiting = s.waiting[:rest]

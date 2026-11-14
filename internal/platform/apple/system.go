@@ -116,6 +116,16 @@ func WithoutAnimation(fn func()) {
 	tx.Send(sel("commit"))
 }
 
+// Transaction groups Core Animation changes made during one backend frame so
+// the render server receives one commit for the frame. Nested transactions,
+// including WithoutAnimation, still keep their local options.
+func Transaction(fn func()) {
+	tx := objc.ID(Class("CATransaction"))
+	tx.Send(sel("begin"))
+	defer tx.Send(sel("commit"))
+	fn()
+}
+
 // Observe calls fn on the main thread each time center posts name, until
 // stop is called.
 func Observe(center, name objc.ID, fn func(note objc.ID)) (stop func()) {
