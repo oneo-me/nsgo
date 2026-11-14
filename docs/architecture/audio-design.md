@@ -1,8 +1,9 @@
 # Audio playback
 
-This document is the design for issue #36. It describes an API and the
-backend contract; it does not claim that audio playback exists yet. The
-roadmap stays open until the implementation and target verification land.
+This document is the design for issue #36. It describes the API and the
+backend contract. The portable API and lifecycle wrappers exist; playback
+stays unavailable until target backends and their verification land. The
+roadmap stays open until that implementation and target verification land.
 
 ## The API
 
@@ -30,7 +31,8 @@ if err == nil {
 `PlayBytes` and `OpenBytes` take encoded bytes and an explicit MIME type. A
 `Source` helper may be added if more than a path and bytes are needed, but the
 first API keeps the source forms explicit. Paths are opened by the platform
-worker, never by the engine goroutine.
+worker, never by the engine goroutine. Until a target backend is linked, these
+entry points return `ErrUnsupported` after validating their source and options.
 
 `Sound` is a short-lived cue. It has `SetVolume`, `Stop`, `OnEnd` and `Close`;
 `Close` is idempotent and releases the native player. A cue that is played
@@ -100,8 +102,9 @@ until a target lacks a native codec that the API promises.
 
 `nsgotest` records `PlayFile`, `PlayBytes`, player commands, progress and end
 events. Its fake advances time only when a test asks it to, so tests can assert
-pause, seek, loop and close without sleeping. The fake also reports an
-unsupported format and an autoplay refusal.
+pause, seek, loop and close without sleeping. The portable package currently
+covers source and option validation, lifecycle behavior and explicit fallback
+errors; the fake and native backends remain subsequent stages.
 
 The implementation is staged so each change remains reviewable:
 
