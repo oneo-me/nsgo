@@ -173,6 +173,9 @@ type surface struct {
 	// openFrame is the frame the window opened at, until its first batch,
 	// whose title bar would change it.
 	openFrame driver.WindowFrame
+	// showFirst is set while an opened window waits for its first batch
+	// to show.
+	showFirst bool
 
 	batch uint64 // batches applied
 	// stickyBound are the scroll views with sticky cells whose insets
@@ -1727,6 +1730,14 @@ func (s *surface) apply(b *driver.MountBatch) {
 	s.drawShaders()
 	if s.animator.Running() {
 		s.startTicking()
+	}
+	if s.showFirst {
+		s.showFirst = false
+		if s.kind == driver.SurfacePanel {
+			s.showPanel(0)
+		} else {
+			s.orderFront()
+		}
 	}
 }
 

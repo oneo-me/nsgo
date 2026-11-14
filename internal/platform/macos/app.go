@@ -129,13 +129,9 @@ func (o *surface) openSurface(cfg driver.SurfaceConfig) {
 			window.Send(sel("center"))
 		}
 	}
-	if !cfg.Hidden {
-		if cfg.Kind == driver.SurfacePanel {
-			s.showPanel(0)
-		} else {
-			s.orderFront()
-		}
-	}
+	// Shown before its first batch, the window would show AppKit's title
+	// bar and no content until the app's title bar, frame and views come.
+	s.showFirst = !cfg.Hidden
 }
 
 // newPanel returns a panel of cfg's size: titled for its rounded corners
