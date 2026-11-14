@@ -548,15 +548,9 @@ func Run(app engine.App, opts Options) {
 	registerFonts(opts.Fonts)
 	w := newWindow(opts)
 	w.primary, w.app, w.opts = true, app, opts
-	if opts.Material != driver.WindowMaterialNone {
-		switch {
-		case !systemBackdrops():
-			log.Printf("nsgo: window materials need Windows 11 22H2 or later: the window stays opaque")
-		case !compositionAvailable():
-			log.Printf("nsgo: window materials need DirectComposition: the window stays opaque")
-		default:
-			w.baseComposed, w.backdrop = true, backdropFor(opts.Material)
-		}
+	if !opts.Hidden {
+		// A hidden root shows nothing: the windows it opens take the material.
+		w.composeFor(opts.Material)
 	}
 	if dpi, _, _ := getDpiForSystem.Call(); dpi != 0 {
 		w.scale = float64(dpi) / 96
@@ -712,6 +706,21 @@ func (w *window) setWindowPosAt(x, y, cx, cy int32) {
 	w.placing = false
 }
 
+// composeFor has a window opening with material m draw through DirectComposition behind its backdrop, where the system has both.
+func (w *window) composeFor(m driver.WindowMaterial) {
+	if m == driver.WindowMaterialNone {
+		return
+	}
+	switch {
+	case !systemBackdrops():
+		log.Printf("nsgo: window materials need Windows 11 22H2 or later: the window stays opaque")
+	case !compositionAvailable():
+		log.Printf("nsgo: window materials need DirectComposition: the window stays opaque")
+	default:
+		w.baseComposed, w.backdrop = true, backdropFor(m)
+	}
+}
+
 // newWindow returns the state of a window showing an app.
 func newWindow(opts Options) *window {
 	w := &window{title: opts.Title, scale: 1, webs: map[*webView]bool{}, touchWebs: map[uint32]*webView{}, trays: map[uint32]*trayIcon{},
@@ -799,14 +808,18 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	child.opts, child.hostWindow, child.kind, child.hideOnBlur = opts, w, cfg.Kind, cfg.HideOnBlur
 	child.visible = !opts.Hidden
 	child.chrome.constraints = opts.Constraints
+	child.composeFor(opts.Material)
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
 	var ex uintptr
+	if child.baseComposed {
+		ex = wsExNoRedirect
+	}
 	if cfg.Kind == driver.SurfacePanel {
 		style = wsPopup | wsClipChildren
 	}
 	if cfg.Kind != driver.SurfaceWindow {
 		// Panels, as tray flyouts, have no taskbar button or Alt+Tab entry.
-		ex = wsExToolWindow
+		ex |= wsExToolWindow
 	}
 	frame := rect{Right: child.px(opts.Width), Bottom: child.px(opts.Height)}
 	if cfg.Kind == driver.SurfaceWindow {
@@ -840,6 +853,13 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	windows[hwnd] = child
 	child.updateIME()
 	child.configureGestures()
+	if child.baseComposed {
+		if child.applyMaterial() {
+			child.material = opts.Material
+		} else {
+			child.backdrop = backdropNone
+		}
+	}
 	child.env = child.environment()
 	child.appearance = opts.Appearance
 	child.darkTitleBar(child.shownDark())
