@@ -30,6 +30,8 @@ It runs on the listbox `Select` and `Combobox` share (`base/listbox.go`), as a l
 
 While the list is open, Up, Down, Page Up and Page Down move the highlight, repeating as they are held, Return and Tab accept the highlighted row, and Escape closes the list. As the listbox's keys beside a search field, they are bound with `KeyAlways` inside a `Show` of the open state, so a text field's normal caret and submit behavior returns when the list closes. Acceptance reports one controlled `OnChange` and moves the caret after the inserted text in the same batch.
 
+A press on a row accepts it, as a listbox row's does: desktops accept as the button goes down, phones on the press. The rows take no focus (`NoFocus`), so the field keeps the keyboard focus and a phone's software keyboard stays up. A software keyboard types into the field rather than pressing bound keys, so on a phone pressing a row is how one is chosen, and its Return types a line in Composer, which ends the query as a disallowed space does.
+
 The rows take the option role, and the field takes the combobox role with `Expanded` following the state, as `base.Combobox`'s field does. The keyboard focus stays in the field and `core` has no active-descendant attribute, so a highlight the keyboard moves is announced with `Scope.Announce` while a screen reader runs, as the listbox does beside a search field.
 
 `Composer` maps its existing suggestion hook to the list and places `ui`'s form of it beside its editor. It does not own token rules, rows' behavior or key capture, so another input can use the same completion behavior. The gallery's chat demo remains an example rather than a dependency of the component.
@@ -46,8 +48,9 @@ The implementation is complete only when these checks exist:
 
 - `core` tests cover trigger prefixes, spaces, UTF-16 offsets, selection and caret changes, acceptance, a list that stays closed after Escape and after accepting an `Insert` that starts with the trigger, and owner cleanup;
 - `base` tests cover the list's scoped keys, empty results, stale generations, the field's focus and the roles while the list is open, the highlight's announcement while a screen reader runs, and the field's normal keys after it closes;
-- `ui` or `ui/chat` tests cover the anchored overlay, scrolling rows, disabled items and an empty state; and
-- an end-to-end composer test types `@re`, chooses a row with Down and Return, verifies one draft change and confirms the rows are gone.
+- `ui` or `ui/chat` tests cover the anchored overlay, scrolling rows, disabled items and an empty state;
+- an end-to-end composer test types `@re`, chooses a row with Down and Return, verifies one draft change and confirms the rows are gone; and
+- the same test, run with `nsgo test -target` in the iOS simulator and the Android emulator, chooses the row by pressing it and finds the field still focused.
 
 ## Open decisions
 
