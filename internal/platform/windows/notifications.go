@@ -25,7 +25,7 @@ import (
 // icon. An app outside an MSIX names itself with an AppUserModelID, its
 // ID, which the current user's registry gives the app's name and icon,
 // as toasts need; a press reaches the app while it runs, through the
-// toast's Activated event.
+// toast's Activated event, or starts the app through the COM activator.
 
 var (
 	combase                   = syscall.NewLazyDLL("combase.dll")
@@ -321,7 +321,7 @@ func toastXML(n driver.Notification) string {
 		_ = xml.EscapeText(&b, []byte(s))
 		return b.String()
 	}
-	s := `<toast><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
+	s := `<toast launch="id=` + esc(n.ID) + `"><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
 	if n.Body != "" {
 		s += `<text>` + esc(n.Body) + `</text>`
 	}

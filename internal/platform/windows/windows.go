@@ -503,6 +503,11 @@ func wide(s string) *uint16 {
 // Run opens a window showing app and runs the message loop. Call it from
 // main; it does not return until the window closes.
 func Run(app engine.App, opts Options) {
+	comApartment()
+	// The installer's and uninstaller's runs come first: handed off to a running copy, they would never stamp the shortcut or remove the registration.
+	if registerToastShortcutCommand(opts.ID) {
+		return
+	}
 	// One copy runs per app ID; an app without one, as a test's window, runs as many as it is started.
 	var single *instance
 	if opts.ID != "" && opts.test == nil {
@@ -512,6 +517,8 @@ func Run(app engine.App, opts Options) {
 		}
 		defer single.close()
 	}
+	registerToastActivator(opts.ID)
+	defer unregisterToastActivator()
 	if opts.Width == 0 {
 		opts.Width, opts.Height = 480, 640
 	}
@@ -557,6 +564,8 @@ func Run(app engine.App, opts Options) {
 		w.placeAt(opts.Frame)
 	}
 	windows[hwnd] = w
+	beginToastActivation(w)
+	defer endToastActivation(w)
 	// Nothing has the focus yet: typing must not open a composition.
 	w.updateIME()
 	w.configureGestures()
@@ -586,6 +595,7 @@ func Run(app engine.App, opts Options) {
 			})
 		})
 	}
+	attachToastActivation(w, w.engine)
 	showWindow.Call(hwnd, swShow)
 	if opts.test != nil {
 		opts.test.ready <- w

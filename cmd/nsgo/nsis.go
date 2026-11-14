@@ -378,6 +378,8 @@ Section
   File /r{{range .Excludes}} /x {{q .}}{{end}} "*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortCut {{path "$SMPROGRAMS\\" .Name ".lnk"}} {{path "$INSTDIR\\" .Exe}}
+  ; Give desktop toasts a COM activator CLSID on the Start menu shortcut.
+  ExecWait '{{path "$INSTDIR\\" .Exe}} --register-toast {{path "$SMPROGRAMS\\" .Name ".lnk"}}'
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayName" {{q .Name}}
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayVersion" {{q .Version}}
   WriteRegStr HKCU {{q .UninstallKey}} "DisplayIcon" {{path "$INSTDIR\\" .Exe}}
