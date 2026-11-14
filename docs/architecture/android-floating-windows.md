@@ -27,8 +27,6 @@ An app declares `SYSTEM_ALERT_WINDOW` and asks the user through the system's spe
 
 Android 13 notification permission is independent. A long-lived overlay service normally needs a visible notification, but the overlay API must report whether its chosen service policy can run without one. The tool adds only the permissions and service declarations the app names in YAML, and never adds `SYSTEM_ALERT_WINDOW` merely because a package imports the API.
 
-Overlay content is subject to Android's touch and accessibility rules. The default is not touchable through the overlay and does not take focus; an app opts in to touch, focus or accessibility separately. The runtime must keep the overlay's touch region bounded and must not set flags that let it obscure security-sensitive system prompts without the app's explicit declaration.
-
 ## Service and lifecycle
 
 The runtime adds the overlay's window first and starts the foreground service only once that window is visible (`View.onWindowVisibilityChanged`). An app targeting Android 15 (`android.target_sdk` of 35 or more) that holds `SYSTEM_ALERT_WINDOW` may start a foreground service from the background only while a `TYPE_APPLICATION_OVERLAY` window of its own is visible, else `startForegroundService` throws `ForegroundServiceStartNotAllowedException`; in this order an overlay opened from the background, by a timer or a notification's action, starts its service on every version. The service keeps the process in the foreground and holds the persistent state needed to reattach after an activity is recreated; the window stays the host's. A start refused all the same closes the overlay with an explicit error, rather than leaving one whose process the system may kill. The service stops as the last overlay closes.
@@ -41,7 +39,9 @@ The app hears the overlay shown, hidden, focused and closed. A system revocation
 
 An overlay's frame is in points, as every window's (`SurfaceConfig.Width` and `Height`, `WindowFrame`), and the runtime converts it to pixels with the display's density at the Java boundary, as `NsgoView` converts sizes and safe areas. The backend keeps a requested frame on the display's usable area, as `WindowFrame.OnScreen` keeps a window, and reports the frame it applied. Rotation, display changes, cutouts and system bars trigger an environment update before the next commit.
 
-The default window level is the platform overlay level. The API does not offer arbitrary z-order, transparent click-through regions or hidden system-window types. Dragging and resizing are explicit gestures in the overlay tree, and the runtime applies them through `WindowManager.updateViewLayout` rather than stepping coordinates from pointer events.
+By default the overlay takes touches but not the focus: `FLAG_NOT_FOCUSABLE`, which also lets touches outside the window reach the app below it (`FLAG_NOT_TOUCH_MODAL`), so presses and drags inside reach the overlay and keys stay with the app in front. An app opts in to focus, for text input, or to accessibility separately. A passive overlay that lets touches through (`FLAG_NOT_TOUCHABLE`) is a mode of its own: from Android 12 the system passes a touch through an app's `TYPE_APPLICATION_OVERLAY` windows only while their combined opacity is at most `InputManager.getMaximumObscuringOpacityForTouch()` (0.8 by default), so the runtime draws a passive overlay at that window alpha or less rather than offer a pass-through that drops touches. The runtime must keep the overlay's touch region bounded and must not set flags that let it obscure security-sensitive system prompts without the app's explicit declaration.
+
+The default window level is the platform overlay level. The API does not offer arbitrary z-order, click-through regions within a touchable overlay or hidden system-window types. Dragging and resizing are explicit gestures in the overlay tree, and the runtime applies them through `WindowManager.updateViewLayout` rather than stepping coordinates from pointer events.
 
 ## Security and data
 
@@ -61,7 +61,7 @@ The implementation is complete only when these checks exist:
 - `nsgotest` tests open, move, hide and close an overlay, and find it refused without the permission and closed after a revocation;
 - Android runtime tests use a fake `WindowManager` and service to cover permission revocation, activity recreation, process death, duplicate close, binder-thread isolation and the service started only after the window shows;
 - API-level tests cover the special-access settings flow and foreground-service restrictions, a background start targeting API 35 among them, without relying on a real user's overlay permission; and
-- a device test checks rotation, cutouts, touch routing, accessibility and removal from system settings, with no unrelated app content captured.
+- a device test checks rotation, cutouts, touch routing, a passive overlay's pass-through, accessibility and removal from system settings, with no unrelated app content captured.
 
 ## Open decisions
 
@@ -71,5 +71,5 @@ These decisions need confirmation before an implementation chooses them:
 2. Which foreground-service type and notification policy keep the overlay valid on Android 14 and later?
 3. Does process death restore the overlay automatically, or only after the app explicitly reopens it?
 4. Is system overlay a separate `AccessOverlay` capability, and can sandboxed packages use it?
-5. Which input and accessibility modes are supported initially: passive, touchable, focusable and screen-reader visible?
+5. Beyond the default, which input and accessibility modes ship first: passive, focusable and screen-reader visible?
 6. Does iOS's unavailable answer point apps to Picture in Picture and Live Activities, and do desktops share this API with `desktop.OpenPanel` rather than answer unavailable?
