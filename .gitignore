@@ -4,3 +4,19 @@
 # The nsgo tool's caches and build output
 .nsgo/
 /examples/*/dist/
+
+# Signing material never belongs in git: keys, keystores, certificates,
+# profiles and signing requests, wherever they are put. DevEco writes its
+# own under .ohos/. The apk tests' fixtures are the one exception and stay
+# tracked.
+.ohos/
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.p7b
+*.csr
+*.cer
+*.pem
+*.key
+!cmd/nsgo/apk/testdata/**

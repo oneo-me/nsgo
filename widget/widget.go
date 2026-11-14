@@ -29,7 +29,6 @@ package widget
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"time"
 )
@@ -90,19 +89,11 @@ func Update(kind string, entries ...Entry) error {
 	if !kindPattern.MatchString(kind) {
 		return fmt.Errorf("widget: %q is not a kind of widget: letters, digits, '.', '_' and '-', up to 64", kind)
 	}
-	dir, err := containerDir()
-	if err != nil {
-		return err
-	}
-	if err := writeTimeline(filepath.Join(dir, kind), entries, time.Now()); err != nil {
-		return fmt.Errorf("widget: %w", err)
-	}
-	return reload(kind)
+	return publish(kind, entries, time.Now())
 }
 
 // Available reports whether the app has widgets that Update can update:
-// whether it runs on macOS or iOS, built with its widgets.
+// whether it runs on a platform whose widgets the app built, with them.
 func Available() bool {
-	_, err := containerDir()
-	return err == nil
+	return available()
 }

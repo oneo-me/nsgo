@@ -1,0 +1,40 @@
+{
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "mainElement": "EntryAbility",
+    "deviceTypes": [ "default", "tablet", "2in1" ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "requestPermissions": [
+      { "name": "ohos.permission.INTERNET" }
+    ],
+    "pages": "$profile:main_pages",
+    "extensionAbilities": [
+      {
+        "name": "EntryFormAbility",
+        "srcEntry": "./ets/entryformability/EntryFormAbility.ets",
+        "label": "$string:app_name",
+        "type": "form",
+        "visible": true,
+        "metadata": [ { "name": "ohos.extension.form", "resource": "$profile:form_config" } ]
+      }
+    ],
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
+        "icon": "$media:app_icon",
+        "label": "$string:app_name",
+        "startWindowIcon": "$media:app_icon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "skills": [
+          { "entities": [ "entity.system.home" ], "actions": [ "ohos.want.action.home" ] },
+          { "entities": [ "entity.system.default" ], "actions": [ "ohos.want.action.viewData" ],
+            "uris": [ { "scheme": "nsgo" } ] }
+        ]
+      }
+    ]
+  }
+}
