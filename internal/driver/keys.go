@@ -26,6 +26,9 @@ type KeyBinding struct {
 func NormalizeKey(key string) string {
 	parts := strings.Split(strings.ToLower(strings.ReplaceAll(key, " ", "")), "+")
 	name := parts[len(parts)-1]
+	if name == "return" {
+		name = "enter"
+	}
 	alias := map[string]string{"cmd": "meta", "command": "meta", "option": "alt", "control": "ctrl"}
 	var given []string
 	for _, m := range parts[:len(parts)-1] {

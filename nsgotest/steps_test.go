@@ -346,6 +346,37 @@ func TestTabMovesTheFocusBetweenPressablesAndFields(t *testing.T) {
 	}
 }
 
+func TestFocusTargetsAnyKeyboardStop(t *testing.T) {
+	pressed := 0
+	root := func(cx *core.Scope) core.Node {
+		return core.View{Children: []core.Node{
+			core.View{TestID: "save", Style: core.Style{Height: core.Pt(20)}, OnPress: func(core.PressEvent) { pressed++ }},
+			core.Input{TestID: "name", Style: core.Style{Height: core.Pt(20)}},
+			core.View{TestID: "plain", Style: core.Style{Height: core.Pt(20)}},
+		}}
+	}
+	a := Start(t, root, Environment(driver.Environment{OS: driver.OSMacOS}))
+	a.Focus("id:save")
+	if !a.Find("id:save").Focused {
+		t.Fatalf("Focus should focus a pressable view\n%s", a.Dump())
+	}
+	a.Key("Return")
+	if pressed != 1 {
+		t.Fatalf("Return pressed the focused button %d times, want once", pressed)
+	}
+	a.Focus("id:name")
+	if !a.Find("id:name").Focused {
+		t.Fatalf("Focus should keep focusing text fields\n%s", a.Dump())
+	}
+	a.Type("id:name", "Ada")
+	if got := a.Find("id:name").Text; got != "Ada" {
+		t.Fatalf("typed %q, want Ada", got)
+	}
+	if msg := fails(t, func(tb testing.TB) { Start(tb, root).Focus("id:plain") }); !strings.Contains(msg, "id:plain") || !strings.Contains(msg, "focusable") {
+		t.Fatalf("non-focusable Focus failed with %q", msg)
+	}
+}
+
 func TestAnAppsRefreshIndicatorFollowsThePull(t *testing.T) {
 	var refreshing *core.Signal[bool]
 	var pull *core.AnimatedValue
