@@ -1221,6 +1221,11 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.str(it.Value)
 		case driver.ItemHaptic, driver.ItemBadge:
 			w.u32(it.Count)
+		case driver.ItemBiometricAvailability:
+			w.u32(it.Count)
+		case driver.ItemBiometricAuthenticate:
+			w.u32(it.Count)
+			w.str(it.Value)
 		case driver.ItemNotificationPermission:
 			w.u32(it.Count)
 			w.flags(it.On)

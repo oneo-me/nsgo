@@ -323,7 +323,38 @@ const (
 	ItemCloseNotification
 	// ItemBadge shows Count on the app's icon; 0 clears it.
 	ItemBadge
+	// ItemBiometricAvailability asks whether an enrolled biometric can be
+	// used; the platform answers with EventBiometric and its kind in Index.
+	ItemBiometricAvailability
+	// ItemBiometricAuthenticate asks the user to authenticate with the
+	// reason in Value; the platform answers with EventBiometric and its
+	// result in Index.
+	ItemBiometricAuthenticate
 )
+
+// Biometric kinds, as reported by an availability request.
+const (
+	BiometricNone = iota
+	BiometricFace
+	BiometricFingerprint
+)
+
+// Biometric results, as reported by an authentication request.
+const (
+	BiometricSuccess = iota + 1
+	BiometricFailure
+	BiometricCancelled
+	BiometricUnavailable
+)
+
+// NoBiometric is how a platform without biometric authentication answers a biometric request: no kind for availability, unavailable for authentication.
+func NoBiometric(it *MountItem) Event {
+	result := BiometricNone
+	if it.Kind == ItemBiometricAuthenticate {
+		result = BiometricUnavailable
+	}
+	return Event{Kind: EventBiometric, Count: it.Count, Index: result}
+}
 
 // Notification is a system notification (ItemShowNotification), as
 // core.Notification.

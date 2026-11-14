@@ -893,7 +893,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemHaptic:
 			haptic(it.Count)
 			continue
-		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge,
+			driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
 			s.notify(it)
 			continue
 		case driver.ItemCheckForUpdates:

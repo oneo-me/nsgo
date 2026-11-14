@@ -57,6 +57,8 @@ const (
 	AccessStatusBar = "statusBar"
 	// AccessNotifications is system notifications and the app's badge.
 	AccessNotifications = "notifications"
+	// AccessBiometrics is Face ID, Touch ID and device biometric unlock.
+	AccessBiometrics = "biometrics"
 	// AccessHost is the host's handlers, by name (CallHost, PostHost).
 	AccessHost = "host"
 )

@@ -24,12 +24,13 @@ type Capabilities struct {
 	// Clipboard is reading and writing the system clipboard, Picker the
 	// photo and camera pickers, Speech the microphone and speech
 	// recognizer, StatusBar setting the status bar, Notifications system
-	// notifications and the app's badge.
+	// notifications and the app's badge, Biometrics device authentication.
 	Clipboard     bool `json:"clipboard,omitempty"`
 	Picker        bool `json:"picker,omitempty"`
 	Speech        bool `json:"speech,omitempty"`
 	StatusBar     bool `json:"statusBar,omitempty"`
 	Notifications bool `json:"notifications,omitempty"`
+	Biometrics    bool `json:"biometrics,omitempty"`
 	// Host names the host's handlers host.call and host.post may reach:
 	// a name, a prefix ending in "*", or "*" for all.
 	Host []string `json:"host,omitempty"`
@@ -114,6 +115,8 @@ func ParseCapabilities(data []byte, strict bool) (c Capabilities, ignored []stri
 			err = json.Unmarshal(raw, &c.StatusBar)
 		case "notifications":
 			err = json.Unmarshal(raw, &c.Notifications)
+		case "biometrics":
+			err = json.Unmarshal(raw, &c.Biometrics)
 		case "host":
 			if string(bytes.TrimSpace(raw)) == "true" {
 				c.Host = []string{"*"}
@@ -162,6 +165,8 @@ func dropCapability(c *Capabilities, key string) {
 		c.OpenURL = nil
 	case "host":
 		c.Host = nil
+	case "biometrics":
+		c.Biometrics = false
 	}
 }
 
@@ -287,6 +292,7 @@ const (
 	capSpeech        = "speech"
 	capStatusBar     = "statusBar"
 	capNotifications = "notifications"
+	capBiometrics    = "biometrics"
 	capHost          = "host"
 )
 
@@ -325,6 +331,8 @@ func (c *Capabilities) Allows(permission, resource, method string) bool {
 		return c.StatusBar
 	case capNotifications:
 		return c.Notifications
+	case capBiometrics:
+		return c.Biometrics
 	case capHost:
 		if !validHostName(resource) {
 			return false

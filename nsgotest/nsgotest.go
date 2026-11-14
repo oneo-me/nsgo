@@ -231,6 +231,12 @@ type App struct {
 	Badge                  int
 	NotificationPermission core.NotificationPermission
 	NotificationAnswer     core.NotificationPermission
+	// BiometricAvailability is the enrolled biometric the test platform
+	// reports. BiometricAnswer is the result of each authentication request;
+	// zero makes it unavailable. AuthenticationReasons records prompts.
+	BiometricAvailability core.BiometricKind
+	BiometricAnswer       core.BiometricResult
+	AuthenticationReasons []string
 	// OnAlert answers each alert the app shows with the index of the
 	// button the user presses, or -1 to dismiss it, once the step that
 	// showed it ends. Without it Alerts lists them and Answer answers

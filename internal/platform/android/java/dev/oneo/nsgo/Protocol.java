@@ -147,6 +147,8 @@ final class Protocol {
     static final int ITEM_SHOW_NOTIFICATION = 83;
     static final int ITEM_CLOSE_NOTIFICATION = 84;
     static final int ITEM_BADGE = 85;
+    static final int ITEM_BIOMETRIC_AVAILABILITY = 86;
+    static final int ITEM_BIOMETRIC_AUTHENTICATE = 87;
 
     // What EVENT_NOTIFICATION answers ITEM_NOTIFICATION_PERMISSION with, as the driver's.
     static final int NOTIFICATIONS_NOT_ASKED = 0;
@@ -228,6 +230,15 @@ final class Protocol {
     static final int EVENT_INPUT_MODALITY = 75;
     static final int EVENT_NOTIFICATION = 76;
     static final int EVENT_NOTIFICATION_PRESS = 77;
+    static final int EVENT_BIOMETRIC = 78;
+
+    static final int BIOMETRIC_NONE = 0;
+    static final int BIOMETRIC_FACE = 1;
+    static final int BIOMETRIC_FINGERPRINT = 2;
+    static final int BIOMETRIC_SUCCESS = 1;
+    static final int BIOMETRIC_FAILURE = 2;
+    static final int BIOMETRIC_CANCELLED = 3;
+    static final int BIOMETRIC_UNAVAILABLE = 4;
 
     // core.Haptic, what ITEM_HAPTIC plays.
     static final int HAPTIC_SELECTION = 1;

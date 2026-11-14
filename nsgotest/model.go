@@ -437,6 +437,15 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.Notifications = slices.DeleteFunc(a.Notifications, func(o core.Notification) bool { return o.ID == it.Value })
 		case driver.ItemBadge:
 			a.Badge = int(it.Count)
+		case driver.ItemBiometricAvailability:
+			a.post(driver.Event{Kind: driver.EventBiometric, Count: it.Count, Index: int(a.BiometricAvailability)})
+		case driver.ItemBiometricAuthenticate:
+			a.AuthenticationReasons = append(a.AuthenticationReasons, it.Value)
+			result := a.BiometricAnswer
+			if result == 0 {
+				result = core.BiometricUnavailable
+			}
+			a.post(driver.Event{Kind: driver.EventBiometric, Count: it.Count, Index: int(result)})
 		case driver.ItemPickImages:
 			a.Picks = append(a.Picks, *it.Pick)
 			var files []driver.PickedFile

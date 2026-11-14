@@ -154,6 +154,24 @@ cx.SetLocale("de")
 cx.OnQuit(func(ctx context.Context) { saveDraft(ctx) })
 ```
 
+## Biometrics
+
+`cx.BiometricAvailability` reports whether Face ID, Touch ID or a device fingerprint is enrolled; Android does not say which kind is enrolled, so there it reports a fingerprint when one is enrolled and otherwise face when the device has face hardware. `cx.AuthenticateBiometric` asks the system to confirm the user with a reason, which must not be empty, and reports success, failure, cancellation or unavailability. It does not choose a passcode fallback for the app.
+
+```go
+cx.BiometricAvailability(func(kind core.BiometricKind) {
+	if kind != core.BiometricNone {
+		cx.AuthenticateBiometric("Confirm deleting this account", func(result core.BiometricResult) {
+			if result == core.BiometricSuccess {
+				deleteAccount()
+			}
+		})
+	}
+})
+```
+
+Face ID apps declare `NSFaceIDUsageDescription` under `apple.info`; Android apps list `USE_BIOMETRIC` under `android.permissions`.
+
 ## Next
 
 - [Notifications](notifications.md): permission, badges and presses.

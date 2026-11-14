@@ -84,6 +84,8 @@ func (s *surface) service(it *driver.MountItem) {
 		s.engine.Dispatch(driver.Event{Kind: driver.EventMenuClosed, Count: it.Count})
 	case driver.ItemLaunchAtLogin:
 		s.engine.Dispatch(driver.Event{Kind: driver.EventLaunchAtLogin, Count: it.Count})
+	case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
+		s.engine.Dispatch(driver.NoBiometric(it))
 	case driver.ItemImageInfo:
 		s.imageInfo(it)
 	case driver.ItemAppearance:

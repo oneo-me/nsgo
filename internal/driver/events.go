@@ -247,6 +247,9 @@ const (
 	// notification whose ID is Text, the one that started the app
 	// included.
 	EventNotificationPress
+	// EventBiometric answers an ItemBiometricAvailability or
+	// ItemBiometricAuthenticate request: Index is a kind or result.
+	EventBiometric
 )
 
 // What EventInputModality reports.

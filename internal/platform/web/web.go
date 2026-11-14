@@ -1316,6 +1316,9 @@ func (s *surface) mount(b *driver.MountBatch) {
 		case driver.ItemOpenURL:
 			s.openURL(it.Value, it.Count)
 			continue
+		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
+			s.engine.Dispatch(driver.NoBiometric(it))
+			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			s.notify(it)
 			continue

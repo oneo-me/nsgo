@@ -107,6 +107,8 @@ func (s *surface) notify(it *driver.MountItem) {
 			label = apple.NSString(strconv.FormatUint(uint64(it.Count), 10))
 		}
 		objc.ID(apple.Class("NSApplication")).Send(sel("sharedApplication")).Send(sel("dockTile")).Send(sel("setBadgeLabel:"), label)
+	case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
+		apple.HandleBiometric(it, s.engine.Dispatch)
 	}
 }
 

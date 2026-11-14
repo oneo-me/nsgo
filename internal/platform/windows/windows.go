@@ -914,6 +914,9 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemOpenURL:
 			w.openURL(it.Value, it.Count)
 			continue
+		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
+			w.engine.Dispatch(driver.NoBiometric(it))
+			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
 			continue

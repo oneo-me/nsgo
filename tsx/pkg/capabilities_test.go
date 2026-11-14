@@ -78,7 +78,7 @@ func TestCapabilitiesAllow(t *testing.T) {
 		}},
 		WebView: &WebView{Hosts: []string{"docs.com"}},
 		OpenURL: &OpenURL{Schemes: []string{"https"}},
-		Host:    []string{"player.*", "search"},
+		Host:    []string{"player.*", "search"}, Biometrics: true,
 	}
 	for _, tc := range []struct {
 		permission, resource, method string
@@ -105,6 +105,7 @@ func TestCapabilitiesAllow(t *testing.T) {
 		{"host", "searchAll", "", false},
 		{"host", "player..x", "", false},
 		{"clipboard", "", "", false},
+		{"biometrics", "", "", true},
 	} {
 		if got := c.Allows(tc.permission, tc.resource, tc.method); got != tc.want {
 			t.Errorf("Allows(%s, %s, %s) = %v", tc.permission, tc.resource, tc.method, got)
