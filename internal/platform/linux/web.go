@@ -5,6 +5,7 @@ package linux
 import (
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,6 +39,7 @@ var (
 	webkitWebViewGetSettings             func(uintptr) uintptr
 	webkitWebViewSetBackgroundColor      func(uintptr, *[4]float32)
 	webkitWebViewLoadURI                 func(uintptr, *byte)
+	webkitWebViewLoadRequest             func(uintptr, uintptr)
 	webkitWebViewLoadHTML                func(uintptr, *byte, *byte)
 	webkitWebViewReload                  func(uintptr)
 	webkitWebViewGoBack                  func(uintptr)
@@ -66,8 +68,11 @@ var (
 	webkitPolicyErrorQuark               func() uint32
 	webkitNavigationDecisionGetAction    func(uintptr) uintptr
 	webkitNavigationActionGetRequest     func(uintptr) uintptr
+	webkitURIRequestNew                  func(*byte) uintptr
+	webkitURIRequestGetHTTPHeaders       func(uintptr) uintptr
 	webkitURIRequestGetURI               func(uintptr) uintptr
 	webkitPolicyDecisionIgnore           func(uintptr)
+	webkitMessageHeadersAppend           func(uintptr, *byte, *byte)
 	jscValueToString                     func(uintptr) uintptr
 )
 
@@ -85,17 +90,22 @@ func openWebKit() error {
 			webkitErr = fmt.Errorf("web views need JavaScriptCore 6.0 (libjavascriptcoregtk-6.0.so.1): %w", err)
 			return
 		}
+		soup, err := purego.Dlopen("libsoup-3.0.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			webkitErr = fmt.Errorf("web views need libsoup 3 (libsoup-3.0.so.0): %w", err)
+			return
+		}
 		defer func() {
 			if r := recover(); r != nil {
 				webkitErr = fmt.Errorf("web views need WebKitGTK 6.0: %v", r)
 			}
 		}()
-		bindWebKit(webkit, jsc)
+		bindWebKit(webkit, jsc, soup)
 	})
 	return webkitErr
 }
 
-func bindWebKit(webkit, jsc uintptr) {
+func bindWebKit(webkit, jsc, soup uintptr) {
 	reg := func(fn any, name string) { purego.RegisterLibFunc(fn, webkit, name) }
 	reg(&webkitWebViewGetType, "webkit_web_view_get_type")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
@@ -112,6 +122,7 @@ func bindWebKit(webkit, jsc uintptr) {
 	reg(&webkitWebViewGetSettings, "webkit_web_view_get_settings")
 	reg(&webkitWebViewSetBackgroundColor, "webkit_web_view_set_background_color")
 	reg(&webkitWebViewLoadURI, "webkit_web_view_load_uri")
+	reg(&webkitWebViewLoadRequest, "webkit_web_view_load_request")
 	reg(&webkitWebViewLoadHTML, "webkit_web_view_load_html")
 	reg(&webkitWebViewReload, "webkit_web_view_reload")
 	reg(&webkitWebViewGoBack, "webkit_web_view_go_back")
@@ -140,8 +151,11 @@ func bindWebKit(webkit, jsc uintptr) {
 	reg(&webkitPolicyErrorQuark, "webkit_policy_error_quark")
 	reg(&webkitNavigationDecisionGetAction, "webkit_navigation_policy_decision_get_navigation_action")
 	reg(&webkitNavigationActionGetRequest, "webkit_navigation_action_get_request")
+	reg(&webkitURIRequestNew, "webkit_uri_request_new")
+	reg(&webkitURIRequestGetHTTPHeaders, "webkit_uri_request_get_http_headers")
 	reg(&webkitURIRequestGetURI, "webkit_uri_request_get_uri")
 	reg(&webkitPolicyDecisionIgnore, "webkit_policy_decision_ignore")
+	purego.RegisterLibFunc(&webkitMessageHeadersAppend, soup, "soup_message_headers_append")
 	purego.RegisterLibFunc(&jscValueToString, jsc, "jsc_value_to_string")
 }
 
@@ -247,7 +261,7 @@ func (w *window) configureWeb(v *view, c *driver.WebConfig) {
 	webkitSettingsSetBackForwardGestures(settings, boolInt(c.BackForwardGestures))
 	w.webBackground(v)
 	// Scripts apply to pages loaded from now on: load again.
-	if first || scripts || c.Source != old.Source {
+	if first || scripts || c.Source != old.Source || !maps.Equal(c.Headers, old.Headers) {
 		w.loadWeb(v)
 	}
 }
@@ -478,7 +492,23 @@ func (w *window) loadWeb(v *view) {
 		}
 		webkitWebViewLoadHTML(wv.widget, cstr(src.HTML), base)
 	case src.Src != "":
-		webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+		if len(wv.config.Headers) == 0 {
+			webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+			return
+		}
+		request := webkitURIRequestNew(cstr(src.Src))
+		if request == 0 {
+			webkitWebViewLoadURI(wv.widget, cstr(src.Src))
+			return
+		}
+		headers := webkitURIRequestGetHTTPHeaders(request)
+		if headers != 0 {
+			for name, value := range wv.config.Headers {
+				webkitMessageHeadersAppend(headers, cstr(name), cstr(value))
+			}
+		}
+		webkitWebViewLoadRequest(wv.widget, request)
+		gObjectUnref(request)
 	}
 }
 

@@ -54,6 +54,7 @@ var (
 	iidNavigationCompleted            = parseGUID("d33a35bf-1c49-4f98-93ab-006e0533fe1c")
 	iidWebMessageReceived             = parseGUID("57213f19-00e6-49fa-8e07-898ea01ecbd2")
 	iidWebResourceRequested           = parseGUID("ab00b74c-15f1-4646-80e8-e76341d25d71")
+	iidHttpRequestHeaders             = parseGUID("e86cac0e-5523-465c-b536-8fb9fc8c8c60")
 	iidWeb4                           = parseGUID("20d02d59-6df2-42dc-bd06-f98a694b1302")
 	iidDownloadStarting               = parseGUID("efedc989-c396-41ca-83f7-07f845a55724")
 	iidBytesReceivedChanged           = parseGUID("828e8ab6-d94c-4264-9cef-5217170d6251")
@@ -162,6 +163,8 @@ const (
 	resourceArgsGetRequest  = 3
 	resourceArgsPutResponse = 5
 	requestGetUri           = 3
+	requestGetHeaders       = 5
+	httpHeadersSetHeader    = 8
 
 	// ICoreWebView2PointerInfo
 	pointerPutPointerKind         = 4

@@ -82,6 +82,7 @@ type webView struct {
 	configured, hasApplied bool
 	commands               []webCommand // waiting for the controller
 	userAgent              string       // WebView2's own
+	headerFilter           bool
 
 	// The document scripts: the app's IDs and the one keeping the page
 	// from scrolling, the generation of each kind, and how many are still
@@ -535,6 +536,9 @@ func (wv *webView) apply() {
 			s6.release()
 		}
 	}
+	if len(c.Headers) > 0 {
+		wv.serveHeaders()
+	}
 	scripts := first || c.InjectedJavaScript != old.InjectedJavaScript ||
 		c.InjectedJavaScriptBeforeContent != old.InjectedJavaScriptBeforeContent
 	if scripts {
@@ -721,6 +725,34 @@ func (wv *webView) serveHTML() {
 		}
 		a.call(resourceArgsPutResponse, response.ptr())
 		response.release()
+	}))
+}
+
+// serveHeaders adds the app's configured headers to WebView2 requests.
+func (wv *webView) serveHeaders() {
+	if wv.headerFilter || wv.web == nil {
+		return
+	}
+	wv.headerFilter = true
+	wv.web.call(webAddWebResourceRequestedFilter, uintptr(unsafe.Pointer(wide("*"))), webResourceContextAll)
+	wv.web.subscribe(webAddWebResourceRequested, newHandler(&iidWebResourceRequested, func(_ uintptr, args unsafe.Pointer) {
+		if wv.closed || len(wv.config.Headers) == 0 {
+			return
+		}
+		a := (*comObject)(args)
+		var request *comObject
+		if failed(a.call(resourceArgsGetRequest, uintptr(unsafe.Pointer(&request)))) || request == nil {
+			return
+		}
+		defer request.release()
+		var headers *comObject
+		if failed(request.call(requestGetHeaders, uintptr(unsafe.Pointer(&headers)))) || headers == nil {
+			return
+		}
+		defer headers.release()
+		for name, value := range wv.config.Headers {
+			headers.call(httpHeadersSetHeader, uintptr(unsafe.Pointer(wide(name))), uintptr(unsafe.Pointer(wide(value))))
+		}
 	}))
 }
 
@@ -931,6 +963,7 @@ const (
 	mouseHorizontalWheel       = 526
 	mouseLeave                 = 675
 	webResourceContextDocument = 1
+	webResourceContextAll      = 0
 )
 
 // buttonEvent returns the mouse event of button (0 left, 1 right, 2
