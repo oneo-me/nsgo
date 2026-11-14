@@ -630,6 +630,12 @@ func buildWindows(ctx context.Context, p *project, dir, arch string) error {
 	if err != nil {
 		return err
 	}
+	if p.Windows.CommandLine {
+		stage(ctx, "compiling the command companion")
+		if err := buildWindowsCommand(ctx, p, dir, arch); err != nil {
+			return err
+		}
+	}
 	stage(ctx, "copying resources")
 	if err := copyResources(p, dir); err != nil {
 		return err

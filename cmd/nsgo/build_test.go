@@ -121,3 +121,18 @@ func TestBuildJobs(t *testing.T) {
 		t.Error("build.jobs -1: got no error")
 	}
 }
+
+func TestBuildWindowsCommand(t *testing.T) {
+	dir := t.TempDir()
+	p := &project{Name: "tool"}
+	if err := buildWindowsCommand(t.Context(), p, dir, "amd64"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "tool.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) < 2 || string(data[:2]) != "MZ" {
+		t.Fatalf("tool.com is not a Windows executable: header %q", data[:min(len(data), 2)])
+	}
+}
