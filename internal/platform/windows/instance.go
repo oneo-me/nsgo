@@ -37,6 +37,9 @@ var (
 	closeHandle         = kernel32.NewProc("CloseHandle")
 	sleep               = kernel32.NewProc("Sleep")
 	processIDToSession  = kernel32.NewProc("ProcessIdToSessionId")
+
+	getNamedPipeServerProcessID = kernel32.NewProc("GetNamedPipeServerProcessId")
+	allowSetForegroundWindow    = user32.NewProc("AllowSetForegroundWindow")
 )
 
 // instance is a named mutex and its message pipe. The mutex prevents a second engine even while the first window is still being created; pending pipe messages wait until Run installs the delivery function.
@@ -88,10 +91,16 @@ func sendInstance(name *uint16, args []string) bool {
 		h, _, _ := createFileW.Call(uintptr(unsafe.Pointer(name)), instanceGenericWrite, 0, 0,
 			instanceOpenExisting, 0, 0)
 		if h != instanceInvalidHandle {
+			// The running app brings its window to the front as it hears the launch, which Windows refuses a background process unless the foreground one, this launch, lets it.
+			var owner uint32
+			if ok, _, _ := getNamedPipeServerProcessID.Call(h, uintptr(unsafe.Pointer(&owner))); ok != 0 {
+				allowSetForegroundWindow.Call(uintptr(owner))
+			}
 			var written uint32
-			_, _, err = writeFile.Call(h, uintptr(unsafe.Pointer(&payload[0])), uintptr(len(payload)), uintptr(unsafe.Pointer(&written)), 0)
+			// WriteFile reports success by a nonzero result; LazyProc.Call's error is never nil.
+			ok, _, _ := writeFile.Call(h, uintptr(unsafe.Pointer(&payload[0])), uintptr(len(payload)), uintptr(unsafe.Pointer(&written)), 0)
 			closeHandle.Call(h)
-			return err == nil && written == uint32(len(payload))
+			return ok != 0 && written == uint32(len(payload))
 		}
 		// The first process may still be creating its pipe. Retry briefly; a
 		// mutex owner is authoritative even if it never reaches its loop.
