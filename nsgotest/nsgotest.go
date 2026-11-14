@@ -49,6 +49,7 @@ import (
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
+	"github.com/nsgo-dev/nsgo/internal/recording"
 )
 
 // Tests check that each commit sends all that changed.
@@ -166,6 +167,7 @@ type App struct {
 	// HearSpeech and EndSpeech report to; sessions end unavailable unless
 	// the environment says Speech.
 	Speech     *driver.SpeechRequest
+	microphone *Microphone
 	speechID   uint32
 	speechText string
 	// OpenedURLs are the URLs the app opened, oldest first. OpenURL
@@ -346,6 +348,11 @@ func Start(t testing.TB, app func(cx *core.Scope) core.Node, opts ...Option) *Ap
 	}
 	for _, o := range opts {
 		o(a)
+	}
+	if a.microphone != nil && !onTarget() {
+		previous := recording.Current()
+		recording.Register(microphoneBackend{m: a.microphone})
+		t.Cleanup(func() { recording.Register(previous) })
 	}
 	if os.Getenv("NSGO_TEST_TRACE") != "" {
 		a.trace = os.Stdout

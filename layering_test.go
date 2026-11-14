@@ -56,7 +56,7 @@ var layers = []struct {
 	{"internal/platform/updates", []string{"internal/driver", "internal/platform/imageload"}},
 	{"internal/platform/webstyle", []string{"internal/driver"}},
 	{"internal/platform/", append([]string{"internal/driver", "internal/engine", "internal/testhost", "core", "desktop/locales", "internal/recording"}, platformShared...)},
-	{"nsgotest", []string{"core", "internal/devtools", "internal/driver", "internal/testhost"}},
+	{"nsgotest", []string{"core", "internal/devtools", "internal/driver", "internal/recording", "internal/testhost"}},
 	{"", []string{"core", "internal/devtools", "internal/engine", "internal/platform/", "updater"}},
 	// The code nsgo writes from catalogs runs on i18n.
 	{"i18n", []string{"core", "internal/cldr"}},
