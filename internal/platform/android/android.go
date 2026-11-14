@@ -1336,6 +1336,11 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted) // Android has no back and forward swipes
 			w.str(c.Hosts)
 			w.str(c.DownloadDir)
+			w.u32(uint32(len(c.Headers)))
+			for name, value := range c.Headers {
+				w.str(name)
+				w.str(value)
+			}
 		case driver.ItemVideo:
 			c := it.Video
 			w.str(c.Source)

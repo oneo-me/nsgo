@@ -3,6 +3,7 @@
 package apple
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -241,7 +242,7 @@ func (w *Web) Configure(c *driver.WebConfig) {
 	if runtime.GOOS == "ios" {
 		w.web.Send(sel("scrollView")).Send(sel("setScrollEnabled:"), !c.NoScroll)
 	}
-	if first || scripts || c.Source != old.Source {
+	if first || scripts || c.Source != old.Source || !maps.Equal(c.Headers, old.Headers) {
 		w.load()
 	}
 }
@@ -302,7 +303,10 @@ func (w *Web) load() {
 	case src.Src != "":
 		// A URL NSURL cannot parse loads nothing.
 		if url := nsURL(src.Src); url != 0 {
-			request := objc.ID(Class("NSURLRequest")).Send(sel("requestWithURL:"), url)
+			request := objc.ID(Class("NSMutableURLRequest")).Send(sel("requestWithURL:"), url)
+			for name, value := range w.config.Headers {
+				request.Send(sel("setValue:forHTTPHeaderField:"), NSString(value), NSString(name))
+			}
 			w.web.Send(sel("loadRequest:"), request)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,9 @@ type WebView struct {
 	InjectedJavaScriptBeforeContent string
 	// UserAgent replaces the platform's.
 	UserAgent string
+	// Headers are sent with the initial URL request where the platform
+	// supports custom request headers. HTML sources do not make one.
+	Headers map[string]string
 	// NoScroll keeps the user from scrolling the page; NoJavaScript keeps
 	// pages from running scripts.
 	NoScroll     bool
@@ -92,6 +96,13 @@ type webNode struct {
 	evals map[string]func(string, error)
 }
 
+func cloneWebHeaders(headers map[string]string) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+	return maps.Clone(headers)
+}
+
 func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n := t.newNode(driver.KindWeb, parent, cx)
 	t.setClasses(n, w.Class)
@@ -102,6 +113,7 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n.web = &webNode{
 		config: driver.WebConfig{Source: w.Source, InjectedJavaScript: w.InjectedJavaScript,
 			InjectedJavaScriptBeforeContent: w.InjectedJavaScriptBeforeContent, UserAgent: w.UserAgent,
+			Headers:  cloneWebHeaders(w.Headers),
 			NoScroll: w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
 		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,

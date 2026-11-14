@@ -52,9 +52,12 @@ type WebConfig struct {
 	InjectedJavaScript              string
 	InjectedJavaScriptBeforeContent string
 	UserAgent                       string
-	NoScroll                        bool
-	NoJavaScript                    bool
-	BackForwardGestures             bool
+	// Headers are sent with the initial URL request where the platform
+	// supports custom request headers. HTML sources do not make one.
+	Headers             map[string]string
+	NoScroll            bool
+	NoJavaScript        bool
+	BackForwardGestures bool
 	// DownloadDir is where the view saves what its pages download, a
 	// directory of its own for each (<id>/<file name>); "" saves nothing.
 	DownloadDir string

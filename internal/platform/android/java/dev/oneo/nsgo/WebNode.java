@@ -31,6 +31,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,6 +78,7 @@ final class WebNode {
     private boolean configured;
     private String src = "", html = "", baseURL = "";
     private String injected = "", injectedBefore = "", userAgent = "";
+    private Map<String, String> headers = new HashMap<>();
     private boolean noScroll;
     private String downloadDir = "";
     private volatile boolean destroyed;
@@ -297,16 +300,22 @@ final class WebNode {
         String hosts = Protocol.readString(in).trim();
         this.hosts = hosts.isEmpty() ? new String[0] : hosts.split(" +");
         this.downloadDir = Protocol.readString(in);
+        int headerCount = in.readInt();
+        Map<String, String> headers = new HashMap<>();
+        for (int i = 0; i < headerCount; i++) {
+            headers.put(Protocol.readString(in), Protocol.readString(in));
+        }
 
         boolean reload = !configured || !src.equals(this.src) || !html.equals(this.html)
                 || !baseURL.equals(this.baseURL) || !injected.equals(this.injected)
-                || !injectedBefore.equals(this.injectedBefore);
+                || !injectedBefore.equals(this.injectedBefore) || !headers.equals(this.headers);
         configured = true;
         this.src = src;
         this.html = html;
         this.baseURL = baseURL;
         this.injected = injected;
         this.injectedBefore = injectedBefore;
+        this.headers = headers;
         this.noScroll = noScroll;
 
         view.setVerticalScrollBarEnabled(!noScroll);
@@ -328,7 +337,7 @@ final class WebNode {
             view.loadDataWithBaseURL(baseURL.isEmpty() ? null : baseURL, html, "text/html", "UTF-8", null);
         } else if (!src.isEmpty()) {
             settings.setAllowFileAccess(src.startsWith("file:"));
-            view.loadUrl(src);
+            view.loadUrl(src, headers);
         }
     }
 
