@@ -280,6 +280,7 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 	case driver.WindowShow:
 		w.visible, w.focused = true, false
 		if w.kind == driver.SurfacePanel {
+			w.placeAtTray(c.Anchor)
 			w.orderFront()
 		} else {
 			showWindow.Call(w.hwnd, swShow)

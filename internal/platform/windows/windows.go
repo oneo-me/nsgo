@@ -334,6 +334,7 @@ type window struct {
 	// primary is the backend's own surface. Opened surfaces share its engine
 	// and message loop, but closing one must not end the process.
 	primary    bool
+	hostWindow *window // root window for services shared by an opened surface
 	kind       driver.SurfaceKind
 	destroying bool
 	hideOnBlur bool
@@ -792,7 +793,7 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 		opts.Hidden = true
 	}
 	child := newWindow(opts)
-	child.opts, child.kind, child.hideOnBlur = opts, cfg.Kind, cfg.HideOnBlur
+	child.opts, child.hostWindow, child.kind, child.hideOnBlur = opts, w, cfg.Kind, cfg.HideOnBlur
 	child.visible = !opts.Hidden
 	child.chrome.constraints = opts.Constraints
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)

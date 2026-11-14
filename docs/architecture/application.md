@@ -63,7 +63,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 
 ## Windows
 
-The Windows backend supports notification-area icons, click events and menus, and attaches opened window surfaces to the app's message loop. Panels use borderless popup windows, take keyboard focus and honor `HideOnBlur`; tray anchoring and drawn tray views remain in the surfaces slice of the roadmap.
+The Windows backend supports notification-area icons, click events and menus, places anchored panels from `Shell_NotifyIconGetRect`, and attaches opened window surfaces to the app's message loop. Panels use borderless popup windows, take keyboard focus and honor `HideOnBlur`; drawn tray views remain in the surfaces slice of the roadmap.
 
 ## Configuration
 

@@ -16,7 +16,10 @@ import (
 // Custom PNGs become private HICONs; the executable's icon is a shared
 // fallback and is therefore never destroyed here.
 
-var shellNotifyIcon = shell32.NewProc("Shell_NotifyIconW")
+var (
+	shellNotifyIcon        = shell32.NewProc("Shell_NotifyIconW")
+	shellNotifyIconGetRect = shell32.NewProc("Shell_NotifyIconGetRect")
+)
 
 const (
 	nimAdd            = 0x00000000
@@ -52,6 +55,14 @@ type notifyIconData struct {
 	InfoFlags   uint32
 	Guid        guid
 	BalloonIcon uintptr
+}
+
+// notifyIconIdentifier identifies an icon for Shell_NotifyIconGetRect.
+type notifyIconIdentifier struct {
+	Size uint32
+	Hwnd uintptr
+	ID   uint32
+	Guid guid
 }
 
 type trayIcon struct {
@@ -133,6 +144,25 @@ func (w *window) removeTrays() {
 	for _, tr := range w.trays {
 		w.removeTray(tr)
 	}
+}
+
+// trayRect returns the notification area's screen rectangle. The shell can
+// fail this call while Explorer is restarting or before the icon is visible.
+func (w *window) trayRect(id uint32) (rect, bool) {
+	root := w
+	if root.hostWindow != nil {
+		root = root.hostWindow
+	}
+	tr := root.trays[id]
+	if tr == nil || !tr.added || root.hwnd == 0 {
+		return rect{}, false
+	}
+	identifier := notifyIconIdentifier{Size: uint32(unsafe.Sizeof(notifyIconIdentifier{})), Hwnd: root.hwnd, ID: id}
+	var bounds rect
+	if ok, _, _ := shellNotifyIconGetRect.Call(uintptr(unsafe.Pointer(&identifier)), uintptr(unsafe.Pointer(&bounds))); ok != 0 && !bounds.empty() {
+		return bounds, true
+	}
+	return rect{}, false
 }
 
 func (w *window) trayMessage(id, message uintptr) {

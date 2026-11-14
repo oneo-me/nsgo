@@ -854,6 +854,42 @@ func (w *window) setLevel(level driver.WindowLevel) {
 	}
 }
 
+// placeAtTray moves a panel beside its notification-area icon. Shell owns
+// the icon's screen rectangle; use the work area of that monitor to keep the
+// panel visible and prefer the space above the taskbar.
+func (w *window) placeAtTray(id uint32) {
+	if id == 0 {
+		return
+	}
+	anchor, ok := w.trayRect(id)
+	if !ok {
+		return
+	}
+	var panel rect
+	if r, _, _ := getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&panel))); r == 0 {
+		return
+	}
+	width, height := panel.Right-panel.Left, panel.Bottom-panel.Top
+	if width <= 0 || height <= 0 {
+		return
+	}
+	var mi monitorInfo
+	mi.Size = uint32(unsafe.Sizeof(mi))
+	monitor, _, _ := monitorFromRect.Call(uintptr(unsafe.Pointer(&anchor)), monitorDefaultNear)
+	if r, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi))); r == 0 {
+		return
+	}
+	work := mi.Work
+	x := anchor.Left + (anchor.Right-anchor.Left-width)/2
+	y := anchor.Top - height - 6
+	if y < work.Top {
+		y = anchor.Bottom + 6
+	}
+	x = max(work.Left, min(x, work.Right-width))
+	y = max(work.Top, min(y, work.Bottom-height))
+	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), 0, 0, swpNoSize|swpNoZOrder|swpNoActivate)
+}
+
 // orderFront shows the window, restored when minimized, in front and
 // focused.
 func (w *window) orderFront() {
