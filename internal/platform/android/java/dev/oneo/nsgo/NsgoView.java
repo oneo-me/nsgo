@@ -68,16 +68,12 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,7 +100,7 @@ import java.util.function.IntConsumer;
  * It needs API 28, and its activity should handle configuration changes
  * itself and draw edge to edge, as NsgoActivity does.
  */
-public class NsgoView extends FrameLayout {
+public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     private static final String TAG = "nsgo";
     private static final int DESTRUCTIVE = 0xffe53935;
 
@@ -139,8 +135,9 @@ public class NsgoView extends FrameLayout {
     /** Nodes reporting presses outside them, on the UI thread. */
     private final ArrayList<Node> outside = new ArrayList<>();
     private final int[] location = new int[2];
-    private Process process;
-    private DataOutputStream out;
+    private NsgoEngine engine;
+    private boolean ownsEngine;
+    private boolean attached;
     // The engine's flags the app starts with (--nsgo-fps).
     private final ArrayList<String> flags = new ArrayList<>();
     // The test nsgo test -target android runs, and its agent.
@@ -246,7 +243,7 @@ public class NsgoView extends FrameLayout {
     }
 
     public NsgoView(Context context) {
-        this(context, null);
+        this(context, (android.util.AttributeSet) null);
     }
 
     /** The constructor layouts inflate. */
@@ -287,8 +284,20 @@ public class NsgoView extends FrameLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        boolean first = process == null;
-        if (first) start();
+        boolean first = false;
+        if (!attached) {
+            if (engine == null) {
+                engine = new NsgoEngine(getContext());
+                ownsEngine = true;
+            }
+            // An engine whose process ended stays ended: a host decides whether to make another.
+            if (engine.canStart()) {
+                start();
+                first = true;
+            } else if (engine.isAlive()) {
+                attachRunningEngine();
+            }
+        }
         environment();
         send(first ? Protocol.START : Protocol.RESIZE, w / density, h / density);
     }
@@ -299,7 +308,7 @@ public class NsgoView extends FrameLayout {
         // Text prepared before a change of density keeps its pixel size
         // until the engine prepares it again.
         float d = getResources().getDisplayMetrics().density;
-        if (d != density && process != null) {
+        if (d != density && engine != null && engine.isAlive()) {
             density = d;
             send(Protocol.RESIZE, getWidth() / density, getHeight() / density);
         }
@@ -313,7 +322,9 @@ public class NsgoView extends FrameLayout {
         accessibility.addTouchExplorationStateChangeListener(screenReader);
         getContext().getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, motion);
-        if (Build.VERSION.SDK_INT >= 33) registerBack();
+        // Back goes to the app only while it can answer, so not on a detached view or an ended engine.
+        boolean answers = attached || engine == null || engine.canStart();
+        if (Build.VERSION.SDK_INT >= 33 && answers) registerBack();
         systemBars();
     }
 
@@ -335,7 +346,41 @@ public class NsgoView extends FrameLayout {
         accessibility.removeTouchExplorationStateChangeListener(screenReader);
         getContext().getContentResolver().unregisterContentObserver(motion);
         unregisterBack();
+        if (!ownsEngine) detachFromEngine();
         super.onDetachedFromWindow();
+    }
+
+    /**
+     * Shows a host-owned engine's app in this view, starting its process as the view first gets a size, or attaches this view again after detachFromEngine. Call on the UI thread.
+     *
+     * Until the surface protocol lands, an engine serves the one view that first attaches to it and a view shows one engine: this throws IllegalStateException for another view's engine, for a second engine, and for an engine whose process ended or was destroyed, which a host replaces with a new engine and a new view.
+     */
+    public void attachToEngine(NsgoEngine next) {
+        if (next == null) throw new NullPointerException("engine");
+        if (!next.isAlive() && !next.canStart()) throw new IllegalStateException("the engine's process has ended: make a new engine");
+        if (engine != next) {
+            if (engine != null) throw new IllegalStateException("this view already shows another engine's app");
+            next.attach(this);
+            engine = next;
+            ownsEngine = false;
+        }
+        if (!attached && next.isAlive()) attachRunningEngine();
+    }
+
+    /**
+     * Takes this view off a host-owned engine's screen: back goes to the system again. The engine keeps the view, and through it its context, as the one it serves: the view still answers the app's text and applies its batches off screen, so the app runs on and the view shows it current when attached again. The view detaches itself as it leaves its window.
+     */
+    public void detachFromEngine() {
+        if (!attached) return;
+        attached = false;
+        unregisterBack();
+    }
+
+    private void attachRunningEngine() {
+        engine.attach(this);
+        attached = true;
+        if (Build.VERSION.SDK_INT >= 33 && isAttachedToWindow() && backCallback == null) registerBack();
+        host.start();
     }
 
     /**
@@ -459,54 +504,59 @@ public class NsgoView extends FrameLayout {
 
     private void start() {
         File exe = new File(getContext().getApplicationInfo().nativeLibraryDir, "libnsgo.so");
+        ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
+        builder.command().addAll(flags);
+        File data = storage != null ? storage : getContext().getFilesDir();
+        builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
+        builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());
+        if (!host.params.isEmpty()) builder.environment().put("NSGO_HOST_PARAMS", host.params);
+        String installer = installer();
+        if (installer != null) builder.environment().put("NSGO_INSTALLER", installer);
+        if (test != null) {
+            agent = new TestAgent(this);
+            TestAgent.apply(test, builder);
+        }
         try {
-            ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
-            builder.command().addAll(flags);
-            File data = storage != null ? storage : getContext().getFilesDir();
-            builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
-            builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());
-            if (!host.params.isEmpty()) builder.environment().put("NSGO_HOST_PARAMS", host.params);
-            String installer = installer();
-            if (installer != null) builder.environment().put("NSGO_INSTALLER", installer);
-            if (test != null) {
-                agent = new TestAgent(this);
-                TestAgent.apply(test, builder);
-            }
-            process = builder.start();
+            engine.start(builder);
         } catch (IOException e) {
             throw new IllegalStateException("cannot start " + exe, e);
         }
-        out = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
         // The host's handlers and tokens come before the app starts.
-        host.start();
+        attachRunningEngine();
         write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
         if (livePressEarly != null) write(Protocol.LIVE_REPORT, livePressEarly);
         livePressEarly = null;
-        Thread reader = new Thread(this::read, "nsgo-reader");
-        reader.setDaemon(true);
-        reader.start();
-        Thread logger = new Thread(this::log, "nsgo-log");
-        logger.setDaemon(true);
-        logger.start();
         watchNetwork();
     }
 
-    /** Ends the app's process and destroys its native components. */
+    /**
+     * Ends the app's process and destroys its native components. On a view showing a host-owned engine it only detaches the view, as NsgoEngine.destroy ends that engine.
+     */
     public void stop() {
+        if (engine != null && !ownsEngine) {
+            detachFromEngine();
+            return;
+        }
+        if (engine != null) engine.destroy();
+        release();
+    }
+
+    /**
+     * Lets go of what serves the app's process once it ends or the view stops, on the UI thread: the network callback, the decoders, back and the native components, as an ended app sends no deletes. It runs again harmlessly.
+     */
+    private void release() {
         if (network != null) {
             getContext().getSystemService(ConnectivityManager.class).unregisterNetworkCallback(network);
             network = null;
         }
         decoder.shutdownNow();
         folders.shutdownNow();
-        if (process != null) process.destroy();
+        attached = false;
+        unregisterBack();
         destroyComponents();
     }
 
-    /**
-     * Destroys the native components still showing: a stopped app sends no
-     * deletes, so this runs as its process ends, on the UI thread.
-     */
+    /** Destroys the native components still showing, on the UI thread. */
     private void destroyComponents() {
         for (int i = 0; i < nodes.size(); i++) {
             Node n = nodes.valueAt(i);
@@ -517,72 +567,68 @@ public class NsgoView extends FrameLayout {
         }
     }
 
-    private void read() {
-        try (DataInputStream in = new DataInputStream(new BufferedInputStream(process.getInputStream()))) {
-            while (true) {
-                int kind = in.readUnsignedByte();
-                byte[] payload = new byte[in.readInt()];
-                in.readFully(payload);
-                DataInputStream message = new DataInputStream(new ByteArrayInputStream(payload));
-                switch (kind) {
-                    case Protocol.BATCH:
-                        ui.post(() -> mount(payload));
-                        break;
-                    case Protocol.IMAGE:
-                        image(message);
-                        break;
-                    case Protocol.CANVAS_IMAGE:
-                        canvasImage(message);
-                        break;
-                    case Protocol.FONTS:
-                        fonts(message);
-                        break;
-                    case Protocol.FONT_DATA:
-                        fontData(message);
-                        break;
-                    case Protocol.TEST:
-                        if (agent != null) agent.handle(message);
-                        break;
-                    case Protocol.HOST_CALL:
-                        host.message(message);
-                        break;
-                    case Protocol.FOLDER:
-                        folders.execute(() -> folder(message));
-                        break;
-                    case Protocol.FETCH:
-                        downloads.message(message);
-                        break;
-                    case Protocol.LIVE_UPDATE:
-                        ui.post(() -> {
-                            LiveUpdates.apply(getContext(), activity(), payload);
-                            write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
-                        });
-                        break;
-                    case Protocol.WANT_FRAME:
-                        ui.post(() -> {
-                            frameWanted = true;
-                            startTicking();
-                        });
-                        break;
-                    default:
-                        text(kind, message);
-                }
+    @Override
+    public void onMessage(int kind, byte[] payload) {
+        DataInputStream message = new DataInputStream(new ByteArrayInputStream(payload));
+        try {
+            switch (kind) {
+                case Protocol.BATCH:
+                    ui.post(() -> mount(payload));
+                    break;
+                case Protocol.IMAGE:
+                    image(message);
+                    break;
+                case Protocol.CANVAS_IMAGE:
+                    canvasImage(message);
+                    break;
+                case Protocol.FONTS:
+                    fonts(message);
+                    break;
+                case Protocol.FONT_DATA:
+                    fontData(message);
+                    break;
+                case Protocol.TEST:
+                    if (agent != null) agent.handle(message);
+                    break;
+                case Protocol.HOST_CALL:
+                    host.message(message);
+                    break;
+                case Protocol.FOLDER:
+                    folders.execute(() -> folder(message));
+                    break;
+                case Protocol.FETCH:
+                    downloads.message(message);
+                    break;
+                case Protocol.LIVE_UPDATE:
+                    ui.post(() -> {
+                        LiveUpdates.apply(getContext(), activity(), payload);
+                        write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
+                    });
+                    break;
+                case Protocol.WANT_FRAME:
+                    ui.post(() -> {
+                        frameWanted = true;
+                        startTicking();
+                    });
+                    break;
+                default:
+                    text(kind, message);
             }
         } catch (IOException e) {
-            Log.i(TAG, "app process ended: " + e);
+            Log.w(TAG, "invalid message from app", e);
         }
-        // Leave back to the system from now on; the app's components go
-        // with it.
-        ui.post(this::unregisterBack);
-        ui.post(this::destroyComponents);
     }
 
-    private void log() {
-        try (BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = err.readLine()) != null; ) Log.i(TAG, line);
-        } catch (IOException ignored) {
-            // The process ended.
-        }
+    @Override
+    public void onProcessEnded(IOException error) {
+        if (error != null) Log.i(TAG, "app process ended: " + error);
+        // Leave back to the system from now on; the app's components, network callback and decoders go with it. The reader has passed on its last message, so nothing decodes after this.
+        ui.post(this::release);
+    }
+
+    @Override
+    public void onLog(String line) {
+        Log.i(TAG, line);
     }
 
     /**
@@ -608,7 +654,7 @@ public class NsgoView extends FrameLayout {
      * duration.
      */
     private void environment() {
-        if (process == null) return;
+        if (engine == null || !engine.isAlive()) return;
         Configuration config = getResources().getConfiguration();
         boolean dark = dark();
         followAppearance(dark);
@@ -1124,16 +1170,8 @@ public class NsgoView extends FrameLayout {
         write(Protocol.TEXT_LINES, bytes.toByteArray());
     }
 
-    synchronized void write(int kind, byte[] payload) {
-        if (out == null) return;
-        try {
-            out.writeByte(kind);
-            out.writeInt(payload.length);
-            out.write(payload);
-            out.flush();
-        } catch (IOException e) {
-            Log.w(TAG, "app process unreachable", e);
-        }
+    void write(int kind, byte[] payload) {
+        if (engine != null) engine.write(kind, payload);
     }
 
     /**
@@ -1384,12 +1422,10 @@ public class NsgoView extends FrameLayout {
     }
 
     /**
-     * Reports back to the engine, which routes it to the topmost overlay,
-     * modal or stack. While the app runs it takes back even when nothing
-     * there does, for the engine cannot answer; false once the app ended.
+     * Reports back to the engine, which routes it to the topmost overlay, modal or stack. While the app runs it takes back even when nothing there does, for the engine cannot answer; false once the app ended or while the view is detached from its engine.
      */
     public boolean back() {
-        if (process == null || !process.isAlive()) return false;
+        if (!attached || engine == null || !engine.isAlive()) return false;
         event(Protocol.EVENT_BACK, 0, 0, 0, 0, "");
         return true;
     }
@@ -2898,7 +2934,7 @@ public class NsgoView extends FrameLayout {
     public void liveActionPressed(android.content.Intent intent) {
         byte[] press = intent == null ? null : LiveUpdates.press(intent);
         if (press == null) return;
-        if (out == null) {
+        if (engine == null || !engine.isAlive()) {
             livePressEarly = press;
             return;
         }

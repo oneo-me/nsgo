@@ -72,6 +72,14 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 | Transparent windows and the taskbar on Windows | #987 | A window opens transparent, showing what is behind it where the app draws nothing, and `SkipTaskbar` keeps it off the taskbar |
 | Panels of windows out of sight on macOS | `macos.md`, #1488 | An open or save panel or an alert shows in a window of its own while the window it belongs to is hidden, minimized or off every screen, as a tray app's often is, where it is a sheet of that window now and stays out of sight with it |
 
+## Android embedding and process lifetime
+
+An `NsgoEngine` a host keeps runs the app on while its one `NsgoView` is detached ([embedding](architecture/embedding.md)). Issue #12 also needs a fresh Activity's view to show a running engine and several surfaces to share one process before recording, floating windows or push delivery can depend on it; the design and staged protocol work are in [Android engine and view lifetime](architecture/android-lifecycle.md).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Android engine and view lifetime | #12, [Android engine and view lifetime](architecture/android-lifecycle.md) | A host retains one `NsgoEngine` in its Application or foreground service, Activities attach and detach `NsgoView` surfaces without killing the Go process, two surfaces share one process with independent trees, and explicit engine destruction closes the process once |
+
 ## Terminal
 
 What `base/terminal` still lacks of a terminal app's features, Ghostty's the reference ([terminal](architecture/terminal.md)), in the order to build them.
