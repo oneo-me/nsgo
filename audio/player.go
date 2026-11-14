@@ -9,17 +9,18 @@ import (
 // Player controls long-form audio.
 type Player struct {
 	// calls is held for reading across each call into the backend and for writing while Close releases it, so no call reaches a released native player.
-	calls      sync.RWMutex
-	mu         sync.Mutex
-	backend    playerBackend
-	closed     bool
-	ended      bool
-	position   time.Duration
-	duration   time.Duration
-	playing    bool
-	err        error
-	onEnd      func()
-	onProgress func(position, duration time.Duration)
+	calls          sync.RWMutex
+	mu             sync.Mutex
+	backend        playerBackend
+	closed         bool
+	ended          bool
+	position       time.Duration
+	duration       time.Duration
+	playing        bool
+	progressQueued bool
+	err            error
+	onEnd          func()
+	onProgress     func(position, duration time.Duration)
 }
 
 // Play starts or resumes playback.
@@ -229,17 +230,26 @@ func (player *Player) progressed(position, duration time.Duration) {
 		player.duration = duration
 	}
 	player.position = position
-	duration = player.duration
-	callback := player.onProgress
-	player.mu.Unlock()
-	callbacks.add(func() {
-		player.mu.Lock()
-		closed := player.closed
+	if player.progressQueued {
 		player.mu.Unlock()
-		if !closed && callback != nil {
-			callback(position, duration)
-		}
-	})
+		return
+	}
+	player.progressQueued = true
+	player.mu.Unlock()
+	callbacks.add(player.deliverProgress)
+}
+
+// deliverProgress reports the latest position and duration, so reports that arrive while an earlier one waits in the queue coalesce into it.
+func (player *Player) deliverProgress() {
+	player.mu.Lock()
+	player.progressQueued = false
+	closed := player.closed
+	callback := player.onProgress
+	position, duration := player.position, player.duration
+	player.mu.Unlock()
+	if !closed && callback != nil {
+		callback(position, duration)
+	}
 }
 
 func (player *Player) pausedByBackend() {

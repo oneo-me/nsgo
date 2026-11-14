@@ -246,6 +246,53 @@ func TestPlayerCloseWaitsForCallsInProgress(t *testing.T) {
 	}
 }
 
+func TestPlayerProgressCoalescesWhileTheAppIsBusy(t *testing.T) {
+	backend := &fakeBackend{}
+	previous := targetBackend
+	targetBackend = backend
+	t.Cleanup(func() { targetBackend = previous })
+
+	player, err := Open("song.mp3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	reports := make(chan time.Duration, 100)
+	if err := player.OnProgress(func(position, _ time.Duration) {
+		if position == 0 {
+			close(started)
+			<-release
+			return
+		}
+		reports <- position
+	}); err != nil {
+		t.Fatal(err)
+	}
+	backend.report(0, 10*time.Second)
+	<-started
+	for second := 1; second <= 50; second++ {
+		backend.report(time.Duration(second)*time.Second, 60*time.Second)
+	}
+	close(release)
+	select {
+	case got := <-reports:
+		if got != 50*time.Second {
+			t.Errorf("coalesced progress %s, want 50s", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("progress callback did not run")
+	}
+	select {
+	case got := <-reports:
+		t.Errorf("an extra progress report %s ran", got)
+	case <-time.After(50 * time.Millisecond):
+	}
+	if err := player.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 type fakeBackend struct {
 	soundOptions   Options
 	playerOptions  Options

@@ -60,7 +60,9 @@ func (unsupportedBackend) openPlayer(source, Options, playerCallbacks) (playerBa
 	return nil, ErrUnsupported
 }
 
+// callbackQueue runs app callbacks serially on a goroutine of its own, started by the first callback. A player keeps at most one progress report in it, so a slow callback delays reports rather than growing the queue.
 type callbackQueue struct {
+	start sync.Once
 	mu    sync.Mutex
 	cond  *sync.Cond
 	items []func()
@@ -69,7 +71,6 @@ type callbackQueue struct {
 func newCallbackQueue() *callbackQueue {
 	queue := &callbackQueue{}
 	queue.cond = sync.NewCond(&queue.mu)
-	go queue.run()
 	return queue
 }
 
@@ -91,6 +92,7 @@ func (queue *callbackQueue) add(callback func()) {
 	if callback == nil {
 		return
 	}
+	queue.start.Do(func() { go queue.run() })
 	queue.mu.Lock()
 	queue.items = append(queue.items, callback)
 	queue.cond.Signal()
