@@ -28,7 +28,7 @@ cx.CloseNotification("sync")
 
 ## Presses
 
-`cx.OnNotificationPress` runs its function with the `ID` of a notification the user pressed, while the component that set it lives, and brings the app to the front. A press that started the app reaches the first handler registered. Keep in `ID` what the press opens (`"chat:42"`), as a press can start the app anew.
+`cx.OnNotificationPress` runs its function with the `ID` of a notification the user pressed, while the component that set it lives, and brings the app to the front. A press that started the app reaches the first handler registered. Keep in `ID` what the press opens (`"chat:42"`), as a press can start the app anew. On Windows it does so for an app its installer put in the Start menu; one run otherwise hears presses only while it runs.
 
 ```go
 cx.OnNotificationPress(func(id string) { openChat(strings.TrimPrefix(id, "chat:")) })

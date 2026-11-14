@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
@@ -25,7 +26,7 @@ import (
 // icon. An app outside an MSIX names itself with an AppUserModelID, its
 // ID, which the current user's registry gives the app's name and icon,
 // as toasts need; a press reaches the app while it runs, through the
-// toast's Activated event.
+// toast's Activated event, or starts the app through the COM activator.
 
 var (
 	combase                   = syscall.NewLazyDLL("combase.dll")
@@ -313,15 +314,14 @@ func (w *window) notify(it *driver.MountItem) {
 	}
 }
 
-// toastXML is a toast's content: its title, its body and, when silent,
-// no sound.
-func toastXML(n driver.Notification) string {
+// toastXML is a toast's content: its launch arguments, its title, its body and, when silent, no sound.
+func toastXML(n driver.Notification, launch string) string {
 	esc := func(s string) string {
 		var b bytes.Buffer
 		_ = xml.EscapeText(&b, []byte(s))
 		return b.String()
 	}
-	s := `<toast><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
+	s := `<toast launch="` + esc(launch) + `"><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
 	if n.Body != "" {
 		s += `<text>` + esc(n.Body) + `</text>`
 	}
@@ -351,7 +351,8 @@ func (w *window) showToast(n driver.Notification) bool {
 	if io == nil {
 		return false
 	}
-	content := hstring(toastXML(n))
+	launch := toastLaunch(n.ID)
+	content := hstring(toastXML(n, launch))
 	hr = io.call(xmlDocumentIOLoadXML, content)
 	deleteHString(content)
 	io.release()
@@ -381,8 +382,11 @@ func (w *window) showToast(n driver.Notification) bool {
 		t2.release()
 	}
 	appID, e := n.ID, w.engine
+	_, press := parseToastActivationArgs(launch)
 	pressed := newHandler(&iidToastActivated, func(uintptr, unsafe.Pointer) {
-		e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: appID})
+		if toastPresses.first(press, time.Now()) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: appID})
+		}
 		w.post(func() {
 			if old := toasts.shown[appID]; old != nil {
 				old.release()

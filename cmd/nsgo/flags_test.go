@@ -266,4 +266,9 @@ func TestIdentityLdflags(t *testing.T) {
 	if !strings.Contains(p.ldflags(), "core.appRelease=1") {
 		t.Errorf("a release's ldflags %s say development", p.ldflags())
 	}
+	// go build splits -ldflags at spaces outside quotes and takes no escapes inside them, so a name with a single quote goes in double quotes.
+	p = &project{Name: "Bob's Notes", ID: "com.example.notes", Version: "1.0.0"}
+	if want := `-X "github.com/nsgo-dev/nsgo/core.appName=Bob's Notes"`; !strings.Contains(p.ldflags(), want) {
+		t.Errorf("ldflags %s lack %s", p.ldflags(), want)
+	}
 }

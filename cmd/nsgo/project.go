@@ -306,6 +306,9 @@ func load(dir string) (*project, error) {
 	if p.Name == "" {
 		return nil, fmt.Errorf("nsgo.yaml: name is required")
 	}
+	if strings.Contains(p.Name, "'") && strings.Contains(p.Name, `"`) {
+		return nil, fmt.Errorf("nsgo.yaml: name %q has both a single and a double quote, which go build cannot pass to the app; use one kind", p.Name)
+	}
 	if _, err := p.capabilities(); err != nil {
 		return nil, err
 	}
@@ -403,6 +406,14 @@ func (p *project) cache(parts ...string) string {
 	return filepath.Join(append([]string{p.Dir, ".nsgo"}, parts...)...)
 }
 
+// xflag is the -X flag setting the string variable name to value, quoted as go build splits -ldflags: in single quotes, or double quotes for a value with a single quote, as an app named Bob's Notes has. Nothing escapes inside either, so load refuses a name with both.
+func xflag(name, value string) string {
+	if strings.Contains(value, "'") {
+		return `-X "` + name + "=" + value + `"`
+	}
+	return "-X '" + name + "=" + value + "'"
+}
+
 // corePath is package core's, which holds the app's identity (core.App).
 const corePath = "github.com/nsgo-dev/nsgo/core"
 
@@ -410,8 +421,8 @@ const corePath = "github.com/nsgo-dev/nsgo/core"
 // core.App, and passes the rest of what nsgo.Run takes from it.
 func (p *project) ldflags(extra ...string) string {
 	const pkg = "github.com/nsgo-dev/nsgo"
-	flags := fmt.Sprintf("-X '%s.appName=%s' -X '%s.appID=%s' -X '%s.appVersion=%s' -X '%s.appBuild=%s'",
-		corePath, p.Name, corePath, p.ID, corePath, p.Version, corePath, p.BundleVersion())
+	flags := strings.Join([]string{xflag(corePath+".appName", p.Name), xflag(corePath+".appID", p.ID),
+		xflag(corePath+".appVersion", p.Version), xflag(corePath+".appBuild", p.BundleVersion())}, " ")
 	if p.Appearance != "" {
 		flags += fmt.Sprintf(" -X %s.appearance=%s", pkg, p.Appearance)
 	}

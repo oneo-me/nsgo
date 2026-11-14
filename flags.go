@@ -28,6 +28,10 @@ type launchFlags struct {
 	// appearanceSet is whether --nsgo-appearance was given, as its
 	// "system" is the zero Appearance.
 	appearanceSet bool
+	// Windows' installer and COM start the app with these, never a user: --nsgo-register-toast=<shortcut> stamps the Start menu shortcut with the toast activator, --nsgo-unregister-toast removes the activator's registration, and --nsgo-toast-activation starts the app for a toast press, followed by the -Embedding COM appends.
+	registerToast   string
+	unregisterToast bool
+	toastActivation bool
 }
 
 // launch holds the flags the app was started with.
@@ -57,6 +61,9 @@ func (f *launchFlags) parse(args []string) []string {
 	for i, arg := range args[1:] {
 		if arg == "--" {
 			return append(rest, args[1+i:]...)
+		}
+		if f.toastActivation && (arg == "-Embedding" || arg == "/Embedding") {
+			continue
 		}
 		name, ok := strings.CutPrefix(strings.TrimPrefix(strings.TrimPrefix(arg, "-"), "-"), "nsgo-")
 		if !ok || !strings.HasPrefix(arg, "-") {
@@ -94,6 +101,15 @@ func (f *launchFlags) set(flag string) error {
 			return errors.New("needs light, dark or system")
 		}
 		f.appearance, f.appearanceSet = a, true
+	case "register-toast":
+		if value == "" {
+			return errors.New("needs the shortcut's path")
+		}
+		f.registerToast = value
+	case "unregister-toast":
+		f.unregisterToast = true
+	case "toast-activation":
+		f.toastActivation = true
 	default:
 		return errors.New("no such flag: --nsgo-fps, --nsgo-lang or --nsgo-appearance")
 	}
