@@ -54,6 +54,14 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 | --- | --- | --- |
 | Context menus from any input | `elements.md`, #978, #1098, #1544, #1555, #1610 | The menu key, Shift+F10 and a screen reader's menu action open a view's context menu; a held finger or pen opens a `ContextMenu` on any device and a mouse never; a secondary click outside closes overlays; a second one on the trigger opens it again where it lands; and `ContextMenuEvent` names its pointer |
 
+## From NSGo's issues
+
+What NSGo's own issues ask for beyond NSH's releases, each issue where its design is discussed.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Mention completion in Composer | [#46](https://github.com/nsgo-dev/nsgo/issues/46), [mention completion](architecture/mention-completion.md) | A `core.Suggest` owns a field's trigger, query and UTF-16 insertion and a `base.SuggestList` its rows, keys and announcements, while `Composer`'s `Suggest` supplies rows and `ui` the look; a test types `@re`, sees two rows, presses Down and Return, and finds the chosen row inserted at the caret with the list gone |
+
 ## Application and windows
 
 What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.

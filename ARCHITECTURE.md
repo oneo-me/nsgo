@@ -112,6 +112,7 @@ Record a design question here, and confirm the answer with the user before choos
 - **Implicit presentations in `ui`.** `ui.Dialog`, `ui.NumberInput` and `ui/commitgraph.View` still swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)), while menus, dropdowns and `dock.Area` take the form the app sets, popups and docked panels by default, and `ui` adds no choice of its own (decided by the user, 2026-11-12). Make `ui`'s a field the app sets too?
 - **Texts drawn into one layer on Apple platforms.** Core Animation spends about 10 µs a frame on each text layer that changes, so a table of 600 numbers changing every frame holds about 90 fps at 120 Hz on a Mac ([performance](docs/architecture/performance.md#keeping-frames-cheap), #51). Drawing a container's texts into one layer of its own reached 135–143 fps in #51's measurements, but its texts would no longer stack, clip, fade, move or transform as their views do, and with few texts it cost about 30 MB more. Draw texts so, and when?
 - **Sizes on a TV.** `ui`'s sizes are constants on every device, but a TV is read from across a room. Since `core` scales nothing by device, does `ui` take larger sizes on a TV, or leave them to the app ([roadmap](docs/roadmap.md#apple-tv))?
+- **Mention completion.** The design for #46 ([mention completion](docs/architecture/mention-completion.md#open-decisions)) leaves five choices open: whether `Items` runs synchronously or is an app-owned resource, whether an empty result keeps the list open, whether Tab accepts as Return does and either submits with no row highlighted, whether a field takes one trigger or several, and whether an `Insert` replaces only the trigger and query or an explicit range.
 
 ## Verification
 
@@ -129,6 +130,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Scrolling](docs/architecture/scrolling.md) | `Scroll`, `List` or a scroll view |
 | [Interaction](docs/architecture/interaction.md) | Accessibility, pointers, focus, touches, gestures or drops |
 | [Services](docs/architecture/services.md) | A service, a menu, the desktop window or the app's lifecycle |
+| [Mention completion](docs/architecture/mention-completion.md) | Suggestion state, text-field key capture or composer rows |
 | [Updates](docs/architecture/updates.md) | `updater`, an update check, the updaters `nsgo build` bundles or a release channel |
 | [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
