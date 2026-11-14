@@ -2,7 +2,11 @@
 
 package apple
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ebitengine/purego/objc"
+)
 
 func TestFileURLPathAndScope(t *testing.T) {
 	for raw, want := range map[string]string{
@@ -24,5 +28,21 @@ func TestFileURLPathAndScope(t *testing.T) {
 		if got := fileURLInDir(raw, "/tmp/opened/a"); got != want {
 			t.Errorf("fileURLInDir(%q) = %v, want %v", raw, got, want)
 		}
+	}
+}
+
+func TestWebKitHandlesItsOwnSchemes(t *testing.T) {
+	loadWebKit()
+	handles := func(name string) bool {
+		return objc.Send[bool](objc.ID(Class("WKWebView")), sel("handlesURLScheme:"), NSString(name))
+	}
+	// core's webBuiltinSchemes refuses these, as WebKit would end the app.
+	for _, name := range []string{"ws", "wss", "javascript", "ftp", "applewebdata", "webkit-fake-url", "blob", "about", "data", "file", "http", "https"} {
+		if !handles(name) {
+			t.Errorf("WKWebView does not handle %q", name)
+		}
+	}
+	if handles("gallery") {
+		t.Error("WKWebView handles an app's scheme")
 	}
 }

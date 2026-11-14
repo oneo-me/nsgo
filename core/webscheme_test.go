@@ -23,7 +23,7 @@ func TestServeScheme(t *testing.T) {
 	if got == nil || got.SchemeHandlers["app"] == nil || string(got.SchemeHandlers["app"]("app://index.html")) != "ok" {
 		t.Fatalf("scheme handlers %+v", got)
 	}
-	for _, scheme := range []string{"", "http", "1app", "bad scheme"} {
+	for _, scheme := range []string{"", "http", "1app", "bad scheme", "WS", "wss:", "javascript", "ftp", "applewebdata", "webkit-fake-url", "blob", "about"} {
 		if err := h.tree.root.ServeScheme(scheme, func(string) []byte { return nil }); err == nil {
 			t.Errorf("ServeScheme(%q) accepted", scheme)
 		}

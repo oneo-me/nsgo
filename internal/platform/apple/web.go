@@ -3,6 +3,7 @@
 package apple
 
 import (
+	"log"
 	"maps"
 	neturl "net/url"
 	"os"
@@ -298,6 +299,11 @@ func (w *Web) make() {
 	webHandlers[w.handler] = w
 	config.Send(sel("userContentController")).Send(sel("addScriptMessageHandler:name:"), w.handler, NSString(messageHandler))
 	for name := range w.config.SchemeHandlers {
+		// WebKit raises NSInvalidArgumentException, which ends the app, for a scheme it handles itself: core refuses those, and this keeps a later WebKit's own from ending it.
+		if objc.Send[bool](objc.ID(Class("WKWebView")), sel("handlesURLScheme:"), NSString(name)) {
+			log.Printf("nsgo: WebKit handles the %q scheme itself: the web view does not serve it", name)
+			continue
+		}
 		schemeHandlers[w.handler] = w
 		config.Send(sel("setURLSchemeHandler:forURLScheme:"), w.handler, NSString(name))
 	}
