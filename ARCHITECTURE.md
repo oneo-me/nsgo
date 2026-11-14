@@ -132,7 +132,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Updates](docs/architecture/updates.md) | `updater`, an update check, the updaters `nsgo build` bundles or a release channel |
 | [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
-| [Audio playback](docs/architecture/audio-design.md) | The planned `audio` package, its native players and audio-session sharing |
+| [Audio playback](docs/architecture/audio.md) | The planned `audio` package, its native players and audio-session sharing |
 | [Images](docs/architecture/images.md) | How backends load, cache, decode or play images |
 | [Canvas](docs/architecture/canvas.md) | `Canvas`, `Drawing` or a backend's canvas player |
 | [Animation](docs/architecture/animation.md) | Animated values, layout animations or a backend's frame clock |
