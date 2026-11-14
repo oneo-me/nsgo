@@ -62,7 +62,9 @@ A `TextView` joins the search in its `Search` field, else the one `ProvideSearch
 
 ## Chat integration
 
-`ui/chat` then supplies a find bar with a field, count, previous/next and close actions. `Conversation` provides one search state to the text views for its turns, opens it from Mod+F (Ctrl+F elsewhere), focuses the field, and reveals the selected bounds. Its localized words are “Find”, “Previous”, “Next”, “Close”, “No results” and “%d of %d”. It does not implement matching, span splitting or cross-view counting.
+`ui/chat` then supplies a find bar with a field, count, previous/next and close actions. `Conversation` provides one search state to the text views for its turns, opens it from Mod+F (Ctrl+F elsewhere) and focuses the field. Revealing a match stops a following transcript from following (`ConversationState`'s `pause`), so a streaming reply does not pull it back to the end. Its localized words are “Find”, “Previous”, “Next”, “Close”, “No results” and “%d of %d”. It does not implement matching, span splitting or cross-view counting.
+
+A completed turn folds its steps and a completed reasoning block its detail, building nothing hidden, so their text views do not exist to register. While the search is open with a query, a turn and a reasoning block that share the transcript's `ConversationState` unfold without recording a choice of the user's, and fold again by their own rules when it closes; the transcript does not virtualize, so this mounts no more than a transcript the user unfolded. A reasoning block's default body is a plain `core.Text`, so it becomes a one-paragraph `TextView` to be searched. Only text views register: what a step or a prompt shows with other components is not searched.
 
 ## Verification
 
@@ -71,7 +73,7 @@ The implementation is complete only when these checks exist:
 - `base/textview` tests cover a three-block document, case and whole-word options, a match at an inline span boundary, code and math TeX, a table cell, a details' summary, a closed details opening, paths into lists, tables, details and footnotes, a `CustomSpan` and a `RenderMath` attachment, UTF-16 offsets past a character outside the BMP, and the result cap;
 - `TextView` tests cover search parts, selected parts, syntax-highlight merging, stale registrations and selection remaining independent;
 - shared-search tests cover tree order with a view mounted late, replacement, removal, opening and closing, next/previous wrapping, selected bounds across three views and revealing a match in a code block's horizontal scroll; and
-- `ui/chat` tests type a query over three turns, show the count, navigate and reveal the selected match, then close without changing the transcript selection.
+- `ui/chat` tests type a query over three turns, one match in a folded turn's step and one in folded reasoning, show the count, navigate and reveal the selected match, then close without changing the transcript selection.
 
 ## Open decisions
 
@@ -81,4 +83,5 @@ These decisions need confirmation before an implementation chooses them:
 2. Should `ProvideSearch` automatically include every descendant `TextView`, or must each view opt in through its `Search` field?
 3. Is matching each text synchronously as the view builds it acceptable for large transcripts, or should the API expose an asynchronous index from the start?
 4. Should regular expressions and accent/Unicode-insensitive matching be later options, or belong to a separate search package?
-5. Should `TextView` reveal its own match through core's box reveal, or should the owning transcript scroll to `SelectedBounds`?
+5. Should an open search unfold a transcript's turns and reasoning, or leave folded content out of it?
+6. Should `TextView` reveal its own match through core's box reveal, or should the owning transcript scroll to `SelectedBounds`?
