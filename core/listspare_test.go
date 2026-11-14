@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"strconv"
 	"testing"
 )
@@ -72,5 +73,78 @@ func TestListSpareCellsWaitUntilTheyShowARow(t *testing.T) {
 	h.commit()
 	if runs["y"] != 1 || runs["z"] != 1 {
 		t.Fatalf("runs = %v", runs)
+	}
+}
+
+func TestListReusedCellsRunOnceWithTheirRowAndCount(t *testing.T) {
+	var items *Signal[[]string]
+	type seen struct {
+		item  string
+		count int
+	}
+	var runs []seen
+	h := newHost(t, Size{Width: 200, Height: 300}, func(cx *Scope) Node {
+		items = NewSignalFunc(cx, []string{"a", "b", "c"}, nil)
+		return List{Count: func() int { return len(items.Get()) }, Style: Style{FlexGrow: 1},
+			Row: func(cx *Scope, row ListRow) Node {
+				return Text{Style: Style{Height: Pt(30)}, ContentFunc: func() string {
+					s := items.Get()[row.Index()]
+					runs = append(runs, seen{s, row.Count()})
+					return s
+				}}
+			}}
+	})
+	h.commit()
+	items.Set([]string{"a"})
+	h.commit()
+	runs = nil
+	// The spare cells come back for rows 1 to 3 of four: each runs once, already knowing the count.
+	items.Set([]string{"a", "x", "y", "z"})
+	h.commit()
+	n := map[string]int{}
+	for _, r := range runs {
+		if r.item != "a" && r.count != 4 {
+			t.Fatalf("%q ran with count %d: %v", r.item, r.count, runs)
+		}
+		n[r.item]++
+	}
+	if n["x"] != 1 || n["y"] != 1 || n["z"] != 1 {
+		t.Fatalf("runs = %v", runs)
+	}
+}
+
+func TestListSpareCellsMemosKeepTheirValueForReadersOutside(t *testing.T) {
+	var items *Signal[[]string]
+	var memos []*Memo[string]
+	h := newHost(t, Size{Width: 200, Height: 300}, func(cx *Scope) Node {
+		items = NewSignalFunc(cx, []string{"a", "b", "c"}, nil)
+		return List{Count: func() int { return len(items.Get()) }, Style: Style{FlexGrow: 1},
+			Row: func(cx *Scope, row ListRow) Node {
+				m := NewMemo(cx, func() string { return items.Get()[row.Index()] })
+				memos = append(memos, m)
+				return Text{Style: Style{Height: Pt(30)}, ContentFunc: m.Get}
+			}}
+	})
+	h.commit()
+	var seen []string
+	h.root.Effect(func() {
+		seen = seen[:0]
+		for _, m := range memos {
+			seen = append(seen, m.Get())
+		}
+	})
+	items.Set([]string{"x"})
+	h.commit()
+	if len(h.errs) != 0 {
+		t.Fatalf("an outside read of a spare cell's memo: %v", h.errs[0])
+	}
+	if !slices.Contains(seen, "x") || !slices.Contains(seen, "b") {
+		t.Fatalf("seen = %v, want the shown row's new value and a spare cell's last", seen)
+	}
+	// Shown again, the cell computes its memo and its readers outside follow.
+	items.Set([]string{"x", "y"})
+	h.commit()
+	if !slices.Contains(seen, "y") || len(h.errs) != 0 {
+		t.Fatalf("seen = %v, errors %v", seen, h.errs)
 	}
 }
