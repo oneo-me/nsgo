@@ -825,6 +825,10 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 			child.placeAt(opts.Frame)
 		}
 	} else {
+		// At its monitor's scale, as placeNew sizes a window.
+		if dpi, _, _ := getDpiForWindow.Call(hwnd); dpi != 0 {
+			child.scale = float64(dpi) / 96
+		}
 		setWindowPos.Call(hwnd, 0, 0, 0, uintptr(child.px(opts.Width)), uintptr(child.px(opts.Height)), swpNoActivate|swpNoZOrder)
 	}
 	windows[hwnd] = child
