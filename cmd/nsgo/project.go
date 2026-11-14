@@ -162,13 +162,15 @@ type project struct {
 		Category      string         `yaml:"category"`
 		Entitlements  map[string]any `yaml:"entitlements"`
 	} `yaml:"macos"`
-	// Windows is the Windows installer's: InstallerIcon and
-	// UninstallerIcon, an .ico or a square PNG, are the icons of the
-	// setup program and the uninstaller, else the app's. Store is the
-	// Microsoft Store's package identity, as Partner Center lists it, which
-	// a store build's MSIX carries (msix.go): the package's name, its
-	// publisher (CN=...) and the publisher's display name.
+	// Windows is the Windows target's options: CommandLine adds a .com
+	// console companion beside the GUI executable, while InstallerIcon and
+	// UninstallerIcon, an .ico or a square PNG, are the icons of the setup
+	// program and the uninstaller, else the app's. Store is the Microsoft
+	// Store's package identity, as Partner Center lists it, which a store
+	// build's MSIX carries (msix.go): the package's name, its publisher
+	// (CN=...) and the publisher's display name.
 	Windows struct {
+		CommandLine     bool   `yaml:"command_line"`
 		InstallerIcon   string `yaml:"installer_icon"`
 		UninstallerIcon string `yaml:"uninstaller_icon"`
 		Store           struct {

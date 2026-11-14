@@ -1,6 +1,7 @@
 package main
 
 import (
+	"debug/pe"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -119,5 +120,49 @@ func TestBuildJobs(t *testing.T) {
 	p.Build.Jobs = -1
 	if _, err := p.buildJobs(2); err == nil {
 		t.Error("build.jobs -1: got no error")
+	}
+}
+
+// The companion is a console program, which the shell waits for and whose streams and exit code it keeps; the app stays a GUI one.
+func TestBuildWindowsCommand(t *testing.T) {
+	dir := t.TempDir()
+	p := &project{Name: "tool"}
+	if err := buildWindowsCommand(t.Context(), p, dir, "amd64"); err != nil {
+		t.Fatal(err)
+	}
+	f, err := pe.Open(filepath.Join(dir, "tool.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	header, ok := f.OptionalHeader.(*pe.OptionalHeader64)
+	if !ok {
+		t.Fatalf("tool.com has no 64-bit optional header: %T", f.OptionalHeader)
+	}
+	if header.Subsystem != pe.IMAGE_SUBSYSTEM_WINDOWS_CUI {
+		t.Fatalf("tool.com's subsystem is %d, want the console's, %d", header.Subsystem, pe.IMAGE_SUBSYSTEM_WINDOWS_CUI)
+	}
+}
+
+// Without windows.command_line, and for the Microsoft Store, Windows builds write no companion.
+func TestWindowsCommandLineBuilds(t *testing.T) {
+	for _, c := range []struct {
+		commandLine bool
+		channel     string
+		want        bool
+	}{
+		{false, "", false},
+		{false, channelDirect, false},
+		{true, "", true},
+		{true, channelDirect, true},
+		{true, channelNone, true},
+		{true, channelStore, false},
+	} {
+		p := &project{}
+		p.Windows.CommandLine = c.commandLine
+		p.Updates.Channel = c.channel
+		if got := p.windowsCommandLine(); got != c.want {
+			t.Errorf("command_line %v on channel %q: companion %v, want %v", c.commandLine, c.channel, got, c.want)
+		}
 	}
 }

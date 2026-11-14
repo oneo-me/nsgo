@@ -69,6 +69,20 @@ func TestBuildOpen(t *testing.T) {
 	}
 }
 
+func TestWindowsCommandLine(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "nsgo.yaml"), []byte("name: Test\nwindows:\n  command_line: true\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Windows.CommandLine {
+		t.Fatal("windows.command_line was not loaded")
+	}
+}
+
 func TestIcons(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name string) {

@@ -168,7 +168,9 @@ type nsisData struct {
 	// UninstallKey is the uninstall entry's key, under HKCU.
 	UninstallKey string
 	// ARM64 has the installer refuse other systems.
-	ARM64     bool
+	ARM64 bool
+	// Command has the installer put its folder on the user's Path, for the command companion, and the uninstaller take it off.
+	Command   bool
 	Languages []nsisLanguage
 	// Files and Dirs are what the package holds, relative to it, which
 	// the uninstaller removes; Excludes what is beside them but the
@@ -185,6 +187,7 @@ func nsisScript(p *project, dir, arch string) (*nsisData, error) {
 		Name: name, Version: p.Version, Exe: p.Name + ".exe", Output: nsisSetupName(p, arch),
 		UninstallKey: `Software\Microsoft\Windows\CurrentVersion\Uninstall\` + p.ID,
 		ARM64:        arch == "arm64",
+		Command:      p.windowsCommandLine(),
 		Excludes:     []string{p.Name + ".nsi", "*-setup.exe"},
 	}
 	img, err := p.iconImage()
@@ -282,6 +285,15 @@ const nsisCloseApp = `$$d = $$env:NSGO_APP_DIR.TrimEnd('\') + '\'; ` +
 	`$$p | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; ` +
 	`Start-Sleep -Milliseconds 500`
 
+// nsisUserPath updates the user's Path for the command companion without
+// expanding existing environment references or truncating long values.
+const nsisUserPath = `$$d = $$env:NSGO_APP_DIR.TrimEnd('\\'); ` +
+	`$$k = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Environment'); ` +
+	`$$p = @(([string]$$k.GetValue('Path', '', 'DoNotExpandEnvironmentNames')) -split ';' | Where-Object { $$_ }); ` +
+	`$$o = @($$p | Where-Object { $$_.TrimEnd('\\') -ne $$d }); ` +
+	`if ($$env:NSGO_PATH_REMOVE) { if ($$o.Count -eq $$p.Count) { exit 0 }; $$p = $$o } else { if ($$o.Count -lt $$p.Count) { exit 0 }; $$p += $$d }; ` +
+	`if ($$p.Count) { $$k.SetValue('Path', ($$p -join ';'), 'ExpandString') } else { $$k.DeleteValue('Path', $$false) }`
+
 var nsisTemplate = template.Must(template.New("nsi").Funcs(template.FuncMap{
 	"q": nsisString,
 	// path quotes an NSIS variable, such as $INSTDIR, joined to names.
@@ -292,9 +304,10 @@ var nsisTemplate = template.Must(template.New("nsi").Funcs(template.FuncMap{
 	"cmd": func(parts ...string) string {
 		return "'" + strings.ReplaceAll(strings.Join(parts, ""), "'", `$\'`) + "'"
 	},
-	"quad":  nsisVersion,
-	"close": func() string { return nsisCloseApp },
-	"amp":   func(s string) string { return strings.ReplaceAll(s, "&", "&&") },
+	"quad":     nsisVersion,
+	"close":    func() string { return nsisCloseApp },
+	"userPath": func() string { return nsisUserPath },
+	"amp":      func(s string) string { return strings.ReplaceAll(s, "&", "&&") },
 }).Parse(`; Written by nsgo build. Compile with NSIS 3: makensis -INPUTCHARSET UTF8 {{.Exe}}.nsi
 Unicode true
 ManifestDPIAware true
@@ -375,12 +388,41 @@ FunctionEnd
 !macroend
 !insertmacro CloseApp ""
 !insertmacro CloseApp "un."
+{{- if .Command}}
+
+; Put the command companion's folder on the user's Path and remove it on uninstall.
+!macro UserPath un
+Function ${un}UserPath
+  Push $0
+  Push $1
+  StrCpy $0 "$WINDIR\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+  IfFileExists $0 +2
+  StrCpy $0 "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  IfFileExists $0 0 done
+  System::Call 'Kernel32::SetEnvironmentVariable(t "NSGO_APP_DIR", t "$INSTDIR")'
+!if "${un}" == "un."
+  System::Call 'Kernel32::SetEnvironmentVariable(t "NSGO_PATH_REMOVE", t "1")'
+!endif
+  nsExec::Exec ` + "`" + `"$0" -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "{{userPath}}"` + "`" + `
+  Pop $1
+  SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
+  done:
+  Pop $1
+  Pop $0
+FunctionEnd
+!macroend
+!insertmacro UserPath ""
+!insertmacro UserPath "un."
+{{- end}}
 
 Section
   Call CloseApp
   SetOutPath "$INSTDIR"
   File /r{{range .Excludes}} /x {{q .}}{{end}} "*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+{{- if .Command}}
+  Call UserPath
+{{- end}}
   CreateShortCut {{path "$SMPROGRAMS\\" .Name ".lnk"}} {{path "$INSTDIR\\" .Exe}}
   ; Give desktop toasts a COM activator CLSID on the Start menu shortcut.
   ExecWait {{cmd (path "$INSTDIR\\" .Exe) " --nsgo-register-toast=" (path "$SMPROGRAMS\\" .Name ".lnk")}}
@@ -410,6 +452,9 @@ FunctionEnd
 
 Section "Uninstall"
   Call un.CloseApp
+{{- if .Command}}
+  Call un.UserPath
+{{- end}}
   ; Remove the per-user toast COM registration before deleting the EXE.
   ExecWait {{cmd (path "$INSTDIR\\" .Exe) " --nsgo-unregister-toast"}}
   Delete {{path "$SMPROGRAMS\\" .Name ".lnk"}}
