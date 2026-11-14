@@ -37,7 +37,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Opening sends `ItemOpenSurface` to the app's surface. The platform makes the window and attaches it: `engine.Engine.Attach(id, platform)` returns the surface's `Engine`, which reports its size, environment and events as the first surface's does.
 - The engine commits every attached tree after each wake-up, the first first, and asks a window's platform for display frames, since the app's surface has no display. A tree waits uncommitted until it is attached.
 - A closed window's tree ends: the engine sends its platform one batch, `WindowDestroy`, and forgets it, or sends it to a platform that attaches after the close.
-- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow`, `OpenPanel` and `NewTray` return nil, whose methods do nothing, and `core.AppRoot` shows the main view in it.
+- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow` and `OpenPanel` return nil, while supported desktop backends still process `NewTray`, and `core.AppRoot` shows the main view in it.
 
 ## Lifecycle
 

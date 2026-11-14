@@ -742,6 +742,7 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Environment: w.env,
 		Appearance:  opts.Appearance,
 		Host:        opts.Host,
+		Tray:        !w.embedded,
 	}
 	data, cache := engine.AppDirs(opts.ID)
 	eopts.SetDirs(data, cache)

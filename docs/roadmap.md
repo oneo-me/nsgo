@@ -56,7 +56,7 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 
 ## Application and windows
 
-What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow`, `OpenPanel` and `NewTray` return nil, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
+What Windows and Linux still lack of what macOS opens for an app ([application and windows](architecture/application.md)): there `OpenWindow` and `OpenPanel` return nil, while supported desktop backends still process `NewTray`, and the main view fills the one window. Avalonia's desktop lifetime is the reference for the model, and NSH 0.5.0, which opens windows, tray icons, global shortcuts and one instance on Windows and Linux too, for each platform's mechanism.
 
 | Item | Reference | Done when |
 | --- | --- | --- |
