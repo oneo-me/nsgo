@@ -14,7 +14,11 @@ Because the properties are separate, an app can tell an occluding hinge, where p
 
 `internal/driver` owns the serializable geometry and the state enum. `core.Env` exposes the value as a signal and keeps its existing device-neutral behavior. `ui` and `base` do not switch forms merely because a device has a fold; an app or component author reads the regions and chooses its own navigation and tab-bar placement.
 
-The backend translates platform geometry into the shared model. Android uses Jetpack WindowManager's `FoldingFeature` and window metrics, including display changes while an activity is resized. Other targets report the one-region form until they have an equivalent system concept. Vendor-specific labels and hinge sensors remain backend metadata unless they affect usable geometry.
+## Platforms
+
+The backend translates platform geometry into the shared model. Vendor-specific labels and hinge sensors remain backend metadata unless they affect usable geometry. Targets without a system concept of a fold report the one-region form.
+
+Android has no fold API in `android.jar`, which is all the Java runtime compiles against (`internal/platform/android/runtime/build.sh`): `FoldingFeature` and `WindowLayoutInfo` come from Jetpack's `androidx.window:window`, a Kotlin library that pulls in the Kotlin standard library, coroutines and `androidx.core`. Bundling it would put those classes into the committed `classes.dex` and into the `classes.jar` that `nsgo build -embed` hosts dex themselves, where a host app that already uses `androidx.window` gets duplicate classes. The proposed route is the one Jetpack itself sits on: the device's `androidx.window.extensions` library, which the OEM ships, declared with `<uses-library android:name="androidx.window.extensions" android:required="false"/>` in the generated APK's manifest and the `-embed` AAR's, and reached by reflection from the runtime: `WindowExtensionsProvider.getWindowExtensions()`, its `WindowLayoutComponent` and `addWindowLayoutInfoListener`, whose `FoldingFeature` gives bounds, a type (`TYPE_FOLD` or `TYPE_HINGE`) and a state (`STATE_FLAT` or `STATE_HALF_OPENED`). The runtime derives the properties as Jetpack's `HardwareFoldingFeature` does: occluding when the bounds have area, separating for a hinge or a half-open fold. Where the library or the component is missing, the runtime reports the one-region form. The listener reports through the same path as the surface's size, including display changes while an activity is resized.
 
 ## Updates
 
@@ -47,3 +51,4 @@ These decisions need confirmation before an implementation chooses them:
 3. Which hinge metadata, such as the state's values and the angle, is stable enough to expose across Android vendors and iOS?
 4. Does the first release support only Android WindowManager, or also desktop multi-display arrangements with disjoint regions?
 5. Should the adaptive tab bar be a `ui` component change, a gallery/app pattern, or a separate component after the environment model lands?
+6. Does Android reach folds through the device's `androidx.window.extensions` by reflection, as proposed, or by bundling `androidx.window` and its Kotlin dependencies into the runtime?
