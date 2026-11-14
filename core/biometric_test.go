@@ -45,3 +45,19 @@ func TestBiometricsHeldToAccess(t *testing.T) {
 		t.Fatalf("refused answers: %v, %v", kind, result)
 	}
 }
+
+func TestBiometricsRefuseAnEmptyReason(t *testing.T) {
+	var scope *core.Scope
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		scope = cx
+		return core.View{}
+	})
+	app.BiometricAvailability = core.BiometricFace
+	app.BiometricAnswer = core.BiometricSuccess
+	var result core.BiometricResult
+	scope.AuthenticateBiometric("", func(v core.BiometricResult) { result = v })
+	app.Settle()
+	if result != core.BiometricFailure || len(app.AuthenticationReasons) != 0 {
+		t.Fatalf("empty reason: result %v, reasons %q", result, app.AuthenticationReasons)
+	}
+}

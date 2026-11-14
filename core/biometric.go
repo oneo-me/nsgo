@@ -36,13 +36,17 @@ func (cx *Scope) BiometricAvailability(done func(BiometricKind)) {
 	done(BiometricNone)
 }
 
-// AuthenticateBiometric asks the user to authenticate with reason. It never
-// falls back to a passcode; the app chooses that separately.
+// AuthenticateBiometric asks the user to authenticate with reason, which the prompt shows and must not be empty: an empty one answers BiometricFailure without a prompt. It never falls back to a passcode; the app chooses that separately.
 func (cx *Scope) AuthenticateBiometric(reason string, done func(BiometricResult)) {
 	answer := func(result BiometricResult) {
 		if done != nil {
 			done(result)
 		}
+	}
+	if reason == "" {
+		// LocalAuthentication throws on an empty reason, which would end the app.
+		answer(BiometricFailure)
+		return
 	}
 	if t := cx.tree(); t != nil && !cx.denied(AccessRequest{Permission: AccessBiometrics}) {
 		t.request(cx, driver.MountItem{Kind: driver.ItemBiometricAuthenticate, Value: reason}, func(ev driver.Event) {
