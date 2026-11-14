@@ -45,7 +45,9 @@ The implementation is complete only when these checks exist:
 - `internal/driver` tests cover serialization, empty lists, posture transitions, points conversion and frames outside the surface;
 - iOS tests use recorded reserved regions and hinge updates for an open, a half-open and a closed hinge, rotation and a vertical bar on either edge, and an older system without the selectors;
 - Android tests use recorded WindowManager observations for an open fold, a half-open fold, an open hinge between two panels (occluding and separating together), rotation and multi-window states; and
-- a target test verifies an app can place two explicit panes and an edge-adaptable tab bar without any implicit device-specific behavior from core or base.
+- a target test verifies an app can place two explicit panes on either side of a separating obstruction without any implicit device-specific behavior from core or base.
+
+An edge-adaptable tab bar, `mobile.TabBar` taking a leading or trailing edge where today it has only the system's bottom form (`core/tabbar.go`), follows once the model lands and decision 5 is answered; it is a separate [roadmap](../roadmap.md#foldable-displays) item.
 
 ## Open decisions
 
