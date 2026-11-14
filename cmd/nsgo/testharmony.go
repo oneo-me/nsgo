@@ -54,6 +54,10 @@ func harmonyTestRunner(ctx context.Context, p *project, dir string, opts testOpt
 			if err != nil {
 				return -1, err
 			}
+			// The tests replace the HAP under the running app: stop it first, or
+			// the old process keeps a page that no longer loads and aa start
+			// brings that back, where the tests never run.
+			hdcAt(ctx, hdc, device, "shell", "aa", "force-stop", bundle)
 			if _, err := hdcAt(ctx, hdc, device, "install", "-r", hap); err != nil {
 				return -1, err
 			}
@@ -61,7 +65,11 @@ func harmonyTestRunner(ctx context.Context, p *project, dir string, opts testOpt
 			if _, err := hdcAt(ctx, hdc, device, "shell", "aa", "start", "-a", "EntryAbility", "-b", bundle); err != nil {
 				return -1, err
 			}
-			return readHarmonyTest(ctx, hdc, device, out)
+			exitCode, testErr := readHarmonyTest(ctx, hdc, device, out)
+			// The test HAP leaves a black window in front when its binary
+			// exits. Stop it so a later run of the app's own HAP is visible.
+			hdcAt(ctx, hdc, device, "shell", "aa", "force-stop", bundle)
+			return exitCode, testErr
 		},
 		close: func() {},
 	}, nil
@@ -90,13 +98,23 @@ func envValues(env []string) map[string]string {
 // readHarmonyTest prints what the test says until it reports, and returns
 // its code.
 func readHarmonyTest(ctx context.Context, hdc string, device []string, out io.Writer) (int, error) {
-	const prefix = "NSGO harmony page: "
+	const (
+		prefix = "NSGO harmony page: "
+		// startWait is how long the page may take to print its first line: a
+		// page that never starts prints nothing, and waiting forever hides
+		// that as a test run that hangs.
+		startWait = 2 * time.Minute
+	)
 	seen := map[string]bool{}
+	started := time.Now()
 	for {
 		select {
 		case <-ctx.Done():
 			return -1, ctx.Err()
 		case <-time.After(300 * time.Millisecond):
+		}
+		if len(seen) == 0 && time.Since(started) > startWait {
+			return -1, fmt.Errorf("the tests printed nothing in %s: the app's page did not start", startWait)
 		}
 		data, _ := hdcAt(ctx, hdc, device, "shell",
 			"hilog -x | grep -F '"+prefix+"'")

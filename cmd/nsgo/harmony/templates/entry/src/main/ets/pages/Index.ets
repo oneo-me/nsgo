@@ -279,6 +279,7 @@ class VNode {
   ph: string = '';
   value: string = '';
   masked: boolean = false;
+  multiline: boolean = false;
   // An image's URI, its fit, and the bytes it embeds, base64.
   src: string = '';
   fit: string = 'cover';
@@ -624,6 +625,7 @@ class Tree {
           v.fw = o[4] as number;
           v.color = o[5] as string;
           v.masked = o[7] as boolean;
+          v.multiline = o[8] as boolean;
         } else if (code === 'iv') {
           v.value = o[2] as string;
         } else if (code === 'im') {
@@ -924,8 +926,14 @@ class Bridge {
         fontStyle: italic ? FontStyle.Italic : FontStyle.Normal,
         constraintWidth: width
       } as MeasureOptions;
+      // measureTextSize answers the constraint's width rather than the
+      // text's own, so a label measured for its line's room came back as wide
+      // as the room and every centering it sat in started at the left edge.
+      // The call without a constraint says which width is the text's.
       const sw = MeasureText.measureTextSize(wrapped);
-      return '[' + px2vp(Number(sw.width)) + ',' + px2vp(Number(sw.height)) + ']';
+      const own = MeasureText.measureTextSize(opts);
+      const w = Math.min(Number(sw.width), Number(own.width));
+      return '[' + px2vp(w) + ',' + px2vp(Number(sw.height)) + ']';
     }
     const s = MeasureText.measureTextSize(opts);
     return '[' + px2vp(Number(s.width)) + ',' + px2vp(Number(s.height)) + ']';
@@ -1517,7 +1525,11 @@ struct Index {
         const bars = this.win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
         this.safeTop = px2vp(bars.topRect.height);
         this.renderer.safeTop = this.safeTop;
-        this.safeBottom = px2vp(bars.bottomRect.height);
+        // A full-screen window's system bar area carries the status bar but
+        // not the navigation indicator, whose own area is what the bottom of
+        // the tree must stay above.
+        const nav = this.win.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+        this.safeBottom = Math.max(px2vp(bars.bottomRect.height), px2vp(nav.bottomRect.height));
         const kb = this.win.getWindowAvoidArea(window.AvoidAreaType.TYPE_KEYBOARD);
         this.keyboard = px2vp(kb.bottomRect.height);
       } catch (e) {
@@ -2451,8 +2463,12 @@ class Renderer {
         host.tree.measure();
       }
       if (structural) {
+        // A structural batch may name only deleted views: they have no
+        // dirty node left to walk from, so a sync gated on dirty would
+        // never reach the parents whose syncChildren drops their ArkUI
+        // children. Walk the tree in full for these batches.
         host.tree.takeDirty();
-        this.sync();
+        this.sync(true);
       } else {
         // Nothing moved: write the views the batch named, and no others.
         const dirty = host.tree.takeDirty();
@@ -2477,12 +2493,14 @@ class Renderer {
     }
   }
 
-  sync(): void {
+  // sync walks the tree, full when a structural batch asks: the ordinary
+  // path writes only views the batch named.
+  sync(full: boolean = false): void {
     const host = this.host;
     if (host === undefined || this.root === null || host.tree.root < 0) {
       return;
     }
-    this.syncNode(host.tree.root, this.root);
+    this.syncNode(host.tree.root, this.root, full);
   }
 
   // forget drops what the renderer holds for a view the batch deleted,
@@ -2586,10 +2604,25 @@ class Renderer {
       b.build(wrapBuilder(canvasBuilder), v);
     }
     this.leaves.set(v.id, b);
-    return b.getFrameNode();
+    const drawn = b.getFrameNode();
+    if (drawn === null) {
+      return null;
+    }
+    // A BuilderNode's frame node ignores the position a batch sets on it, so
+    // it keeps the frame of the parent's top left corner and the view lands
+    // there whatever the engine laid out. A Stack of its own holds the frame
+    // and the view fills it.
+    const box = typeNode.createNode(ui, 'Stack');
+    const ba = typeNode.getAttribute(box, 'Stack');
+    if (ba !== undefined) {
+      ba.alignContent(Alignment.TopStart);
+    }
+    drawn.commonAttribute.position({ x: 0, y: 0 }).width('100%').height('100%');
+    box.appendChild(drawn);
+    return box;
   }
 
-  syncNode(id: number, parent: FrameNode): void {
+  syncNode(id: number, parent: FrameNode, full: boolean = false): void {
     const host = this.host;
     if (host === undefined) {
       return;
@@ -2615,24 +2648,24 @@ class Renderer {
         const ui = this.ui;
         if (ui !== undefined) {
           ui.animateTo({ duration: host.tree.layoutMs, curve: layoutCurve(host.tree.layoutCurve) }, () => {
-            this.update(v, made);
+            this.update(v, made, full);
           });
         } else {
-          this.update(v, made);
+          this.update(v, made, full);
         }
         v.matchFrame = undefined;
       } else {
-        this.update(v, made);
+        this.update(v, made, full);
       }
       return;
     }
-    if (v.dirty) {
+    if (v.dirty || full) {
       v.dirty = false;
-      this.update(v, existing);
+      this.update(v, existing, full);
     }
   }
 
-  update(v: VNode, node: FrameNode): void {
+  update(v: VNode, node: FrameNode, full: boolean = false): void {
     this.style(v, node);
     this.applyShift(v.id);
     if (v.kind === KIND_TEXT) {
@@ -2717,11 +2750,11 @@ class Renderer {
       const content = this.contents.get(v.id);
       if (content !== undefined) {
         content.commonAttribute.width(v.cw > 0 ? v.cw : v.w).height(v.ch > 0 ? v.ch : v.h);
-        this.syncChildren(v, content);
+        this.syncChildren(v, content, full);
       }
     } else {
       this.screen(v, node);
-      this.syncChildren(v, node);
+      this.syncChildren(v, node, full);
     }
   }
 
@@ -2831,9 +2864,14 @@ class Renderer {
     if (a === undefined) {
       return;
     }
+    if (v.multiline) {
+      // A field as tall as a page is not a line as tall as a page: using
+      // its whole height as lineHeight drops the glyphs into the middle.
+      node.commonAttribute.align(Alignment.TopStart);
+    }
     a.fontSize(v.fs).fontColor(v.color)
       .type(v.masked ? InputType.Password : InputType.Normal)
-      .lineHeight(v.h)
+      .lineHeight(v.multiline ? Math.max(v.fs * 1.4, 1) : v.h)
       .padding({ top: 0, bottom: 0 })
       .onFocus(() => {
         const host = this.host;
@@ -3104,7 +3142,7 @@ class Renderer {
   }
 
   // syncChildren makes the FrameNode's children match the view's, in order.
-  syncChildren(v: VNode, parent: FrameNode): void {
+  syncChildren(v: VNode, parent: FrameNode, full: boolean = false): void {
     const count = parent.getChildrenCount();
     for (let i = count - 1; i >= 0; i--) {
       const child = parent.getChild(i);
@@ -3113,7 +3151,7 @@ class Renderer {
       }
     }
     for (let k = 0; k < v.children.length; k++) {
-      this.syncNode(v.children[k], parent);
+      this.syncNode(v.children[k], parent, full);
       const c = this.nodes.get(v.children[k]);
       if (c === undefined) {
         continue;

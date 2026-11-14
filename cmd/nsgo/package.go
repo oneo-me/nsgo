@@ -241,6 +241,11 @@ func runHarmony(ctx context.Context, p *project, dir string, flags []string) err
 	if p.Build.device != "" {
 		device = []string{"-t", p.Build.device}
 	}
+	// A running install keeps its page: replacing the HAP under it leaves the
+	// old process drawing a page that no longer loads, and aa start brings that
+	// window back black instead of starting the new one. Stop it first; on a
+	// first run nothing is installed, which hdc reports and this ignores.
+	_ = run(ctx, "hdc", append(append([]string{}, device...), "shell", "aa", "force-stop", bundle)...)
 	if err := run(ctx, "hdc", append(append([]string{}, device...), "install", "-r", hap)...); err != nil {
 		return err
 	}
