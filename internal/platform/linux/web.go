@@ -189,6 +189,7 @@ const webNoScroll = "html, body { overflow: hidden !important; }"
 type web struct {
 	hosted
 	widget     uintptr // WebKitWebView
+	session    uintptr // network session; ephemeral for Incognito
 	content    uintptr // its WebKitUserContentManager
 	config     driver.WebConfig
 	made       bool
@@ -217,7 +218,7 @@ var webWarned sync.Once
 // changed; the rest applies to the page as it is.
 func (w *window) configureWeb(v *view, c *driver.WebConfig) {
 	if v.web == nil {
-		v.web = &web{}
+		v.web = &web{config: *c}
 		if err := openWebKit(); err != nil {
 			webWarned.Do(func() { log.Printf("nsgo: WebView is not available: %v; it shows a placeholder", err) })
 			w.host(v, &v.web.hosted, webPlaceholder(), false)
@@ -307,7 +308,8 @@ func addScript(content uintptr, source string, at int32) {
 // makeWeb makes v's page in the app's network session and hosts it.
 func (w *window) makeWeb(v *view) {
 	wv := v.web
-	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), w.webSession(), uintptr(0))
+	wv.session = w.webSession(wv.config.Incognito)
+	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), wv.session, uintptr(0))
 	wv.content = webkitWebViewGetUserContentManager(wv.widget)
 	webkitContentRegisterHandler(wv.content, cstr(webHandler), nil)
 	webkitWebViewGetBackgroundColor(wv.widget, &wv.background)
@@ -348,7 +350,14 @@ var webSessionHandles = map[uintptr]map[uintptr]struct{}{}
 // webSession returns the network session of w's app, which keeps
 // website data in $XDG_DATA_HOME/<app id>/webkit and its cache in
 // $XDG_CACHE_HOME/<app id>/webkit, with cookies in cookies.sqlite there.
-func (w *window) webSession() uintptr {
+func (w *window) webSession(incognito bool) uintptr {
+	if incognito {
+		// A session without data or cache directories is ephemeral.
+		s := webkitNetworkSessionNew(nil, nil)
+		webSessionHandles[s] = map[uintptr]struct{}{w.handle: {}}
+		gSignalConnect(s, "download-started", cbWebDownloadStarted, s)
+		return s
+	}
 	if s := webSessions[w.appID]; s != 0 {
 		webSessionHandles[s][w.handle] = struct{}{}
 		return s
@@ -546,6 +555,13 @@ func (w *window) closeWeb(v *view) {
 		webkitWebViewStopLoading(wv.widget)
 		// Before unhosting, which lets the page and its content manager go.
 		webkitContentUnregisterHandler(wv.content, cstr(webHandler), nil)
+	}
+	if wv.session != 0 {
+		delete(webSessionHandles[wv.session], w.handle)
+		if len(webSessionHandles[wv.session]) == 0 {
+			delete(webSessionHandles, wv.session)
+			gObjectUnref(wv.session)
+		}
 	}
 	w.unhost(v, &wv.hosted)
 }

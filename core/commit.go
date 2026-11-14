@@ -14,7 +14,7 @@ import (
 func sameWebConfig(a, b driver.WebConfig) bool {
 	return a.Source == b.Source && a.InjectedJavaScript == b.InjectedJavaScript &&
 		a.InjectedJavaScriptBeforeContent == b.InjectedJavaScriptBeforeContent &&
-		a.UserAgent == b.UserAgent && maps.Equal(a.Headers, b.Headers) &&
+		a.UserAgent == b.UserAgent && maps.Equal(a.Headers, b.Headers) && a.Incognito == b.Incognito &&
 		a.NoScroll == b.NoScroll && a.NoJavaScript == b.NoJavaScript &&
 		a.BackForwardGestures == b.BackForwardGestures && a.DownloadDir == b.DownloadDir &&
 		a.Restricted == b.Restricted && a.Hosts == b.Hosts

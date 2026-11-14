@@ -43,6 +43,8 @@ var (
 	iidAgileObject                    = parseGUID("94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90")
 	iidEnvironment                    = parseGUID("b96d755e-0319-4e92-a296-23436f46a1fc")
 	iidEnvironment3                   = parseGUID("80a22ae3-be7c-4ce2-afe1-5a50056cdeeb")
+	iidEnvironment10                  = parseGUID("ee0eb9df-6f12-46ce-b53f-3f47b9c928e0")
+	iidControllerOptions              = parseGUID("12aae616-8ccb-44ec-bcb3-eb1831881635")
 	iidController                     = parseGUID("4d00c0d1-9434-4eb6-8078-8697a560334f")
 	iidController2                    = parseGUID("c979903e-d4ca-4228-92eb-47ee3fa96eab")
 	iidController3                    = parseGUID("f9614724-5d2b-41dc-aef7-73d62b51543b")
@@ -76,6 +78,8 @@ const (
 	envCreateWebResourceResponse   = 4
 	envCreateCompositionController = 9
 	envCreatePointerInfo           = 10
+	env10CreateCompositionWithOpts = 20
+	env10CreateControllerOptions   = 21
 
 	// ICoreWebView2CompositionController
 	compPutRootVisualTarget = 4
@@ -97,6 +101,9 @@ const (
 	controllerPutDefaultBackgroundColor          = 27
 	controllerPutRasterizationScale              = 29
 	controllerPutShouldDetectMonitorScaleChanges = 31
+
+	// ICoreWebView2ControllerOptions.
+	controllerOptionsPutIsInPrivateModeEnabled = 4
 
 	// ICoreWebView2
 	webGetSettings                   = 3
@@ -250,6 +257,7 @@ type pointerPenInfo struct {
 const (
 	sOK             = 0
 	eNoInterface    = 0x80004002
+	eFail           = 0x80004005
 	rpcEChangedMode = 0x80010106
 )
 

@@ -54,7 +54,10 @@ type WebConfig struct {
 	UserAgent                       string
 	// Headers are sent with the initial URL request where the platform
 	// supports custom request headers. HTML sources do not make one.
-	Headers             map[string]string
+	Headers map[string]string
+	// Incognito keeps website data in memory for this view. Platforms read
+	// this when the native view is first made.
+	Incognito           bool
 	NoScroll            bool
 	NoJavaScript        bool
 	BackForwardGestures bool

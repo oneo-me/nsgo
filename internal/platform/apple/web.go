@@ -250,6 +250,10 @@ func (w *Web) Configure(c *driver.WebConfig) {
 func (w *Web) make() {
 	loadWebKit()
 	config := objc.ID(Class("WKWebViewConfiguration")).Send(sel("new"))
+	if w.config.Incognito {
+		store := objc.ID(Class("WKWebsiteDataStore")).Send(sel("nonPersistentDataStore"))
+		config.Send(sel("setWebsiteDataStore:"), store)
+	}
 	w.handler = objc.ID(classWebHandler).Send(sel("new"))
 	webHandlers[w.handler] = w
 	config.Send(sel("userContentController")).Send(sel("addScriptMessageHandler:name:"), w.handler, NSString(messageHandler))

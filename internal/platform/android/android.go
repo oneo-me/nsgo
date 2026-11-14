@@ -1333,7 +1333,7 @@ func encode(w *writer, b *driver.MountBatch, first bool, requests []uint32, nati
 			// The bridge comes first, so the app's script can post.
 			w.str(webBridge + "\n" + c.InjectedJavaScriptBeforeContent)
 			w.str(c.UserAgent)
-			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted) // Android has no back and forward swipes
+			w.flags(c.NoScroll, c.NoJavaScript, c.Restricted, c.Incognito) // Android has no back and forward swipes
 			w.str(c.Hosts)
 			w.str(c.DownloadDir)
 			w.u32(uint32(len(c.Headers)))

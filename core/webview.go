@@ -29,6 +29,9 @@ type WebView struct {
 	// Headers are sent with the initial URL request where the platform
 	// supports custom request headers. HTML sources do not make one.
 	Headers map[string]string
+	// Incognito keeps website data in memory for this view. It is read when
+	// the native view is first made; changing it afterwards has no effect.
+	Incognito bool
 	// NoScroll keeps the user from scrolling the page; NoJavaScript keeps
 	// pages from running scripts.
 	NoScroll     bool
@@ -113,7 +116,7 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 	n.web = &webNode{
 		config: driver.WebConfig{Source: w.Source, InjectedJavaScript: w.InjectedJavaScript,
 			InjectedJavaScriptBeforeContent: w.InjectedJavaScriptBeforeContent, UserAgent: w.UserAgent,
-			Headers:  cloneWebHeaders(w.Headers),
+			Headers: cloneWebHeaders(w.Headers), Incognito: w.Incognito,
 			NoScroll: w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
 		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,

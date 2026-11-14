@@ -203,7 +203,26 @@ func (wv *webView) environmentReady(env *comObject, err error) {
 		c.addRef()
 		wv.controllerReady(c)
 	})
-	if hr := env3.call(envCreateCompositionController, wv.w.hwnd, h.ptr()); failed(hr) {
+	create := func() uintptr {
+		if !wv.config.Incognito {
+			return env3.call(envCreateCompositionController, wv.w.hwnd, h.ptr())
+		}
+		env10 := env.query(&iidEnvironment10)
+		if env10 == nil {
+			return eNoInterface
+		}
+		defer env10.release()
+		var options *comObject
+		if failed(env10.call(env10CreateControllerOptions, uintptr(unsafe.Pointer(&options)))) || options == nil {
+			return eFail
+		}
+		defer options.release()
+		if failed(options.call(controllerOptionsPutIsInPrivateModeEnabled, boolArg(true))) {
+			return eFail
+		}
+		return env10.call(env10CreateCompositionWithOpts, wv.w.hwnd, uintptr(unsafe.Pointer(options)), h.ptr())
+	}
+	if hr := create(); failed(hr) {
 		h.release()
 		wv.unavailable()
 	}

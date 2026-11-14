@@ -80,6 +80,7 @@ final class WebNode {
     private String injected = "", injectedBefore = "", userAgent = "";
     private Map<String, String> headers = new HashMap<>();
     private boolean noScroll;
+    private boolean incognito;
     private String downloadDir = "";
     private volatile boolean destroyed;
     private static final AtomicLong DOWNLOAD_SERIAL = new AtomicLong();
@@ -297,6 +298,7 @@ final class WebNode {
         int flags = in.readUnsignedByte();
         boolean noScroll = Protocol.flag(flags, 0), noJavaScript = Protocol.flag(flags, 1);
         restricted = Protocol.flag(flags, 2);
+        boolean incognito = Protocol.flag(flags, 3);
         String hosts = Protocol.readString(in).trim();
         this.hosts = hosts.isEmpty() ? new String[0] : hosts.split(" +");
         this.downloadDir = Protocol.readString(in);
@@ -309,6 +311,7 @@ final class WebNode {
         boolean reload = !configured || !src.equals(this.src) || !html.equals(this.html)
                 || !baseURL.equals(this.baseURL) || !injected.equals(this.injected)
                 || !injectedBefore.equals(this.injectedBefore) || !headers.equals(this.headers);
+        boolean first = !configured;
         configured = true;
         this.src = src;
         this.html = html;
@@ -317,10 +320,16 @@ final class WebNode {
         this.injectedBefore = injectedBefore;
         this.headers = headers;
         this.noScroll = noScroll;
+        this.incognito = incognito;
 
         view.setVerticalScrollBarEnabled(!noScroll);
         view.setHorizontalScrollBarEnabled(!noScroll);
         WebSettings settings = view.getSettings();
+        if (first) {
+            settings.setCacheMode(incognito ? WebSettings.LOAD_NO_CACHE : WebSettings.LOAD_DEFAULT);
+            settings.setSaveFormData(!incognito);
+            settings.setDomStorageEnabled(!incognito);
+        }
         settings.setJavaScriptEnabled(!noJavaScript);
         if (!userAgent.equals(this.userAgent)) {
             this.userAgent = userAgent;
