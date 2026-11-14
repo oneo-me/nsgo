@@ -65,23 +65,42 @@ func HandleBiometric(it *driver.MountItem, dispatch func(driver.Event)) {
 	}
 	reason := NSString(it.Value)
 	block := objc.NewBlock(func(_ objc.Block, success bool, err objc.ID) {
+		// Read the error here, as it is gone by the time the main thread runs.
+		result := driver.BiometricFailure
+		if success {
+			result = driver.BiometricSuccess
+		} else if err != 0 {
+			result = biometricResult(objc.Send[int](err, sel("code")))
+		}
 		OnMain(func() {
-			result := driver.BiometricFailure
-			if success {
-				result = driver.BiometricSuccess
-			} else if err != 0 {
-				// LAErrorUserCancel, AppCancel and SystemCancel.
-				code := objc.Send[int](err, sel("code"))
-				if code == 2 || code == 3 || code == 4 {
-					result = driver.BiometricCancelled
-				} else if code == 6 || code == 7 || code == 8 {
-					result = driver.BiometricUnavailable
-				}
-			}
 			ctx.Send(selRelease)
 			dispatch(driver.Event{Kind: driver.EventBiometric, Count: id, Index: result})
 		})
 	})
 	ctx.Send(sel("evaluatePolicy:localizedReason:reply:"), 1, reason, block)
 	block.Release()
+}
+
+// LAError codes, from LocalAuthentication's LAPublicDefines.h.
+const (
+	laErrorUserCancel           = -2
+	laErrorUserFallback         = -3
+	laErrorSystemCancel         = -4
+	laErrorPasscodeNotSet       = -5
+	laErrorBiometryNotAvailable = -6
+	laErrorBiometryNotEnrolled  = -7
+	laErrorBiometryLockout      = -8
+	laErrorAppCancel            = -9
+	laErrorNotInteractive       = -1004
+)
+
+// biometricResult answers a failed evaluation by its LAError code: a cancel by the user, the system or the app, or a press of the fallback button, is a cancel; missing hardware, enrolment or passcode, a lockout and a context that cannot show a prompt are unavailable; anything else, such as a biometric that does not match, is a failure.
+func biometricResult(code int) int {
+	switch code {
+	case laErrorUserCancel, laErrorUserFallback, laErrorSystemCancel, laErrorAppCancel:
+		return driver.BiometricCancelled
+	case laErrorPasscodeNotSet, laErrorBiometryNotAvailable, laErrorBiometryNotEnrolled, laErrorBiometryLockout, laErrorNotInteractive:
+		return driver.BiometricUnavailable
+	}
+	return driver.BiometricFailure
 }
