@@ -777,6 +777,9 @@ func (w *window) windowFocus(focused bool) {
 	} else if w.kind == driver.SurfacePanel && w.hideOnBlur && w.visible && w.focused {
 		w.visible = false
 		showWindow.Call(w.hwnd, swHide)
+		if w.hostWindow != nil && w.anchor != 0 {
+			w.hostWindow.panelBlurred(w.anchor)
+		}
 		if w.engine != nil {
 			w.engine.Dispatch(driver.Event{Kind: driver.EventWindowHidden})
 		}

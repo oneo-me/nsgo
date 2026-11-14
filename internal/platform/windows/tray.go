@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"image/png"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -80,7 +81,12 @@ type trayIcon struct {
 	icon    uintptr
 	private bool
 	added   bool
+	// blurred is when a panel under it hid as it lost the focus to a press on the icon: the click that press ends does not show it again.
+	blurred time.Time
 }
+
+// blurClick is how long after a panel hid on blur the icon's next primary click is the one that hid it.
+const blurClick = 2 * time.Second
 
 func (w *window) applyTray(cfg driver.TrayConfig) {
 	tr := w.trays[cfg.ID]
@@ -188,6 +194,22 @@ func (w *window) readdTrays() {
 	}
 }
 
+// panelBlurred notes that a panel under icon id hid as it lost the focus. A press on the icon takes the focus before the shell reports the click it ends, which must not show the panel again; a press elsewhere is not marked, unless the shell does not say where the icon is.
+func (w *window) panelBlurred(id uint32) {
+	tr := w.trays[id]
+	if tr == nil {
+		return
+	}
+	if r, ok := w.trayRect(id); ok {
+		var at point
+		getCursorPos.Call(uintptr(unsafe.Pointer(&at)))
+		if at.X < r.Left || at.X >= r.Right || at.Y < r.Top || at.Y >= r.Bottom {
+			return
+		}
+	}
+	tr.blurred = time.Now()
+}
+
 // trayEvent decodes a version 4 callback: the icon's ID and the button, 0 for the primary, of a click; ok is false for what is not a click, the raw button messages that come before NIN_SELECT and WM_CONTEXTMENU among them.
 func trayEvent(lParam uintptr) (id uint32, index int, ok bool) {
 	id = uint32(lParam>>16) & 0xffff
@@ -208,6 +230,13 @@ func (w *window) trayMessage(lParam uintptr) {
 	tr := w.trays[id]
 	if tr == nil {
 		return
+	}
+	if index == 0 && !tr.blurred.IsZero() {
+		blurred := time.Since(tr.blurred) < blurClick
+		tr.blurred = time.Time{}
+		if blurred {
+			return
+		}
 	}
 	w.engine.Dispatch(driver.Event{Kind: driver.EventTray, Count: id, Index: index})
 }

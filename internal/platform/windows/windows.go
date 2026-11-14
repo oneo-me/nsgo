@@ -340,6 +340,8 @@ type window struct {
 	hideOnBlur bool
 	visible    bool
 	focused    bool
+	// anchor is the tray icon a panel last showed under, 0 for none.
+	anchor uint32
 	// language is what the menus say (driver.ItemDirection).
 	language string
 	// rtl is the app's direction (driver.ItemDirection), which the menus
