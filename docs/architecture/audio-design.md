@@ -48,11 +48,7 @@ metadata is ready; `OnProgress` reports a monotonic position and the final
 duration once it is known. Seeking before metadata is ready is queued and
 applied when the decoder can seek.
 
-Callbacks are serialized on the package's callback queue. They never run on a
-platform audio thread and never hold a platform lock while calling app code.
-`Close` prevents later callbacks, waits only for the callback queue to forget
-the player, and does not block on a decoder or device teardown from the app's
-engine goroutine.
+Callbacks are serialized on the package's callback queue. They never run on a platform audio thread and never hold a platform lock while calling app code. `Close` prevents later callbacks, waits only for the callback queue to forget the player, and does not block on a decoder or device teardown from the app's engine goroutine. On macOS and iOS, `AVAudioPlayer` reports the end of playback and decoding errors only to its delegate, on the main thread's run loop, which an app runs; the backend hands them off that thread at once.
 
 ## Errors and sessions
 

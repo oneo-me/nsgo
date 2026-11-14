@@ -3,6 +3,7 @@
 package audio
 
 import (
+	"fmt"
 	"sync"
 	"time"
 	"unsafe"
@@ -17,17 +18,97 @@ import (
 type appleBackend struct{}
 
 var appleFramework struct {
-	once sync.Once
-	err  error
+	once     sync.Once
+	err      error
+	delegate objc.ID
+}
+
+// appleDelegates maps each open AVAudioPlayer to what its delegate reports
+// to. AVAudioPlayer posts no notifications: it reports the end of playback
+// and decoding errors only to its delegate, which one shared object of the
+// class registered in loadAppleAudio stands for. A player leaves the map
+// before it is released, so a report arriving late reaches nothing.
+var appleDelegates struct {
+	sync.Mutex
+	players map[objc.ID]appleEvents
+}
+
+// appleEvents are what an AVAudioPlayer's delegate reports: the end of
+// playback, ok when it was not cut short by a decoding error, and a
+// decoding error.
+type appleEvents struct {
+	finished func(ok bool)
+	failed   func(error)
 }
 
 func init() { targetBackend = appleBackend{} }
 
 func loadAppleAudio() error {
 	appleFramework.once.Do(func() {
-		_, appleFramework.err = purego.Dlopen("/System/Library/Frameworks/AVFoundation.framework/AVFoundation", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if _, err := purego.Dlopen("/System/Library/Frameworks/AVFoundation.framework/AVFoundation", purego.RTLD_NOW|purego.RTLD_GLOBAL); err != nil {
+			appleFramework.err = err
+			return
+		}
+		var protocols []*objc.Protocol
+		if protocol := objc.GetProtocol("AVAudioPlayerDelegate"); protocol != nil {
+			protocols = append(protocols, protocol)
+		}
+		class, err := objc.RegisterClass("NSGoAudioPlayerDelegate", objc.GetClass("NSObject"), protocols, []objc.FieldDef{}, []objc.MethodDef{
+			{Cmd: appleSel("audioPlayerDidFinishPlaying:successfully:"), Fn: func(_ objc.ID, _ objc.SEL, player objc.ID, ok bool) {
+				appleReport(player, func(events appleEvents) { events.finished(ok) })
+			}},
+			{Cmd: appleSel("audioPlayerDecodeErrorDidOccur:error:"), Fn: func(_ objc.ID, _ objc.SEL, player objc.ID, nsError objc.ID) {
+				err := fmt.Errorf("%w: decoding failed", ErrUnsupportedFormat)
+				if detail := appleErrorText(nsError); detail != "" {
+					err = fmt.Errorf("%w: %s", ErrUnsupportedFormat, detail)
+				}
+				appleReport(player, func(events appleEvents) { events.failed(err) })
+			}},
+		})
+		if err != nil {
+			appleFramework.err = err
+			return
+		}
+		// The delegate property is weak; this object is never released.
+		appleFramework.delegate = objc.ID(class).Send(appleSel("new"))
+		appleDelegates.players = map[objc.ID]appleEvents{}
 	})
 	return appleFramework.err
+}
+
+// appleWatch makes the shared delegate report player's events to events.
+func appleWatch(player objc.ID, events appleEvents) {
+	appleDelegates.Lock()
+	appleDelegates.players[player] = events
+	appleDelegates.Unlock()
+	player.Send(appleSel("setDelegate:"), appleFramework.delegate)
+}
+
+// appleUnwatch stops reporting player's events; reports already on their
+// way are dropped.
+func appleUnwatch(player objc.ID) {
+	appleDelegates.Lock()
+	delete(appleDelegates.players, player)
+	appleDelegates.Unlock()
+}
+
+// appleReport hands a delegate report to player's events off the thread
+// AVAudioPlayer reports on, the main thread, so a backend's lock or the
+// callback queue never holds it up.
+func appleReport(player objc.ID, report func(appleEvents)) {
+	appleDelegates.Lock()
+	events, ok := appleDelegates.players[player]
+	appleDelegates.Unlock()
+	if ok {
+		go report(events)
+	}
+}
+
+// appleRelease detaches player from the delegate, stops it and releases it.
+func appleRelease(player objc.ID) {
+	player.Send(appleSel("setDelegate:"), objc.ID(0))
+	objc.Send[bool](player, appleSel("stop"))
+	player.Send(appleSel("release"))
 }
 
 func (appleBackend) openSound(src source, options Options, ended func()) (soundBackend, error) {
@@ -41,11 +122,14 @@ func (appleBackend) openSound(src source, options Options, ended func()) (soundB
 		return nil, err
 	}
 	sound := &appleSound{player: player}
-	sound.endToken = observeAppleEnd(player, func() {
+	// A cue ends, as far as its app is concerned, whether it played to the
+	// end or a decoding error cut it short; Sound reports the end once.
+	end := func() {
 		if ended != nil {
 			ended()
 		}
-	})
+	}
+	appleWatch(player, appleEvents{finished: func(bool) { end() }, failed: func(error) { end() }})
 	if !objc.Send[bool](player, appleSel("play")) {
 		sound.close()
 		return nil, ErrDeviceUnavailable
@@ -62,7 +146,7 @@ func (appleBackend) openPlayer(src source, options Options, callbacks playerCall
 		return nil, err
 	}
 	result := &applePlayer{player: player, options: options, callbacks: callbacks}
-	result.endToken = observeAppleEnd(player, result.ended)
+	appleWatch(player, appleEvents{finished: result.finished, failed: result.failed})
 	return result, nil
 }
 
@@ -99,10 +183,9 @@ func newApplePlayer(src source, options Options) (objc.ID, error) {
 }
 
 type appleSound struct {
-	mu       sync.Mutex
-	player   objc.ID
-	endToken objc.ID
-	closed   bool
+	mu     sync.Mutex
+	player objc.ID
+	closed bool
 }
 
 func (sound *appleSound) setVolume(volume float64) error {
@@ -132,13 +215,12 @@ func (sound *appleSound) close() error {
 		return nil
 	}
 	sound.closed = true
-	player, token := sound.player, sound.endToken
-	sound.player, sound.endToken = 0, 0
+	player := sound.player
+	sound.player = 0
 	sound.mu.Unlock()
-	removeAppleEnd(token)
 	if player != 0 {
-		objc.Send[bool](player, appleSel("stop"))
-		player.Send(appleSel("release"))
+		appleUnwatch(player)
+		appleRelease(player)
 	}
 	return nil
 }
@@ -146,7 +228,6 @@ func (sound *appleSound) close() error {
 type applePlayer struct {
 	mu        sync.Mutex
 	player    objc.ID
-	endToken  objc.ID
 	options   Options
 	callbacks playerCallbacks
 	closed    bool
@@ -279,21 +360,46 @@ func (player *applePlayer) close() error {
 	}
 	player.closed = true
 	player.stopProgressLocked()
-	playerID, token, done := player.player, player.endToken, player.tickDone
-	player.player, player.endToken = 0, 0
+	playerID, done := player.player, player.tickDone
+	player.player = 0
 	player.mu.Unlock()
-	removeAppleEnd(token)
+	if playerID != 0 {
+		appleUnwatch(playerID)
+	}
 	if done != nil {
 		<-done
 	}
 	if playerID != 0 {
-		objc.Send[bool](playerID, appleSel("stop"))
-		playerID.Send(appleSel("release"))
+		appleRelease(playerID)
 	}
 	return nil
 }
 
-func (player *applePlayer) ended() {
+// finished reports the end of playback: the final position, then the end,
+// or an error when a decoding error cut playback short.
+func (player *applePlayer) finished(ok bool) {
+	player.mu.Lock()
+	if player.closed {
+		player.mu.Unlock()
+		return
+	}
+	player.stopProgressLocked()
+	if ok && player.callbacks.progress != nil {
+		duration := time.Duration(objc.Send[float64](player.player, appleSel("duration")) * float64(time.Second))
+		player.callbacks.progress(duration, duration)
+	}
+	player.mu.Unlock()
+	if !ok {
+		player.failed(fmt.Errorf("%w: decoding stopped playback", ErrUnsupportedFormat))
+		return
+	}
+	if player.callbacks.end != nil {
+		player.callbacks.end()
+	}
+}
+
+// failed reports a decoding error, which stops playback.
+func (player *applePlayer) failed(err error) {
 	player.mu.Lock()
 	if player.closed {
 		player.mu.Unlock()
@@ -301,8 +407,8 @@ func (player *applePlayer) ended() {
 	}
 	player.stopProgressLocked()
 	player.mu.Unlock()
-	if player.callbacks.end != nil {
-		player.callbacks.end()
+	if player.callbacks.err != nil {
+		player.callbacks.err(err)
 	}
 }
 
@@ -314,6 +420,13 @@ func (player *applePlayer) progressLoop(stop <-chan struct{}, done chan<- struct
 		select {
 		case <-ticker.C:
 			player.mu.Lock()
+			select {
+			case <-stop:
+				// Playback ended or paused while this tick waited for the lock.
+				player.mu.Unlock()
+				return
+			default:
+			}
 			if player.closed {
 				player.mu.Unlock()
 				return
@@ -339,24 +452,23 @@ func (player *applePlayer) stopProgressLocked() {
 	player.ticking = false
 }
 
-func observeAppleEnd(player objc.ID, callback func()) objc.ID {
-	block := objc.NewBlock(func(objc.Block, objc.ID) { callback() })
-	center := objc.ID(objc.GetClass("NSNotificationCenter")).Send(appleSel("defaultCenter"))
-	token := center.Send(appleSel("addObserverForName:object:queue:usingBlock:"),
-		appleNSString("AVAudioPlayerDidFinishPlayingNotification"), player, objc.ID(0), block)
-	block.Release()
-	return token.Send(appleSel("retain"))
-}
-
-func removeAppleEnd(token objc.ID) {
-	if token == 0 {
-		return
-	}
-	objc.ID(objc.GetClass("NSNotificationCenter")).Send(appleSel("defaultCenter")).Send(appleSel("removeObserver:"), token)
-	token.Send(appleSel("release"))
-}
-
 func appleSel(name string) objc.SEL { return objc.RegisterName(name) }
+
+// appleErrorText returns an NSError's localized description, or "" for nil.
+func appleErrorText(nsError objc.ID) string {
+	if nsError == 0 {
+		return ""
+	}
+	text := objc.Send[*byte](nsError.Send(appleSel("localizedDescription")), appleSel("UTF8String"))
+	if text == nil {
+		return ""
+	}
+	n := 0
+	for *(*byte)(unsafe.Add(unsafe.Pointer(text), n)) != 0 {
+		n++
+	}
+	return string(unsafe.Slice(text, n))
+}
 
 func appleNSString(value string) objc.ID {
 	bytes := append([]byte(value), 0)
