@@ -57,6 +57,10 @@ func init() {
 type Options struct {
 	Title         string
 	Width, Height driver.Points
+	// Hidden keeps the backend's root window off the screen as the app's
+	// own surface (nsgo.Run(App)), which opens the windows the app shows
+	// and shows only as an alert's window.
+	Hidden bool
 	// Frame is where the window opens (nsgo.WindowFrame).
 	Frame driver.WindowFrame
 	// ID names the app's directories and storage (engine.AppDirs).
