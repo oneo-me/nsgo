@@ -9,7 +9,12 @@ The first target is iOS. Other Apple targets report unavailable until they have 
 
 ## Video PiP
 
-The video path takes a `core.Video` or an explicit video handle and asks its `AVPlayerViewController` to enter PiP. The player must be configured for PiP before the view appears, and the app must declare the playback/background intent that the system requires. The backend reports whether PiP is supported, started, paused, stopped or failed; calling start while it is already active is idempotent.
+The video path takes a `core.Video` or an explicit video handle, and what starts its PiP depends on how `internal/platform/apple/video.go` shows it:
+
+- a video without `Controls` shows its `AVPlayer` in an `AVPlayerLayer`, so the backend makes an `AVPictureInPictureController` with `initWithPlayerLayer:` and starts and stops it from code with `startPictureInPicture` and `stopPictureInPicture`;
+- a video with `Controls` shows an `AVPlayerViewController`, which has no start or stop of its own and does not expose its layer: the user starts PiP with its button, which `allowsPictureInPicturePlayback` shows, and the controller's delegate reports it. Starting it from code would need a second `AVPlayerLayer` on the same player, an open decision; until then a start from code reports it unsupported.
+
+The player must be configured for PiP before the view appears, and the app must declare the playback/background intent that the system requires. The backend reports whether PiP is supported (`isPictureInPictureSupported`), possible (`pictureInPicturePossible`, which changes as the player becomes ready), started, stopped or failed with the delegate's error; calling start while it is already active is idempotent, and a start while it is not possible reports a failure rather than waiting.
 
 The player remains the owner of timing, buffering, subtitles, controls and audio focus. PiP does not copy frames into Go. When the app's view is detached, the player and its audio session remain alive while the PiP controller owns them; closing the video or its scope ends PiP and releases the player. A notification press or app relaunch may restore the app's own model, but NSGo does not persist a video URL or playback position for it.
 
@@ -53,3 +58,4 @@ These decisions need confirmation before an implementation chooses them:
 3. Is the public entry point a `mobile` service, a `core.Video` method, or a new `core` session type?
 4. Which iOS versions and background entitlements are supported for each path?
 5. Should PiP control callbacks expose seek/skip commands, or only play and pause initially?
+6. Does a video with `Controls` start PiP from code through a second `AVPlayerLayer` on its player, or only by its button?
