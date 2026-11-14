@@ -409,8 +409,9 @@ func globalHotKeyResponse(conn, sender, path, iface, signal, params, data uintpt
 			return
 		}
 		state.session = session
+		// The portal emits Activated on its own object, naming the session in the first argument.
 		state.activatedSub = gDBusConnectionSignalSubscribe(state.bus, cstr(globalShortcutName), cstr(globalShortcutIface), cstr("Activated"),
-			cstr(session), nil, 0, cbGlobalHotKeyActivated, w.handle, 0)
+			cstr(globalShortcutPath), nil, 0, cbGlobalHotKeyActivated, w.handle, 0)
 		if state.activatedSub == 0 {
 			w.closeHotKeys()
 			return
@@ -450,9 +451,13 @@ func globalHotKeyResponse(conn, sender, path, iface, signal, params, data uintpt
 	}
 }
 
+// globalHotKeyActivated hears the portal's Activated(o session_handle, s shortcut_id, t timestamp, a{sv} options).
 func globalHotKeyActivated(conn, sender, path, iface, signal, params, data uintptr) {
 	w := windowOf(data)
-	if w == nil || w.closing || w.engine == nil || w.hotKeys == nil || goString(path) != w.hotKeys.session || gVariantNChildren(params) < 2 {
+	if w == nil || w.closing || w.engine == nil || w.hotKeys == nil || w.hotKeys.session == "" || gVariantNChildren(params) < 2 {
+		return
+	}
+	if portalTupleText(params, 0) != w.hotKeys.session {
 		return
 	}
 	id := portalTupleText(params, 1)
