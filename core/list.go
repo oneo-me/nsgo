@@ -242,7 +242,9 @@ type listNode struct {
 	extras [3]*node
 	st     listState
 	count  *Signal[int]
-	keys   []any
+	// guard is the computation that follows Count and Key and frees and binds cells for them: what runs in a cell waits for it.
+	guard *computation
+	keys  []any
 	// byIndex holds the cells bound to rows; free the others, hidden.
 	byIndex map[int]*listCell
 	free    []*listCell
@@ -432,7 +434,8 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 			t.relayout(v)
 		})
 	}
-	cx.renderEffect(func() {
+	ln.guard = newComputation(cx.current(), renderEffect, nil)
+	ln.guard.effect = func() {
 		n := max(l.Count(), 0)
 		if l.Key != nil {
 			keys := make([]any, n)
@@ -450,7 +453,8 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		}
 		ln.count.Set(n)
 		t.relayout(v)
-	})
+	}
+	ln.guard.run()
 	t.lists = append(t.lists, v)
 }
 
@@ -469,7 +473,7 @@ func (t *Tree) spliceList(ln *listNode, at, removed, inserted int) {
 			c.pos.index.Set(c.index)
 			ln.byIndex[c.index] = c
 		default:
-			ln.free = append(ln.free, c)
+			ln.spare(c)
 		}
 	}
 	ln.loadAt = -1
@@ -496,12 +500,26 @@ func (t *Tree) loadMore(ln *listNode, v *node) {
 	}
 }
 
+// spare makes c a spare cell: what runs in it waits until it shows a row again.
+func (ln *listNode) spare(c *listCell) {
+	c.scope.park.parked = true
+	ln.free = append(ln.free, c)
+}
+
+// reuse makes spare cell c show row i, running what waited in it with i in one batch.
+func (ln *listNode) reuse(c *listCell, i int) {
+	c.scope.Batch(func() {
+		c.scope.rt.unpark(c.scope.park)
+		c.pos.index.Set(i)
+	})
+}
+
 // freeFrom frees the cells of rows count and after.
 func (ln *listNode) freeFrom(count int) {
 	for i, c := range ln.byIndex {
 		if i >= count {
 			delete(ln.byIndex, i)
-			ln.free = append(ln.free, c)
+			ln.spare(c)
 		}
 	}
 }
@@ -714,7 +732,7 @@ func (t *Tree) updateList(v *node) bool {
 	for i, c := range ln.byIndex {
 		if !wanted(i) {
 			delete(ln.byIndex, i)
-			ln.free = append(ln.free, c)
+			ln.spare(c)
 		}
 	}
 	bind := func(i int) {
@@ -725,7 +743,7 @@ func (t *Tree) updateList(v *node) bool {
 		var c *listCell
 		if k := len(ln.free); k > 0 {
 			c, ln.free = ln.free[k-1], ln.free[:k-1]
-			c.pos.index.Set(i)
+			ln.reuse(c, i)
 		} else {
 			c = t.newCell(ln, i)
 		}
@@ -1018,6 +1036,7 @@ func (t *Tree) setSpacer(ln *listNode, total Points) {
 func (t *Tree) newCell(ln *listNode, i int) *listCell {
 	c := &listCell{scope: &Scope{}, index: i}
 	ln.owner.adopt(c.scope)
+	c.scope.park = &parking{guard: ln.guard}
 	c.pos = ListRow{index: NewSignal(c.scope, i), count: NewSignal(c.scope, ln.count.GetUntracked())}
 	t.within(c.scope, func() {
 		c.node = t.newNode(driver.KindView, ln.cells, c.scope)
