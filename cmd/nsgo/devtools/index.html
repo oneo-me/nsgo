@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSGo DevTools</title>
+<link rel="stylesheet" href="devtools.css">
+</head>
+<body>
+<header>
+  <strong>NSGo DevTools</strong>
+  <span id="status" class="status off" title="Connection to the app">disconnected</span>
+  <label>Window <select id="surface"></select></label>
+  <button id="pick" title="Choose a view on the device">Pick</button>
+  <label title="Outline what each commit changed"><input type="checkbox" id="highlight"> Highlight updates</label>
+  <span class="spacer"></span>
+  <label>Open in <select id="editor">
+    <option value="vscode">VS Code</option>
+    <option value="cursor">Cursor</option>
+    <option value="zed">Zed</option>
+    <option value="">None</option>
+  </select></label>
+</header>
+<nav id="tabs">
+  <button data-tab="elements" class="active">Elements</button>
+  <button data-tab="state">State</button>
+  <button data-tab="profiler">Profiler</button>
+  <button data-tab="recorder">Recorder</button>
+</nav>
+<main>
+  <section id="elements" class="tab active">
+    <div class="split">
+      <div class="pane"><div class="toolbar"><input id="element-filter" placeholder="Filter by kind, test ID or text"><label><input type="checkbox" id="elements-live" checked> Live</label></div><div id="element-tree" class="tree"></div></div>
+      <div class="pane details" id="element-details"><p class="hint">Hover a row to outline its view on the device, or press Pick and choose one there.</p></div>
+    </div>
+  </section>
+  <section id="state" class="tab">
+    <div class="toolbar"><input id="state-filter" placeholder="Filter by name, file, type or value"><label title="Values NSGo made for itself, such as the environment's"><input type="checkbox" id="state-own"> NSGo's own</label><label><input type="checkbox" id="state-live" checked> Live</label></div>
+    <div id="owner-tree" class="tree"></div>
+  </section>
+  <section id="profiler" class="tab">
+    <div class="split">
+      <div class="pane"><div class="toolbar"><strong>Commits</strong><button id="commits-pause">Pause</button><button id="commits-clear">Clear</button></div><div id="commits" class="list"></div></div>
+      <div class="pane"><div class="toolbar"><strong>Computations that ran in the last second</strong></div><div id="hot" class="list"></div></div>
+    </div>
+  </section>
+  <section id="recorder" class="tab">
+    <div class="toolbar"><button id="record">Record</button><button id="steps-clear">Clear</button><button id="copy-test">Copy test</button><span class="hint">Press, type and clear on the device; steps become an nsgotest test.</span></div>
+    <pre id="test-code" class="code"></pre>
+  </section>
+</main>
+<script src="devtools.js"></script>
+</body>
+</html>

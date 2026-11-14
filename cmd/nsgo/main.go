@@ -54,7 +54,7 @@ func main() {
 		var p *project
 		if p, err = load(fs.Arg(0)); err == nil {
 			f.apply(p)
-			err = dev(ctx, p, devOptions{apply: f.apply, port: f.port, open: f.open, device: f.device, team: f.team, release: f.release, trace: f.trace, highlight: f.highlight, fps: f.fps, lang: f.lang, clip: f.clip})
+			err = dev(ctx, p, devOptions{apply: f.apply, port: f.port, open: f.open, device: f.device, team: f.team, release: f.release, trace: f.trace, highlight: f.highlight, devtools: f.devtools, fps: f.fps, lang: f.lang, clip: f.clip})
 		}
 	case "init":
 		fs := flag.NewFlagSet("init", flag.ExitOnError)

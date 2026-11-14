@@ -103,6 +103,7 @@ type devFlags struct {
 	release   bool
 	trace     bool
 	highlight bool
+	devtools  bool
 	lang      string
 	clip      string
 	limits    limitsFlag
@@ -143,6 +144,7 @@ func bindDevFlags(fs *flag.FlagSet) *devFlags {
 	fs.BoolVar(&f.release, "release", false, "build stripped release binaries, as nsgo build does, for measuring with -fps")
 	fs.BoolVar(&f.trace, "trace", false, "print each commit's time, mount items and the writes that caused it from the running app")
 	fs.BoolVar(&f.highlight, "highlight", false, "outline for a moment each view a commit of the running app changed")
+	fs.BoolVar(&f.devtools, "devtools", false, "open DevTools in the browser: the running app's views, state, profiler and a test recorder")
 	fs.StringVar(&f.lang, "lang", "", "start the app with --nsgo-lang, in this `locale`, as de or zh-Hant, or a pseudo locale: en-XA accents and lengthens its messages, ar-XB mirrors them")
 	fs.StringVar(&f.team, "team", "", "the Apple developer `team` the iOS target signs with (default: the team Xcode last used)")
 	fs.StringVar(&f.clip, "clip", "", "with -target ios or ios_simulator, run nsgo.yaml's App Clip alone, opened from this `url`, in place of the app")

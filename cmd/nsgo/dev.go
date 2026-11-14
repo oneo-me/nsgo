@@ -46,6 +46,7 @@ type devOptions struct {
 	release   bool   // build as nsgo build does, for measuring
 	trace     bool   // print the running app's commits
 	highlight bool   // outline what the running app's commits changed
+	devtools  bool   // open DevTools for the running app
 	fps       bool   // show the performance monitor: --nsgo-fps
 	lang      string // the locale to run the app in: --nsgo-lang
 	clip      string // the URL the App Clip opens from, run in the app's place
@@ -75,6 +76,14 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 	stop := func() {}
 	defer func() { stop() }()
 	header(p.Name, p.Version, "dev "+p.Dev.Target)
+	if opts.devtools {
+		url := srv.url() + "/_nsgo/devtools/"
+		note("DevTools %s", link(url))
+		if opts.open {
+			name, args := openCommand(url)
+			exec.Command(name, args...).Start()
+		}
+	}
 	var exited chan error
 	first, hinted := true, false
 	for {
@@ -173,7 +182,7 @@ func dev(ctx context.Context, p *project, opts devOptions) error {
 // prepareDev sets what dev's builds carry: the dev client, -trace's
 // commits, -highlight's outlines and the dev icons; -release strips them as nsgo build does.
 func (p *project) prepareDev(opts devOptions) {
-	p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Highlight = opts.release, true, opts.trace, opts.highlight
+	p.Release, p.Dev.Client, p.Dev.Trace, p.Dev.Highlight, p.Dev.Devtools = opts.release, true, opts.trace, opts.highlight, opts.devtools
 	p.useDevIcons()
 }
 
@@ -301,6 +310,8 @@ type devServer struct {
 
 	mu      sync.Mutex
 	clients map[chan string]bool
+	// pages are the DevTools pages following the app's messages.
+	pages   map[chan string]bool
 	last    string // the last error event, for apps that connect later
 	files   string
 	bundles map[string]string // the latest TSX bundles, by entry
@@ -327,8 +338,9 @@ func startDevServer(port int) (*devServer, error) {
 		return nil, fmt.Errorf("no free port from %d: %w", port, err)
 	}
 	s := &devServer{port: ln.Addr().(*net.TCPAddr).Port, mux: http.NewServeMux(), reloads: make(chan struct{}, 1),
-		clients: map[chan string]bool{}}
+		clients: map[chan string]bool{}, pages: map[chan string]bool{}}
 	s.mux.HandleFunc("/_nsgo/events", s.events)
+	s.serveDevTools()
 	s.mux.HandleFunc("/_nsgo/bundle", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		code, ok := s.bundles[r.URL.Query().Get("entry")]
@@ -404,14 +416,15 @@ func (s *devServer) lanURLs() []string {
 }
 
 // send tells every client kind: "error" with a failed build's output,
-// "ok" once a build succeeds, "reload" for web pages to load it, and
-// "bundle" with a TSX entry whose new bundle /_nsgo/bundle serves.
+// "ok" once a build succeeds, "reload" for web pages to load it,
+// "bundle" with a TSX entry whose new bundle /_nsgo/bundle serves, and
+// "devtools" with a DevTools page's command for the app.
 func (s *devServer) send(kind, text string) {
 	msg := kind
 	switch kind {
 	case "error":
 		msg += " " + strconv.Quote(text)
-	case "bundle":
+	case "bundle", "devtools":
 		msg += " " + text
 	}
 	s.mu.Lock()

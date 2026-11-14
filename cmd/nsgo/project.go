@@ -77,6 +77,8 @@ type project struct {
 		Trace  bool `yaml:"-"`
 		// Highlight has the client outline what each commit changed: nsgo dev -highlight sets it.
 		Highlight bool `yaml:"-"`
+		// Devtools has the client serve DevTools: nsgo dev -devtools sets it.
+		Devtools bool `yaml:"-"`
 		// Limits runs a TSX app sandboxed, as tsx.View would, within
 		// these limits (tsx.ParseLimits) and its capabilities: nsgo dev
 		// -limits sets it.
@@ -421,6 +423,9 @@ func (p *project) ldflags(extra ...string) string {
 	}
 	if p.Dev.Client && p.Dev.Highlight {
 		flags += fmt.Sprintf(" -X %s.devHighlight=1", pkg)
+	}
+	if p.Dev.Client && p.Dev.Devtools {
+		flags += fmt.Sprintf(" -X %s.devDevtools=1", pkg)
 	}
 	if p.Dev.Client && p.Dev.Limits != "" {
 		flags += fmt.Sprintf(" -X '%s.devLimits=%s'", compilerPath, p.Dev.Limits)

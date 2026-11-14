@@ -42,9 +42,11 @@ func devApp(app App) App {
 	if devTrace == "1" {
 		traceTo(server)
 	}
-	if devHighlight == "1" {
-		inner := app
-		app = func(cx *core.Scope) core.Node { return core.Group{core.Func(inner), core.UpdateHighlights{}} }
+	if devDevtools == "1" {
+		startDevTools(server)
+	}
+	if devHighlight == "1" || devDevtools == "1" {
+		app = withDevOverlay(app, devHighlight == "1")
 	}
 	if page {
 		return app
