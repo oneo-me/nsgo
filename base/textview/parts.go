@@ -122,6 +122,9 @@ const (
 	PartFootnoteReference
 	// PartCustom is custom nodes shown as their content.
 	PartCustom
+	// PartSearch and PartSearchSelected style ordinary and selected find hits.
+	PartSearch
+	PartSearchSelected
 )
 
 // Styles are styles by part.
