@@ -78,7 +78,8 @@ What NSGo's issue [#49](https://github.com/nsgo-dev/nsgo/issues/49) asks for fol
 
 | Item | Reference | Done when |
 | --- | --- | --- |
-| Fold geometry | `androidx.window.extensions`' `WindowLayoutComponent` | A surface reports its regions and obstructions with its size in one resize, each obstruction's occlusion, separation and state apart, from a foldable Android emulator or device, while components choose any adaptive layout explicitly |
+| Fold geometry | `androidx.window.extensions`' `WindowLayoutComponent`; UIKit's `reservedRegionsOfKind:` and `UIHingeInteraction` (iOS 27.1) | A surface reports its regions and obstructions with its size in one resize, each obstruction's occlusion, separation and state apart, from a foldable Android emulator or device and an iOS 27.1 fold simulator or device, and the gallery has a page that splits on the hinge with a test on both, while components choose any adaptive layout explicitly |
+| iOS multitasking and `Info.plist` values | `UIRequiresFullScreen`, `UIApplicationSupportsMultipleScenes` | `apple.requires_full_screen` and `apple.multiple_scenes` set what `cmd/nsgo/ios.go` hardcodes to true and false, keeping those defaults, so an iPad build multitasks, and `apple.info` takes booleans, numbers, arrays and dictionaries as well as strings, so keys such as `CFBundleURLTypes` need no fork of the tool |
 
 ## Terminal
 
