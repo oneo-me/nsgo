@@ -38,15 +38,20 @@ var (
 	cbEntryFocus    uintptr
 	cbAlertChosen   uintptr
 
-	cbWebLoadChanged uintptr
-	cbWebLoadFailed  uintptr
-	cbWebPolicy      uintptr
-	cbWebMessage     uintptr
-	cbWebMap         uintptr
-	cbWebKey         uintptr
-	cbWebButton      uintptr
-	cbWebMotion      uintptr
-	cbWebScroll      uintptr
+	cbWebLoadChanged         uintptr
+	cbWebLoadFailed          uintptr
+	cbWebPolicy              uintptr
+	cbWebMessage             uintptr
+	cbWebMap                 uintptr
+	cbWebKey                 uintptr
+	cbWebButton              uintptr
+	cbWebMotion              uintptr
+	cbWebScroll              uintptr
+	cbWebDownloadStarted     uintptr
+	cbWebDownloadDestination uintptr
+	cbWebDownloadReceived    uintptr
+	cbWebDownloadFinished    uintptr
+	cbWebDownloadFailed      uintptr
 
 	cbShield           uintptr
 	cbViewClassInit    uintptr
@@ -117,6 +122,11 @@ func init() {
 	cbWebButton = newCallback(webButtonCallback)
 	cbWebMotion = newCallback(webMotionCallback)
 	cbWebScroll = newCallback(webScrollCallback)
+	cbWebDownloadStarted = newCallback(webDownloadStartedCallback)
+	cbWebDownloadDestination = newCallback(webDownloadDestinationCallback)
+	cbWebDownloadReceived = newCallback(webDownloadReceivedCallback)
+	cbWebDownloadFinished = newCallback(webDownloadFinishedCallback)
+	cbWebDownloadFailed = newCallback(webDownloadFailedCallback)
 
 	cbShield = newCallback(shieldCallback)
 	cbViewClassInit = newCallback(viewClassInitCallback)

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 
 	"github.com/ebitengine/purego"
@@ -25,6 +26,12 @@ var (
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
 	webkitNetworkSessionGetCookieManager func(uintptr) uintptr
+	webkitDownloadGetWebView             func(uintptr) uintptr
+	webkitDownloadGetRequest             func(uintptr) uintptr
+	webkitDownloadSetDestination         func(uintptr, *byte)
+	webkitDownloadGetDestination         func(uintptr) uintptr
+	webkitDownloadGetReceivedDataLength  func(uintptr) uint64
+	webkitDownloadCancel                 func(uintptr)
 	webkitCookieManagerSetPersistent     func(uintptr, *byte, int32)
 	webkitWebViewGetUserContentManager   func(uintptr) uintptr
 	webkitWebViewGetSettings             func(uintptr) uintptr
@@ -93,6 +100,12 @@ func bindWebKit(webkit, jsc uintptr) {
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
 	reg(&webkitNetworkSessionGetCookieManager, "webkit_network_session_get_cookie_manager")
+	reg(&webkitDownloadGetWebView, "webkit_download_get_web_view")
+	reg(&webkitDownloadGetRequest, "webkit_download_get_request")
+	reg(&webkitDownloadSetDestination, "webkit_download_set_destination")
+	reg(&webkitDownloadGetDestination, "webkit_download_get_destination")
+	reg(&webkitDownloadGetReceivedDataLength, "webkit_download_get_received_data_length")
+	reg(&webkitDownloadCancel, "webkit_download_cancel")
 	reg(&webkitCookieManagerSetPersistent, "webkit_cookie_manager_set_persistent_storage")
 	reg(&webkitWebViewGetUserContentManager, "webkit_web_view_get_user_content_manager")
 	reg(&webkitWebViewGetSettings, "webkit_web_view_get_settings")
@@ -169,6 +182,17 @@ type web struct {
 	background [4]float32   // WebKit's own, for views without an opaque one
 	pointer    driver.Point // where the pointer is in the page
 }
+
+type webDownload struct {
+	window *window
+	view   *view
+	item   driver.WebDownload
+}
+
+var (
+	webDownloads      = map[uintptr]*webDownload{}
+	webDownloadSerial uint64
+)
 
 // webWarned is the warning, once, that web views show a placeholder.
 var webWarned sync.Once
@@ -304,12 +328,14 @@ func (w *window) makeWeb(v *view) {
 // webSessions are the network sessions by app ID: one network process,
 // and one set of cookies and storage, serves every web view of an app.
 var webSessions = map[string]uintptr{}
+var webSessionHandles = map[uintptr]map[uintptr]struct{}{}
 
 // webSession returns the network session of w's app, which keeps
 // website data in $XDG_DATA_HOME/<app id>/webkit and its cache in
 // $XDG_CACHE_HOME/<app id>/webkit, with cookies in cookies.sqlite there.
 func (w *window) webSession() uintptr {
 	if s := webSessions[w.appID]; s != 0 {
+		webSessionHandles[s][w.handle] = struct{}{}
 		return s
 	}
 	data, cache := webFolders(w.appID)
@@ -317,12 +343,109 @@ func (w *window) webSession() uintptr {
 		log.Printf("nsgo: web view: %v", err)
 	}
 	s := webkitNetworkSessionNew(cstr(data), cstr(cache))
+	webSessionHandles[s] = map[uintptr]struct{}{w.handle: {}}
+	gSignalConnect(s, "download-started", cbWebDownloadStarted, s)
 	// Cookies outlive the app, as other website data does.
 	if cookies := webkitNetworkSessionGetCookieManager(s); cookies != 0 {
 		webkitCookieManagerSetPersistent(cookies, cstr(filepath.Join(data, "cookies.sqlite")), webkitCookieSQLite)
 	}
 	webSessions[w.appID] = s
 	return s
+}
+
+func webWindowForPage(session, page uintptr) (*window, *view) {
+	for handle := range webSessionHandles[session] {
+		w := windowOf(handle)
+		if w == nil || w.closing {
+			continue
+		}
+		if v := w.natives[page]; v != nil && v.web != nil {
+			return w, v
+		}
+	}
+	return nil, nil
+}
+
+func webDownloadStartedCallback(session, download, _ uintptr) {
+	page := webkitDownloadGetWebView(download)
+	w, v := webWindowForPage(session, page)
+	if w == nil || v == nil || v.web == nil || v.web.config.DownloadDir == "" {
+		webkitDownloadCancel(download)
+		return
+	}
+	webDownloadSerial++
+	id := strconv.FormatUint(webDownloadSerial, 36)
+	urlText := ""
+	if request := webkitDownloadGetRequest(download); request != 0 {
+		urlText = goString(webkitURIRequestGetURI(request))
+	}
+	dl := &webDownload{window: w, view: v, item: driver.WebDownload{State: driver.WebDownloadStarted, ID: id, URL: urlText}}
+	webDownloads[download] = dl
+	w.connect(v, download, "decide-destination", cbWebDownloadDestination)
+	w.connect(v, download, "received-data", cbWebDownloadReceived)
+	w.connect(v, download, "finished", cbWebDownloadFinished)
+	w.connect(v, download, "failed", cbWebDownloadFailed)
+}
+
+func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
+	dl := webDownloads[download]
+	if dl == nil {
+		return 0
+	}
+	name := webDownloadFilename(goString(suggested))
+	dir := filepath.Join(dl.view.web.config.DownloadDir, dl.item.ID)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		dl.item.State, dl.item.Message = driver.WebDownloadFailed, err.Error()
+		dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+		delete(webDownloads, download)
+		webkitDownloadCancel(download)
+		return 1
+	}
+	dl.item.Filename = name
+	dl.item.Path = filepath.Join(dir, name)
+	webkitDownloadSetDestination(download, cstr(dl.item.Path))
+	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	return 1
+}
+
+func webDownloadFilename(suggested string) string {
+	name := filepath.Base(suggested)
+	if name == "." || name == string(filepath.Separator) || name == "" {
+		return "download"
+	}
+	return name
+}
+
+func webDownloadReceivedCallback(download, _ uint64, _ uintptr) {
+	// WebKit reports progress through received-data; the public event model
+	// reports only started, finished and failed, as the Apple backend does.
+}
+
+func webDownloadFinishedCallback(download, data uintptr) {
+	dl := webDownloads[download]
+	if dl == nil {
+		return
+	}
+	dl.item.State = driver.WebDownloadFinished
+	dl.item.Bytes = int64(webkitDownloadGetReceivedDataLength(download))
+	if dest := webkitDownloadGetDestination(download); dest != 0 {
+		dl.item.Path = goString(dest)
+	}
+	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	delete(webDownloads, download)
+}
+
+func webDownloadFailedCallback(download, gerr, data uintptr) {
+	dl := webDownloads[download]
+	if dl == nil {
+		return
+	}
+	dl.item.State = driver.WebDownloadFailed
+	if gerr != 0 {
+		dl.item.Message = goString((*gError)(cPointer(gerr)).message)
+	}
+	dl.window.report(dl.view, driver.Event{Kind: driver.EventDownload, ID: dl.view.id, Data: &dl.item})
+	delete(webDownloads, download)
 }
 
 // webFolders are where web views of app id keep their data and cache.
