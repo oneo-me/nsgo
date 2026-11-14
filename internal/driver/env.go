@@ -1,6 +1,8 @@
 package driver
 
 import (
+	"reflect"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -8,6 +10,12 @@ import (
 // Environment is what the platform reports about where the app runs. The
 // surface size is not part of it: Tree.Resize reports that.
 type Environment struct {
+	// DisplayFeatures are folds, hinges, cutouts and system bars in window
+	// coordinates. Empty on targets without a foldable display.
+	DisplayFeatures []DisplayFeature
+	// ReservedRegions are areas occupied by a system feature and excluded
+	// from app content, in addition to SafeArea.
+	ReservedRegions []Bounds
 	// SafeArea is the part of each edge that system bars, notches and
 	// rounded corners cover.
 	SafeArea Edges
@@ -51,7 +59,7 @@ type Environment struct {
 	// LocaleSettings are how the user reads weeks, times and measures,
 	// apart from the language, where the platform says.
 	LocaleSettings LocaleSettings
-	OS     OS
+	OS             OS
 	// OSVersion is the system's version: major and minor on Apple
 	// platforms, Windows and Linux (the kernel's), Android's API level
 	// as Major, and zero on the web.
@@ -72,6 +80,43 @@ type Environment struct {
 	// link; "" when none did.
 	AppClip   bool
 	OpenedURL string
+}
+
+// Equal reports whether two environments carry the same platform state.
+// Slices are compared by value so Environment remains convenient to copy.
+func (e Environment) Equal(other Environment) bool {
+	a, b := e, other
+	features, regions := a.DisplayFeatures, a.ReservedRegions
+	otherFeatures, otherRegions := b.DisplayFeatures, b.ReservedRegions
+	a.DisplayFeatures, a.ReservedRegions = nil, nil
+	b.DisplayFeatures, b.ReservedRegions = nil, nil
+	return reflect.DeepEqual(a, b) && slices.Equal(features, otherFeatures) && slices.Equal(regions, otherRegions)
+}
+
+// DisplayFeatureKind describes a physical or system feature of a display.
+type DisplayFeatureKind uint8
+
+const (
+	DisplayFeatureFold DisplayFeatureKind = iota
+	DisplayFeatureHinge
+	DisplayFeatureCutout
+	DisplayFeatureBar
+)
+
+// DisplayFeatureState is the posture of a fold or hinge.
+type DisplayFeatureState uint8
+
+const (
+	DisplayFeatureFlat DisplayFeatureState = iota
+	DisplayFeatureHalfFolded
+	DisplayFeatureFolded
+)
+
+// DisplayFeature is a display feature in window coordinates.
+type DisplayFeature struct {
+	Kind   DisplayFeatureKind
+	State  DisplayFeatureState
+	Bounds Bounds
 }
 
 // LocaleSettings are the regional preferences the user set, in Intl's

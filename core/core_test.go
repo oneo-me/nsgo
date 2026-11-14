@@ -677,8 +677,10 @@ func TestEnvironment(t *testing.T) {
 	var darks []bool
 	var materials []WindowMaterial
 	var states []Lifecycle
+	var hinges []Bounds
 	h := newHost(t, Size{Width: 100, Height: 100}, func(cx *Scope) Node {
 		cx.Effect(func() { states = append(states, cx.Env().Lifecycle()) })
+		cx.Effect(func() { hinges = append(hinges, cx.Env().Hinge()) })
 		cx.Effect(func() { widths = append(widths, cx.Env().Window().Width) })
 		cx.Effect(func() { darks = append(darks, cx.Env().Dark()) })
 		cx.Effect(func() { materials = append(materials, cx.Env().WindowMaterial()) })
@@ -692,6 +694,11 @@ func TestEnvironment(t *testing.T) {
 	if !slices.Equal(widths, []Points{100, 200}) || !slices.Equal(darks, []bool{false, true}) ||
 		!slices.Equal(materials, []WindowMaterial{WindowMaterialNone, WindowMaterialSidebar}) {
 		t.Fatalf("widths %v, darks %v, materials %v", widths, darks, materials)
+	}
+	h.tree.SetEnvironment(Environment{Dark: true, FontScale: 2, WindowMaterial: WindowMaterialSidebar, DisplayFeatures: []DisplayFeature{{Kind: DisplayFeatureHinge, Bounds: Bounds{Origin: Point{X: 490}, Size: Size{Width: 20, Height: 100}}}}})
+	h.commit()
+	if len(hinges) == 0 || hinges[len(hinges)-1].Origin.X != 490 {
+		t.Fatalf("hinge %v", hinges)
 	}
 	if got := h.find("text").text.style.Font.Size; got != 20 {
 		t.Fatalf("font size = %v, want scaled to 20", got)

@@ -164,7 +164,7 @@ func osVersion(v string) driver.OSVersion {
 // theme or the keyboard changed.
 func (s *surface) changed() {
 	env := s.environment()
-	if env != s.env {
+	if !env.Equal(s.env) {
 		s.env = env
 		s.m.reduce = env.ReduceMotion
 		s.engine.SetEnvironment(env)
