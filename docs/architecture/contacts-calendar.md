@@ -28,7 +28,7 @@ The picker returns the provider ID and the fields the user chose. A query takes 
 
 Writing a contact is a separate operation from reading. It must say whether it creates a new record or applies a revision to an existing provider ID, and it must report conflicts instead of overwriting a newer edit silently. The first implementation may leave writes out if both platforms cannot provide the same conflict semantics; a picker and read-only API must not imply write support.
 
-Apple requests `CNAuthorizationStatus` and uses `requestAccessForEntityType:`. Android requests `READ_CONTACTS` for reads and `WRITE_CONTACTS` only for writes. A denied or limited grant returns no contact bytes. A package declares the permissions in YAML; code does not add them to a manifest implicitly.
+The permission reads as not asked, granted, limited, denied or restricted. Apple reads it with `CNContactStore`'s `authorizationStatusForEntityType:` and asks with `requestAccessForEntityType:completionHandler:`; Android asks for `READ_CONTACTS` for reads and `WRITE_CONTACTS` only for writes. Limited is iOS 18's `CNAuthorizationStatusLimited`: queries and reads see only the contacts the user shared, and one outside them is not found, not an error. Denied and restricted return no contact bytes. A package declares the usage description and permissions in YAML; code does not add them to a manifest implicitly.
 
 ## Calendar
 
@@ -48,7 +48,7 @@ The tool adds only the declarations an app requests: Apple usage descriptions an
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, conflicts and denied access;
+- headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, conflicts, limited and denied access;
 - `internal/driver` tests cover request IDs, empty versus absent fields, bounded results and large notes or payloads;
 - Apple tests use fake contact and event stores for limited access, picker results, authorization changes and stale records;
 - Android tests use fake `ContentResolver` providers for permission separation, cursors, account changes and revision conflicts; and
