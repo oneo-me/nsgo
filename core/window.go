@@ -448,9 +448,7 @@ type Tray struct {
 	removed bool
 }
 
-// NewTray is the core's part of desktop.NewTray, which apps use: it adds
-// a tray icon, the macOS menu bar's, the Windows notification area's or
-// Linux's StatusNotifierItem's, which the current owner keeps.
+// NewTray is the core's part of desktop.NewTray, which apps use: it adds a tray icon, the macOS menu bar's or the Windows notification area's, which the current owner keeps.
 func (cx *Scope) NewTray(opts TrayOptions) *Tray {
 	rt := cx.rt
 	if rt.windows == nil && !rt.tray {

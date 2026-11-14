@@ -56,12 +56,7 @@ type Main interface {
 
 // Run runs main and the platform's event loop. Call it from main.
 //
-// A root view shows in the app's main window, or fills the app on
-// phones and the web. The app's function runs once, in the app's own
-// scope, and opens what the app shows: on macOS its windows, panels and
-// tray icons (package desktop); everywhere the view SetMainView sets.
-// Where the platform opens no windows of the app's (Windows, Linux,
-// phones and the web) desktop.OpenWindow returns nil.
+// A root view shows in the app's main window, or fills the app on phones and the web. The app's function runs once, in the app's own scope, and opens what the app shows: on macOS and Windows its windows, panels and tray icons (package desktop); everywhere the view SetMainView sets. Where the platform opens no windows of the app's (Linux, phones, the web, and Windows for a root view) desktop.OpenWindow returns nil.
 //
 // On desktops Run returns once the app ends, by its shutdown mode
 // (desktop.SetShutdownMode), core.Scope.Quit or desktop.Restart, its
