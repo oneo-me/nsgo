@@ -62,7 +62,7 @@ func TestParseAppcast(t *testing.T) {
 	}
 	// The highest build with a link: the enclosure's older form, and its
 	// download where the item has no page.
-	want := Item{Version: "1.2", Build: "12", Link: "https://example.com/hello-1.2.deb"}
+	want := Item{Version: "1.2", Build: "12", Link: "https://example.com/hello-1.2.deb", Download: "https://example.com/hello-1.2.deb", Size: 10}
 	if item != want {
 		t.Errorf("ParseAppcast = %+v, want %+v", item, want)
 	}
@@ -87,7 +87,7 @@ func TestFind(t *testing.T) {
 	serve(t, 200, feed)
 	c := Config{App: "Hello", Version: "1.1", Build: "11", Feed: "https://example.com/appcast-linux_x64.xml"}
 	got := Find(context.Background(), c)
-	want := driver.Update{App: "Hello", Current: "1.1", Version: "1.2", URL: "https://example.com/hello-1.2.deb"}
+	want := driver.Update{App: "Hello", Current: "1.1", Version: "1.2", URL: "https://example.com/hello-1.2.deb", Download: "https://example.com/hello-1.2.deb", Size: 10}
 	if got != want {
 		t.Errorf("Find = %+v, want %+v", got, want)
 	}

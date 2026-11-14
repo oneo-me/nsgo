@@ -489,7 +489,7 @@ func (p *project) writeAppcast(target, installer string) error {
 		return err
 	}
 	item := appcastItem{name: name, version: p.Version, build: p.BundleVersion(), page: p.releasePage(),
-		url: p.downloadURL(filepath.Base(installer)), os: system, length: len(data), published: time.Now()}
+		url: p.downloadURL(filepath.Base(installer)), os: system, length: len(data), sha256: fmt.Sprintf("%x", sha256.Sum256(data)), published: time.Now()}
 	if key != nil {
 		item.signature = base64.StdEncoding.EncodeToString(ed25519.Sign(key, data))
 	}
@@ -512,6 +512,7 @@ type appcastItem struct {
 	// Sparkle's name of its system.
 	page, url, os string
 	length        int
+	sha256        string
 	// signature is the installer's EdDSA signature, in base64; "" unsigned.
 	signature string
 	// arguments are what WinSparkle runs the installer with.
@@ -534,8 +535,8 @@ func (it appcastItem) feed() []byte {
 	fmt.Fprintf(&b, "      <pubDate>%s</pubDate>\n", it.published.UTC().Format(time.RFC1123Z))
 	fmt.Fprintf(&b, "      <sparkle:version>%s</sparkle:version>\n", xmlText(it.build))
 	fmt.Fprintf(&b, "      <sparkle:shortVersionString>%s</sparkle:shortVersionString>\n", xmlText(it.version))
-	fmt.Fprintf(&b, "      <enclosure url=\"%s\" length=\"%d\" type=\"application/octet-stream\" sparkle:os=\"%s\" sparkle:version=\"%s\" sparkle:shortVersionString=\"%s\"",
-		xmlText(it.url), it.length, xmlText(it.os), xmlText(it.build), xmlText(it.version))
+	fmt.Fprintf(&b, "      <enclosure url=\"%s\" length=\"%d\" type=\"application/octet-stream\" sparkle:os=\"%s\" sparkle:version=\"%s\" sparkle:shortVersionString=\"%s\" sparkle:sha256=\"%s\"",
+		xmlText(it.url), it.length, xmlText(it.os), xmlText(it.build), xmlText(it.version), xmlText(it.sha256))
 	if it.signature != "" {
 		fmt.Fprintf(&b, " sparkle:edSignature=\"%s\"", it.signature)
 	}

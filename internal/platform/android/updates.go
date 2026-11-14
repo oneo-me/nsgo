@@ -13,8 +13,8 @@ import (
 
 // updateConfig is how the app Run runs updates. A check of an APK the
 // user installed reads the app's appcast through the runtime's HTTP, and
-// package updater offers the newer release's page; one of an app a store
-// installed checks nothing, as the store updates it.
+// package updater hands a verified APK to Android's package installer; one
+// of an app a store installed checks nothing, as the store updates it.
 var updateConfig updates.Config
 
 // InstalledBy names the store that installed the app, which updates it,

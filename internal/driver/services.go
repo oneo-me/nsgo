@@ -1,19 +1,31 @@
 package driver
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 )
 
 // Update is what a platform's updater with no windows of its own found
 // (EventUpdate): the app's name and running version, and a newer version
-// with the page that gets it, Version empty when the running one is the
-// newest, or why it could not check.
+// with the page and verified download that gets it, Version empty when the
+// running one is the newest, or why it could not check.
 type Update struct {
-	App, Current string
-	Version, URL string
-	Err          string
+	App, Current                     string
+	Version, URL                     string
+	Download, Signature, SHA256, Key string
+	Size                             int64
+	Err                              string
 }
+
+// UpdateDownloadProgress reports bytes received by a platform update
+// downloader.
+type UpdateDownloadProgress struct{ Loaded, Total int64 }
+
+// UpdateDownload and UpdateInstall are backend hooks. The core and updater
+// packages use them without importing a platform package.
+var UpdateDownload func(context.Context, Update, string, func(UpdateDownloadProgress)) (string, error)
+var UpdateInstall func(string, func(error))
 
 // AlertConfig is a native alert: a title, a message and its buttons.
 type AlertConfig struct {

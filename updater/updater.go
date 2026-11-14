@@ -2,13 +2,15 @@
 // macOS and Windows, Sparkle and WinSparkle, which nsgo build bundles when
 // nsgo.yaml configures updates, read the app's appcast on their own
 // schedule, download a newer release, verify its EdDSA signature,
-// install it and restart the app. Linux and Android read the same
-// appcast, and iOS the App Store, and offer the newer version's page, once
-// a day and whenever the user asks.
+// install it and restart the app. Linux and Android read the same appcast,
+// verify and install its package after the user confirms, and iOS asks the
+// App Store, once a day and whenever the user asks.
 package updater
 
 import (
+	"context"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -18,8 +20,9 @@ import (
 
 // Check checks for a newer version now, as a Check for Updates… item
 // does, and shows what it finds: on macOS and Windows in Sparkle's and
-// WinSparkle's windows, elsewhere in an alert that offers to open the
-// newer version's page, says the app is up to date, or says the check
+// WinSparkle's windows, on Linux and Android an alert that installs the
+// signed package after confirmation, elsewhere an alert that offers to open
+// the newer version's page, says the app is up to date, or says the check
 // failed.
 func Check(cx *core.Scope) { check(cx, false, nil) }
 
@@ -120,9 +123,42 @@ func check(cx *core.Scope, background bool, answered func(core.UpdateCheck)) {
 				Cancelable: true,
 			}, func(index int) {
 				if index == 0 {
-					cx.OpenURL(c.URL, nil)
+					if c.Download != "" && (cx.Env().OS() == core.OSLinux || cx.Env().OS() == core.OSAndroid) {
+						downloadAndInstall(cx, c)
+					} else {
+						cx.OpenURL(c.URL, nil)
+					}
 				}
 			})
 		}
 	})
+}
+
+// downloadAndInstall keeps network and package-manager work off the app's
+// graph and main threads. The dialog's Update action is the user's explicit
+// approval; package managers still ask for their own elevation or install
+// permission.
+func downloadAndInstall(cx *core.Scope, c core.UpdateCheck) {
+	dir := cx.CacheDir()
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	go func() {
+		path, err := Download(context.Background(), c, dir, nil)
+		cx.Post(func() {
+			if err != nil {
+				log.Printf("updater: %v", err)
+				return
+			}
+			Install(cx, path, func(err error) {
+				if err != nil {
+					log.Printf("updater: install: %v", err)
+					return
+				}
+				if cx.Env().OS() == core.OSLinux {
+					cx.Restart()
+				}
+			})
+		})
+	}()
 }

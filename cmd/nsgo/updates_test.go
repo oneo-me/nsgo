@@ -178,8 +178,8 @@ func TestWriteAppcast(t *testing.T) {
 	}
 	// The backends' reader takes it.
 	item, err := updates.ParseAppcast(data)
-	want := updates.Item{Version: "1.2.0", Build: "12", Link: "https://github.com/example/hello/releases/tag/v1.2.0"}
-	if err != nil || item != want {
+	want := updates.Item{Version: "1.2.0", Build: "12", Link: "https://github.com/example/hello/releases/tag/v1.2.0", Download: "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-windows-x64-setup.exe", Size: int64(len("installer")), SHA256: "9c0d294c05fc1d88d698034609bb81c0c69196327594e4c69d2915c80fd9850c"}
+	if err != nil || item.Version != want.Version || item.Build != want.Build || item.Link != want.Link || item.Download != want.Download || item.Size != want.Size || item.SHA256 != want.SHA256 || item.Signature == "" {
 		t.Fatalf("ParseAppcast = %+v, %v; want %+v", item, err, want)
 	}
 	var feed struct {
@@ -189,6 +189,7 @@ func TestWriteAppcast(t *testing.T) {
 			OS        string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle os,attr"`
 			Signature string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle edSignature,attr"`
 			Arguments string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle installerArguments,attr"`
+			SHA256    string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle sha256,attr"`
 		} `xml:"channel>item>enclosure"`
 	}
 	if err := xml.Unmarshal(data, &feed); err != nil {
@@ -196,7 +197,7 @@ func TestWriteAppcast(t *testing.T) {
 	}
 	e := feed.Enclosure
 	if e.URL != "https://github.com/example/hello/releases/download/v1.2.0/hello-1.2.0-windows-x64-setup.exe" || e.Length != len("installer") ||
-		e.OS != "windows" || e.Arguments != "/S /RELAUNCH" {
+		e.OS != "windows" || e.Arguments != "/S /RELAUNCH" || e.SHA256 != "9c0d294c05fc1d88d698034609bb81c0c69196327594e4c69d2915c80fd9850c" {
 		t.Errorf("enclosure %+v", e)
 	}
 	sig, err := base64.StdEncoding.DecodeString(e.Signature)
