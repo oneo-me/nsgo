@@ -3,6 +3,7 @@
 package linux
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/ebitengine/purego"
@@ -15,7 +16,8 @@ import (
 // the other desktops run: a notification of an app's ID replaces the
 // server's one of that ID, and its default action is its press. The
 // server needs no permission, so the app may show them where one runs.
-// Linux has no badge of its own.
+// A Unity-compatible launcher gets a count through LauncherEntry.Update;
+// desktops without that interface simply ignore the badge.
 
 var (
 	gVariantNewUint32              func(v uint32) uintptr
@@ -101,8 +103,30 @@ func (w *window) notify(it *driver.MountItem) {
 			if ok && bus != 0 {
 				gVariantUnrefNonZero(dbusCall(bus, notifyName, notifyPath, notifyIface, "CloseNotification", gVariantNewUint32(id)))
 			}
+		case driver.ItemBadge:
+			setLauncherBadge(bus, appID, item.Count)
 		}
 	}
+}
+
+// setLauncherBadge updates the optional Unity launcher badge. The call is
+// intentionally best effort: GNOME, KDE and other launchers do not expose
+// this interface, and SetBadge remains a no-op there.
+func setLauncherBadge(bus uintptr, appID string, count uint32) {
+	if bus == 0 || appID == "" {
+		return
+	}
+	pathID := strings.NewReplacer("/", "_", "-", "_").Replace(appID)
+	path := "/com/canonical/Unity/LauncherEntry/" + pathID
+	str := func(s string) uintptr { return gVariantNewString(cstr(s)) }
+	entries := []uintptr{
+		gVariantNewDictEntry(str("count"), gVariantNewVariant(gVariantNewInt32(int32(min(count, 1<<31-1))))),
+		gVariantNewDictEntry(str("count-visible"), gVariantNewVariant(gVariantNewBoolean(boolInt(count != 0)))),
+	}
+	t := gVariantTypeNew(cstr("{sv}"))
+	defer gVariantTypeFree(t)
+	props := gVariantNewArray(t, &entries[0], uintptr(len(entries)))
+	gVariantUnrefNonZero(dbusCall(bus, "com.canonical.Unity", path, "com.canonical.Unity.LauncherEntry", "Update", props))
 }
 
 // notifyQueue runs the server's calls in order, off the main thread.
