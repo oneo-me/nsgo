@@ -331,6 +331,11 @@ type window struct {
 	batch uint64 // batches applied
 	hwnd  uintptr
 	title string
+	// root is the backend's own surface. Opened surfaces share its engine
+	// and message loop, but closing one must not end the process.
+	root       bool
+	kind       driver.SurfaceKind
+	destroying bool
 	// language is what the menus say (driver.ItemDirection).
 	language string
 	// rtl is the app's direction (driver.ItemDirection), which the menus
@@ -535,6 +540,7 @@ func Run(app engine.App, opts Options) {
 	setDpiAwareness.Call(perMonitorAwareV2)
 	registerFonts(opts.Fonts)
 	w := newWindow(opts)
+	w.root, w.app, w.opts = true, app, opts
 	if opts.Material != driver.WindowMaterialNone {
 		switch {
 		case !systemBackdrops():
@@ -744,6 +750,10 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Host:        opts.Host,
 		Tray:        !w.embedded,
 	}
+	if opts.Hidden {
+		eopts.Windows = &engine.WindowOptions{Title: opts.Title, Width: opts.Width, Height: opts.Height,
+			Frame: opts.Frame, Material: opts.Material, Constraints: opts.Constraints}
+	}
 	data, cache := engine.AppDirs(opts.ID)
 	eopts.SetDirs(data, cache)
 	if opts.test != nil {
@@ -756,6 +766,67 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		eopts.Perf = w.startPerf()
 	}
 	w.engine = engine.Start(w, app, eopts)
+}
+
+// openSurface creates an opened window on the backend's message loop and
+// attaches its tree to the same engine. The root window owns the loop; a
+// child surface only owns its HWND and engine surface.
+func (w *window) openSurface(cfg driver.SurfaceConfig) {
+	opts := w.opts
+	if cfg.Title != "" {
+		opts.Title = cfg.Title
+	}
+	if cfg.Width > 0 {
+		opts.Width = cfg.Width
+	}
+	if cfg.Height > 0 {
+		opts.Height = cfg.Height
+	}
+	opts.Frame, opts.Material, opts.Constraints, opts.Hidden = cfg.Frame, cfg.Material, cfg.Constraints, cfg.Hidden
+	child := newWindow(opts)
+	child.opts, child.kind = opts, cfg.Kind
+	child.chrome.constraints = opts.Constraints
+	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
+	if cfg.Kind == driver.SurfacePanel {
+		style = wsPopup | wsClipChildren
+	}
+	frame := rect{Right: child.px(opts.Width), Bottom: child.px(opts.Height)}
+	if cfg.Kind == driver.SurfaceWindow {
+		adjustWindowRect.Call(uintptr(unsafe.Pointer(&frame)), style, 0)
+	}
+	instance, className := registerClass()
+	hwnd, _, _ := createWindowExW.Call(0, uintptr(unsafe.Pointer(className)),
+		uintptr(unsafe.Pointer(wide(opts.Title))), style,
+		cwUseDefault, cwUseDefault, uintptr(frame.Right-frame.Left), uintptr(frame.Bottom-frame.Top),
+		0, 0, instance, 0)
+	if hwnd == 0 {
+		return
+	}
+	child.hwnd = hwnd
+	if cfg.Kind == driver.SurfaceWindow {
+		child.placeNew(opts.Width, opts.Height, true)
+		if opts.Frame.Move {
+			child.placeAt(opts.Frame)
+		}
+	} else {
+		setWindowPos.Call(hwnd, 0, 0, 0, uintptr(child.px(opts.Width)), uintptr(child.px(opts.Height)), swpNoActivate|swpNoZOrder)
+	}
+	windows[hwnd] = child
+	child.updateIME()
+	child.configureGestures()
+	child.env = child.environment()
+	child.appearance = opts.Appearance
+	child.darkTitleBar(child.shownDark())
+	darkMenus(child.appearance)
+	var client rect
+	getClientRect.Call(hwnd, uintptr(unsafe.Pointer(&client)))
+	size := child.point(client.Right, client.Bottom)
+	child.engine = w.engine.Attach(cfg.ID, child)
+	child.engine.Resize(driver.Size{Width: size.X, Height: size.Y})
+	child.engine.SetEnvironment(child.env)
+	if !cfg.Hidden {
+		showWindow.Call(hwnd, swShow)
+	}
 }
 
 // View is an app in a child window of an embedding host's window, which
@@ -955,6 +1026,11 @@ func (w *window) apply(b *driver.MountBatch) {
 			continue
 		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
 			w.engine.Dispatch(driver.NoBiometric(it))
+			continue
+		case driver.ItemOpenSurface:
+			if it.Surface != nil {
+				w.openSurface(*it.Surface)
+			}
 			continue
 		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
@@ -1806,6 +1882,10 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		r, _, _ := defWindowProcW.Call(hwnd, uintptr(message), wParam, lParam)
 		return r
 	}
+	if message == wmClose && !w.root && !w.embedded && !w.destroying {
+		w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
+		return 0
+	}
 	w.reportModality(message, wParam)
 	// An alert takes the pointer and the keys while it shows.
 	if w.alert != nil {
@@ -2181,7 +2261,7 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		for c := range w.hosts {
 			w.closeComponent(c)
 		}
-		if !w.embedded {
+		if w.root {
 			postQuitMessage.Call(0)
 			return 0
 		}
