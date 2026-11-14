@@ -150,8 +150,12 @@ const (
 	wmRun           = 0x8000 + 2 // functions are queued
 	wmAlert         = 0x8000 + 3 // alerts are queued
 	wmFrame         = 0x8000 + 4 // the app waits for a display frame
+	wmSysCommand    = 0x0112
+	scClose         = 0xF060 // SC_CLOSE, in WM_SYSCOMMAND's wParam
 
 	wsOverlappedWindow = 0x00CF0000
+	wsCaption          = 0x00C00000
+	wsSysMenu          = 0x00080000
 	wsThickFrame       = 0x00040000
 	wsMinimizeBox      = 0x00020000
 	wsMaximizeBox      = 0x00010000
@@ -386,6 +390,8 @@ type window struct {
 	alertShown   driver.AlertConfig
 	alert        *shownAlert
 	alertRestore *textInput
+	// alertWindow is set while a hidden root window shows as an app-level alert's own window.
+	alertWindow bool
 	// The open and save dialogs and context menus waiting for a message
 	// of their own, and whether one shows.
 	dialogs  []func()
@@ -566,6 +572,11 @@ func Run(app engine.App, opts Options) {
 	// corrects.
 	w.chrome.constraints = opts.Constraints
 	style := constrainedStyle(wsOverlappedWindow|wsClipChildren, opts.Constraints)
+	if opts.Hidden {
+		// It only ever shows as an alert's window (showAlertWindow): a caption and a close button, without the main window's limits, which the window the app opens for it takes.
+		w.chrome.constraints = driver.WindowConstraints{}
+		style = wsCaption | wsSysMenu | wsClipChildren
+	}
 	var ex uintptr
 	if w.baseComposed {
 		ex = wsExNoRedirect
@@ -1956,6 +1967,13 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	}
 	if message == wmClose && !w.primary && !w.embedded && !w.destroying {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
+		return 0
+	}
+	// Closing an alert's window cancels the alert, if it can be, rather than ending the app.
+	if message == wmSysCommand && wParam&0xfff0 == scClose && w.alertWindow {
+		if s := w.alert; s != nil && s.cancelable {
+			w.answerAlert(s.cancel)
+		}
 		return 0
 	}
 	if message == taskbarCreated && taskbarCreated != 0 {
