@@ -17,6 +17,14 @@ Geofencing, significant-location-change monitoring, step counting, activity reco
 
 `core` owns provider-neutral requests, copied sample values and scoped callbacks. `internal/driver` carries request IDs, timestamps, coordinates and numeric sample arrays. Apple uses Core Location and Core Motion; Android uses `LocationManager`/the fused provider boundary and `SensorManager`. Platform objects and callback queues stay in backends.
 
+| Target | Location | Motion |
+| --- | --- | --- |
+| iOS, watchOS | Core Location: one-shot fixes and streams | Core Motion, the sensors `CMMotionManager` says are available |
+| macOS | Core Location: one-shot fixes and streams | Unavailable: `CMMotionManager` is not on macOS |
+| tvOS | One-shot fixes (`requestLocation`); streams report unavailable, as `startUpdatingLocation` is not on tvOS | Unavailable: Core Motion's updates are not on tvOS |
+| Android | `LocationManager` | `SensorManager` |
+| The web, Windows, Linux, mini programs | Unavailable in the first release; the web's Geolocation API, Windows' `Windows.Devices.Geolocation` and Linux's GeoClue are the later backends, recorded in the [roadmap](../roadmap.md) | Unavailable; the web's `DeviceMotionEvent` is the later backend |
+
 Sensor callbacks never run user code on a platform thread. The backend copies a sample, acknowledges the provider callback promptly and posts the sample to the engine goroutine. A scope stopping a stream removes it before later samples are delivered. A pending one-shot location is canceled when its owner ends.
 
 The default policy follows `Env.Lifecycle` ([the app's lifecycle](services.md#the-apps-lifecycle)): streams keep running while the app is `inactive`, which still shows it (another app frontmost on a Mac, the other half of Android's split screen, Control Center over an iPhone app), and pause when it turns `background`. A paused stream stays the app's until its scope ends or the app stops it; the backend restarts the provider when the app shows again, and the first sample after the pause says it follows a gap, so the app can tell a cold fix from a continuous track. A one-shot request waits through the pause rather than failing. A separate background policy may opt in to location updates or a bounded motion session after the Android engine/view lifetime design is complete. The core must not keep a process or a radio alive merely because a handler remains registered.
