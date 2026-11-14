@@ -112,6 +112,7 @@ Record a design question here, and confirm the answer with the user before choos
 - **Implicit presentations in `ui`.** `ui.Dialog`, `ui.NumberInput` and `ui/commitgraph.View` still swap their form on touch screens or by width ([device differences](docs/architecture/device-differences.md#presentation)), while menus, dropdowns and `dock.Area` take the form the app sets, popups and docked panels by default, and `ui` adds no choice of its own (decided by the user, 2026-11-12). Make `ui`'s a field the app sets too?
 - **Texts drawn into one layer on Apple platforms.** Core Animation spends about 10 µs a frame on each text layer that changes, so a table of 600 numbers changing every frame holds about 90 fps at 120 Hz on a Mac ([performance](docs/architecture/performance.md#keeping-frames-cheap), #51). Drawing a container's texts into one layer of its own reached 135–143 fps in #51's measurements, but its texts would no longer stack, clip, fade, move or transform as their views do, and with few texts it cost about 30 MB more. Draw texts so, and when?
 - **Sizes on a TV.** `ui`'s sizes are constants on every device, but a TV is read from across a room. Since `core` scales nothing by device, does `ui` take larger sizes on a TV, or leave them to the app ([roadmap](docs/roadmap.md#apple-tv))?
+- **Text-level search.** The design for #47 ([text-level search](docs/architecture/text-search.md#open-decisions)) proposes an answer to each of its open decisions: matches within one text, matched synchronously as a view builds its texts, every `TextView` below `ProvideSearch` joining, a view revealing its own match, folded chat turns unfolding while a search is open, and what the app renders itself and a closed disclosure's content left out. Confirm them before building it?
 
 ## Verification
 
@@ -139,6 +140,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Components](docs/architecture/components.md) | A component in `base`: controls, popups, resizable panels or the dock |
 | [Device differences](docs/architecture/device-differences.md) | A component that changes by device, input or width |
 | [Text view](docs/architecture/textview.md) | `TextView`, its parsers, parts or highlighting |
+| [Text-level search](docs/architecture/text-search.md) | Document matches, search highlights or shared find state |
 | [Editor](docs/architecture/editor.md) | `Editor`, `DiffView` or their highlighting |
 | [Rich editor](docs/architecture/richeditor.md) | `RichEditor`, its kernel, extensions or formats |
 | [Terminal](docs/architecture/terminal.md) | `base/terminal`, its emulator binding or pseudo-terminals |
