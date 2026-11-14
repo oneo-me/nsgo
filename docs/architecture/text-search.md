@@ -2,38 +2,37 @@
 
 This is the shared design for issue [#47](https://github.com/nsgo-dev/nsgo/issues/47). It is not an implemented API. Chat transcript search will consume this capability; the matching rules and highlights belong to `base/textview`, so another document viewer can use them without importing `ui/chat`.
 
-## Finding in a document
+## What a view searches
 
-The document exposes matches in the text a `TextView` renders:
+A search matches the text a `TextView` shows, which depends on the view as much as on its document: with `RenderMath` a formula is an attachment where a plain view shows its TeX, `CustomSpan` shows an inline custom node as a span of the app's, and a footnote reference shows "[n]". So matching runs in the renderer, over each `core.Text` it builds, rather than over a `Document` alone:
 
 ```go
-type TextRef struct {
-	Block    []int // the block's path, outermost first
-	Footnote int   // -1 when the block is not in a footnote
-}
-
-type Match struct {
-	Text     TextRef
-	From, To int // byte offsets in the text TextView shows
-}
-
 type FindOptions struct {
 	CaseSensitive bool
 	WholeWord     bool
 }
 
-func (d Document) Find(query string, opts FindOptions) []Match
+// TextRef names a text a view shows.
+type TextRef struct {
+	Footnote int   // the footnote's index, -1 outside footnotes
+	Path     []int // the text's place in the blocks, outermost first
+}
+
+type Match struct {
+	Text     TextRef
+	From, To int // UTF-16 offsets in that text, as core's text ranges take them
+}
 ```
 
-`Find` searches paragraphs, headings, code and math TeX, including the children of quotes, lists, details and custom blocks. It excludes image alt text and hidden content. A match never crosses a text value or block, so a query containing a line break does not join two paragraphs. Regex is deliberately outside the first contract; the options can grow later without making plain search ambiguous.
+A view searches the texts it builds: paragraphs, headings, code blocks' code, table cells, a details' summary, and a formula's TeX, a custom node's content and an inline custom node's `CustomSpan` where the view shows them as text. What the app shows itself is not searched, since `base` can neither split nor measure it: attachments (images, `RenderMath`'s formulas, `RenderCustom`'s and plugins' nodes), `RenderCodeBlock`'s and `RenderImage`'s nodes, `RenderTableActions`, code block actions, list and footnote markers, the disclosure marker and image alt text. HTML's hidden elements never reach the document, as the reader drops them, and a closed details' children are not built, so they are searched once it opens. A match never crosses a text, so a query containing a line break does not join two paragraphs. Regex is deliberately outside the first contract; the options can grow later without making plain search ambiguous.
 
-The returned block path is stable for a document revision, and an empty query returns no matches. Implementations cap work and result count so an untrusted transcript cannot allocate without bound. A caller that needs a match after an edit reruns `Find` against the new document rather than applying byte offsets to stale text.
+`Path` steps through the blocks as they nest: a block's index among its siblings, then inside a list the item's index and the block's in it, inside a table the row's (0 the head, the body's rows from 1) and the cell's, and inside a details -1 for its summary or a child block's index. Paths order one view's texts, a footnote's after the blocks, and are stable for a document revision; a view finds its matches again when its document changes rather than moving old offsets. A view caps its work and its matches so an untrusted transcript cannot allocate without bound, and an empty query matches nothing.
 
 ## Highlights
 
 `TextView` gains a search state and an optional stable key. The state carries the query, matches, and selected match; a view registers its matches in render order. The renderer splits spans at match boundaries and adds `PartSearch` to every match and `PartSearchSelected` to the selected one. `base` supplies no colors: the app's `Styles` or `StyleOf` chooses them, and code-block highlighting merges with search parts.
 
-Search highlights are not a text selection. A selectable view keeps its selection and copy behavior, while a search can mark a different range. A custom renderer receives the match metadata and may draw its own highlight; it must still report the match so a shared search can count and navigate it.
+Search highlights are not a text selection. A selectable view keeps its selection and copy behavior, while a search can mark a different range.
 
 ## One search across views
 
@@ -62,8 +61,8 @@ func (s *Search) SelectedBounds() (core.Bounds, bool)
 
 The implementation is complete only when these checks exist:
 
-- `base/textview` tests cover a three-block document, case and whole-word options, a match at an inline span boundary, code and math text, hidden content, stable block paths and the result cap;
-- `TextView` tests cover search parts, selected parts, syntax-highlight merging, custom renderers, stale registrations and selection remaining independent;
+- `base/textview` tests cover a three-block document, case and whole-word options, a match at an inline span boundary, code and math TeX, a table cell, a details' summary, a closed details opening, paths into lists, tables, details and footnotes, a `CustomSpan` and a `RenderMath` attachment, UTF-16 offsets past a character outside the BMP, and the result cap;
+- `TextView` tests cover search parts, selected parts, syntax-highlight merging, stale registrations and selection remaining independent;
 - shared-search tests cover registration order, replacement, removal, next/previous wrapping and selected bounds across three views; and
 - `ui/chat` tests type a query over three turns, show the count, navigate and reveal the selected match, then close without changing the transcript selection.
 
@@ -71,8 +70,8 @@ The implementation is complete only when these checks exist:
 
 These decisions need confirmation before an implementation chooses them:
 
-1. Should cross-block matches remain unsupported initially, or should a document-level plain-text view join blocks?
+1. Should matches stay within one text initially, or should a document-level plain-text view join blocks?
 2. Should `ProvideSearch` automatically include every descendant `TextView`, or must each view opt in with a key?
-3. Is a synchronous `Document.Find` acceptable for large transcripts, or should the API expose an asynchronous index from the start?
+3. Is matching each text synchronously as the view builds it acceptable for large transcripts, or should the API expose an asynchronous index from the start?
 4. Should regular expressions and accent/Unicode-insensitive matching be later options, or belong to a separate search package?
 5. Does `SelectedBounds` leave scrolling to the owning transcript, or should `TextView` reveal its own match?
