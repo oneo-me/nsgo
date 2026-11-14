@@ -12,8 +12,8 @@
     "screenshots": "bun scripts/screenshots.mjs"
   },
   "dependencies": {
-    "@astrojs/markdown-satteri": "^0.4.7",
-    "astro": "^7.4.5",
+    "@astrojs/markdown-satteri": "^0.4.8",
+    "astro": "^7.4.10",
     "mdast-util-from-markdown": "^2.1.0"
   },
   "devDependencies": {
