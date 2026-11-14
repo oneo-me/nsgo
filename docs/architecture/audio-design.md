@@ -43,8 +43,8 @@ one.
 `SetVolume`, `SetRate`, `SetLoop`, `Position`, `Duration`, `Playing`, `Ended`,
 `OnProgress`, `OnEnd`, `Err` and `Close`. `Open` returns after the source has
 been accepted, not after all bytes have decoded. `Duration` can be zero until
-metadata is ready; `OnProgress` reports a monotonic position and the final
-duration once it is known. Seeking before metadata is ready is queued and
+metadata is ready; `OnProgress` reports the position, which moves back when
+playback seeks, stops or loops, and the final duration once it is known. Seeking before metadata is ready is queued and
 applied when the decoder can seek.
 
 Callbacks are serialized on the package's callback queue. They never run on a

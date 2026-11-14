@@ -93,7 +93,7 @@ func (player *Player) SetLoop(loop bool) error {
 	return player.command(func(backend playerBackend) error { return backend.setLoop(loop) })
 }
 
-// Position returns the latest position reported by the backend.
+// Position returns the backend's current position. It moves back when playback seeks, stops or loops. After Close it returns the last position the player knew.
 func (player *Player) Position() time.Duration {
 	player.mu.Lock()
 	if player.closed {
@@ -102,12 +102,8 @@ func (player *Player) Position() time.Duration {
 		return position
 	}
 	backend := player.backend
-	position := player.position
 	player.mu.Unlock()
-	if current := backend.position(); current > position {
-		position = current
-	}
-	return position
+	return backend.position()
 }
 
 // Duration returns the latest known duration, or zero while metadata is not
@@ -217,9 +213,6 @@ func (player *Player) progressed(position, duration time.Duration) {
 	if player.closed {
 		player.mu.Unlock()
 		return
-	}
-	if position < player.position {
-		position = player.position
 	}
 	if duration > player.duration {
 		player.duration = duration

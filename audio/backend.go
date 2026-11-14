@@ -36,6 +36,7 @@ type playerBackend interface {
 	setVolume(float64) error
 	setRate(float64) error
 	setLoop(bool) error
+	// position reports where playback is now, including a seek queued before metadata is ready.
 	position() time.Duration
 	duration() time.Duration
 	playing() bool

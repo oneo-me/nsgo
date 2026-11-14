@@ -89,7 +89,7 @@ func TestPlayerCallbacksAndState(t *testing.T) {
 	if err := player.OnEnd(func() { close(ended) }); err != nil {
 		t.Fatal(err)
 	}
-	backend.playerProgress(2*time.Second, 10*time.Second)
+	backend.report(2*time.Second, 10*time.Second)
 	select {
 	case got := <-progress:
 		if got != 12*time.Second {
@@ -118,6 +118,42 @@ func TestPlayerCallbacksAndState(t *testing.T) {
 	}
 }
 
+func TestPlayerPositionFollowsALoop(t *testing.T) {
+	backend := &fakeBackend{}
+	previous := targetBackend
+	targetBackend = backend
+	t.Cleanup(func() { targetBackend = previous })
+
+	player, err := Open("song.mp3", WithLoop(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	progress := make(chan time.Duration, 2)
+	if err := player.OnProgress(func(position, _ time.Duration) { progress <- position }); err != nil {
+		t.Fatal(err)
+	}
+	if err := player.Play(); err != nil {
+		t.Fatal(err)
+	}
+	backend.report(9*time.Second, 10*time.Second)
+	backend.report(time.Second, 10*time.Second)
+	var last time.Duration
+	deadline := time.After(time.Second)
+	for last != time.Second {
+		select {
+		case last = <-progress:
+		case <-deadline:
+			t.Fatalf("last progress %s, want 1s after the loop", last)
+		}
+	}
+	if got := player.Position(); got != time.Second {
+		t.Errorf("Position %s after the loop, want 1s", got)
+	}
+	if err := player.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 type fakeBackend struct {
 	soundOptions   Options
 	playerOptions  Options
@@ -126,6 +162,15 @@ type fakeBackend struct {
 	playerEnd      func()
 	sound          fakeSound
 	player         fakePlayer
+}
+
+// report moves the fake player to position and reports it, as a native player does on its progress timer.
+func (backend *fakeBackend) report(position, duration time.Duration) {
+	backend.player.mu.Lock()
+	backend.player.pos = position
+	backend.player.dur = duration
+	backend.player.mu.Unlock()
+	backend.playerProgress(position, duration)
 }
 
 func (backend *fakeBackend) openSound(_ source, options Options, end func()) (soundBackend, error) {
