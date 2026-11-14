@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -46,6 +47,7 @@ const (
 	classFactoryLockServer     = 4
 	persistFileLoad            = 5
 	persistFileSave            = 6
+	stgmReadWrite              = 2 // STGM_READWRITE
 	propertyStoreSetValue      = 6
 	propertyStoreCommit        = 7
 )
@@ -384,6 +386,7 @@ func setToastActivatorShortcut(path, id string) {
 	hr, _, _ := coCreateInstance.Call(uintptr(unsafe.Pointer(&clsidShellLink)), 0, clsctxInprocServer,
 		uintptr(unsafe.Pointer(&iidShellLink)), uintptr(unsafe.Pointer(&link)))
 	if failed(hr) || link == nil {
+		log.Printf("nsgo: toast shortcut %s: CoCreateInstance(ShellLink): %#x", path, uint32(hr))
 		return
 	}
 	defer link.release()
@@ -392,26 +395,36 @@ func setToastActivatorShortcut(path, id string) {
 	if persist == nil || store == nil {
 		persist.release()
 		store.release()
+		log.Printf("nsgo: toast shortcut %s: the shell link has no IPersistFile or IPropertyStore", path)
 		return
 	}
 	defer persist.release()
 	defer store.release()
 	file := wide(path)
-	if failed(persist.call(persistFileLoad, uintptr(unsafe.Pointer(file)), 0)) {
+	// Loaded with STGM_READ, the link's property store refuses SetValue and Commit with STG_E_ACCESSDENIED, and Save then writes the shortcut back unchanged.
+	if hr := persist.call(persistFileLoad, uintptr(unsafe.Pointer(file)), stgmReadWrite); failed(hr) {
+		log.Printf("nsgo: toast shortcut %s: IPersistFile::Load: %#x", path, uint32(hr))
 		return
 	}
 	appID := syscall.StringToUTF16(id)
 	appIDVariant := propVariant{vt: 31, value: unsafe.Pointer(&appID[0])} // VT_LPWSTR
 	clsidVariant := propVariant{vt: 72, value: unsafe.Pointer(&clsid)}    // VT_CLSID
-	stored := !failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelID)), uintptr(unsafe.Pointer(&appIDVariant)))) &&
-		!failed(store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelToastActivator)), uintptr(unsafe.Pointer(&clsidVariant)))) &&
-		!failed(store.call(propertyStoreCommit))
+	step, hr := "SetValue(AppUserModel.ID)", store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelID)), uintptr(unsafe.Pointer(&appIDVariant)))
+	if !failed(hr) {
+		step, hr = "SetValue(AppUserModel.ToastActivatorCLSID)", store.call(propertyStoreSetValue, uintptr(unsafe.Pointer(&pkeyAppUserModelToastActivator)), uintptr(unsafe.Pointer(&clsidVariant)))
+	}
+	if !failed(hr) {
+		step, hr = "Commit", store.call(propertyStoreCommit)
+	}
+	if !failed(hr) {
+		step, hr = "IPersistFile::Save", persist.call(persistFileSave, uintptr(unsafe.Pointer(file)), 1)
+	}
 	// The variants, and appID and clsid they point at, outlive the calls that read them.
 	runtime.KeepAlive(&appIDVariant)
 	runtime.KeepAlive(&clsidVariant)
 	runtime.KeepAlive(appID)
 	runtime.KeepAlive(&clsid)
-	if stored {
-		persist.call(persistFileSave, uintptr(unsafe.Pointer(file)), 1)
+	if failed(hr) {
+		log.Printf("nsgo: toast shortcut %s: %s: %#x", path, step, uint32(hr))
 	}
 }
