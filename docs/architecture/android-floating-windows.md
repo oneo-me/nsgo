@@ -23,9 +23,11 @@ The Android backend has none of this model yet. Phones open no windows, so the f
 
 ## Permission and user consent
 
-An app declares `SYSTEM_ALERT_WINDOW` and asks the user through the system's special-access settings. The API reports `unavailable`, `denied`, `granted` or `revoked`; it never opens the settings page without an explicit user action. A denied or revoked grant creates no window and exposes no overlay frame.
+An app declares `SYSTEM_ALERT_WINDOW` in `android.permissions`; the tool never adds it because a package imports the API. `mobile.OverlayPermission` answers granted, denied or unavailable, the words of `NotificationPermission` ([services](services.md#notifications-and-the-badge)) without its not asked (`"default"`): Android's special access has no such state, and `Settings.canDrawOverlays` is all the backend reads. It is unavailable where the platform has no overlay ([other targets](#other-targets-and-tests)) or the manifest does not ask for the permission.
 
-Android 13 notification permission is independent. A long-lived overlay service normally needs a visible notification, but the overlay API must report whether its chosen service policy can run without one. The tool adds only the permissions and service declarations the app names in YAML, and never adds `SYSTEM_ALERT_WINDOW` merely because a package imports the API.
+`mobile.RequestOverlayPermission` opens `ACTION_MANAGE_OVERLAY_PERMISSION` for the app's package, only from a user action, and the answer is read again as the app returns to the front. A revoked grant is not a state of its own, since nothing tells it from one never given after the process restarts: the backend reads `canDrawOverlays` again as the app returns and as the system removes the window, and a revocation closes an open overlay with the reason `revoked`. A denied grant creates no window and exposes no overlay frame.
+
+Android 13 notification permission is independent. A long-lived overlay service normally needs a visible notification, but the overlay API must report whether its chosen service policy can run without one. The tool adds only the permissions and service declarations the app names in YAML.
 
 ## Service and lifecycle
 
