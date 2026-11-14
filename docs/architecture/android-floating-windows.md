@@ -31,7 +31,7 @@ Overlay content is subject to Android's touch and accessibility rules. The defau
 
 ## Service and lifecycle
 
-The runtime starts a foreground service only after the app has permission and requested an overlay. The service owns the engine connection, window manager and persistent state needed to reattach after an activity is recreated. Starting from the background follows the Android version's restrictions and the app's declared foreground-service type; a rejected start is an explicit error.
+The runtime adds the overlay's window first and starts the foreground service only once that window is visible (`View.onWindowVisibilityChanged`). An app targeting Android 15 (`android.target_sdk` of 35 or more) that holds `SYSTEM_ALERT_WINDOW` may start a foreground service from the background only while a `TYPE_APPLICATION_OVERLAY` window of its own is visible, else `startForegroundService` throws `ForegroundServiceStartNotAllowedException`; in this order an overlay opened from the background, by a timer or a notification's action, starts its service on every version. The service keeps the process in the foreground and holds the persistent state needed to reattach after an activity is recreated; the window stays the host's. A start refused all the same closes the overlay with an explicit error, rather than leaving one whose process the system may kill. The service stops as the last overlay closes.
 
 The service may survive an activity rotation, task removal or a detached `NsgoView`, but not an app shutdown requested by the app. The background policy defines when a process may be restarted after it is killed, how much state is restored, and whether the overlay is shown before the main view attaches. Until #12 defines those guarantees, the backend reports the overlay as unavailable after process death rather than silently reconstructing a partial tree.
 
@@ -59,8 +59,8 @@ The implementation is complete only when these checks exist:
 
 - headless core tests cover permission state, owner disposal, surface attach/detach, frame clamping and lifecycle events;
 - `nsgotest` tests open, move, hide and close an overlay, and find it refused without the permission and closed after a revocation;
-- Android runtime tests use a fake `WindowManager` and service to cover permission revocation, activity recreation, process death, duplicate close and binder-thread isolation;
-- API-level tests cover the special-access settings flow and foreground-service restrictions without relying on a real user's overlay permission; and
+- Android runtime tests use a fake `WindowManager` and service to cover permission revocation, activity recreation, process death, duplicate close, binder-thread isolation and the service started only after the window shows;
+- API-level tests cover the special-access settings flow and foreground-service restrictions, a background start targeting API 35 among them, without relying on a real user's overlay permission; and
 - a device test checks rotation, cutouts, touch routing, accessibility and removal from system settings, with no unrelated app content captured.
 
 ## Open decisions
