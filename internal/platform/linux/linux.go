@@ -649,7 +649,7 @@ func (w *window) apply(b *driver.MountBatch) {
 		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
 			w.engine.Dispatch(driver.NoBiometric(it))
 			continue
-		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification:
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
 			w.notify(it)
 			continue
 		case driver.ItemCheckForUpdates:

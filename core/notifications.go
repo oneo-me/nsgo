@@ -119,12 +119,7 @@ func (cx *Scope) CloseNotification(id string) {
 	}
 }
 
-// SetBadge shows count on the app's icon, and 0 or less clears it: the
-// Dock's on macOS, the Home Screen's on iOS, which needs the
-// notification permission, the taskbar button's on Windows and an
-// installed web app's. Android has no count to set: launchers mark an app
-// whose notifications show, and count goes with those shown after it.
-// Elsewhere nothing happens.
+// SetBadge shows count on the app's icon, and 0 or less clears it: the Dock's on macOS, the Home Screen's on iOS, which needs the notification permission, the taskbar button's on Windows, the launcher's on Linux where it follows Unity's LauncherEntry API, such as Ubuntu's dock, Plasma and Dash to Dock, and an installed web app's. Android has no count to set: launchers mark an app whose notifications show, and count goes with those shown after it. Elsewhere nothing happens.
 func (cx *Scope) SetBadge(count int) {
 	t := cx.tree()
 	if t == nil || cx.denied(AccessRequest{Permission: AccessNotifications}) {
