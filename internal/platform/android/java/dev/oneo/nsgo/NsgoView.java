@@ -68,16 +68,12 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,7 +100,7 @@ import java.util.function.IntConsumer;
  * It needs API 28, and its activity should handle configuration changes
  * itself and draw edge to edge, as NsgoActivity does.
  */
-public class NsgoView extends FrameLayout {
+public class NsgoView extends FrameLayout implements NsgoEngine.Listener {
     private static final String TAG = "nsgo";
     private static final int DESTRUCTIVE = 0xffe53935;
 
@@ -139,8 +135,9 @@ public class NsgoView extends FrameLayout {
     /** Nodes reporting presses outside them, on the UI thread. */
     private final ArrayList<Node> outside = new ArrayList<>();
     private final int[] location = new int[2];
-    private Process process;
-    private DataOutputStream out;
+    private NsgoEngine engine;
+    private boolean ownsEngine;
+    private boolean attached;
     // The engine's flags the app starts with (--nsgo-fps).
     private final ArrayList<String> flags = new ArrayList<>();
     // The test nsgo test -target android runs, and its agent.
@@ -246,7 +243,7 @@ public class NsgoView extends FrameLayout {
     }
 
     public NsgoView(Context context) {
-        this(context, null);
+        this(context, (android.util.AttributeSet) null);
     }
 
     /** The constructor layouts inflate. */
@@ -287,8 +284,15 @@ public class NsgoView extends FrameLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        boolean first = process == null;
-        if (first) start();
+        boolean first = engine == null || engine.isDestroyed() || !engine.isAlive();
+        if (!attached) {
+            if (engine == null || engine.isDestroyed()) {
+                engine = new NsgoEngine(getContext());
+                ownsEngine = true;
+            }
+            if (!engine.isAlive()) start();
+            else attachRunningEngine();
+        }
         environment();
         send(first ? Protocol.START : Protocol.RESIZE, w / density, h / density);
     }
@@ -299,7 +303,7 @@ public class NsgoView extends FrameLayout {
         // Text prepared before a change of density keeps its pixel size
         // until the engine prepares it again.
         float d = getResources().getDisplayMetrics().density;
-        if (d != density && process != null) {
+        if (d != density && engine != null && engine.isAlive()) {
             density = d;
             send(Protocol.RESIZE, getWidth() / density, getHeight() / density);
         }
@@ -335,7 +339,41 @@ public class NsgoView extends FrameLayout {
         accessibility.removeTouchExplorationStateChangeListener(screenReader);
         getContext().getContentResolver().unregisterContentObserver(motion);
         unregisterBack();
+        if (!ownsEngine) detachFromEngine();
         super.onDetachedFromWindow();
+    }
+
+    /**
+     * Attaches this surface to a host-owned engine. Call on the UI thread.
+     * The current pipe supports one surface and does not resync a fresh view;
+     * use the same view for a detach/attach until the surface protocol lands.
+     */
+    public void attachToEngine(NsgoEngine next) {
+        if (next == null) throw new NullPointerException("engine");
+        if (engine == next) {
+            if (next.isAlive() && !attached) attachRunningEngine();
+            return;
+        }
+        if (attached) detachFromEngine();
+        if (ownsEngine && engine != null) engine.destroy();
+        engine = next;
+        ownsEngine = false;
+        if (next.isAlive()) attachRunningEngine();
+    }
+
+    /** Detaches this surface without stopping a host-owned engine. */
+    public void detachFromEngine() {
+        if (!attached) return;
+        engine.detach(this);
+        attached = false;
+        unregisterBack();
+        destroyComponents();
+    }
+
+    private void attachRunningEngine() {
+        engine.attach(this);
+        attached = true;
+        host.start();
     }
 
     /**
@@ -459,35 +497,32 @@ public class NsgoView extends FrameLayout {
 
     private void start() {
         File exe = new File(getContext().getApplicationInfo().nativeLibraryDir, "libnsgo.so");
+        if (engine == null || engine.isDestroyed()) {
+            engine = new NsgoEngine(getContext());
+            ownsEngine = true;
+        }
+        ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
+        builder.command().addAll(flags);
+        File data = storage != null ? storage : getContext().getFilesDir();
+        builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
+        builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());
+        if (!host.params.isEmpty()) builder.environment().put("NSGO_HOST_PARAMS", host.params);
+        String installer = installer();
+        if (installer != null) builder.environment().put("NSGO_INSTALLER", installer);
+        if (test != null) {
+            agent = new TestAgent(this);
+            TestAgent.apply(test, builder);
+        }
         try {
-            ProcessBuilder builder = new ProcessBuilder(exe.getAbsolutePath());
-            builder.command().addAll(flags);
-            File data = storage != null ? storage : getContext().getFilesDir();
-            builder.environment().put("NSGO_DATA_DIR", data.getAbsolutePath());
-            builder.environment().put("NSGO_CACHE_DIR", getContext().getCacheDir().getAbsolutePath());
-            if (!host.params.isEmpty()) builder.environment().put("NSGO_HOST_PARAMS", host.params);
-            String installer = installer();
-            if (installer != null) builder.environment().put("NSGO_INSTALLER", installer);
-            if (test != null) {
-                agent = new TestAgent(this);
-                TestAgent.apply(test, builder);
-            }
-            process = builder.start();
+            engine.start(builder);
         } catch (IOException e) {
             throw new IllegalStateException("cannot start " + exe, e);
         }
-        out = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
         // The host's handlers and tokens come before the app starts.
-        host.start();
+        attachRunningEngine();
         write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
         if (livePressEarly != null) write(Protocol.LIVE_REPORT, livePressEarly);
         livePressEarly = null;
-        Thread reader = new Thread(this::read, "nsgo-reader");
-        reader.setDaemon(true);
-        reader.start();
-        Thread logger = new Thread(this::log, "nsgo-log");
-        logger.setDaemon(true);
-        logger.start();
         watchNetwork();
     }
 
@@ -499,7 +534,11 @@ public class NsgoView extends FrameLayout {
         }
         decoder.shutdownNow();
         folders.shutdownNow();
-        if (process != null) process.destroy();
+        if (engine != null) {
+            if (ownsEngine) engine.destroy();
+            else engine.detach(this);
+        }
+        attached = false;
         destroyComponents();
     }
 
@@ -517,72 +556,70 @@ public class NsgoView extends FrameLayout {
         }
     }
 
-    private void read() {
-        try (DataInputStream in = new DataInputStream(new BufferedInputStream(process.getInputStream()))) {
-            while (true) {
-                int kind = in.readUnsignedByte();
-                byte[] payload = new byte[in.readInt()];
-                in.readFully(payload);
-                DataInputStream message = new DataInputStream(new ByteArrayInputStream(payload));
-                switch (kind) {
-                    case Protocol.BATCH:
-                        ui.post(() -> mount(payload));
-                        break;
-                    case Protocol.IMAGE:
-                        image(message);
-                        break;
-                    case Protocol.CANVAS_IMAGE:
-                        canvasImage(message);
-                        break;
-                    case Protocol.FONTS:
-                        fonts(message);
-                        break;
-                    case Protocol.FONT_DATA:
-                        fontData(message);
-                        break;
-                    case Protocol.TEST:
-                        if (agent != null) agent.handle(message);
-                        break;
-                    case Protocol.HOST_CALL:
-                        host.message(message);
-                        break;
-                    case Protocol.FOLDER:
-                        folders.execute(() -> folder(message));
-                        break;
-                    case Protocol.FETCH:
-                        downloads.message(message);
-                        break;
-                    case Protocol.LIVE_UPDATE:
-                        ui.post(() -> {
-                            LiveUpdates.apply(getContext(), activity(), payload);
-                            write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
-                        });
-                        break;
-                    case Protocol.WANT_FRAME:
-                        ui.post(() -> {
-                            frameWanted = true;
-                            startTicking();
-                        });
-                        break;
-                    default:
-                        text(kind, message);
-                }
+    @Override
+    public void onMessage(int kind, byte[] payload) {
+        DataInputStream message = new DataInputStream(new ByteArrayInputStream(payload));
+        try {
+            switch (kind) {
+                case Protocol.BATCH:
+                    ui.post(() -> mount(payload));
+                    break;
+                case Protocol.IMAGE:
+                    image(message);
+                    break;
+                case Protocol.CANVAS_IMAGE:
+                    canvasImage(message);
+                    break;
+                case Protocol.FONTS:
+                    fonts(message);
+                    break;
+                case Protocol.FONT_DATA:
+                    fontData(message);
+                    break;
+                case Protocol.TEST:
+                    if (agent != null) agent.handle(message);
+                    break;
+                case Protocol.HOST_CALL:
+                    host.message(message);
+                    break;
+                case Protocol.FOLDER:
+                    folders.execute(() -> folder(message));
+                    break;
+                case Protocol.FETCH:
+                    downloads.message(message);
+                    break;
+                case Protocol.LIVE_UPDATE:
+                    ui.post(() -> {
+                        LiveUpdates.apply(getContext(), activity(), payload);
+                        write(Protocol.LIVE_REPORT, LiveUpdates.state(getContext()));
+                    });
+                    break;
+                case Protocol.WANT_FRAME:
+                    ui.post(() -> {
+                        frameWanted = true;
+                        startTicking();
+                    });
+                    break;
+                default:
+                    text(kind, message);
             }
         } catch (IOException e) {
-            Log.i(TAG, "app process ended: " + e);
+            Log.w(TAG, "invalid message from app", e);
         }
+    }
+
+    @Override
+    public void onProcessEnded(IOException error) {
+        if (error != null) Log.i(TAG, "app process ended: " + error);
         // Leave back to the system from now on; the app's components go
         // with it.
         ui.post(this::unregisterBack);
         ui.post(this::destroyComponents);
     }
 
-    private void log() {
-        try (BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = err.readLine()) != null; ) Log.i(TAG, line);
-        } catch (IOException ignored) {
-            // The process ended.
-        }
+    @Override
+    public void onLog(String line) {
+        Log.i(TAG, line);
     }
 
     /**
@@ -608,7 +645,7 @@ public class NsgoView extends FrameLayout {
      * duration.
      */
     private void environment() {
-        if (process == null) return;
+        if (engine == null || !engine.isAlive()) return;
         Configuration config = getResources().getConfiguration();
         boolean dark = dark();
         followAppearance(dark);
@@ -1124,16 +1161,8 @@ public class NsgoView extends FrameLayout {
         write(Protocol.TEXT_LINES, bytes.toByteArray());
     }
 
-    synchronized void write(int kind, byte[] payload) {
-        if (out == null) return;
-        try {
-            out.writeByte(kind);
-            out.writeInt(payload.length);
-            out.write(payload);
-            out.flush();
-        } catch (IOException e) {
-            Log.w(TAG, "app process unreachable", e);
-        }
+    void write(int kind, byte[] payload) {
+        if (engine != null) engine.write(kind, payload);
     }
 
     /**
@@ -1389,7 +1418,7 @@ public class NsgoView extends FrameLayout {
      * there does, for the engine cannot answer; false once the app ended.
      */
     public boolean back() {
-        if (process == null || !process.isAlive()) return false;
+        if (engine == null || !engine.isAlive()) return false;
         event(Protocol.EVENT_BACK, 0, 0, 0, 0, "");
         return true;
     }
@@ -2898,7 +2927,7 @@ public class NsgoView extends FrameLayout {
     public void liveActionPressed(android.content.Intent intent) {
         byte[] press = intent == null ? null : LiveUpdates.press(intent);
         if (press == null) return;
-        if (out == null) {
+        if (engine == null || !engine.isAlive()) {
             livePressEarly = press;
             return;
         }

@@ -1,10 +1,12 @@
 # Android engine and view lifetime
 
 This document is the design for issue #12. It is a dependency for Android
-recording, floating windows and push delivery. The current Android runtime
-still starts one Go process from each `NsgoView` and stops that process from
-`NsgoActivity.onDestroy`; this page records the target architecture and does
-not claim that the split exists yet.
+recording, floating windows and push delivery. The first stage now has a
+process and pipe owner (`NsgoEngine`) plus one-surface attach and detach on
+`NsgoView`; the protocol still supports only one surface at a time. A fresh
+Activity view cannot yet resync the existing Go tree, so the complete
+Activity-recreation guarantee remains a later protocol stage. Multiple
+surfaces and process-level routing remain planned work described below.
 
 ## Ownership
 
@@ -33,7 +35,7 @@ callbacks. It may attach to an engine while its Activity is visible and must
 detach before the Activity releases it. A detached view releases its native
 children and UI callbacks but leaves the engine and the app graph alive.
 
-The first implementation may allow one attached view at a time while the
+The first implementation allows one attached view at a time while the
 protocol migration is in progress. The completed design supports several
 attached views, each with its own surface tree and environment, sharing the
 same Go process and application state.
@@ -151,7 +153,9 @@ current.
 ## Delivery stages
 
 1. Move process and pipe ownership into `NsgoEngine`, add attach and detach
-   for one surface, and keep the old single-view API working.
+   for one surface, and keep the old single-view API working. This stage is
+   implemented; its protocol still has one surface, drops messages while no
+   view is attached and cannot resync a fresh view yet.
 2. Add surface IDs and attach/detach/resync messages to the Java and Go
    protocols; make the headless protocol tests cover stale batches and
    process death.
