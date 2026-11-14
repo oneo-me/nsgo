@@ -569,7 +569,7 @@ type hotKey struct {
 // the focus, while the current owner lives.
 func (cx *Scope) RegisterHotKey(key string, fn func()) {
 	rt := cx.rt
-	if rt.windows == nil {
+	if rt.windows == nil && !rt.takesHotKeys {
 		return
 	}
 	rt.hotKeyID++

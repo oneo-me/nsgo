@@ -318,6 +318,42 @@ func TestMainViewWithoutWindows(t *testing.T) {
 	}
 }
 
+// TestHotKeysWithoutWindows: a platform that opens no windows takes global shortcuts on its one surface once it says it registers them, as Linux does.
+func TestHotKeysWithoutWindows(t *testing.T) {
+	for _, takes := range []bool{false, true} {
+		fired := 0
+		w := &windows{t: t, items: map[uint32][]driver.MountItem{}}
+		w.root = NewRoot(RootOptions{Post: func(func()) {}, Clock: NewManualClock(time.Unix(0, 0)), HotKeys: takes})
+		w.app = NewTree(w.root, ApproxTextEngine{})
+		w.app.Resize(Size{Width: 100, Height: 100})
+		w.app.Mount(AppRoot(func(cx *Scope) {
+			cx.SetMainView(func(cx *Scope) Node { return Text{Content: "main"} })
+			cx.RegisterHotKey("Ctrl+Alt+K", func() { fired++ })
+			if cx.OpenWindow(WindowOptions{}, nil) != nil {
+				t.Error("a platform without windows opened one")
+			}
+		}))
+		w.commit()
+		keys := w.take(0, driver.ItemHotKeys)
+		if !takes {
+			if len(keys) != 0 {
+				t.Errorf("a platform that takes no shortcuts was sent %+v", keys)
+			}
+			continue
+		}
+		if len(keys) != 1 || len(keys[0].Keys) != 1 || keys[0].Keys[0].Key != "ctrl+alt+k" {
+			t.Fatalf("keys %+v", keys)
+		}
+		w.dispatch(0, driver.Event{Kind: driver.EventHotKey, Count: keys[0].Keys[0].ID})
+		if fired != 1 {
+			t.Error("a hot key did not fire")
+		}
+		if !slices.Contains(w.texts(0), "main") {
+			t.Errorf("the main view does not show beside the shortcut: %v", w.texts(0))
+		}
+	}
+}
+
 func TestWindowConstraints(t *testing.T) {
 	var cx *Scope
 	w := newWindows(t, func(app *Scope) {

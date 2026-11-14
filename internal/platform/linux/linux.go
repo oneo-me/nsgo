@@ -323,6 +323,8 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 		Environment: w.env,
 		Appearance:  opts.Appearance,
 		Host:        opts.Host,
+		// The app's own window takes its global shortcuts; a host's widget leaves them to the host.
+		HotKeys: !w.embedded,
 	}
 	eopts.SetDirs(engine.AppDirs(opts.ID))
 	if opts.test != nil {
