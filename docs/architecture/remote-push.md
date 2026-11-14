@@ -20,7 +20,7 @@ The first implementation covers APNs on Apple targets and FCM on Android. Deskto
 
 The service has three layers:
 
-1. `core` exposes a provider-neutral registration and delivery API. It owns scoped handlers, pending events and the engine-goroutine boundary. Its values are opaque tokens and payload bytes; it does not know whether a token came from APNs or FCM.
+1. `core` exposes a provider-neutral registration and delivery API. It owns scoped handlers, pending events and the engine-goroutine boundary. Its values are opaque tokens and payload JSON; it does not know whether a token came from APNs or FCM.
 2. `internal/driver` carries commands to register or unregister and events for a token change or an incoming payload. Events include enough metadata to distinguish a foreground delivery from a launch delivery, but the payload is kept unchanged.
 3. A platform backend translates the provider callback into the driver event. Apple calls APNs through the system frameworks. Android calls an adapter supplied by the runtime or an embedding host.
 
@@ -36,7 +36,7 @@ Handlers are scoped like `OnNotificationPress`: a handler is removed with its ow
 
 The provider acknowledgement is separate from app handling. The backend acknowledges the platform callback after it has copied the payload into the engine's queue; the app's handler is not allowed to hold APNs or FCM's callback thread. If a process cannot start, the provider or adapter keeps the platform's normal retry policy. A force-quit, revoked permission, expired token or provider-specific delivery drop is reported as unavailable or lost delivery, not retried forever by NSGo.
 
-The payload is retained as provider JSON bytes plus a small set of transport metadata. NSGo does not merge APNs' `aps` object with FCM's notification fields or turn arbitrary data into a `core.Notification`. An app may call `ShowNotification` after decoding its own data. This leaves notification presentation, deduplication and authentication in app code while preserving fields added by a provider later.
+Neither platform hands the app the bytes the server sent. Apple gives the delegate the payload already parsed, as an `NSDictionary` (`userInfo`), and FCM gives `RemoteMessage.getData()`, a map of strings, with the notification block parsed into `RemoteMessage.Notification`. The backend therefore encodes what it receives as JSON, and that JSON, plus a small set of transport metadata, is the payload: on Apple the `userInfo` dictionary through `NSJSONSerialization`, which keeps neither the server's key order nor its spelling of numbers; on Android an object of the data's string values, with the notification fields beside it when FCM gives them. The two shapes differ because the providers' do. A server that needs exact bytes, such as for a signature, sends them as one string value. NSGo does not merge APNs' `aps` object with FCM's notification fields or turn arbitrary data into a `core.Notification`. An app may call `ShowNotification` after decoding its own data. This leaves notification presentation, deduplication and authentication in app code while keeping fields a provider adds later.
 
 ## Apple
 
@@ -64,7 +64,7 @@ The capability check uses `AccessNotifications` for the user-visible notificatio
 
 The implementation is complete only when these checks exist:
 
-- headless `core` tests cover permission, idempotent registration, token replacement, pending delivery, scope cleanup, provider metadata and payload byte preservation;
+- headless `core` tests cover permission, idempotent registration, token replacement, pending delivery, scope cleanup, provider metadata and a payload reaching the handler as the backend passed it;
 - `internal/driver` tests cover command and event encoding, including a payload larger than one bridge frame;
 - Apple tests use a fake delegate to cover token conversion, foreground/background completion and a launch press;
 - Android runtime tests use a fake adapter to cover a dead-process queue, acknowledgement, duplicate message IDs and token refresh without requiring Firebase or a device; and
@@ -74,7 +74,7 @@ The implementation is complete only when these checks exist:
 
 These decisions need confirmation before an implementation chooses them:
 
-1. Should the public API expose one `OnPush` callback with raw payload bytes, or separate token and message objects with a typed acknowledgement?
+1. Should the public API expose one `OnPush` callback with the payload's JSON, or separate token and message objects with a typed acknowledgement?
 2. Is an Android FCM adapter part of `nsgo build`, supplied as a checked-in prebuilt artifact, or supplied by each app/embedding host?
 3. Should a background data push be allowed to start a stopped NSGo process by default, or only when an app declares a background policy and a bounded execution budget?
 4. Does remote data delivery get a new capability distinct from `AccessNotifications`?
