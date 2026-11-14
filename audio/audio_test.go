@@ -23,6 +23,9 @@ func TestSourcesAndOptionsAreValidated(t *testing.T) {
 	if _, err := Open(""); !errors.Is(err, ErrUnreadableSource) {
 		t.Errorf("empty path error %v, want ErrUnreadableSource", err)
 	}
+	if _, err := PlayFile("tone\x00.wav"); !errors.Is(err, ErrUnreadableSource) {
+		t.Errorf("path with NUL error %v, want ErrUnreadableSource", err)
+	}
 	if _, err := OpenBytes(nil, "audio/wav"); !errors.Is(err, ErrUnreadableSource) {
 		t.Errorf("empty bytes error %v, want ErrUnreadableSource", err)
 	}

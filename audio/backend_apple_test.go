@@ -130,3 +130,12 @@ func TestApplePlayerLoopsAndSeeksBack(t *testing.T) {
 		t.Errorf("position %s after seeking back to 50ms", got)
 	}
 }
+
+func TestAppleRejectsPathsItCannotName(t *testing.T) {
+	if _, err := Open("/tmp/\xff.wav"); !errors.Is(err, ErrUnreadableSource) {
+		t.Errorf("invalid UTF-8 path error %v, want ErrUnreadableSource", err)
+	}
+	if _, err := PlayFile("/tmp/\xff.wav"); !errors.Is(err, ErrUnreadableSource) {
+		t.Errorf("invalid UTF-8 cue path error %v, want ErrUnreadableSource", err)
+	}
+}

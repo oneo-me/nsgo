@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -94,14 +95,15 @@ var (
 // Open opens a long-form player from path. It returns after the backend has
 // accepted the source; metadata and decoding may arrive asynchronously.
 func Open(path string, options ...Option) (*Player, error) {
-	if path == "" {
-		return nil, fmt.Errorf("%w: empty path", ErrUnreadableSource)
+	src, err := pathSource(path)
+	if err != nil {
+		return nil, err
 	}
 	settings, err := resolveOptions(options)
 	if err != nil {
 		return nil, err
 	}
-	return openPlayer(source{path: path}, settings)
+	return openPlayer(src, settings)
 }
 
 // OpenBytes opens a long-form player from encoded bytes and their MIME type.
@@ -121,14 +123,15 @@ func OpenBytes(data []byte, mime string, options ...Option) (*Player, error) {
 
 // PlayFile starts a short-lived cue from path.
 func PlayFile(path string, options ...Option) (*Sound, error) {
-	if path == "" {
-		return nil, fmt.Errorf("%w: empty path", ErrUnreadableSource)
+	src, err := pathSource(path)
+	if err != nil {
+		return nil, err
 	}
 	settings, err := resolveOptions(options)
 	if err != nil {
 		return nil, err
 	}
-	return playSound(source{path: path}, settings)
+	return playSound(src, settings)
 }
 
 // PlayBytes starts a short-lived cue from encoded bytes and their MIME type.
@@ -143,6 +146,17 @@ func PlayBytes(data []byte, mime string, options ...Option) (*Sound, error) {
 		return nil, err
 	}
 	return playSound(src, settings)
+}
+
+func pathSource(path string) (source, error) {
+	if path == "" {
+		return source{}, fmt.Errorf("%w: empty path", ErrUnreadableSource)
+	}
+	// No system names a file with a NUL; a C string would end there.
+	if strings.IndexByte(path, 0) >= 0 {
+		return source{}, fmt.Errorf("%w: path contains a NUL byte", ErrUnreadableSource)
+	}
+	return source{path: path}, nil
 }
 
 func bytesSource(data []byte, mime string) (source, error) {

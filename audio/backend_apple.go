@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"unicode/utf8"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -151,6 +152,21 @@ func (appleBackend) openPlayer(src source, options Options, callbacks playerCall
 }
 
 func newApplePlayer(src source, options Options) (objc.ID, error) {
+	var url objc.ID
+	if len(src.data) == 0 {
+		// Apple's file systems name files in UTF-8; NSString takes nothing
+		// else, and NSURL raises an exception for the nil it returns.
+		path := objc.ID(0)
+		if utf8.ValidString(src.path) {
+			path = appleNSString(src.path)
+		}
+		if path == 0 {
+			return 0, fmt.Errorf("%w: path is not valid UTF-8", ErrUnreadableSource)
+		}
+		if url = objc.ID(objc.GetClass("NSURL")).Send(appleSel("fileURLWithPath:"), path); url == 0 {
+			return 0, ErrUnreadableSource
+		}
+	}
 	var player objc.ID
 	av := objc.ID(objc.GetClass("AVAudioPlayer")).Send(appleSel("alloc"))
 	if av == 0 {
@@ -160,7 +176,6 @@ func newApplePlayer(src source, options Options) (objc.ID, error) {
 		data := objc.ID(objc.GetClass("NSData")).Send(appleSel("dataWithBytes:length:"), unsafe.Pointer(&src.data[0]), uint(len(src.data)))
 		player = av.Send(appleSel("initWithData:error:"), data, objc.ID(0))
 	} else {
-		url := objc.ID(objc.GetClass("NSURL")).Send(appleSel("fileURLWithPath:"), appleNSString(src.path))
 		player = av.Send(appleSel("initWithContentsOfURL:error:"), url, objc.ID(0))
 	}
 	if player == 0 {
