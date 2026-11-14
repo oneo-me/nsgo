@@ -381,10 +381,13 @@ func webDownloadStartedCallback(session, download, _ uintptr) {
 	}
 	dl := &webDownload{window: w, view: v, item: driver.WebDownload{State: driver.WebDownloadStarted, ID: id, URL: urlText}}
 	webDownloads[download] = dl
-	w.connect(v, download, "decide-destination", cbWebDownloadDestination)
-	w.connect(v, download, "received-data", cbWebDownloadReceived)
-	w.connect(v, download, "finished", cbWebDownloadFinished)
-	w.connect(v, download, "failed", cbWebDownloadFailed)
+	// Downloads own these temporary signal connections; attaching them to
+	// the view's hosted-signal list would leave stale object pointers after
+	// WebKit releases a completed download.
+	gSignalConnect(download, "decide-destination", cbWebDownloadDestination, w.handle)
+	gSignalConnect(download, "received-data", cbWebDownloadReceived, w.handle)
+	gSignalConnect(download, "finished", cbWebDownloadFinished, w.handle)
+	gSignalConnect(download, "failed", cbWebDownloadFailed, w.handle)
 }
 
 func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
