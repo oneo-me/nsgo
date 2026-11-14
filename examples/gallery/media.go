@@ -65,6 +65,23 @@ func messaging(cx *core.Scope) core.Node {
 	sent := core.NewSignal(cx, 0)
 	saved := core.NewSignal(cx, "")
 	result := core.NewSignal(cx, "")
+	// Desktop native hosts serve the same page through an app-owned scheme;
+	// targets without that bridge keep the inline HTML source.
+	schemePage := inlinePage(cx)
+	_ = cx.ServeScheme("gallery", func(url string) []byte {
+		if url == "gallery://inline/index.html" {
+			return []byte(schemePage)
+		}
+		return nil
+	})
+	source := func() core.WebSource {
+		switch cx.Env().OS() {
+		case core.OSMacOS, core.OSWindows, core.OSLinux:
+			return core.WebSrc("gallery://inline/index.html")
+		default:
+			return core.WebHTML(inlinePage(cx), "")
+		}
+	}
 	// Where the page's button and link are, which it posts as it loads.
 	var at struct{ Post, Save [2]core.Points }
 	web := &core.Ref{}
@@ -90,7 +107,7 @@ func messaging(cx *core.Scope) core.Node {
 		return s
 	}
 	return Card{Title: tr.MediaWebView(), Description: tr.MediaInlineHtmlWithMessagesBoth(), Children: []core.Node{
-		core.WebView{Ref: web, SourceFunc: func() core.WebSource { return core.WebHTML(inlinePage(cx), "") }, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: got, OnDownload: download},
+		core.WebView{Ref: web, SourceFunc: source, Headers: map[string]string{"X-NSGo-Gallery": "webview"}, Incognito: true, TestID: "bridge", StyleFunc: func() core.Style { return mediaFrame(cx, 210, colors.Inset()) }, OnMessage: got, OnDownload: download},
 		Caption{Label: tr.MediaFromThePage(), Note: func() string { return or(message.Get()) }},
 		Caption{Label: tr.MediaToThePage(), Note: func() string {
 			if sent.Get() == 0 {
