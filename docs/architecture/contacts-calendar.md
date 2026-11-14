@@ -1,6 +1,6 @@
 # Contacts and calendar
 
-This is the design for issue [#57](https://github.com/nsgo-dev/nsgo/issues/57). It is not an implemented API. Contacts and calendar are separate services because their stores, permissions and user expectations differ, even though both are personal data on a phone.
+This is the design for issue [#57](https://github.com/nsgo-dev/nsgo/issues/57). It is not an implemented API, and the questions it waits on are in [ARCHITECTURE.md](../../ARCHITECTURE.md#open-questions). Contacts and calendar are separate services because their stores, permissions and user expectations differ, even though both are personal data on a phone.
 
 ## Scope
 
@@ -83,7 +83,7 @@ The implementation is complete only when these checks exist:
 
 ## Open decisions
 
-These decisions need confirmation before an implementation chooses them:
+These decisions need confirmation before an implementation chooses them, and the [open questions](../../ARCHITECTURE.md#open-questions) list them:
 
 1. Is the first release picker plus read-only, or does it include contact and event writes?
 2. Are contacts and calendar separate capabilities and permission APIs?
