@@ -74,11 +74,7 @@ What Windows and Linux still lack of what macOS opens for an app ([application a
 
 ## Android embedding and process lifetime
 
-The current `-embed` runtime starts one Go process per `NsgoView` and stops it
-from the Activity. Issue #12 requires the process to outlive an Activity and be
-shared by multiple surfaces before recording, floating windows or push delivery
-can depend on it. The design and staged protocol work are in [Android engine and
-view lifetime](architecture/android-lifecycle.md).
+An `NsgoEngine` a host keeps runs the app on while its one `NsgoView` is detached ([embedding](architecture/embedding.md)). Issue #12 also needs a fresh Activity's view to show a running engine and several surfaces to share one process before recording, floating windows or push delivery can depend on it; the design and staged protocol work are in [Android engine and view lifetime](architecture/android-lifecycle.md).
 
 | Item | Reference | Done when |
 | --- | --- | --- |
