@@ -22,7 +22,6 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Picture in Picture on iOS | #54, [Picture in Picture design](architecture/picture-in-picture.md) | Video and custom-content PiP have explicit sessions, lifecycle ownership and tests for AVKit delegate behavior |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
@@ -117,6 +116,19 @@ What `app_clip` lacks of App Clips ([tool](architecture/tool.md#app-clips)).
 | Handing data to the full app | App groups | The clip and the app share `apple.app_group`'s container, so the app finds what the clip stored once installed |
 | Links into the full app | `applinks:`, `CFBundleURLTypes` | The full app takes universal links and URL schemes into `mobile.OpenedURL`, as the clip takes its invocation |
 | Opened links elsewhere | `Intent.getData`, `location.href` | Android's App Links and the web page's address reach `mobile.OpenedURL` as iOS's links do, which reads "" there now |
+
+## Picture in Picture
+
+What issue #54 asks of Picture in Picture ([Picture in Picture](architecture/picture-in-picture.md)), which waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Videos on iOS | `AVPictureInPictureController`, `AVPlayerViewController` | On an iPhone and the simulator a `Video` enters and leaves PiP and keeps playing there with the default `AudioSession`, enters it on its own as the app goes to the background when the app chose so, and the app hears when the user returns; a device without PiP reports it unavailable |
+| Custom content on iOS | `AVSampleBufferDisplayLayer`, `AVPictureInPictureSampleBufferPlaybackDelegate` | On an iPhone a PiP window shows what the app's content draws and follows its state, fast enough to show a recording level change, and its play, pause and skip reach the app |
+| PiP on tvOS | `AVPictureInPictureController` | A video enters PiP on an Apple TV, where iOS's backend reports PiP unavailable until then |
+| PiP on macOS | `AVPlayerView.allowsPictureInPicturePlayback`, `AVPictureInPictureController` | A `Video` on a Mac enters and leaves PiP with the same states as on iOS |
+| PiP on Android | `Activity.enterPictureInPictureMode` | An Android app's activity enters PiP showing its video, with the same states as on iOS |
+| PiP on the web | `HTMLVideoElement.requestPictureInPicture` | A `Video` on the web enters and leaves PiP with the same states as on iOS |
 
 ## Apple TV
 
