@@ -2919,34 +2919,55 @@ public class NsgoView extends FrameLayout {
                 ? Protocol.BIOMETRIC_FINGERPRINT : Protocol.BIOMETRIC_NONE;
     }
 
-    /** Shows Android's biometric prompt and reports its terminal result. */
+    /**
+     * Shows Android's biometric prompt and reports its result once: success, a cancel by the user, the
+     * system or the prompt's button, unavailable when the hardware, the enrolment or a lockout stops it,
+     * else a failure. The framework calls only the button's listener when the user presses it, not
+     * onAuthenticationError, so the listener answers too.
+     */
     private void authenticateBiometric(long count, String reason) {
         Activity activity = activity();
         if (activity == null || biometricAvailability() == Protocol.BIOMETRIC_NONE) {
             event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, Protocol.BIOMETRIC_UNAVAILABLE);
             return;
         }
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        java.util.concurrent.Executor main = getContext().getMainExecutor();
+        java.util.concurrent.atomic.AtomicBoolean answered = new java.util.concurrent.atomic.AtomicBoolean();
+        java.util.function.IntConsumer answer = result -> {
+            if (answered.compareAndSet(false, true)) {
+                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, result);
+            }
+        };
         BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
             @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-                executor.shutdown();
-                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, Protocol.BIOMETRIC_SUCCESS);
+                answer.accept(Protocol.BIOMETRIC_SUCCESS);
             }
             @Override public void onAuthenticationError(int errorCode, CharSequence message) {
-                executor.shutdown();
-                int result = errorCode == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED
-                        || errorCode == 10 // BIOMETRIC_ERROR_NEGATIVE_BUTTON
-                        || errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED
-                        ? Protocol.BIOMETRIC_CANCELLED : Protocol.BIOMETRIC_FAILURE;
-                event(Protocol.EVENT_BIOMETRIC, 0, count, 0, 0, "", 0, 0, result);
+                switch (errorCode) {
+                    case BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED:
+                    case BiometricPrompt.BIOMETRIC_ERROR_CANCELED:
+                    case 13: // ERROR_NEGATIVE_BUTTON, as androidx numbers it
+                        answer.accept(Protocol.BIOMETRIC_CANCELLED);
+                        break;
+                    case BiometricPrompt.BIOMETRIC_ERROR_HW_UNAVAILABLE:
+                    case BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT:
+                    case BiometricPrompt.BIOMETRIC_ERROR_LOCKOUT_PERMANENT:
+                    case BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS:
+                    case BiometricPrompt.BIOMETRIC_ERROR_HW_NOT_PRESENT:
+                        answer.accept(Protocol.BIOMETRIC_UNAVAILABLE);
+                        break;
+                    default:
+                        answer.accept(Protocol.BIOMETRIC_FAILURE);
+                }
             }
         };
         BiometricPrompt prompt = new BiometricPrompt.Builder(activity)
                 .setTitle(getContext().getApplicationInfo().loadLabel(getContext().getPackageManager()))
                 .setDescription(reason)
-                .setNegativeButton("Cancel", executor, (dialog, which) -> { })
+                .setNegativeButton(getContext().getString(android.R.string.cancel), main,
+                        (dialog, which) -> answer.accept(Protocol.BIOMETRIC_CANCELLED))
                 .build();
-        prompt.authenticate(new CancellationSignal(), executor, callback);
+        prompt.authenticate(new CancellationSignal(), main, callback);
     }
 
     /** The notification permission requests waiting for the system's prompt. */

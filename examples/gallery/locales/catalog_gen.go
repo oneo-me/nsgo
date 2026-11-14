@@ -563,6 +563,12 @@ const (
 	textSystemAuthenticate
 	textSystemFaceId
 	textSystemFingerprint
+	textSystemBiometrics
+	textSystemBiometricsDetail
+	textSystemCheck
+	textSystemBiometricCancelled
+	textSystemBiometricFailed
+	textSystemBiometricUnavailable
 	textSystemCancelAndDestructiveButtons
 	textSystemDeleteThePhoto
 	textSystemThisCannotBeUndone
@@ -2635,6 +2641,12 @@ var keyOfText = [numTexts]string{
 	"systemAuthenticate",
 	"systemFaceId",
 	"systemFingerprint",
+	"systemBiometrics",
+	"systemBiometricsDetail",
+	"systemCheck",
+	"systemBiometricCancelled",
+	"systemBiometricFailed",
+	"systemBiometricUnavailable",
 	"systemCancelAndDestructiveButtons",
 	"systemDeleteThePhoto",
 	"systemThisCannotBeUndone",
@@ -4705,6 +4717,12 @@ var textsEn = i18n.NewTexts(""+
 	"Authenticate"+
 	"Face ID"+
 	"Fingerprint"+
+	"Biometrics"+
+	"The biometric the device has enrolled, and the system's prompt"+
+	"Check"+
+	"Cancelled"+
+	"Failed"+
+	"Unavailable"+
 	"Cancel and destructive buttons"+
 	"Delete the photo?"+
 	"This cannot be undone."+
@@ -6771,6 +6789,12 @@ var textsEn = i18n.NewTexts(""+
 		9,
 		12,
 		7,
+		11,
+		10,
+		62,
+		5,
+		9,
+		6,
 		11,
 		30,
 		17,
@@ -8842,6 +8866,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"验证身份"+
 	"面容 ID"+
 	"指纹"+
+	"生物识别"+
+	"设备录入的生物特征和系统的验证提示"+
+	"检查"+
+	"已取消"+
+	"失败"+
+	"不可用"+
 	"取消和破坏性按钮"+
 	"删除这张照片？"+
 	"此操作无法撤销。"+
@@ -10909,6 +10939,12 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		9,
 		6,
+		12,
+		51,
+		6,
+		9,
+		6,
+		9,
 		24,
 		21,
 		24,
@@ -15088,6 +15124,52 @@ func SystemFingerprint(cx *core.Scope) string { return For(cx).SystemFingerprint
 
 // SystemFingerprint is the package's SystemFingerprint in the language of msgs.
 func (msgs Messages) SystemFingerprint() string { return msgs.text(textSystemFingerprint) }
+
+// SystemBiometrics says "Biometrics"
+// in the language the app shows under cx.
+func SystemBiometrics(cx *core.Scope) string { return For(cx).SystemBiometrics() }
+
+// SystemBiometrics is the package's SystemBiometrics in the language of msgs.
+func (msgs Messages) SystemBiometrics() string { return msgs.text(textSystemBiometrics) }
+
+// SystemBiometricsDetail says "The biometric the device has enrolled, and the system's prompt"
+// in the language the app shows under cx.
+func SystemBiometricsDetail(cx *core.Scope) string { return For(cx).SystemBiometricsDetail() }
+
+// SystemBiometricsDetail is the package's SystemBiometricsDetail in the language of msgs.
+func (msgs Messages) SystemBiometricsDetail() string { return msgs.text(textSystemBiometricsDetail) }
+
+// SystemCheck says "Check"
+// in the language the app shows under cx.
+func SystemCheck(cx *core.Scope) string { return For(cx).SystemCheck() }
+
+// SystemCheck is the package's SystemCheck in the language of msgs.
+func (msgs Messages) SystemCheck() string { return msgs.text(textSystemCheck) }
+
+// SystemBiometricCancelled says "Cancelled"
+// in the language the app shows under cx.
+func SystemBiometricCancelled(cx *core.Scope) string { return For(cx).SystemBiometricCancelled() }
+
+// SystemBiometricCancelled is the package's SystemBiometricCancelled in the language of msgs.
+func (msgs Messages) SystemBiometricCancelled() string {
+	return msgs.text(textSystemBiometricCancelled)
+}
+
+// SystemBiometricFailed says "Failed"
+// in the language the app shows under cx.
+func SystemBiometricFailed(cx *core.Scope) string { return For(cx).SystemBiometricFailed() }
+
+// SystemBiometricFailed is the package's SystemBiometricFailed in the language of msgs.
+func (msgs Messages) SystemBiometricFailed() string { return msgs.text(textSystemBiometricFailed) }
+
+// SystemBiometricUnavailable says "Unavailable"
+// in the language the app shows under cx.
+func SystemBiometricUnavailable(cx *core.Scope) string { return For(cx).SystemBiometricUnavailable() }
+
+// SystemBiometricUnavailable is the package's SystemBiometricUnavailable in the language of msgs.
+func (msgs Messages) SystemBiometricUnavailable() string {
+	return msgs.text(textSystemBiometricUnavailable)
+}
 
 // SystemCancelAndDestructiveButtons says "Cancel and destructive buttons"
 // in the language the app shows under cx.

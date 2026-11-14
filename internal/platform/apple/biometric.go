@@ -51,6 +51,12 @@ func HandleBiometric(it *driver.MountItem, dispatch func(driver.Event)) {
 		return
 	}
 
+	// biometryType is set only once canEvaluatePolicy has run.
+	if !objc.Send[bool](ctx, sel("canEvaluatePolicy:error:"), 1, objc.ID(0)) {
+		ctx.Send(selRelease)
+		dispatch(driver.Event{Kind: driver.EventBiometric, Count: id, Index: driver.BiometricUnavailable})
+		return
+	}
 	if !DeclaresUsage("NSFaceIDUsageDescription") && objc.Send[int](ctx, sel("biometryType")) == 2 {
 		log.Printf("nsgo: biometric authentication needs NSFaceIDUsageDescription in the app's Info.plist (nsgo.yaml's apple.info)")
 		ctx.Send(selRelease)

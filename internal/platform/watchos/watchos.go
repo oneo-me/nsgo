@@ -448,6 +448,10 @@ func (s *surface) apply(b *driver.MountBatch) {
 			// unavailable.
 			apple.HandleSpeech(it.Count, *it.Speech, s.engine.Dispatch)
 			continue
+		case driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
+			// LocalAuthentication's biometric policy is not on watchOS.
+			s.engine.Dispatch(driver.NoBiometric(it))
+			continue
 		case driver.ItemReadClipboard, driver.ItemPickImages, driver.ItemTakePhoto, driver.ItemPickFiles,
 			driver.ItemPickDirectories, driver.ItemOpenFile, driver.ItemShare, driver.ItemSaveFile:
 			s.unsupported(it)

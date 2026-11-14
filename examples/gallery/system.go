@@ -1008,21 +1008,21 @@ func biometricsCard(cx *core.Scope) core.Node {
 			}
 		})
 	}
-	return Card{Title: tr.SystemConfirm(), Description: tr.SystemCancelAndDestructiveButtons(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
+	return Card{Title: tr.SystemBiometrics(), Description: tr.SystemBiometricsDetail(), Actions: []core.Node{ui.Badge{Text: tr.SystemNsgo()}}, Children: []core.Node{
 		Caption{Label: tr.SystemBiometric(), Note: kind.Get},
 		ui.Wrap{Children: []core.Node{
-			ui.Button{Text: tr.SystemPreview(), Size: ui.SizeSmall, TestID: "biometric-availability", OnPress: availability},
+			ui.Button{Text: tr.SystemCheck(), Size: ui.SizeSmall, TestID: "biometric-availability", OnPress: availability},
 			ui.Button{Text: tr.SystemAuthenticate(), Variant: ui.ButtonSecondary, Size: ui.SizeSmall, TestID: "biometric-authenticate", OnPress: func() {
-				cx.AuthenticateBiometric(tr.SystemConfirm(), func(r core.BiometricResult) {
+				cx.AuthenticateBiometric(tr.SystemAuthenticate(), func(r core.BiometricResult) {
 					switch r {
 					case core.BiometricSuccess:
 						result.Set(tr.SystemSuccess())
 					case core.BiometricCancelled:
-						result.Set(tr.SystemCancel())
+						result.Set(tr.SystemBiometricCancelled())
 					case core.BiometricFailure:
-						result.Set(tr.SystemDelete())
+						result.Set(tr.SystemBiometricFailed())
 					default:
-						result.Set(tr.SystemNone())
+						result.Set(tr.SystemBiometricUnavailable())
 					}
 				})
 			}},

@@ -1430,7 +1430,8 @@ func (s *surface) apply(b *driver.MountBatch) {
 		case driver.ItemCheckForUpdates:
 			s.checkForUpdates(it.On, it.Count)
 			continue
-		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge:
+		case driver.ItemNotificationPermission, driver.ItemShowNotification, driver.ItemCloseNotification, driver.ItemBadge,
+			driver.ItemBiometricAvailability, driver.ItemBiometricAuthenticate:
 			s.notify(it)
 			continue
 		case driver.ItemPickImages:

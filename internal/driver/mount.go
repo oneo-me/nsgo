@@ -347,6 +347,15 @@ const (
 	BiometricUnavailable
 )
 
+// NoBiometric is how a platform without biometric authentication answers a biometric request: no kind for availability, unavailable for authentication.
+func NoBiometric(it *MountItem) Event {
+	result := BiometricNone
+	if it.Kind == ItemBiometricAuthenticate {
+		result = BiometricUnavailable
+	}
+	return Event{Kind: EventBiometric, Count: it.Count, Index: result}
+}
+
 // Notification is a system notification (ItemShowNotification), as
 // core.Notification.
 type Notification struct {
