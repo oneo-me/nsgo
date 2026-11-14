@@ -46,6 +46,16 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Package settings | #1654, #1548, #1460 | `nsgo.yaml` raises an Apple package's minimum system version, never below the runtime's, gives Windows, Linux and Android icons of their own, and lets an Android app load plain HTTP |
 | Store uploads | `tooling.md` (Releases), #1052, #1054 | A command uploads the store packages `build -channel store` makes to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
 
+## Location and motion
+
+NSGo's own design for [#56](https://github.com/nsgo-dev/nsgo/issues/56) ([location and motion](architecture/location-motion.md)), which waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Location and motion on phones | `CLLocationManager`, `CMMotionManager`, `LocationManager`, `SensorManager` | The gallery's System page, the permission granted, gets a one-shot fix and a stream and accelerometer, gyroscope and device-motion samples at the rate it asks on an iPhone, an Android 9 device and one on API 31 or later, a phone lying face up reading +9.81 m/s² on z on both; a denied permission reaches the app as denied, and `nsgotest` grants, denies and feeds fixes and samples headless |
+| Location on Macs and TVs | `CLLocationManager` | A notarized macOS build and a Mac App Store build get fixes, with the location entitlement `nsgo build` claims, and a tvOS app a one-shot fix, its streams reporting unavailable |
+| Location and motion elsewhere | Geolocation API, `DeviceMotionEvent`, `Windows.Devices.Geolocation`, GeoClue | The web, Windows and Linux give location fixes, and the web motion samples, where they report both unavailable in the first release |
+
 ## Keyboard, popups and screen readers
 
 What 0.5.0 changed in how the keyboard's focus, popups and assistive technology behave, which NSGo's `core` and `base` follow from 0.4.0 still ([interaction](architecture/interaction.md), [components](architecture/components.md)).
