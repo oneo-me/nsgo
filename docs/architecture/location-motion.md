@@ -23,7 +23,7 @@ Geofencing, significant-location-change monitoring, step counting, activity reco
 | macOS | Core Location: one-shot fixes and streams | Unavailable: `CMMotionManager` is not on macOS |
 | tvOS | One-shot fixes (`requestLocation`); streams report unavailable, as `startUpdatingLocation` is not on tvOS | Unavailable: Core Motion's updates are not on tvOS |
 | Android | `LocationManager`: its `FUSED_PROVIDER` from API 31, and below it, down to the runtime's API 28, the best of `GPS_PROVIDER` and `NETWORK_PROVIDER` the permission allows; a one-shot fix through `getCurrentLocation` from API 30 and `requestSingleUpdate` before it | `SensorManager` |
-| The web, Windows, Linux, mini programs | Unavailable in the first release; the web's Geolocation API, Windows' `Windows.Devices.Geolocation` and Linux's GeoClue are the later backends, recorded in the [roadmap](../roadmap.md) | Unavailable; the web's `DeviceMotionEvent` is the later backend |
+| The web, Windows, Linux, mini programs | Unavailable in the first release; the web's Geolocation API, Windows' `Windows.Devices.Geolocation` and Linux's GeoClue are the later backends, recorded in the [roadmap](../roadmap.md#location-and-motion) | Unavailable; the web's `DeviceMotionEvent` is the later backend |
 
 Sensor callbacks never run user code on a platform thread. The backend copies a sample, acknowledges the provider callback promptly and posts the sample to the engine goroutine. A scope stopping a stream removes it before later samples are delivered. A pending one-shot location is canceled when its owner ends.
 

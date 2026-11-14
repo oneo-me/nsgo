@@ -22,7 +22,6 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Location and motion sensors | #56, [location and motion design](architecture/location-motion.md) | Provider-neutral location and sensor streams define accuracy, rates, timestamps, permission and lifecycle behavior on Apple and Android targets |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
@@ -45,6 +44,16 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Packaged Apple apps' logs | `macos.md` (Packaged apps' logs), #1655 | A macOS or iOS app opened from Finder, the Dock or the Home screen writes its warnings and errors to the unified log under its bundle ID, reached through purego, where its stderr goes nowhere now |
 | Package settings | #1654, #1548, #1460 | `nsgo.yaml` raises an Apple package's minimum system version, never below the runtime's, gives Windows, Linux and Android icons of their own, and lets an Android app load plain HTTP |
 | Store uploads | `tooling.md` (Releases), #1052, #1054 | A command uploads the store packages `build -channel store` makes to TestFlight and Play's internal track, named apart from `nsgo publish`, which signs TSX packages |
+
+## Location and motion
+
+NSGo's own design for [#56](https://github.com/nsgo-dev/nsgo/issues/56) ([location and motion](architecture/location-motion.md)), which waits on its [open questions](../ARCHITECTURE.md#open-questions).
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Location and motion on phones | `CLLocationManager`, `CMMotionManager`, `LocationManager`, `SensorManager` | The gallery's System page, the permission granted, gets a one-shot fix and a stream and accelerometer, gyroscope and device-motion samples at the rate it asks on an iPhone, an Android 9 device and one on API 31 or later, a phone lying face up reading +9.81 m/s² on z on both; a denied permission reaches the app as denied, and `nsgotest` grants, denies and feeds fixes and samples headless |
+| Location on Macs and TVs | `CLLocationManager` | A notarized macOS build and a Mac App Store build get fixes, with the location entitlement `nsgo build` claims, and a tvOS app a one-shot fix, its streams reporting unavailable |
+| Location and motion elsewhere | Geolocation API, `DeviceMotionEvent`, `Windows.Devices.Geolocation`, GeoClue | The web, Windows and Linux give location fixes, and the web motion samples, where they report both unavailable in the first release |
 
 ## Keyboard, popups and screen readers
 
