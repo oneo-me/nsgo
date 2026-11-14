@@ -148,3 +148,35 @@ func TestListSpareCellsMemosKeepTheirValueForReadersOutside(t *testing.T) {
 		t.Fatalf("seen = %v, errors %v", seen, h.errs)
 	}
 }
+
+// A memo in a row that only readers outside the cell read: shown again, the cell computes it for them.
+func TestListSpareCellsMemosReadOnlyOutsideFollowTheirNewRow(t *testing.T) {
+	var items *Signal[[]string]
+	var memos []*Memo[string]
+	h := newHost(t, Size{Width: 200, Height: 300}, func(cx *Scope) Node {
+		items = NewSignalFunc(cx, []string{"a", "b", "c"}, nil)
+		return List{Count: func() int { return len(items.Get()) }, Style: Style{FlexGrow: 1},
+			Row: func(cx *Scope, row ListRow) Node {
+				memos = append(memos, NewMemo(cx, func() string { return items.Get()[row.Index()] }))
+				return Text{Style: Style{Height: Pt(30)}, Content: "row"}
+			}}
+	})
+	h.commit()
+	var seen []string
+	h.root.Effect(func() {
+		seen = seen[:0]
+		for _, m := range memos {
+			seen = append(seen, m.Get())
+		}
+	})
+	items.Set([]string{"x"})
+	h.commit()
+	items.Set([]string{"x", "y", "z"})
+	h.commit()
+	if len(h.errs) != 0 {
+		t.Fatalf("errors %v", h.errs)
+	}
+	if !slices.Contains(seen, "y") || !slices.Contains(seen, "z") {
+		t.Fatalf("seen = %v, want the reused cells' new rows", seen)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"slices"
 	"sync/atomic"
 	"time"
 )
@@ -44,7 +45,7 @@ type Scope struct {
 	disposed bool
 }
 
-// parking holds back the computations under a list cell's scope while the cell is spare, as its index may name a row that is gone or another row's, and runs them when the cell shows a row again. guard, the list's computation that frees and binds its cells, is brought up to date before anything under the scope runs, so a row's binding never runs with an index its list has not settled.
+// parking holds back the computations under a list cell's scope while the cell is spare, as its index may name a row that is gone or another row's, and runs them when the cell shows a row again: its effects, and its memos read from outside it, for their readers. guard, the list's computation that frees and binds its cells, is brought up to date before anything under the scope runs, so a row's binding never runs with an index its list has not settled.
 type parking struct {
 	guard    *computation
 	parked   bool
@@ -593,9 +594,14 @@ func (c *computation) update() {
 		}
 	}
 	if c.state == dirty {
-		// A memo in a spare cell, read from outside it, keeps its value until the cell shows a row again.
-		if c.subs != nil && c.rt.parked > 0 && c.parent.heldBack() {
-			return
+		// A memo in a spare cell, read from outside it, keeps its value until the cell shows a row again, and runs then for its readers.
+		if c.subs != nil && c.rt.parked > 0 {
+			if p := c.parent.heldBack(); p != nil {
+				if !slices.Contains(p.deferred, c) {
+					p.deferred = append(p.deferred, c)
+				}
+				return
+			}
 		}
 		c.run()
 		return
@@ -603,14 +609,14 @@ func (c *computation) update() {
 	c.state = clean
 }
 
-// heldBack reports whether s or an owner above it is parked.
-func (s *Scope) heldBack() bool {
+// heldBack returns the parking of s or the nearest owner above it that is parked, or nil.
+func (s *Scope) heldBack() *parking {
 	for ; s != nil; s = s.parent {
 		if s.park != nil && s.park.parked {
-			return true
+			return s.park
 		}
 	}
-	return false
+	return nil
 }
 
 // run recomputes c. Writes during the run are batched, and a write to
