@@ -129,6 +129,7 @@ Record a design question here, and confirm the answer with the user before choos
 | [Scrolling](docs/architecture/scrolling.md) | `Scroll`, `List` or a scroll view |
 | [Interaction](docs/architecture/interaction.md) | Accessibility, pointers, focus, touches, gestures or drops |
 | [Services](docs/architecture/services.md) | A service, a menu, the desktop window or the app's lifecycle |
+| [Picture in Picture](docs/architecture/picture-in-picture.md) | iOS video or custom-content Picture in Picture |
 | [Updates](docs/architecture/updates.md) | `updater`, an update check, the updaters `nsgo build` bundles or a release channel |
 | [Application and windows](docs/architecture/application.md) | `nsgo.Run`, the windows, panels and tray icons an app opens, global shortcuts or shutdown |
 | [Hosted views](docs/architecture/native-views.md) | `WebView`, `Video` or `Native` components |
