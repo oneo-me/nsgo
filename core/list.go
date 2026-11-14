@@ -446,7 +446,7 @@ func (t *Tree) mountList(cx *Scope, parent *node, l List) {
 		}
 		if n != st.count {
 			st.setCount(n)
-			ln.freeFrom(n)
+			t.freeFrom(ln, n)
 		}
 		ln.count.Set(n)
 		t.relayout(v)
@@ -469,7 +469,7 @@ func (t *Tree) spliceList(ln *listNode, at, removed, inserted int) {
 			c.pos.index.Set(c.index)
 			ln.byIndex[c.index] = c
 		default:
-			ln.free = append(ln.free, c)
+			t.freeCell(ln, c)
 		}
 	}
 	ln.loadAt = -1
@@ -497,13 +497,24 @@ func (t *Tree) loadMore(ln *listNode, v *node) {
 }
 
 // freeFrom frees the cells of rows count and after.
-func (ln *listNode) freeFrom(count int) {
+func (t *Tree) freeFrom(ln *listNode, count int) {
 	for i, c := range ln.byIndex {
 		if i >= count {
 			delete(ln.byIndex, i)
-			ln.free = append(ln.free, c)
+			t.freeCell(ln, c)
 		}
 	}
+}
+
+// freeCell stops a recycled cell's bindings before putting it aside. Its
+// previous row may have read an app slice by index; leaving that computation
+// alive would run it after the row disappeared and can panic in Go. The node
+// stays in the free list so its ID and parent region are reused, while its
+// content is mounted afresh when a row takes it again.
+func (t *Tree) freeCell(ln *listNode, c *listCell) {
+	c.scope.Dispose()
+	t.clear(c.node)
+	ln.free = append(ln.free, c)
 }
 
 // main is the main-axis length of a size.
@@ -714,7 +725,7 @@ func (t *Tree) updateList(v *node) bool {
 	for i, c := range ln.byIndex {
 		if !wanted(i) {
 			delete(ln.byIndex, i)
-			ln.free = append(ln.free, c)
+			t.freeCell(ln, c)
 		}
 	}
 	bind := func(i int) {
@@ -725,7 +736,7 @@ func (t *Tree) updateList(v *node) bool {
 		var c *listCell
 		if k := len(ln.free); k > 0 {
 			c, ln.free = ln.free[k-1], ln.free[:k-1]
-			c.pos.index.Set(i)
+			t.resetCell(ln, c, i)
 		} else {
 			c = t.newCell(ln, i)
 		}
@@ -1016,16 +1027,29 @@ func (t *Tree) setSpacer(ln *listNode, total Points) {
 }
 
 func (t *Tree) newCell(ln *listNode, i int) *listCell {
-	c := &listCell{scope: &Scope{}, index: i}
+	c := &listCell{}
+	t.resetCell(ln, c, i)
+	return c
+}
+
+// resetCell gives a dormant cell a live owner and mounts the row it now
+// shows. Its node itself remains allocated, so the list still recycles the
+// platform view and its ID.
+func (t *Tree) resetCell(ln *listNode, c *listCell, i int) {
+	c.scope = &Scope{}
 	ln.owner.adopt(c.scope)
+	c.index = i
 	c.pos = ListRow{index: NewSignal(c.scope, i), count: NewSignal(c.scope, ln.count.GetUntracked())}
 	t.within(c.scope, func() {
-		c.node = t.newNode(driver.KindView, ln.cells, c.scope)
-		c.node.base = Style{Position: Absolute}
-		if ln.spec.Horizontal {
-			c.node.base.Direction = Row
+		if c.node == nil {
+			c.node = t.newNode(driver.KindView, ln.cells, c.scope)
+			c.node.base = Style{Position: Absolute}
+			if ln.spec.Horizontal {
+				c.node.base.Direction = Row
+			}
+			t.restyle(c.node)
 		}
-		t.restyle(c.node)
+		c.node.owner = c.scope
 		row := ln.spec.Row(c.scope, c.pos)
 		var sep Node
 		if f := ln.spec.Separator; f != nil {
@@ -1040,7 +1064,6 @@ func (t *Tree) newCell(ln *listNode, i int) *listCell {
 			t.mount(c.scope, c.node, sep)
 		}
 	})
-	return c
 }
 
 // updateLists updates every list: those with views of their own first,

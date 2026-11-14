@@ -73,6 +73,32 @@ func TestKeyedListKeepsTheVisibleRowsInPlace(t *testing.T) {
 	}
 }
 
+// A recycled cell's old row must stop reading the app's slice before a
+// shorter count makes that row invalid.
+func TestListRowsStopRunningWhenCountShrinks(t *testing.T) {
+	var failed error
+	var values *core.Signal[[]string]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		values = core.NewSignalFunc(cx, []string{"a", "b", "c"}, nil)
+		return core.List{TestID: "list", Style: core.Style{Height: core.Pt(100)}, EstimatedSize: 40,
+			Count: func() int { return len(values.Get()) },
+			Key:   func(i int) any { return values.Get()[i] },
+			Row: func(cx *core.Scope, row core.ListRow) core.Node {
+				return core.Text{ContentFunc: func() string { return values.Get()[row.Index()] }, Style: core.Style{Height: core.Pt(40)}}
+			}}
+	}, nsgotest.Errors(func(err error) { failed = err }))
+	// The row at index 2 is mounted before the list shrinks.
+	app.Find("text:c")
+	values.Set([]string{"a", "b"})
+	app.Settle()
+	if failed != nil {
+		t.Fatalf("shrinking the list failed: %v", failed)
+	}
+	values.Set([]string{"a", "b", "c", "d"})
+	app.Settle()
+	app.Find("text:c")
+}
+
 func makeIDs(n, from int) []int {
 	out := make([]int, n)
 	for i := range out {
