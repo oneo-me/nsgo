@@ -16,12 +16,19 @@ import (
 // Custom PNGs become private HICONs; the executable's icon is a shared
 // fallback and is therefore never destroyed here.
 //
-// The icons use NOTIFYICON_VERSION_4: the callback's LOWORD(lParam) is the event and HIWORD(lParam) the icon's ID, and a click arrives both as its raw button message and as NIN_SELECT or WM_CONTEXTMENU, of which only the latter count; a middle click has only its button-up.
+// The icons use NOTIFYICON_VERSION_4: the callback's LOWORD(lParam) is the event and HIWORD(lParam) the icon's ID, and a click arrives both as its raw button message and as NIN_SELECT or WM_CONTEXTMENU, of which only the latter count; a middle click has only its button-up. When Explorer starts again it broadcasts TaskbarCreated, and the icons are added again.
 
 var (
 	shellNotifyIcon        = shell32.NewProc("Shell_NotifyIconW")
 	shellNotifyIconGetRect = shell32.NewProc("Shell_NotifyIconGetRect")
+	registerWindowMessageW = user32.NewProc("RegisterWindowMessageW")
 )
+
+// taskbarCreated is the message Explorer broadcasts as it creates the taskbar, after it started again.
+var taskbarCreated = func() uint32 {
+	m, _, _ := registerWindowMessageW.Call(uintptr(unsafe.Pointer(wide("TaskbarCreated"))))
+	return uint32(m)
+}()
 
 const (
 	nimAdd            = 0x00000000
@@ -100,11 +107,16 @@ func (w *window) applyTray(cfg driver.TrayConfig) {
 		op = nimAdd
 	}
 	if ok, _, _ := shellNotifyIcon.Call(uintptr(op), uintptr(unsafe.Pointer(&data))); ok == 0 {
-		if op == nimAdd {
-			delete(w.trays, cfg.ID)
-		}
 		if tr.private {
 			destroyIcon.Call(tr.icon)
+		}
+		if op == nimAdd {
+			// Kept, to add again with its next change or once the taskbar exists (TaskbarCreated): the shell has no notification area before Explorer starts.
+			if oldPrivate && oldIcon != 0 {
+				destroyIcon.Call(oldIcon)
+			}
+			tr.icon, tr.private = 0, false
+			return
 		}
 		tr.cfg, tr.icon, tr.private = oldCfg, oldIcon, oldPrivate
 		return
@@ -166,6 +178,14 @@ func (w *window) trayRect(id uint32) (rect, bool) {
 		return bounds, true
 	}
 	return rect{}, false
+}
+
+// readdTrays adds the icons again after Explorer started again, which forgot them.
+func (w *window) readdTrays() {
+	for _, tr := range w.trays {
+		tr.added = false
+		w.applyTray(tr.cfg)
+	}
 }
 
 // trayEvent decodes a version 4 callback: the icon's ID and the button, 0 for the primary, of a click; ok is false for what is not a click, the raw button messages that come before NIN_SELECT and WM_CONTEXTMENU among them.

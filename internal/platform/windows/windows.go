@@ -1904,6 +1904,10 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 		w.engine.Dispatch(driver.Event{Kind: driver.EventWindowClose})
 		return 0
 	}
+	if message == taskbarCreated && taskbarCreated != 0 {
+		w.readdTrays()
+		return 0
+	}
 	w.reportModality(message, wParam)
 	// An alert takes the pointer and the keys while it shows.
 	if w.alert != nil {
