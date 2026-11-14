@@ -21,6 +21,7 @@ var layers = []struct {
 }{
 	{"internal/layout", nil},
 	{"microphone", nil},
+	{"audio", nil},
 	// Widgets take core's colors, edges and fonts, and reach WidgetKit
 	// through the files and the library the tool's extension shares, and
 	// Android's runtime through the driver's Live Updates.

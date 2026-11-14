@@ -2,6 +2,11 @@
 
 Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, biometrics, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
+Planned audio playback is a process resource rather than a view service. Its
+API and target contract are recorded in [audio playback](audio-design.md);
+until that design's implementation stages land, apps can use only a video's
+audio track or the existing `microphone` and speech APIs.
+
 ## Requests and answers
 
 A service is a command item in the batch. One that answers, such as a clipboard read, an opened URL or a pick, carries a number in `Count` and comes back as an event with it.
