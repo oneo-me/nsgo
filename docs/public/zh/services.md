@@ -129,6 +129,17 @@ items := core.NewResource(cx, func() (string, bool) { return query.Get(), query.
 
 `items.Get()`、`items.Err()` 和 `items.Loading()` 都是 signal，绑定会跟着它们更新。新的查询会通过 `ctx` 取消仍在进行的请求，迟到的响应不会覆盖较新的结果。`items.Refetch()` 用于重试，加载期间保留上一次的列表；`items.Mutate` 立即设置一个值，用于乐观更新。
 
+`core.Suspense` 会在其内容读取的资源加载首个值时显示占位内容，页面无需自己维护加载状态：
+
+```go
+core.Suspense{
+	Content:  func(cx *core.Scope) core.Node { return itemList(cx, items) },
+	Fallback: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} },
+}
+```
+
+等待期间内容保持挂载但处于隐藏状态，值一到就能立即显示。重新加载时会继续显示上一次的值。
+
 ## 语音与生命周期
 
 `cx.StartSpeech` 在 `cx.Env().CanRecognizeSpeech()` 为真时用系统识别器识别语音，并随着转写结果变化返回文本。

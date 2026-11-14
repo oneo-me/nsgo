@@ -129,6 +129,17 @@ items := core.NewResource(cx, func() (string, bool) { return query.Get(), query.
 
 `items.Get()`, `items.Err()` and `items.Loading()` are signals that bindings follow. A new query cancels the request still running through `ctx`, so a late answer never replaces a newer one. `items.Refetch()` retries, keeping the last list while it loads, and `items.Mutate` sets a value at once for an optimistic update.
 
+`core.Suspense` shows a fallback while the resources its content reads load their first value, so a screen needs no loading flag of its own:
+
+```go
+core.Suspense{
+	Content:  func(cx *core.Scope) core.Node { return itemList(cx, items) },
+	Fallback: func(*core.Scope) core.Node { return ui.Spinner{Label: "Loading"} },
+}
+```
+
+The content stays mounted but hidden while it waits, so it shows at once when the values arrive. A refetch keeps it shown with the last value.
+
 ## Speech and the lifecycle
 
 `cx.StartSpeech` recognizes speech with the system's recognizer where `cx.Env().CanRecognizeSpeech()` says it exists, and answers with the transcript as it changes.
