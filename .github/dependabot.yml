@@ -32,3 +32,7 @@ updates:
     groups:
       website-minor:
         update-types: [minor, patch]
+    # astro check runs on TypeScript 5 or 6 only; lift this once @astrojs/check supports 7.
+    ignore:
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
