@@ -68,8 +68,9 @@ For `nsgo.Run(App)`, `Run` keeps its root window hidden as the app's own surface
 - A window is a top-level window centered at its content size in its monitor's scale, with its material. Its close reports `EventWindowClose`, and `WindowDestroy` destroys it. Keys go to the key bindings and menu of the window they are sent to.
 - A panel is a borderless popup tool window, so it has no taskbar button. It shows above or under its tray icon from `Shell_NotifyIconGetRect`, else in the upper middle of the monitor with the pointer, and takes the focus, which activates the app; with `HideOnBlur` it hides as it loses it. The press on the icon that hides a panel by taking its focus does not show it again.
 - A tray icon is `Shell_NotifyIcon`'s at `NOTIFYICON_VERSION_4`: `NIN_SELECT` and `NIN_KEYSELECT` are primary clicks and `WM_CONTEXTMENU` secondary, its tooltip is the standard one, and the icons are added again when Explorer broadcasts `TaskbarCreated`. Its menu is owned by a hidden window, so it raises none of the app's. A drawn icon's surface stays hidden.
+- Global shortcuts are `RegisterHotKey` on the hidden root window, with `MOD_NOREPEAT`; `WM_HOTKEY` reports the registered ID, and the whole set is replaced whenever it changes. A combination another app holds fails silently.
 - An alert asked from the app's own surface shows the hidden root window as the alert's own window, which closing cancels.
-- `LaunchAtLogin` answers false, and global shortcuts register nothing ([roadmap](../roadmap.md#application-and-windows)).
+- `LaunchAtLogin` answers false ([roadmap](../roadmap.md#application-and-windows)).
 
 ## Configuration
 
