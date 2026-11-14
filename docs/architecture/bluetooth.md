@@ -71,6 +71,7 @@ Bluetooth bytes are untrusted input. The API does not decode a characteristic as
 The implementation is complete only when these checks exist:
 
 - headless `core` tests cover handle ownership, scan filters, coalesced results, connection state, operation IDs, operation cancellation, stale events, subscription cleanup, empty values and byte preservation;
+- `nsgotest` answers from its model: availability, the permission and its answer, scan results, connections and their failures, read values and notifications, and it records writes; and `examples/gallery` checks a Bluetooth part of its System page with it;
 - Apple tests use fake central and peripheral delegates to cover authorization read without a manager, the `unknown` state before the first update, powered-off state, discovery, read/write ordering, subscriptions through `setNotifyValue:forCharacteristic:` and disconnects;
 - Android tests cover the pipe's encoding of UUIDs, empty values and large payloads, `protocol_test.go` holds the new kinds in `Protocol.java` to the driver's, and a fake scanner and GATT client cover API 31 permissions, the install-time permissions and location-gated scans before it, adapter state, reconnect and cleanup without a device; and
 - target tests use a controlled peripheral or provider simulator, never a user's nearby device, and verify that no callback runs after its owning scope is disposed.
