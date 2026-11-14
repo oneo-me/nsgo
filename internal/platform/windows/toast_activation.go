@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -248,10 +249,41 @@ func toastActivationCallbackRelease(c *toastActivationCallback) uintptr {
 	return uintptr(n)
 }
 func toastActivationCallbackActivate(_ *toastActivationCallback, _ *uint16, args *uint16, _ uintptr, _ uint32) uintptr {
-	if id := parseToastActivationArgs(wideString(args)); id != "" {
+	if id := parseToastActivationArgs(wideString(args)); id != "" && toastPresses.first(id, time.Now()) {
 		dispatchToastActivation(id)
 	}
 	return sOK
+}
+
+// toastPressWindow is how long a press of a toast is held against another delivery of it.
+const toastPressWindow = 5 * time.Second
+
+// toastPresses lets one press of a toast reach the app once: while the app runs, a press arrives both through the toast's Activated event and through the COM activator, in either order, as Microsoft's DesktopToasts sample notes.
+var toastPresses toastPressDedup
+
+// toastPressDedup holds when each toast was last pressed.
+type toastPressDedup struct {
+	sync.Mutex
+	at map[string]time.Time
+}
+
+// first reports whether a press of the toast id at now is the first delivery of it, not one within toastPressWindow of an earlier press, and records it.
+func (d *toastPressDedup) first(id string, now time.Time) bool {
+	d.Lock()
+	defer d.Unlock()
+	for k, at := range d.at {
+		if now.Sub(at) >= toastPressWindow {
+			delete(d.at, k)
+		}
+	}
+	if _, ok := d.at[id]; ok {
+		return false
+	}
+	if d.at == nil {
+		d.at = map[string]time.Time{}
+	}
+	d.at[id] = now
+	return true
 }
 
 func parseToastActivationArgs(args string) string {

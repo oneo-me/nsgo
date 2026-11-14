@@ -5,6 +5,7 @@ package windows
 import (
 	"runtime"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -51,5 +52,30 @@ func TestPropVariantSize(t *testing.T) {
 	}
 	if got := unsafe.Offsetof(propVariant{}.value); got != 8 {
 		t.Fatalf("propVariant's value is at %d, want 8", got)
+	}
+}
+
+// A press arriving through both the Activated event and the COM activator reaches the app once; a later press of the toast, or another toast's, again.
+func TestToastPressDedup(t *testing.T) {
+	var d toastPressDedup
+	at := time.Unix(1000, 0)
+	for _, step := range []struct {
+		id    string
+		after time.Duration
+		want  bool
+	}{
+		{"chat:42", 0, true},
+		{"chat:42", 300 * time.Millisecond, false},
+		{"chat:7", 300 * time.Millisecond, true},
+		{"chat:42", toastPressWindow - time.Millisecond, false},
+		{"chat:42", toastPressWindow, true},
+		{"chat:42", toastPressWindow + time.Second, false},
+	} {
+		if got := d.first(step.id, at.Add(step.after)); got != step.want {
+			t.Errorf("first(%q) at +%v = %v, want %v", step.id, step.after, got, step.want)
+		}
+	}
+	if len(d.at) != 1 {
+		t.Errorf("held %d presses, want 1 once the others passed the window", len(d.at))
 	}
 }

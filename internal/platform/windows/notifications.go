@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
@@ -382,7 +383,9 @@ func (w *window) showToast(n driver.Notification) bool {
 	}
 	appID, e := n.ID, w.engine
 	pressed := newHandler(&iidToastActivated, func(uintptr, unsafe.Pointer) {
-		e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: appID})
+		if toastPresses.first(appID, time.Now()) {
+			e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: appID})
+		}
 		w.post(func() {
 			if old := toasts.shown[appID]; old != nil {
 				old.release()
