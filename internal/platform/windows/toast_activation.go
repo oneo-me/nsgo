@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -249,7 +250,7 @@ func toastActivationCallbackRelease(c *toastActivationCallback) uintptr {
 	return uintptr(n)
 }
 func toastActivationCallbackActivate(_ *toastActivationCallback, _ *uint16, args *uint16, _ uintptr, _ uint32) uintptr {
-	if id := parseToastActivationArgs(wideString(args)); id != "" && toastPresses.first(id, time.Now()) {
+	if id, press := parseToastActivationArgs(wideString(args)); id != "" && toastPresses.first(press, time.Now()) {
 		dispatchToastActivation(id)
 	}
 	return sOK
@@ -258,17 +259,17 @@ func toastActivationCallbackActivate(_ *toastActivationCallback, _ *uint16, args
 // toastPressWindow is how long a press of a toast is held against another delivery of it.
 const toastPressWindow = 5 * time.Second
 
-// toastPresses lets one press of a toast reach the app once: while the app runs, a press arrives both through the toast's Activated event and through the COM activator, in either order, as Microsoft's DesktopToasts sample notes.
+// toastPresses lets one press of a toast reach the app once: while the app runs, a press arrives both through the toast's Activated event and through the COM activator, in either order, as Microsoft's DesktopToasts sample notes. It goes by the toast's launch arguments, which a nonce makes new for each toast shown, so a press of a toast that replaced a pressed one under the same ID gets through.
 var toastPresses toastPressDedup
 
-// toastPressDedup holds when each toast was last pressed.
+// toastPressDedup holds when each toast, by its launch arguments, was last pressed.
 type toastPressDedup struct {
 	sync.Mutex
 	at map[string]time.Time
 }
 
-// first reports whether a press of the toast id at now is the first delivery of it, not one within toastPressWindow of an earlier press, and records it.
-func (d *toastPressDedup) first(id string, now time.Time) bool {
+// first reports whether a press of the toast with launch arguments press at now is the first delivery of it, not one within toastPressWindow of an earlier press, and records it.
+func (d *toastPressDedup) first(press string, now time.Time) bool {
 	d.Lock()
 	defer d.Unlock()
 	for k, at := range d.at {
@@ -276,22 +277,39 @@ func (d *toastPressDedup) first(id string, now time.Time) bool {
 			delete(d.at, k)
 		}
 	}
-	if _, ok := d.at[id]; ok {
+	if _, ok := d.at[press]; ok {
 		return false
 	}
 	if d.at == nil {
 		d.at = map[string]time.Time{}
 	}
-	d.at[id] = now
+	d.at[press] = now
 	return true
 }
 
-func parseToastActivationArgs(args string) string {
-	args = strings.TrimSpace(args)
-	if strings.HasPrefix(args, "id=") {
-		return strings.TrimPrefix(args, "id=")
+// toastNonce counts the toasts shown, from the time the process first showed one, so a toast of an earlier run of the app, pressed after it ended, does not share its nonce with one this run shows.
+var toastNonce struct {
+	sync.Once
+	n atomic.Uint64
+}
+
+// toastLaunch is the launch arguments of a toast shown with id: a nonce new for each toast, then the ID, which runs to the end and may hold any character.
+func toastLaunch(id string) string {
+	toastNonce.Do(func() { toastNonce.n.Store(uint64(time.Now().UnixNano())) })
+	return "n=" + strconv.FormatUint(toastNonce.n.Add(1), 36) + ";id=" + id
+}
+
+// parseToastActivationArgs returns the ID of the toast launch arguments args name and the arguments the press is known by. It also takes the bare id=<ID> of a toast an earlier version of the app showed.
+func parseToastActivationArgs(args string) (id, press string) {
+	press = strings.TrimSpace(args)
+	rest := press
+	if nonce, after, ok := strings.Cut(rest, ";"); ok && strings.HasPrefix(nonce, "n=") && strings.HasPrefix(after, "id=") {
+		rest = after
 	}
-	return ""
+	if !strings.HasPrefix(rest, "id=") {
+		return "", ""
+	}
+	return strings.TrimPrefix(rest, "id="), press
 }
 
 var toastActivation struct {

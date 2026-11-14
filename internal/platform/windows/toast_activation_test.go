@@ -28,15 +28,32 @@ func TestToastActivatorCLSIDStable(t *testing.T) {
 
 func TestParseToastActivationArgs(t *testing.T) {
 	for _, test := range []struct {
-		args, want string
+		args, id, press string
 	}{
-		{"id=invoice-42", "invoice-42"},
-		{"  id=hello world  ", "hello world"},
-		{"", ""},
-		{"action=invoice-42", ""},
+		{"n=1a;id=invoice-42", "invoice-42", "n=1a;id=invoice-42"},
+		{"n=1a;id=a;b&n=2;id=c", "a;b&n=2;id=c", "n=1a;id=a;b&n=2;id=c"},
+		{"id=invoice-42", "invoice-42", "id=invoice-42"},
+		{"id=a;id=b", "a;id=b", "id=a;id=b"},
+		{"  id=hello world  ", "hello world", "id=hello world"},
+		{"", "", ""},
+		{"action=invoice-42", "", ""},
+		{"n=1a;action=invoice-42", "", ""},
 	} {
-		if got := parseToastActivationArgs(test.args); got != test.want {
-			t.Errorf("parseToastActivationArgs(%q) = %q, want %q", test.args, got, test.want)
+		if id, press := parseToastActivationArgs(test.args); id != test.id || press != test.press {
+			t.Errorf("parseToastActivationArgs(%q) = %q, %q, want %q, %q", test.args, id, press, test.id, test.press)
+		}
+	}
+}
+
+// Each toast shown launches with a nonce of its own and parses back to its ID.
+func TestToastLaunch(t *testing.T) {
+	a, b := toastLaunch("chat:42"), toastLaunch("chat:42")
+	if a == b {
+		t.Fatalf("two toasts of one ID launch alike: %q", a)
+	}
+	for _, launch := range []string{a, b} {
+		if id, press := parseToastActivationArgs(launch); id != "chat:42" || press != launch {
+			t.Errorf("parseToastActivationArgs(%q) = %q, %q, want %q, %q", launch, id, press, "chat:42", launch)
 		}
 	}
 }
@@ -55,27 +72,29 @@ func TestPropVariantSize(t *testing.T) {
 	}
 }
 
-// A press arriving through both the Activated event and the COM activator reaches the app once; a later press of the toast, or another toast's, again.
+// A press arriving through both the Activated event and the COM activator reaches the app once; a later press of the toast, another toast's, or one of a toast that replaced it under the same ID, again.
 func TestToastPressDedup(t *testing.T) {
 	var d toastPressDedup
 	at := time.Unix(1000, 0)
 	for _, step := range []struct {
-		id    string
+		press string
 		after time.Duration
 		want  bool
 	}{
-		{"chat:42", 0, true},
-		{"chat:42", 300 * time.Millisecond, false},
-		{"chat:7", 300 * time.Millisecond, true},
-		{"chat:42", toastPressWindow - time.Millisecond, false},
-		{"chat:42", toastPressWindow, true},
-		{"chat:42", toastPressWindow + time.Second, false},
+		{"n=1;id=chat:42", 0, true},
+		{"n=1;id=chat:42", 300 * time.Millisecond, false},
+		{"n=2;id=chat:7", 300 * time.Millisecond, true},
+		{"n=3;id=chat:42", 2 * time.Second, true},
+		{"n=3;id=chat:42", 2*time.Second + 300*time.Millisecond, false},
+		{"n=1;id=chat:42", toastPressWindow - time.Millisecond, false},
+		{"n=1;id=chat:42", toastPressWindow, true},
+		{"n=1;id=chat:42", toastPressWindow + time.Second, false},
 	} {
-		if got := d.first(step.id, at.Add(step.after)); got != step.want {
-			t.Errorf("first(%q) at +%v = %v, want %v", step.id, step.after, got, step.want)
+		if got := d.first(step.press, at.Add(step.after)); got != step.want {
+			t.Errorf("first(%q) at +%v = %v, want %v", step.press, step.after, got, step.want)
 		}
 	}
-	if len(d.at) != 1 {
-		t.Errorf("held %d presses, want 1 once the others passed the window", len(d.at))
+	if len(d.at) != 2 {
+		t.Errorf("held %d presses, want 2 once the others passed the window", len(d.at))
 	}
 }

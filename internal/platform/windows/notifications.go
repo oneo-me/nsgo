@@ -314,15 +314,14 @@ func (w *window) notify(it *driver.MountItem) {
 	}
 }
 
-// toastXML is a toast's content: its title, its body and, when silent,
-// no sound.
-func toastXML(n driver.Notification) string {
+// toastXML is a toast's content: its launch arguments, its title, its body and, when silent, no sound.
+func toastXML(n driver.Notification, launch string) string {
 	esc := func(s string) string {
 		var b bytes.Buffer
 		_ = xml.EscapeText(&b, []byte(s))
 		return b.String()
 	}
-	s := `<toast launch="id=` + esc(n.ID) + `"><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
+	s := `<toast launch="` + esc(launch) + `"><visual><binding template="ToastGeneric"><text>` + esc(n.Title) + `</text>`
 	if n.Body != "" {
 		s += `<text>` + esc(n.Body) + `</text>`
 	}
@@ -352,7 +351,8 @@ func (w *window) showToast(n driver.Notification) bool {
 	if io == nil {
 		return false
 	}
-	content := hstring(toastXML(n))
+	launch := toastLaunch(n.ID)
+	content := hstring(toastXML(n, launch))
 	hr = io.call(xmlDocumentIOLoadXML, content)
 	deleteHString(content)
 	io.release()
@@ -382,8 +382,9 @@ func (w *window) showToast(n driver.Notification) bool {
 		t2.release()
 	}
 	appID, e := n.ID, w.engine
+	_, press := parseToastActivationArgs(launch)
 	pressed := newHandler(&iidToastActivated, func(uintptr, unsafe.Pointer) {
-		if toastPresses.first(appID, time.Now()) {
+		if toastPresses.first(press, time.Now()) {
 			e.Dispatch(driver.Event{Kind: driver.EventNotificationPress, Text: appID})
 		}
 		w.post(func() {
