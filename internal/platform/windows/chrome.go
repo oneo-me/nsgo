@@ -281,7 +281,7 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 		w.visible, w.focused = true, false
 		if w.kind == driver.SurfacePanel {
 			w.anchor = c.Anchor
-			w.placeAtTray(c.Anchor)
+			w.placePanel(c.Anchor)
 			w.orderFront()
 		} else {
 			showWindow.Call(w.hwnd, swShow)
@@ -295,6 +295,9 @@ func (w *window) windowCommand(c *driver.WindowCommand) {
 		w.setLevel(c.Level)
 	case driver.WindowOrderFront:
 		w.visible, w.focused = true, false
+		if w.kind == driver.SurfacePanel {
+			w.placePanel(w.anchor)
+		}
 		w.orderFront()
 	case driver.WindowSetMenuBar:
 		w.setMenuBar(c.MenuBar)

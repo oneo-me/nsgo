@@ -852,6 +852,7 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 	child.engine.SetEnvironment(child.env)
 	if !opts.Hidden {
 		if cfg.Kind == driver.SurfacePanel {
+			child.placePanel(0)
 			child.orderFront()
 		} else {
 			showWindow.Call(hwnd, swShow)

@@ -854,15 +854,9 @@ func (w *window) setLevel(level driver.WindowLevel) {
 	}
 }
 
-// placeAtTray moves a panel beside its notification-area icon. Shell owns
-// the icon's screen rectangle; use the work area of that monitor to keep the
-// panel visible and prefer the space above the taskbar.
-func (w *window) placeAtTray(id uint32) {
-	if id == 0 {
-		return
-	}
-	anchor, ok := w.trayRect(id)
-	if !ok {
+// placePanel moves a panel beside tray icon anchor, else, with no anchor or none the shell places, to the upper middle of the monitor with the pointer, as macOS shows it.
+func (w *window) placePanel(anchor uint32) {
+	if anchor != 0 && w.placeAtTray(anchor) {
 		return
 	}
 	var panel rect
@@ -870,14 +864,42 @@ func (w *window) placeAtTray(id uint32) {
 		return
 	}
 	width, height := panel.Right-panel.Left, panel.Bottom-panel.Top
-	if width <= 0 || height <= 0 {
+	var at point
+	getCursorPos.Call(uintptr(unsafe.Pointer(&at)))
+	pointer := rect{at.X, at.Y, at.X + 1, at.Y + 1}
+	var mi monitorInfo
+	mi.Size = uint32(unsafe.Sizeof(mi))
+	monitor, _, _ := monitorFromRect.Call(uintptr(unsafe.Pointer(&pointer)), monitorDefaultNear)
+	if r, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi))); r == 0 {
 		return
+	}
+	screen, work := mi.Monitor, mi.Work
+	x := screen.Left + (screen.Right-screen.Left-width)/2
+	y := screen.Top + (screen.Bottom-screen.Top)/3 - height/2
+	x = max(work.Left, min(x, work.Right-width))
+	y = max(work.Top, min(y, work.Bottom-height))
+	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), 0, 0, swpNoSize|swpNoZOrder|swpNoActivate)
+}
+
+// placeAtTray moves a panel beside its notification-area icon, reporting whether it could. Shell owns the icon's screen rectangle; use the work area of that monitor to keep the panel visible and prefer the space above the taskbar.
+func (w *window) placeAtTray(id uint32) bool {
+	anchor, ok := w.trayRect(id)
+	if !ok {
+		return false
+	}
+	var panel rect
+	if r, _, _ := getWindowRect.Call(w.hwnd, uintptr(unsafe.Pointer(&panel))); r == 0 {
+		return false
+	}
+	width, height := panel.Right-panel.Left, panel.Bottom-panel.Top
+	if width <= 0 || height <= 0 {
+		return false
 	}
 	var mi monitorInfo
 	mi.Size = uint32(unsafe.Sizeof(mi))
 	monitor, _, _ := monitorFromRect.Call(uintptr(unsafe.Pointer(&anchor)), monitorDefaultNear)
 	if r, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&mi))); r == 0 {
-		return
+		return false
 	}
 	work := mi.Work
 	x := anchor.Left + (anchor.Right-anchor.Left-width)/2
@@ -888,6 +910,7 @@ func (w *window) placeAtTray(id uint32) {
 	x = max(work.Left, min(x, work.Right-width))
 	y = max(work.Top, min(y, work.Bottom-height))
 	setWindowPos.Call(w.hwnd, 0, uintptr(x), uintptr(y), 0, 0, swpNoSize|swpNoZOrder|swpNoActivate)
+	return true
 }
 
 // orderFront shows the window, restored when minimized, in front and
