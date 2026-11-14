@@ -2722,6 +2722,13 @@ func (s *surface) applyBatches(budget time.Duration, alone bool) {
 	}
 	s.applying = true
 	defer func() { s.applying = false }()
+	// Keep all layer mutations from this display pass in one Core
+	// Animation transaction. Nested transactions used for no-animation
+	// updates still join this outer transaction, so AppKit submits one
+	// commit instead of one per batch or property group.
+	tx := objc.ID(apple.Class("CATransaction"))
+	tx.Send(sel("begin"))
+	defer tx.Send(sel("commit"))
 	start := time.Now()
 	n := 0
 	for n < len(s.waiting) {
