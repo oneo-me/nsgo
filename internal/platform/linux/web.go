@@ -33,6 +33,8 @@ var (
 	webkitURISchemeRequestGetURI         func(uintptr) uintptr
 	webkitURISchemeRequestGetWebView     func(uintptr) uintptr
 	webkitURISchemeRequestFinish         func(uintptr, uintptr, int64, *byte)
+	webkitURISchemeRequestFinishError    func(uintptr, uintptr)
+	gErrorNewLiteral                     func(uint32, int32, *byte) uintptr
 	gMemoryInputStreamNewFromBytes       func(uintptr) uintptr
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
@@ -122,6 +124,8 @@ func bindWebKit(webkit, jsc, soup uintptr) {
 	reg(&webkitURISchemeRequestGetURI, "webkit_uri_scheme_request_get_uri")
 	reg(&webkitURISchemeRequestGetWebView, "webkit_uri_scheme_request_get_web_view")
 	reg(&webkitURISchemeRequestFinish, "webkit_uri_scheme_request_finish")
+	reg(&webkitURISchemeRequestFinishError, "webkit_uri_scheme_request_finish_error")
+	purego.RegisterLibFunc(&gErrorNewLiteral, glibLib, "g_error_new_literal")
 	purego.RegisterLibFunc(&gMemoryInputStreamNewFromBytes, gioLib, "g_memory_input_stream_new_from_bytes")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
@@ -183,6 +187,8 @@ const (
 	webkitLoadStarted      = 0
 	webkitLoadFinished     = 3
 	webkitNetworkCancelled = 302 // WEBKIT_NETWORK_ERROR_CANCELLED
+	webkitNetworkUnknown   = 301 // WEBKIT_NETWORK_ERROR_UNKNOWN_PROTOCOL
+	webkitNetworkFailed    = 399 // WEBKIT_NETWORK_ERROR_FAILED
 	webkitPolicyInterrupt  = 102 // WEBKIT_POLICY_ERROR_FRAME_LOAD_INTERRUPTED_BY_POLICY_CHANGE
 	webkitNewWindowAction  = 1   // WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION
 	webkitCookieSQLite     = 1   // WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE
@@ -204,7 +210,7 @@ const webNoScroll = "html, body { overflow: hidden !important; }"
 type web struct {
 	hosted
 	widget     uintptr // WebKitWebView
-	session    uintptr // network session; ephemeral for Incognito
+	session    uintptr // the ephemeral network session an Incognito page owns, released with it; 0 for the app's
 	content    uintptr // its WebKitUserContentManager
 	config     driver.WebConfig
 	made       bool
@@ -214,8 +220,28 @@ type web struct {
 	pointer    driver.Point // where the pointer is in the page
 }
 
-var webSchemeSessions = map[uintptr]map[string]struct{}{}
+// webPage is the window and view a WebKitWebView belongs to.
+type webPage struct {
+	window *window
+	view   *view
+}
 
+// webPages are the live pages by WebKitWebView, whatever their window and network session, so that what WebKit hands over with only a page (scheme requests, downloads) finds its view.
+var webPages = map[uintptr]webPage{}
+
+// webPageOf returns the live view showing page, or nils.
+func webPageOf(page uintptr) (*window, *view) {
+	p, ok := webPages[page]
+	if !ok || p.window.closing || p.view.deleted || p.view.web == nil || p.view.web.widget != page {
+		return nil, nil
+	}
+	return p.window, p.view
+}
+
+// webSchemes are the schemes registered on each WebKitWebContext. A context keeps a scheme for its life, so each is registered once, and its requests find their view by page (webSchemeCallback).
+var webSchemes = map[uintptr]map[string]bool{}
+
+// webDownload is a download a view saves.
 type webDownload struct {
 	window *window
 	view   *view
@@ -328,13 +354,22 @@ func addScript(content uintptr, source string, at int32) {
 	webkitUserScriptUnref(script)
 }
 
-// makeWeb makes v's page in the app's network session and hosts it.
+// makeWeb makes v's page in the app's network session, or an ephemeral one of its own for Incognito, and hosts it.
 func (w *window) makeWeb(v *view) {
 	wv := v.web
-	wv.session = w.webSession(wv.config.Incognito)
-	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), wv.session, uintptr(0))
+	var session uintptr
+	if wv.config.Incognito {
+		// A session without data or cache directories is ephemeral. The page holds its own reference; wv.session is released when the view closes.
+		wv.session = webkitNetworkSessionNew(nil, nil)
+		gSignalConnect(wv.session, "download-started", cbWebDownloadStarted, 0)
+		session = wv.session
+	} else {
+		session = w.webSession()
+	}
+	wv.widget = gObjectNew(webkitWebViewGetType(), cstr("network-session"), session, uintptr(0))
 	wv.content = webkitWebViewGetUserContentManager(wv.widget)
-	w.registerWebSchemes(wv)
+	webPages[wv.widget] = webPage{window: w, view: v}
+	registerWebSchemes(wv)
 	webkitContentRegisterHandler(wv.content, cstr(webHandler), nil)
 	webkitWebViewGetBackgroundColor(wv.widget, &wv.background)
 	w.host(v, &wv.hosted, wv.widget, true)
@@ -366,46 +401,36 @@ func (w *window) makeWeb(v *view) {
 	gtkWidgetAddController(wv.widget, scroll)
 }
 
-func (w *window) registerWebSchemes(wv *web) {
-	if len(wv.config.SchemeHandlers) == 0 || wv.session == 0 {
+// registerWebSchemes registers the schemes wv's app serves on its page's WebKitWebContext, which every page of the process shares, so a scheme is registered once for every view that serves it.
+func registerWebSchemes(wv *web) {
+	if len(wv.config.SchemeHandlers) == 0 {
 		return
 	}
 	context := webkitWebViewGetContext(wv.widget)
 	if context == 0 {
 		return
 	}
-	registered := webSchemeSessions[context]
+	registered := webSchemes[context]
 	if registered == nil {
-		registered = map[string]struct{}{}
-		webSchemeSessions[context] = registered
+		registered = map[string]bool{}
+		webSchemes[context] = registered
 	}
 	for name := range wv.config.SchemeHandlers {
-		if _, ok := registered[name]; ok {
-			continue
+		if !registered[name] {
+			webkitWebContextRegisterURIScheme(context, cstr(name), cbWebScheme, 0, 0)
+			registered[name] = true
 		}
-		webkitWebContextRegisterURIScheme(context, cstr(name), cbWebScheme, wv.session, 0)
-		registered[name] = struct{}{}
 	}
 }
 
-// webSessions are the network sessions by app ID: one network process,
-// and one set of cookies and storage, serves every web view of an app.
+// webSessions are the network sessions by app ID: one network process, and one set of cookies and storage, serves every web view of an app that is not Incognito. A session lives as long as the process, so views mounted again find it.
 var webSessions = map[string]uintptr{}
-var webSessionHandles = map[uintptr]map[uintptr]struct{}{}
 
 // webSession returns the network session of w's app, which keeps
 // website data in $XDG_DATA_HOME/<app id>/webkit and its cache in
 // $XDG_CACHE_HOME/<app id>/webkit, with cookies in cookies.sqlite there.
-func (w *window) webSession(incognito bool) uintptr {
-	if incognito {
-		// A session without data or cache directories is ephemeral.
-		s := webkitNetworkSessionNew(nil, nil)
-		webSessionHandles[s] = map[uintptr]struct{}{w.handle: {}}
-		gSignalConnect(s, "download-started", cbWebDownloadStarted, s)
-		return s
-	}
+func (w *window) webSession() uintptr {
 	if s := webSessions[w.appID]; s != 0 {
-		webSessionHandles[s][w.handle] = struct{}{}
 		return s
 	}
 	data, cache := webFolders(w.appID)
@@ -413,8 +438,7 @@ func (w *window) webSession(incognito bool) uintptr {
 		log.Printf("nsgo: web view: %v", err)
 	}
 	s := webkitNetworkSessionNew(cstr(data), cstr(cache))
-	webSessionHandles[s] = map[uintptr]struct{}{w.handle: {}}
-	gSignalConnect(s, "download-started", cbWebDownloadStarted, s)
+	gSignalConnect(s, "download-started", cbWebDownloadStarted, 0)
 	// Cookies outlive the app, as other website data does.
 	if cookies := webkitNetworkSessionGetCookieManager(s); cookies != 0 {
 		webkitCookieManagerSetPersistent(cookies, cstr(filepath.Join(data, "cookies.sqlite")), webkitCookieSQLite)
@@ -423,20 +447,21 @@ func (w *window) webSession(incognito bool) uintptr {
 	return s
 }
 
-func webSchemeCallback(request, data uintptr) {
-	page := webkitURISchemeRequestGetWebView(request)
-	w, v := webWindowForPage(data, page)
-	if w == nil || v == nil || v.web == nil {
-		return
-	}
+// webSchemeCallback answers a request for an app-owned scheme from the handler of the view whose page made it. Every request is finished, with an error when no live view serves its scheme, so no page waits on one.
+func webSchemeCallback(request, _ uintptr) {
+	_, v := webPageOf(webkitURISchemeRequestGetWebView(request))
 	raw := goString(webkitURISchemeRequestGetURI(request))
 	u, err := url.Parse(raw)
 	if err != nil {
+		finishWebSchemeError(request, webkitNetworkFailed, err.Error())
 		return
 	}
-	handler := v.web.config.SchemeHandlers[strings.ToLower(u.Scheme)]
+	var handler func(string) []byte
+	if v != nil {
+		handler = v.web.config.SchemeHandlers[strings.ToLower(u.Scheme)]
+	}
 	if handler == nil {
-		webkitURISchemeRequestFinish(request, 0, 0, cstr("application/octet-stream"))
+		finishWebSchemeError(request, webkitNetworkUnknown, "nsgo: no handler serves "+u.Scheme+": URLs in this web view")
 		return
 	}
 	body := handler(raw)
@@ -451,23 +476,17 @@ func webSchemeCallback(request, data uintptr) {
 	gObjectUnref(stream)
 }
 
-func webWindowForPage(session, page uintptr) (*window, *view) {
-	for handle := range webSessionHandles[session] {
-		w := windowOf(handle)
-		if w == nil || w.closing {
-			continue
-		}
-		if v := w.natives[page]; v != nil && v.web != nil {
-			return w, v
-		}
-	}
-	return nil, nil
+// finishWebSchemeError ends request with a WebKit network error of code and message.
+func finishWebSchemeError(request uintptr, code int32, message string) {
+	err := gErrorNewLiteral(webkitNetworkErrorQuark(), code, cstr(message))
+	webkitURISchemeRequestFinishError(request, err)
+	gErrorFree(err)
 }
 
-func webDownloadStartedCallback(session, download, _ uintptr) {
-	page := webkitDownloadGetWebView(download)
-	w, v := webWindowForPage(session, page)
-	if w == nil || v == nil || v.web == nil || v.web.config.DownloadDir == "" {
+// webDownloadStartedCallback takes a download a network session started for the view whose page asked for it, when the view saves downloads, and cancels it otherwise.
+func webDownloadStartedCallback(_, download, _ uintptr) {
+	w, v := webPageOf(webkitDownloadGetWebView(download))
+	if v == nil || v.web.config.DownloadDir == "" {
 		webkitDownloadCancel(download)
 		return
 	}
@@ -479,16 +498,14 @@ func webDownloadStartedCallback(session, download, _ uintptr) {
 	}
 	dl := &webDownload{window: w, view: v, item: driver.WebDownload{State: driver.WebDownloadStarted, ID: id, URL: urlText}}
 	webDownloads[download] = dl
-	// Downloads own these temporary signal connections; attaching them to
-	// the view's hosted-signal list would leave stale object pointers after
-	// WebKit releases a completed download.
-	gSignalConnect(download, "decide-destination", cbWebDownloadDestination, w.handle)
-	gSignalConnect(download, "received-data", cbWebDownloadReceived, w.handle)
-	gSignalConnect(download, "finished", cbWebDownloadFinished, w.handle)
-	gSignalConnect(download, "failed", cbWebDownloadFailed, w.handle)
+	// Downloads own these temporary signal connections; attaching them to the view's hosted-signal list would leave stale object pointers after WebKit releases a completed download.
+	gSignalConnect(download, "decide-destination", cbWebDownloadDestination, 0)
+	gSignalConnect(download, "received-data", cbWebDownloadReceived, 0)
+	gSignalConnect(download, "finished", cbWebDownloadFinished, 0)
+	gSignalConnect(download, "failed", cbWebDownloadFailed, 0)
 }
 
-func webDownloadDestinationCallback(download, suggested, data uintptr) int32 {
+func webDownloadDestinationCallback(download, suggested, _ uintptr) int32 {
 	dl := webDownloads[download]
 	if dl == nil {
 		return 0
@@ -522,7 +539,7 @@ func webDownloadReceivedCallback(download, _ uint64, _ uintptr) {
 	// reports only started, finished and failed, as the Apple backend does.
 }
 
-func webDownloadFinishedCallback(download, data uintptr) {
+func webDownloadFinishedCallback(download, _ uintptr) {
 	dl := webDownloads[download]
 	if dl == nil {
 		return
@@ -536,7 +553,7 @@ func webDownloadFinishedCallback(download, data uintptr) {
 	delete(webDownloads, download)
 }
 
-func webDownloadFailedCallback(download, gerr, data uintptr) {
+func webDownloadFailedCallback(download, gerr, _ uintptr) {
 	dl := webDownloads[download]
 	if dl == nil {
 		return
@@ -626,21 +643,16 @@ func (w *window) closeWeb(v *view) {
 	wv := v.web
 	v.web = nil
 	if wv.widget != 0 {
+		delete(webPages, wv.widget)
 		webkitWebViewStopLoading(wv.widget)
 		// Before unhosting, which lets the page and its content manager go.
 		webkitContentUnregisterHandler(wv.content, cstr(webHandler), nil)
 	}
-	if wv.session != 0 {
-		delete(webSessionHandles[wv.session], w.handle)
-		if len(webSessionHandles[wv.session]) == 0 {
-			delete(webSessionHandles, wv.session)
-			if context := webkitWebViewGetContext(wv.widget); context != 0 {
-				delete(webSchemeSessions, context)
-			}
-			gObjectUnref(wv.session)
-		}
-	}
 	w.unhost(v, &wv.hosted)
+	if wv.session != 0 {
+		// The Incognito page's own session, whose website data goes with its last reference.
+		gObjectUnref(wv.session)
+	}
 }
 
 // focusedWeb returns the web view whose page has keyboard focus, or nil.
