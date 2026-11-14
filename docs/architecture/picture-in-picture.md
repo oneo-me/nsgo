@@ -5,7 +5,7 @@ This is the design for issue [#54](https://github.com/nsgo-dev/nsgo/issues/54). 
 - video PiP uses the existing native video player and its timed playback;
 - custom-content PiP supplies video frames to `AVPictureInPictureController` and needs a renderer, clock and playback delegate of its own.
 
-The first target is iOS. Other Apple targets report unavailable until they have an equivalent system surface.
+The first target is iOS. The other targets have PiP surfaces of their own, which the [roadmap](../roadmap.md#picture-in-picture) lists until a design covers them: macOS's `AVPlayerView`, which a macOS video with `Controls` already is, has `allowsPictureInPicturePlayback` and a PiP delegate (macOS 10.15), and `AVPictureInPictureController` and its content sources exist there too (10.15 and 12); Android has `Activity.enterPictureInPictureMode`, and the web's `<video>` has `requestPictureInPicture`. tvOS runs iOS's backend and AVKit has PiP there from tvOS 14, without automatic starts, so the backend reports PiP unavailable on tvOS until it is checked there, rather than trusting `isPictureInPictureSupported`.
 
 ## Video PiP
 
