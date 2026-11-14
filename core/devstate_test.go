@@ -96,3 +96,20 @@ func TestDevToolsDropSignalsNothingHolds(t *testing.T) {
 	}
 	goruntime.KeepAlive(kept)
 }
+
+// Under nsgo dev -devtools without -highlight, the overlay turns outlines off before the first commit's are drawn: the first screen does not flash.
+func TestDevToolsHighlightsOffFromTheFirstCommit(t *testing.T) {
+	h := devHost(t, func(cx *Scope) Node {
+		cx.Post(func() {
+			for _, s := range devtools.Surfaces() {
+				s.Highlight(false)
+			}
+		})
+		return Group{View{Style: Style{Width: Pt(50), Height: Pt(50)}}, UpdateHighlights{}}
+	})
+	h.commit()
+	h.drain()
+	if n := len(h.tree.highlights.boxes.GetUntracked()); n != 0 {
+		t.Fatalf("the first commit outlined %d views with outlines off", n)
+	}
+}

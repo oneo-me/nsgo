@@ -182,6 +182,10 @@ func (h *highlights) owns(n *node) bool {
 
 // show adds an outline for each of bounds, and takes them away after highlightFor.
 func (h *highlights) show(bounds []Bounds) {
+	// DevTools may have turned outlines off since the commit posted them, as nsgo dev -devtools does before the first commit's run.
+	if !h.updates {
+		return
+	}
 	first := h.next
 	added := make([]highlightBox, len(bounds))
 	for i, b := range bounds {
