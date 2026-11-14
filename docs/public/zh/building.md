@@ -53,7 +53,7 @@ build:
   jobs: 0               # 同时构建的目标数；0 为 CPU 数的一半，1 为逐个构建
   targets: [macos_arm64, macos_x64, windows_arm64, windows_x64, linux_arm64, linux_x64, ios, ios_simulator, tvos, tvos_simulator, watchos, watchos_simulator, android_arm64, web]
 # android: { permissions: [REQUEST_INSTALL_PACKAGES] }  # 运行时所需之外的清单权限
-# windows: { command_line: true }  # 添加 <name>.com 控制台伴侣，把参数和标准流转给 <name>.exe
+# windows: { command_line: true }  # 添加 <name>.com 控制台伴侣，把参数和标准流转给 <name>.exe；store 构建不含
 # linux: { maintainer: "Jane Doe <jane@example.com>" }  # Linux 软件包的维护者，省略时为应用名
 # release: { github: me/hello }  # 安装脚本和自动更新从其 Releases 安装的 GitHub 仓库，省略时取 Git 远程 origin 的；tag_prefix 默认为 v
 # updates: { key: <公钥> }  # 应用按平台和渠道更新的方式，见“自动更新”

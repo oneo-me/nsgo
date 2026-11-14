@@ -144,3 +144,25 @@ func TestBuildWindowsCommand(t *testing.T) {
 	}
 }
 
+// Without windows.command_line, and for the Microsoft Store, Windows builds write no companion.
+func TestWindowsCommandLineBuilds(t *testing.T) {
+	for _, c := range []struct {
+		commandLine bool
+		channel     string
+		want        bool
+	}{
+		{false, "", false},
+		{false, channelDirect, false},
+		{true, "", true},
+		{true, channelDirect, true},
+		{true, channelNone, true},
+		{true, channelStore, false},
+	} {
+		p := &project{}
+		p.Windows.CommandLine = c.commandLine
+		p.Updates.Channel = c.channel
+		if got := p.windowsCommandLine(); got != c.want {
+			t.Errorf("command_line %v on channel %q: companion %v, want %v", c.commandLine, c.channel, got, c.want)
+		}
+	}
+}

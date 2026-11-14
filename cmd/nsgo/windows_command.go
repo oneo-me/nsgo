@@ -146,3 +146,8 @@ func buildWindowsCommand(ctx context.Context, p *project, dir, arch string) erro
 	}
 	return nil
 }
+
+// windowsCommandLine reports whether Windows builds write the command companion: with windows.command_line, but not for the Microsoft Store, whose MSIX installs where no console's command lookup finds it.
+func (p *project) windowsCommandLine() bool {
+	return p.Windows.CommandLine && p.channel() != channelStore
+}
