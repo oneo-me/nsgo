@@ -14,7 +14,7 @@ Remote push is a server-to-device channel. An app needs to:
 
 The server, provider credentials, token storage and message encryption remain the app's responsibility. NSGo does not send a token to a service owned by NSGo and does not interpret application data.
 
-The first implementation covers APNs on iOS and macOS and FCM on Android. Windows, Linux, the web, tvOS and watchOS report that remote push is unavailable until they have a provider with the same lifecycle guarantees. Local notifications, badges and notification presses remain the existing service in [`services.md`](services.md#notifications-and-the-badge).
+The first implementation covers APNs on iOS and macOS and FCM on Android, the latter for standalone apps only once open decision 2 gives them an adapter. Windows, Linux, the web, tvOS and watchOS report that remote push is unavailable until they have a provider with the same lifecycle guarantees. Local notifications, badges and notification presses remain the existing service in [`services.md`](services.md#notifications-and-the-badge).
 
 ## Layers
 
@@ -24,7 +24,7 @@ The service has three layers:
 2. `internal/driver` carries commands to register or unregister and events for a token change or an incoming payload. Events include enough metadata to distinguish a foreground delivery from a launch delivery, but the payload is kept unchanged.
 3. A platform backend translates the provider callback into the driver event. Apple calls APNs through the system frameworks. Android calls an adapter supplied by the runtime or an embedding host.
 
-The Android adapter is a deliberate boundary. The core and the prebuilt runtime must not import Firebase classes. FCM's client library, `google-services.json` or an equivalent provider configuration, manifest entries, and background service are selected by the app's Android build or by its embedding host. The adapter forwards only a token, a payload and an acknowledgement result through the runtime protocol. This keeps the default NSGo build reproducible and does not require an Android SDK or a JDK on a user's machine. A future tool change may package a tested FCM adapter, but that is a separate decision and artifact.
+The Android adapter is a deliberate boundary. The core and the prebuilt runtime must not import Firebase classes. The adapter forwards only a token, a payload and an acknowledgement result through the runtime protocol. Where FCM's client library, `google-services.json` or an equivalent provider configuration, manifest entries and background service come from is open decision 2. An embedding host can supply them today, since its Gradle build can add `firebase-messaging` and merge its manifest. A standalone app has no Android build of its own: `nsgo build` assembles its APK from the committed `classes.dex` and the runtime's fixed manifest, and needs no Android SDK, JDK or Gradle on a user's machine, so nothing can add an adapter there until the tool packages a tested one, a separate artifact.
 
 An embedding host uses the same boundary: it owns provider setup and hands tokens and payloads to NSGo through an entry point of the embedding API that does not exist yet, beside `nsgo.NewView` and the iOS and Android faces. `core.Host`'s JSON channel ([embedding](embedding.md#the-host-channel)) carries the app's own names, not driver events, so it is not that entry point. The entry point feeds the same per-process queue as a backend, so a host cannot bypass `core`'s access checks or deliver a payload to a disposed scope.
 
@@ -79,7 +79,7 @@ The implementation is complete only when these checks exist:
 These decisions need confirmation before an implementation chooses them:
 
 1. Should the public API expose one `OnPush` callback with the payload's JSON, or separate token and message objects with a typed acknowledgement?
-2. Is an Android FCM adapter part of `nsgo build`, supplied as a checked-in prebuilt artifact, or supplied by each app/embedding host?
+2. Does `nsgo build` package a prebuilt FCM adapter, committed beside `classes.dex`, into standalone apps, or does FCM stay with embedding hosts, which supply their own?
 3. Should a background data push run app code with no view, through a process-wide handler set before `nsgo.Run` on Apple and a viewless start of the Go process on Android, and if so by default, or only when an app declares a background policy and a bounded execution budget?
 4. Does remote data delivery get a new capability distinct from `AccessNotifications`?
 5. Which provider metadata is stable enough to expose (message ID, collapse key, delivery time), which stays inside the adapter, and which field gives a remote notification's press its ID for `OnNotificationPress`?
