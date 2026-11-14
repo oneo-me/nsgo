@@ -24,11 +24,13 @@ When the user returns to the app from the PiP window, AVKit calls `restoreUserIn
 
 ## Custom content PiP
 
-Custom content is a separate component. An app supplies a fixed-size render surface and a playback model that can produce a `CVPixelBuffer` or sample buffer at the requested cadence. The backend uses `AVPictureInPictureController` with a sample-buffer display layer and `AVPictureInPictureSampleBufferPlaybackDelegate`; it does not capture an arbitrary NSGo view tree or screenshot a window.
+Custom content is issue #54's live-stream case: a small window that shows what NSGo draws, such as the current script, a countdown or the recording level, and follows the app's state. The backend uses `AVPictureInPictureController` with a content source made of an `AVSampleBufferDisplayLayer` and an `AVPictureInPictureSampleBufferPlaybackDelegate` (`initWithSampleBufferDisplayLayer:playbackDelegate:`, iOS 15); it never screenshots a window.
 
-The source owns frame production and tells the backend when a frame is ready. The backend drops stale frames under back-pressure, retains at most one pending frame and reports the effective frame interval. The playback delegate maps play, pause, seek and skip commands to app callbacks. If the app cannot provide a frame while PiP is visible, the backend holds the last frame or ends PiP according to the app's chosen policy; it never blocks the main thread waiting for Go.
+The goal is that the app gives an element tree, laid out at the window's fixed size, which the backend pictures into `CMSampleBuffer`s, as Apple backends already picture views for `ShaderEffect` ([shaders](shaders.md)), so that no CoreVideo type reaches the app's API. Taking frames the app makes (`CVPixelBuffer`s) instead would be simpler to build, but a Go app has no NSGo way to draw them. Which the first release takes, and how a tree that shows only in PiP is mounted, are open decisions, as is whether custom content is a component of its own or shares an API with video.
 
-Custom content is therefore a product surface with its own size, color space, clock and control model. The first implementation may support a static or app-timed frame stream and leave arbitrary animated layouts for a later design.
+Frames follow the content: one after each commit that changes it, at most once a display frame. The backend drops stale frames under back-pressure, retains at most one pending frame and reports the effective frame interval. The playback delegate maps play, pause and skip (`setPlaying:`, `skipByInterval:completionHandler:`) to app callbacks and answers `pictureInPictureControllerTimeRangeForPlayback:` and `pictureInPictureControllerIsPlaybackPaused:` from the session's state. If no new frame comes while PiP is visible, the backend holds the last frame or ends PiP according to the app's chosen policy; it never blocks the main thread waiting for Go.
+
+Custom content is therefore a product surface with its own size, color space, clock and control model. Its window takes no input beyond play, pause and skip.
 
 ## Lifecycle and ownership
 
@@ -61,10 +63,11 @@ The implementation is complete only when these checks exist:
 
 These decisions need confirmation before an implementation chooses them:
 
-1. Should the first release expose video PiP only, or ship a separate custom-frame API at the same time?
-2. Does custom content end when the engine is suspended, or must the adapter retain and present frames independently?
-3. Is the public entry point a `mobile` service, a `core.Video` method, or a new `core` session type?
-4. Which `nsgo.yaml` field declares the `audio` background mode: a PiP setting of its own, or `apple.info` taking arrays?
-5. Should PiP control callbacks expose seek/skip commands, or only play and pause initially?
-6. Can a session outlive the view that started it, through a deferred deletion in the mount protocol, or does deleting the view always end it?
-7. Does a video with `Controls` start PiP from code through a second `AVPlayerLayer` on its player, or only by its button?
+1. Should the first release expose video PiP only, or custom content at the same time?
+2. Does custom content draw an NSGo element tree, as issue #54 asks, or take frames the app makes, and how is a tree that shows only in PiP mounted?
+3. Does custom content end when the engine is suspended, or must the adapter retain and present frames independently?
+4. Is the public entry point a `core.Video` field or method for video and a component of its own for custom content, one `mobile` session type for both, or an API shared with #53's Android floating windows?
+5. Which `nsgo.yaml` field declares the `audio` background mode: a PiP setting of its own, or `apple.info` taking arrays?
+6. Should PiP control callbacks expose seek/skip commands, or only play and pause initially?
+7. Can a session outlive the view that started it, through a deferred deletion in the mount protocol, or does deleting the view always end it?
+8. Does a video with `Controls` start PiP from code through a second `AVPlayerLayer` on its player, or only by its button?
