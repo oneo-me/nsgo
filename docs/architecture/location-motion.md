@@ -27,7 +27,7 @@ A location sample has latitude, longitude, altitude, horizontal and vertical acc
 
 A request chooses desired accuracy, minimum distance and whether a one-shot or stream is wanted. The backend may deliver a less accurate fix while the provider warms up, but each sample says its accuracy. The core does not reverse-geocode, snap to roads or infer a place name.
 
-Apple uses `CLLocationManager`'s authorization and accuracy state. `WhenInUse` and `Always` are distinct app declarations; background delivery requires the latter plus the appropriate background mode, and the system may reduce updates. Android separates fine and coarse location and its background location grant. The tool adds only the usage descriptions and manifest permissions named by the app, and code never starts a prompt implicitly.
+Apple uses `CLLocationManager`'s authorization and accuracy state. `WhenInUse` and `Always` are distinct app declarations. Continuous background delivery needs the `location` background mode and `allowsBackgroundLocationUpdates` set before the stream starts, under either grant: with When In Use the system shows its background location indicator while it runs. `Always` is needed only for services that relaunch the app, such as region monitoring, significant changes and visits, which this scope leaves out; the system may still reduce updates. Android separates fine and coarse location and its background location grant. The tool adds only the usage descriptions and manifest permissions named by the app, and code never starts a prompt implicitly.
 
 The final API must decide whether a one-shot request can use the last cached fix. If it can, the result must identify its age and accuracy; otherwise the backend waits for a new provider fix. A cached fix is never treated as proof that the user is currently at a place.
 
@@ -62,7 +62,7 @@ The implementation is complete only when these checks exist:
 These decisions need confirmation before an implementation chooses them:
 
 1. Can a one-shot location use a cached fix, and what maximum age is acceptable?
-2. Which location authorization modes and background guarantees are in the first release?
+2. Does the first release offer background location at all, through When In Use with the background mode on Apple and a location foreground service or `ACCESS_BACKGROUND_LOCATION` on Android, or only foreground fixes?
 3. Is the public motion API raw sensors only, or does it include fused device motion, with its east-north-up attitude and gravity split, from the start?
 4. Does the capability model separate location from motion and foreground from background access?
 5. Are dropped high-rate samples reported as an explicit event, a counter, or only through effective-rate metadata?
