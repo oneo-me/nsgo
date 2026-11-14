@@ -64,13 +64,16 @@ device, and a closed player. A format failure is observable through `Open` or
 `Err`; silence is never treated as success. `PlayFile` returns the same errors
 as `Open` and invokes `OnEnd` only after a successfully opened cue finishes.
 
-Playback has a `Session` option with the existing `AudioSessionDefault`,
-`AudioSessionPlayback` and `AudioSessionMixWithOthers` values. The default
-does not change another app's audio. Playback asks for the session only while
-one of the package's players is audible, and restores the previous session
-when the last player pauses, ends or closes. A cue defaults to mixing so it
-does not interrupt a video or speech session; an app can request playback
-explicitly for a long-form player.
+Playback has a `Session` option with `AudioSessionDefault`,
+`AudioSessionPlayback` and `AudioSessionMixWithOthers` values, named as a
+video's `core.AudioSession` values are; `audio` declares a `Session` type of
+its own, as it imports no other package of the module. For a cue the default
+mixes, as `AudioSessionMixWithOthers` does, so a cue does not change another
+app's audio or interrupt a video or speech session. For a long-form player the
+default leaves the platform's existing session policy alone; an app can
+request playback explicitly. Playback asks for the session only while one of
+the package's players is audible, and restores the previous session when the
+last player pauses, ends or closes.
 
 The session is process-wide but its ownership is reference counted. Video,
 speech and `microphone` must share the same iOS audio-session coordinator

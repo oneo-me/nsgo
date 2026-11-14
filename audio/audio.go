@@ -14,7 +14,7 @@ import (
 type Session uint8
 
 const (
-	// AudioSessionDefault leaves the platform's existing session policy alone.
+	// AudioSessionDefault lets the package choose: a Sound mixes with other audio, as AudioSessionMixWithOthers does, so a cue never interrupts it, and a Player leaves the platform's existing session policy alone.
 	AudioSessionDefault Session = iota
 	// AudioSessionPlayback asks for an exclusive playback session while audio
 	// is audible.
@@ -26,8 +26,7 @@ const (
 
 // Options controls a sound or player when it is opened.
 //
-// The zero value uses the platform's default session, full volume, normal
-// speed, no loop and a 250 ms progress interval.
+// The zero value uses AudioSessionDefault, full volume, normal speed, no loop and a 250 ms progress interval.
 type Options struct {
 	Session          Session
 	Volume           float64
