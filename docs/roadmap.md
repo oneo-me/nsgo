@@ -22,7 +22,6 @@ What NSH added between 0.4.0 and 0.5.0 that NSGo has not, in the order to build 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Notifications on screens | #931, #1373 | With the permission granted, a notification shows, its press reaches the app and the badge shows on a Mac, an iPhone, Windows in a signed-in session and an Android 13 device, and a toast pressed after the app ended starts it through a COM activator; so far Linux and the Android emulator (API 29) showed and closed one, macOS, iOS's simulator and the web answered the permission without asking, and Windows, over SSH, reached its notifier, which reports the platform unavailable there (2026-11-12) |
-| Mention completion in Composer | #46, [mention completion design](architecture/mention-completion.md) | A reusable field suggestion state owns trigger parsing, UTF-16 insertion, scoped keys and accessibility, while Composer supplies rows and styling |
 | Sounds and audio | `audio-design.md` (The API, The platforms) | `Sound` plays a short sound from a file or bytes and `AudioPlayer` plays, pauses, seeks and loops audio on every target, decoding off the main thread, and the gallery gives each kind of moment a sound |
 | Haptics felt | #1328 | `mobile.PlayHaptic` is felt on an iPhone and an Android phone; so far it ran in the iOS simulator and the Android emulator, which have none (2026-11-12) |
 | More of a web view's loads | #1038, #1028, #1233, #1496, #1439 | A load carries the app's request headers, `Incognito` keeps the website data in memory, the app serves URL schemes of its own to its pages, a page from the app's own files loads on macOS, and `Env` says where the platform shows no web view |
@@ -53,6 +52,14 @@ What 0.5.0 changed in how the keyboard's focus, popups and assistive technology 
 | Item | NSH reference | Done when |
 | --- | --- | --- |
 | Context menus from any input | `elements.md`, #978, #1098, #1544, #1555, #1610 | The menu key, Shift+F10 and a screen reader's menu action open a view's context menu; a held finger or pen opens a `ContextMenu` on any device and a mouse never; a secondary click outside closes overlays; a second one on the trigger opens it again where it lands; and `ContextMenuEvent` names its pointer |
+
+## From NSGo's issues
+
+What NSGo's own issues ask for beyond NSH's releases, each issue where its design is discussed.
+
+| Item | Reference | Done when |
+| --- | --- | --- |
+| Mention completion in Composer | [#46](https://github.com/nsgo-dev/nsgo/issues/46), [mention completion](architecture/mention-completion.md) | A `core.Suggest` owns a field's trigger, query and UTF-16 insertion and a `base.SuggestList` its rows, keys and announcements, while `Composer`'s `Suggest` supplies rows and `ui` the look; a test types `@re`, sees two rows, presses Down and Return, and finds the chosen row inserted at the caret with the list gone |
 
 ## Application and windows
 
