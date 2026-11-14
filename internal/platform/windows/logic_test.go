@@ -1114,3 +1114,26 @@ func TestMonitorLayoutKeepsMixedScalesApart(t *testing.T) {
 		}
 	}
 }
+
+// TestTrayEventsDecodeVersion4 checks that a NOTIFYICON_VERSION_4 callback is read with the event in LOWORD(lParam) and the icon in HIWORD(lParam), and that a click counts once: by NIN_SELECT or WM_CONTEXTMENU, not the raw button-up that comes before it.
+func TestTrayEventsDecodeVersion4(t *testing.T) {
+	const id = 3
+	for _, c := range []struct {
+		event uint32
+		index int
+		ok    bool
+	}{
+		{ninSelect, 0, true},
+		{ninKeySelect, 0, true},
+		{wmContextMenu, 1, true},
+		{wmMButtonUp, 0, true},
+		{wmLButtonUp, 0, false},
+		{wmRButtonUp, 0, false},
+		{0x0200, 0, false}, // WM_MOUSEMOVE
+	} {
+		gotID, index, ok := trayEvent(uintptr(id<<16 | c.event))
+		if ok != c.ok || ok && (gotID != id || index != c.index) {
+			t.Errorf("event %#x: id %d, index %d, ok %v; want id %d, index %d, ok %v", c.event, gotID, index, ok, id, c.index, c.ok)
+		}
+	}
+}

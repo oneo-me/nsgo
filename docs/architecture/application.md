@@ -1,6 +1,6 @@
 # Application and windows
 
-An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens them; the [roadmap](../roadmap.md#application-and-windows) orders Windows and Linux.
+An app opens what it shows itself, as an Avalonia application does: windows, panels, tray icons and global shortcuts, on one engine whose windows share its signals. Read this before changing `nsgo.Run`, `nsgo.SetMainView`, `desktop`'s windows, tray icons, shortcuts or shutdown, or how the engine attaches surfaces. macOS opens them, and Windows for `nsgo.Run(App)`; the [roadmap](../roadmap.md#application-and-windows) orders what Windows lacks and Linux.
 
 ## Model
 
@@ -29,7 +29,7 @@ func App(app *core.Scope) {
 
 ## Surfaces
 
-The engine runs one graph with a tree per surface (`core.Tree`). Where the platform opens windows (`core.RootOptions.Windows`, the main window's options), the first tree is the app's own surface: it shows no view, and the platform gives it no window.
+The engine runs one graph with a tree per surface (`core.Tree`). Where the platform opens windows (`core.RootOptions.Windows`, the main window's options), the first tree is the app's own surface: it shows no view, and the platform gives it no window, or a hidden one on Windows.
 
 - `OpenWindow`, `OpenPanel` and a drawn tray icon make a tree under a scope of the opener's owner, so the window closes when that owner goes. Every scope under it knows its tree (`Scope.surf`), so services, key bindings and `desktop`'s window functions act on the window the code is in, and the app's own scope on the first tree.
 - Each tree has its own `Env`: size, scale, safe area and title bar. What the app forces, its locale, appearance and host tokens, is one signal shared by every window's.
@@ -37,7 +37,7 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Opening sends `ItemOpenSurface` to the app's surface. The platform makes the window and attaches it: `engine.Engine.Attach(id, platform)` returns the surface's `Engine`, which reports its size, environment and events as the first surface's does.
 - The engine commits every attached tree after each wake-up, the first first, and asks a window's platform for display frames, since the app's surface has no display. A tree waits uncommitted until it is attached.
 - A closed window's tree ends: the engine sends its platform one batch, `WindowDestroy`, and forgets it, or sends it to a platform that attaches after the close.
-- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Windows and Linux for now), the first tree is the one surface: `OpenWindow`, `OpenPanel` and `NewTray` return nil, whose methods do nothing, and `core.AppRoot` shows the main view in it.
+- Where the platform opens no windows (phones, the web, `nsgo.NewView`, test hosts, Linux for now and Windows for `nsgo.Run(Root)`), the first tree is the one surface: `OpenWindow` and `OpenPanel` return nil, and `core.AppRoot` shows the main view in it. `NewTray` returns nil there too, except on Windows, which adds tray icons to the main window (`core.RootOptions.Tray`).
 
 ## Lifecycle
 
@@ -61,6 +61,16 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 - Global shortcuts are Carbon's `RegisterEventHotKey` on the application's event target, which needs no accessibility permission; a key names its ANSI virtual key code.
 - An alert asked from the app's own surface, which has no window to hold a sheet, runs app-modal.
 
+## Windows
+
+For `nsgo.Run(App)`, `Run` keeps its root window hidden as the app's own surface and attaches the surfaces the app opens on its message loop; `nsgo.Run(Root)` shows the main view in the root window and only adds tray icons.
+
+- A window is a top-level window centered at its content size in its monitor's scale, with its material. Its close reports `EventWindowClose`, and `WindowDestroy` destroys it. Keys go to the key bindings and menu of the window they are sent to.
+- A panel is a borderless popup tool window, so it has no taskbar button. It shows above or under its tray icon from `Shell_NotifyIconGetRect`, else in the upper middle of the monitor with the pointer, and takes the focus, which activates the app; with `HideOnBlur` it hides as it loses it. The press on the icon that hides a panel by taking its focus does not show it again.
+- A tray icon is `Shell_NotifyIcon`'s at `NOTIFYICON_VERSION_4`: `NIN_SELECT` and `NIN_KEYSELECT` are primary clicks and `WM_CONTEXTMENU` secondary, its tooltip is the standard one, and the icons are added again when Explorer broadcasts `TaskbarCreated`. Its menu is owned by a hidden window, so it raises none of the app's. A drawn icon's surface stays hidden.
+- An alert asked from the app's own surface shows the hidden root window as the alert's own window, which closing cancels.
+- `LaunchAtLogin` answers false, and global shortcuts register nothing ([roadmap](../roadmap.md#application-and-windows)).
+
 ## Configuration
 
 `nsgo.yaml` keeps what the package needs before any code runs: the name, the ID, the version and the launch screen's appearance. Windows are sized and limited in Go, `nsgo.WindowSize` and `nsgo.WindowConstraints` for the main window and `WindowOptions` for others; `nsgo.HideDock` and the shutdown mode are Go's too. A `window` in `nsgo.yaml` fails the tool, naming `nsgo.WindowSize`.
@@ -76,4 +86,4 @@ The engine runs one graph with a tree per surface (`core.Tree`). Where the platf
 
 ## Verification
 
-`core/window_test.go` opens windows, panels and tray icons on a platform that opens windows, headless: shared signals, shutdown modes, canceled closes, reopening, keys and owners, tray clicks and menus, shortcuts, the Dock and the login item, and the main view where no windows open. `internal/engine` attaches an opened window and destroys it. On macOS `examples/tray` was run: its welcome window, its panel under the icon after a click, a close that keeps the app, and the gallery ending with its window.
+`core/window_test.go` opens windows, panels and tray icons on a platform that opens windows, headless: shared signals, shutdown modes, canceled closes, reopening, keys and owners, tray clicks and menus, shortcuts, the Dock and the login item, and the main view where no windows open. `internal/engine` attaches an opened window and destroys it, and the Windows backend's tests decode the notification area's callbacks. On macOS `examples/tray` was run: its welcome window, its panel under the icon after a click, a close that keeps the app, and the gallery ending with its window.
