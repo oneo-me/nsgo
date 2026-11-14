@@ -67,8 +67,17 @@ func claimInstance(id string, args []string) (*instance, bool) {
 }
 
 // instancePath is the socket of app id, beside its lock (the path with ".lock"), in a directory only this user may write and only this host sees: $XDG_RUNTIME_DIR, or a private directory in the temporary one. A directory another user could write would let them take the launches, and one on a network share, as a home directory can be, would let a copy on another host hold the lock. The name is a digest of id, as Linux limits a Unix socket's address to 108 bytes.
+//
+// In a Flatpak sandbox it is $XDG_RUNTIME_DIR/app/$FLATPAK_ID, the directory Flatpak shares between the app's instances: before Flatpak 1.11.1 each instance has an empty $XDG_RUNTIME_DIR of its own, so every launch there would own the app. Where that directory is missing, or too deep for the address, as a long app ID can make it, $XDG_RUNTIME_DIR is used, which Flatpak 1.11.1 and later share between the app's instances too.
 func instancePath(id string) (string, error) {
+	digest := sha256.Sum256([]byte(id))
+	name := fmt.Sprintf("nsgo-%x.sock", digest[:12])
 	dir := os.Getenv("XDG_RUNTIME_DIR")
+	if app := os.Getenv("FLATPAK_ID"); dir != "" && app != "" {
+		if shared := filepath.Join(dir, "app", app); len(filepath.Join(shared, name)) < 100 && privateDir(shared) == nil {
+			dir = shared
+		}
+	}
 	if dir == "" || privateDir(dir) != nil {
 		dir = filepath.Join(os.TempDir(), fmt.Sprintf("nsgo-%d", os.Getuid()))
 		if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
@@ -78,8 +87,7 @@ func instancePath(id string) (string, error) {
 			return "", err
 		}
 	}
-	digest := sha256.Sum256([]byte(id))
-	path := filepath.Join(dir, fmt.Sprintf("nsgo-%x.sock", digest[:12]))
+	path := filepath.Join(dir, name)
 	if len(path) >= 100 {
 		return "", fmt.Errorf("%s: too long for a socket address", path)
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -32,6 +33,74 @@ func TestInstanceHandsOffReopenAndFiles(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for handoff")
+	}
+}
+
+// TestInstanceHandsOffInAFlatpak hands a launch over between two Flatpak instances, each with an $XDG_RUNTIME_DIR of its own whose app/$FLATPAK_ID is one shared directory, as Flatpak lays them out.
+func TestInstanceHandsOffInAFlatpak(t *testing.T) {
+	const id = "dev.nsgo.FlatpakTest"
+	t.Setenv("FLATPAK_ID", id)
+	// Short directories, not t.TempDir's, which name the test and would leave no room in the socket's address.
+	root, err := os.MkdirTemp("", "fp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(root) })
+	shared, err := os.MkdirTemp(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(shared, id), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	runtime := func() string {
+		dir, err := os.MkdirTemp(root, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(shared, filepath.Join(dir, "app")); err != nil {
+			t.Fatal(err)
+		}
+		return dir
+	}
+
+	t.Setenv("XDG_RUNTIME_DIR", runtime())
+	first, already := claimInstance(id, nil)
+	if already || first == nil {
+		t.Fatalf("first claim = (%v, %v), want owner", first, already)
+	}
+	defer first.close()
+	if filepath.Dir(first.path) != filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "app", id) {
+		t.Fatalf("the socket is %s, want one in app/%s", first.path, id)
+	}
+
+	got := make(chan []string, 1)
+	first.setDelivery(func(paths []string) { got <- paths })
+	t.Setenv("XDG_RUNTIME_DIR", runtime())
+	second, already := claimInstance(id, []string{"/tmp/example.txt"})
+	if !already || second != nil {
+		second.close()
+		t.Fatalf("a second instance's claim = (%v, %v), want handoff", second, already)
+	}
+	select {
+	case paths := <-got:
+		if len(paths) != 1 || paths[0] != "/tmp/example.txt" {
+			t.Fatalf("handoff paths = %v", paths)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for handoff")
+	}
+
+	// Without the app's directory, or with an app ID too long for the address beneath it, the socket is in $XDG_RUNTIME_DIR, which later Flatpaks share.
+	long := "dev.nsgo." + strings.Repeat("Long", 20)
+	if err := os.Mkdir(filepath.Join(shared, long), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, app := range []string{"dev.nsgo.Missing", long} {
+		t.Setenv("FLATPAK_ID", app)
+		if path, err := instancePath(app); err != nil || filepath.Dir(path) != os.Getenv("XDG_RUNTIME_DIR") {
+			t.Fatalf("with FLATPAK_ID %s, instancePath = %q, %v, want one in $XDG_RUNTIME_DIR", app, path, err)
+		}
 	}
 }
 
