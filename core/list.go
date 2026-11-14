@@ -502,7 +502,7 @@ func (t *Tree) loadMore(ln *listNode, v *node) {
 
 // spare makes c a spare cell: what runs in it waits until it shows a row again.
 func (ln *listNode) spare(c *listCell) {
-	c.scope.park.parked = true
+	c.scope.rt.park(c.scope.park)
 	ln.free = append(ln.free, c)
 }
 
@@ -1036,7 +1036,10 @@ func (t *Tree) setSpacer(ln *listNode, total Points) {
 func (t *Tree) newCell(ln *listNode, i int) *listCell {
 	c := &listCell{scope: &Scope{}, index: i}
 	ln.owner.adopt(c.scope)
-	c.scope.park = &parking{guard: ln.guard}
+	p := &parking{guard: ln.guard}
+	c.scope.park = p
+	// A cell disposed while spare no longer counts as parked.
+	c.scope.addCleanup(func() { c.scope.rt.unpark(p) })
 	c.pos = ListRow{index: NewSignal(c.scope, i), count: NewSignal(c.scope, ln.count.GetUntracked())}
 	t.within(c.scope, func() {
 		c.node = t.newNode(driver.KindView, ln.cells, c.scope)

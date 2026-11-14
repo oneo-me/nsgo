@@ -51,9 +51,20 @@ type parking struct {
 	deferred []*computation
 }
 
+// park holds back what runs under p's scope.
+func (rt *runtime) park(p *parking) {
+	if !p.parked {
+		p.parked = true
+		rt.parked++
+	}
+}
+
 // unpark lets what p held back run, in the running batch or the next.
 func (rt *runtime) unpark(p *parking) {
-	p.parked = false
+	if p.parked {
+		p.parked = false
+		rt.parked--
+	}
 	for _, c := range p.deferred {
 		if !c.disposed && c.state != clean {
 			rt.enqueue(c)
@@ -120,9 +131,11 @@ type runtime struct {
 	// renderAt and userAt are the next in each queue flush runs.
 	renderAt, userAt int
 	runs             int
-	post             func(func())
-	clock            Clock
-	report           func(error)
+	// parked counts the parked scopes, so a memo looks for one above it only while there are any.
+	parked int
+	post   func(func())
+	clock  Clock
+	report func(error)
 
 	// The callbacks waiting for the next display frame, and whether the
 	// host has been asked for it.
@@ -580,10 +593,24 @@ func (c *computation) update() {
 		}
 	}
 	if c.state == dirty {
+		// A memo in a spare cell, read from outside it, keeps its value until the cell shows a row again.
+		if c.subs != nil && c.rt.parked > 0 && c.parent.heldBack() {
+			return
+		}
 		c.run()
 		return
 	}
 	c.state = clean
+}
+
+// heldBack reports whether s or an owner above it is parked.
+func (s *Scope) heldBack() bool {
+	for ; s != nil; s = s.parent {
+		if s.park != nil && s.park.parked {
+			return true
+		}
+	}
+	return false
 }
 
 // run recomputes c. Writes during the run are batched, and a write to
