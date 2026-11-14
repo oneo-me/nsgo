@@ -55,6 +55,7 @@ import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
 import android.view.ViewConfiguration;
 import android.view.ViewParent;
+import android.view.WindowManager;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
@@ -187,6 +188,10 @@ public class NsgoView extends FrameLayout {
     private final Gestures gestures;
     /** The view the root node shows in, among the accessory bar. */
     private View rootView;
+    /** Overlay roots keyed by the core surface ID. All access is on UI. */
+    private final java.util.HashMap<Integer, FrameLayout> overlayRoots = new java.util.HashMap<>();
+    /** Surface ID whose next root node is being mounted. */
+    private int mountingRoot;
 
     // Animation, on the UI thread: the graph, whether a frame callback is
     // posted and the app waits for it, the nodes whose frames move or which appear, and the views
@@ -530,6 +535,9 @@ public class NsgoView extends FrameLayout {
                 switch (kind) {
                     case Protocol.BATCH:
                         ui.post(() -> mount(payload));
+                        break;
+                    case Protocol.OVERLAY:
+                        ui.post(() -> overlay(payload));
                         break;
                     case Protocol.IMAGE:
                         image(message);
@@ -1786,7 +1794,9 @@ public class NsgoView extends FrameLayout {
         }
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(batch));
         try {
+            int surface = in.readInt();
             int root = in.readInt();
+            mountingRoot = root;
             layoutCreate = layoutUpdate = layoutDelete = null;
             if (in.readUnsignedByte() != 0) {
                 LayoutTransition create = LayoutTransition.read(in), update = LayoutTransition.read(in);
@@ -1818,7 +1828,7 @@ public class NsgoView extends FrameLayout {
                     if (layoutCreate != null || layoutUpdate != null) created.add(id);
                     // Show the root at once, so text fields can take focus
                     // while the rest of its first batch mounts.
-                    if (id == root) show(n.view);
+                    if (id == root) show(n.view, surface);
                 } else {
                     apply(kind, nodes.get(id), in);
                 }
@@ -1848,13 +1858,109 @@ public class NsgoView extends FrameLayout {
         events(n, 0);
     }
 
-    private void show(View root) {
+    private void show(View root, int surface) {
+        if (surface != 0) {
+            FrameLayout host = overlayRoots.get(surface);
+            if (host == null) return;
+            if (root.getParent() == host) return;
+            detach(root);
+            host.removeAllViews();
+            host.addView(root, new FrameLayout.LayoutParams(-1, -1));
+            return;
+        }
         if (root.getParent() == this) return;
         if (rootView != null && rootView.getParent() == this) removeView(rootView);
         detach(root);
         // Under the accessory bar.
         addView(root, 0);
         rootView = root;
+    }
+
+    /** Adds or updates an Android system overlay for a core surface. */
+    private void overlay(byte[] payload) {
+        try {
+            DataInputStream in = new DataInputStream(new ByteArrayInputStream(payload));
+            int id = in.readInt();
+            int width = Math.max(1, Math.round(in.readFloat() * density));
+            int height = Math.max(1, Math.round(in.readFloat() * density));
+            int x = Math.round(in.readFloat() * density);
+            int y = Math.round(in.readFloat() * density);
+            int flags = in.readUnsignedByte();
+            if (id == 0) return;
+            if (in.readBoolean()) {
+                FrameLayout host = overlayRoots.remove(id);
+                if (host != null) {
+                    WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+                    try { wm.removeView(host); } catch (IllegalArgumentException ignored) {}
+                }
+                if (overlayRoots.isEmpty()) stopOverlayService();
+                return;
+            }
+            if (!Services.canDrawOverlays(getContext())) {
+                Log.w(TAG, "overlay permission is not granted");
+                return;
+            }
+            WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+            FrameLayout host = overlayRoots.get(id);
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
+                    Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                            : WindowManager.LayoutParams.TYPE_PHONE,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                            | ((flags & 1) == 0 ? WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE : 0)
+                            | ((flags & 2) != 0 ? WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE : 0),
+                    PixelFormat.TRANSLUCENT);
+            lp.gravity = Gravity.TOP | Gravity.START;
+            lp.x = x;
+            lp.y = y;
+            if (host == null) {
+                host = new FrameLayout(getContext());
+                host.setClipChildren(false);
+                host.setClipToPadding(false);
+                if ((flags & 2) == 0) {
+                    host.setOnTouchListener(new View.OnTouchListener() {
+                        float startX, startY; int baseX, baseY;
+                        @Override public boolean onTouch(View v, MotionEvent e) {
+                            switch (e.getActionMasked()) {
+                                case MotionEvent.ACTION_DOWN:
+                                    startX = e.getRawX(); startY = e.getRawY();
+                                    WindowManager.LayoutParams current = (WindowManager.LayoutParams) v.getLayoutParams();
+                                    baseX = current.x; baseY = current.y; return false;
+                                case MotionEvent.ACTION_MOVE:
+                                    WindowManager.LayoutParams move = (WindowManager.LayoutParams) v.getLayoutParams();
+                                    move.x = baseX + Math.round(e.getRawX() - startX);
+                                    move.y = baseY + Math.round(e.getRawY() - startY);
+                                    wm.updateViewLayout(v, move); return true;
+                                default: return false;
+                            }
+                        }
+                    });
+                }
+                overlayRoots.put(id, host);
+                try {
+                    wm.addView(host, lp);
+                    startOverlayService();
+                } catch (RuntimeException e) {
+                    overlayRoots.remove(id);
+                    Log.w(TAG, "cannot add overlay", e);
+                }
+            } else {
+                wm.updateViewLayout(host, lp);
+            }
+        } catch (IOException | RuntimeException e) {
+            Log.w(TAG, "bad overlay message", e);
+        }
+    }
+
+    private void startOverlayService() {
+        android.content.Intent intent = new android.content.Intent(getContext(), OverlayService.class);
+        if (Build.VERSION.SDK_INT >= 26) getContext().startForegroundService(intent);
+        else getContext().startService(intent);
+    }
+
+    private void stopOverlayService() {
+        android.content.Intent intent = new android.content.Intent(getContext(), OverlayService.class)
+                .setAction(OverlayService.STOP);
+        getContext().startService(intent);
     }
 
     /** Whether Android's reduce-motion setting, no animations, is on. */
@@ -2227,6 +2333,19 @@ public class NsgoView extends FrameLayout {
                 long count = in.readInt() & 0xffffffffL;
                 Context context = activity() != null ? activity() : getContext();
                 boolean opened = Services.installSettings(context);
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
+                break;
+            }
+            case Protocol.ITEM_CAN_DRAW_OVERLAYS: {
+                long count = in.readInt() & 0xffffffffL;
+                event(Protocol.EVENT_FILES, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "",
+                        Services.canDrawOverlays(getContext()));
+                break;
+            }
+            case Protocol.ITEM_OVERLAY_SETTINGS: {
+                long count = in.readInt() & 0xffffffffL;
+                Context context = activity() != null ? activity() : getContext();
+                boolean opened = Services.overlaySettings(context);
                 event(Protocol.EVENT_FILES, 0, count, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, null, 0, 0, false, "", opened);
                 break;
             }

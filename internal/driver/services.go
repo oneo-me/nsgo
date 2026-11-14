@@ -168,6 +168,8 @@ const (
 	// SurfaceTrayIcon is the view a tray icon draws itself with
 	// (TrayConfig.View), in the menu bar on macOS.
 	SurfaceTrayIcon
+	// SurfaceOverlay is an Android system overlay window.
+	SurfaceOverlay
 )
 
 // SurfaceConfig is a window, a panel or a tray icon's view the app opens
@@ -195,6 +197,12 @@ type SurfaceConfig struct {
 	HideOnBlur bool
 	// Tray is the tray icon a SurfaceTrayIcon draws.
 	Tray uint32
+	// Overlay lets Android attach this surface to TYPE_APPLICATION_OVERLAY.
+	Overlay bool
+	// TouchThrough lets the overlay pass pointer events to the app below.
+	TouchThrough bool
+	// Focusable lets the overlay take keyboard focus.
+	Focusable bool
 }
 
 // TrayConfig is a tray icon (ItemTray).

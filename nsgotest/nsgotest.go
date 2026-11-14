@@ -221,6 +221,12 @@ type App struct {
 	Installs        []driver.SharedFile
 	InstallAllowed  bool
 	InstallSettings int
+	// OverlayAllowed is what CanDrawOverlays answers. OverlaySettings counts
+	// requests to open Android's display-over-other-apps setting, and
+	// Overlays records the floating windows shown by the app.
+	OverlayAllowed  bool
+	OverlaySettings int
+	Overlays        []core.FloatingWindowOptions
 	// Notifications are the notifications showing, oldest first, one of
 	// an ID replacing the one before; Badge is the count on the app's
 	// icon. NotificationPermission is what the platform answers whether

@@ -19,6 +19,7 @@ import android.os.ext.SdkExtensions;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.provider.Settings;
 import android.util.Base64;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -293,6 +294,24 @@ final class Services {
     /** Opens the setting that lets the app install packages; false when it cannot. */
     static boolean installSettings(Context context) {
         Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + context.getPackageName()));
+        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(intent);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /** Whether Android lets this package draw windows above other apps. */
+    static boolean canDrawOverlays(Context context) {
+        return Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(context);
+    }
+
+    /** Opens the setting that lets this package draw windows above other apps. */
+    static boolean overlaySettings(Context context) {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:" + context.getPackageName()));
         if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {

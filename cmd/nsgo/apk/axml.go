@@ -87,6 +87,8 @@ var androidAttrs = map[string]attrSpec{
 	"enableOnBackInvokedCallback": {0x0101066c, typeBool, parseBool},
 	"configChanges":               {0x0101001f, typeHex, parseConfigChanges},
 	"windowSoftInputMode":         {0x0101022b, typeHex, parseSoftInputMode},
+	"foregroundServiceType":       {0x01010599, typeHex, parseForegroundServiceType},
+	"value":                       {0x01010024, typeString, nil},
 }
 
 // styles are the framework styles a manifest may name. A reference needs
@@ -129,6 +131,18 @@ var softInputModes = map[string]uint32{
 	"adjustResize":       0x10,
 	"adjustPan":          0x20,
 	"adjustNothing":      0x30,
+}
+
+var foregroundServiceTypes = map[string]uint32{
+	"dataSync": 0x01, "mediaPlayback": 0x02, "phoneCall": 0x04,
+	"location": 0x08, "connectedDevice": 0x10, "mediaProjection": 0x20,
+	"camera": 0x40, "microphone": 0x80, "health": 0x100,
+	"remoteMessaging": 0x200, "systemExempted": 0x400, "shortService": 0x800,
+	"mediaProcessing": 0x2000, "specialUse": 0x40000000,
+}
+
+func parseForegroundServiceType(s string) (uint32, error) {
+	return parseFlags(foregroundServiceTypes)(s)
 }
 
 // EncodeManifest turns the runtime's readable manifest into the binary XML

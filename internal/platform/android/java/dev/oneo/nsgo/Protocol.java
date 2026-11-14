@@ -30,6 +30,7 @@ final class Protocol {
     static final int FETCH = 16;
     /** Starts, updates or ends a Live Activity: JSON (LiveUpdates). */
     static final int LIVE_UPDATE = 17;
+    static final int OVERLAY = 18;
 
     // Java to Go.
     static final int START = 1;
@@ -140,15 +141,17 @@ final class Protocol {
     static final int ITEM_INSTALL_PACKAGE = 65;
     static final int ITEM_CAN_INSTALL_PACKAGES = 66;
     static final int ITEM_INSTALL_SETTINGS = 67;
-    static final int ITEM_TAKE_PHOTO = 78;
-    static final int ITEM_MATCH = 79;
-    static final int ITEM_HAPTIC = 81;
-    static final int ITEM_NOTIFICATION_PERMISSION = 82;
-    static final int ITEM_SHOW_NOTIFICATION = 83;
-    static final int ITEM_CLOSE_NOTIFICATION = 84;
-    static final int ITEM_BADGE = 85;
-    static final int ITEM_BIOMETRIC_AVAILABILITY = 86;
-    static final int ITEM_BIOMETRIC_AUTHENTICATE = 87;
+    static final int ITEM_CAN_DRAW_OVERLAYS = 68;
+    static final int ITEM_OVERLAY_SETTINGS = 69;
+    static final int ITEM_TAKE_PHOTO = 80;
+    static final int ITEM_MATCH = 81;
+    static final int ITEM_HAPTIC = 83;
+    static final int ITEM_NOTIFICATION_PERMISSION = 84;
+    static final int ITEM_SHOW_NOTIFICATION = 85;
+    static final int ITEM_CLOSE_NOTIFICATION = 86;
+    static final int ITEM_BADGE = 87;
+    static final int ITEM_BIOMETRIC_AVAILABILITY = 88;
+    static final int ITEM_BIOMETRIC_AUTHENTICATE = 89;
 
     // What EVENT_NOTIFICATION answers ITEM_NOTIFICATION_PERMISSION with, as the driver's.
     static final int NOTIFICATIONS_NOT_ASKED = 0;

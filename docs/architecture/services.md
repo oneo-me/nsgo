@@ -1,6 +1,6 @@
 # Services
 
-Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages on Android, speech recognition, biometrics, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
+Services are what the platform does for the app outside its views: alerts, the clipboard, opening links, the photo picker, taking a photo, file and folder picks and saves, opening and sharing the app's files, installing packages and floating windows on Android, speech recognition, biometrics, notifications and the badge, haptics, the app's lifecycle, the appearance, keyboard shortcuts, the status bar, the desktop window and quitting. Read this before changing one, in `core` or in a backend; [application and windows](application.md) covers the windows, tray icons and global shortcuts an app opens. A service goes to the platform of the window the code asking is in.
 
 ## Requests and answers
 
@@ -8,7 +8,7 @@ A service is a command item in the batch. One that answers, such as a clipboard 
 
 - `Tree.request` keeps the callback under the owner that asked, and the root runs it when that owner is gone, so a closed menu still hears its answer.
 - Platforms answer on any goroutine through `Engine.Dispatch`; slow work, such as encoding a photo, runs off the main thread first.
-- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `TakePhoto` (recording `Photos`), `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile` and `CanInstallPackages`, and it records the shares, the packages installed, the install settings opened, the appearance, quits and the context menu shown. A speech session it runs hears what `HearSpeech` says and ends with `EndSpeech`.
+- `nsgotest` answers from its model: `App.Clipboard`, `ClipboardImage` and `ClipboardFiles`, `OpenURL`, `PickImages`, `TakePhoto` (recording `Photos`), `PickFiles`, `PickDirectories`, `SaveFile`, `OpenFile`, `CanInstallPackages` and `CanDrawOverlays`, and it records the shares, the packages installed, the install and overlay settings opened, the floating surfaces, the appearance, quits and the context menu shown. A speech session it runs hears what `HearSpeech` says and ends with `EndSpeech`.
 
 ## Clipboard
 
@@ -112,6 +112,12 @@ The desktops show no camera ([roadmap](../roadmap.md#finish-the-existing-platfor
 | Web | None: `NoFileOpener` | None: `NoShareSheet` |
 
 Android hands files on as content URIs from the runtime's `FileProvider`, which the manifest declares unexported, granting URIs, with an authority named after the app's package. A URI names one of its roots, the app's data directory (which holds `DataDir` and `CacheDir`) or its external one, the path under it and the name the other app sees, with the type as a parameter; a file elsewhere fails, and the provider serves nothing outside its roots, whatever the path says. The intent grants the app chosen read access until its activity finishes, so the app keeps the file there until then and deletes it itself.
+
+## Floating windows on Android
+
+`mobile.CanDrawOverlays` reports Android's `Settings.canDrawOverlays`, and `mobile.OpenOverlaySettings` opens the app's `ACTION_MANAGE_OVERLAY_PERMISSION` page. The app lists `SYSTEM_ALERT_WINDOW` in `android.permissions`; without the grant, the capability reports false and an overlay is not attached.
+
+`mobile.OpenFloatingWindow` opens an Android `TYPE_APPLICATION_OVERLAY` surface. `FloatingWindowOptions` sets its size, position, focusability and touch-through behavior. The surface is a normal NSGo tree, can be dragged when it accepts touches, and is removed when its `FloatingWindow` closes. The runtime keeps an overlay foreground service while at least one such surface is showing, so it remains while the activity is backgrounded or the screen turns off. The API is Android-only and returns nil on other targets.
 
 ## Installing packages
 

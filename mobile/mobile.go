@@ -23,7 +23,21 @@ type (
 	// is as wide as the surface and as tall as its content, and shows
 	// nothing where it is written.
 	InputAccessoryView = core.InputAccessoryView
+	// FloatingWindowOptions configures Android's system-level overlay window.
+	FloatingWindowOptions = core.FloatingWindowOptions
+	// FloatingWindow is an Android overlay's content tree and lifecycle.
+	FloatingWindow = core.Window
 )
+
+// OpenFloatingWindow shows content above other apps on Android after the app
+// has been granted SYSTEM_ALERT_WINDOW. Check CanDrawOverlays first; it
+// returns nil on other targets.
+func OpenFloatingWindow(cx *core.Scope, opts FloatingWindowOptions, content func(*core.Scope) core.Node) *FloatingWindow {
+	if cx.Env().OS() != core.OSAndroid {
+		return nil
+	}
+	return cx.OpenFloatingWindow(opts, content)
+}
 
 // Haptic is feedback the device plays under the user's finger, from
 // HapticSelection to HapticError.
@@ -103,3 +117,14 @@ func CanInstallPackages(cx *core.Scope, done func(allowed bool)) { cx.CanInstall
 // packages, for the user to allow it, and calls done with whether it
 // opened. Elsewhere it answers false.
 func OpenInstallSettings(cx *core.Scope, done func(opened bool)) { cx.OpenInstallSettings(done) }
+
+// CanDrawOverlays calls done with whether Android lets the app show a window
+// above other apps. Elsewhere it answers false.
+func CanDrawOverlays(cx *core.Scope, done func(allowed bool)) { cx.CanDrawOverlays(done) }
+
+// OpenOverlaySettings opens Android's setting for allowing windows above
+// other apps and calls done with whether it opened. Elsewhere it answers
+// false.
+func OpenOverlaySettings(cx *core.Scope, done func(opened bool)) {
+	cx.OpenOverlaySettings(done)
+}

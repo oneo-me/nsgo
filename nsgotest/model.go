@@ -256,6 +256,14 @@ func (a *App) apply(b *driver.MountBatch) {
 	for _, it := range b.Items {
 		v := a.views[it.ID]
 		switch it.Kind {
+		case driver.ItemOpenSurface:
+			if it.Surface != nil && it.Surface.Overlay {
+				a.Overlays = append(a.Overlays, core.FloatingWindowOptions{
+					Width: it.Surface.Width, Height: it.Surface.Height,
+					X: it.Surface.Frame.X, Y: it.Surface.Frame.Y,
+					Focusable: it.Surface.Focusable, TouchThrough: it.Surface.TouchThrough,
+				})
+			}
 		case driver.ItemCreate:
 			a.views[it.ID] = &View{ID: it.ID, Kind: it.View, Style: driver.DefaultViewStyle, anim: a.anim}
 		case driver.ItemDelete:
@@ -512,6 +520,11 @@ func (a *App) apply(b *driver.MountBatch) {
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: a.InstallAllowed})
 		case driver.ItemInstallSettings:
 			a.InstallSettings++
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
+		case driver.ItemCanDrawOverlays:
+			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: a.OverlayAllowed})
+		case driver.ItemOverlaySettings:
+			a.OverlaySettings++
 			a.post(driver.Event{Kind: driver.EventFiles, Count: it.Count, Finished: true})
 		case driver.ItemShare:
 			a.Shares = append(a.Shares, *it.Share)
