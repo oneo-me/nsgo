@@ -14,7 +14,7 @@ Remote push is a server-to-device channel. An app needs to:
 
 The server, provider credentials, token storage and message encryption remain the app's responsibility. NSGo does not send a token to a service owned by NSGo and does not interpret application data.
 
-The first implementation covers APNs on Apple targets and FCM on Android. Desktop and web backends report that remote push is unavailable until they have a provider with the same lifecycle guarantees. Local notifications, badges and notification presses remain the existing service in [`services.md`](services.md#notifications-and-the-badge).
+The first implementation covers APNs on iOS and macOS and FCM on Android. Windows, Linux, the web, tvOS and watchOS report that remote push is unavailable until they have a provider with the same lifecycle guarantees. Local notifications, badges and notification presses remain the existing service in [`services.md`](services.md#notifications-and-the-badge).
 
 ## Layers
 
@@ -42,9 +42,11 @@ Neither platform hands the app the bytes the server sent. Apple gives the delega
 
 ## Apple
 
-The Apple backend registers with `UIApplication`'s remote-notification API after the app has requested notification authorization. The application delegate receives the binary device token and converts it to a stable lowercase hexadecimal string before emitting the driver event. The delegate also forwards foreground and background payloads, and always calls Apple's completion handler after the payload has been copied.
+The Apple backend calls `registerForRemoteNotifications`, on `UIApplication` on iOS and `NSApplication` on macOS, without waiting for notification authorization: APNs issues the token whatever the user answers, and a background push needs no authorization, so registration and permission are separate results, as on Android. The application delegate receives the binary device token (`application:didRegisterForRemoteNotificationsWithDeviceToken:`) and converts it to a stable lowercase hexadecimal string before emitting the driver event. This is the device's token; a Live Activity's push tokens, which `widget.OnPushToken` gives, are ActivityKit's and separate.
 
-The tool must make the app's intent explicit in YAML. A package that uses remote push opts into the push entitlement (`aps-environment`) and, when it needs background data delivery, the `remote-notification` background mode. The tool does not add either entitlement merely because local notifications are used. The Apple backend reports unavailable when the package is not an app bundle, has no push entitlement, or is running on a target without APNs.
+On iOS, `application:didReceiveRemoteNotification:fetchCompletionHandler:` forwards foreground and background payloads. The backend calls the completion handler once the payload is in the queue, on disk when no engine runs, with `UIBackgroundFetchResultNewData` when a handler accepted it and `UIBackgroundFetchResultNoData` when it is only queued, as iOS may suspend the process as soon as it is called. AppKit's `application:didReceiveRemoteNotification:` has no completion handler, and macOS has no background modes.
+
+The tool must make the app's intent explicit in YAML, and adds nothing because local notifications are used. A package that uses remote push claims the push entitlement, `aps-environment` on iOS and `com.apple.developer.aps-environment` on macOS. An iOS package that needs background data delivery also lists `remote-notification` in its Info.plist's `UIBackgroundModes`, an array, which `apple.info`'s string entries cannot express. Only a provisioning profile grants the entitlement: on iOS the device's profile must include push, and on macOS the tool embeds a profile only in a Mac App Store package (`sign.macos_profile`), so a Developer ID disk image needs a Developer ID profile embedded as well, while `nsgo dev`'s and ad hoc builds claim no push entitlement, since macOS refuses to launch an app claiming it without a profile. The Apple backend reports unavailable when the package is not an app bundle or has no push entitlement.
 
 The system may display a notification payload without launching the app. In that case NSGo receives no data event until Apple delivers one. A notification press continues through the existing notification-press path; remote push does not create a second press API.
 
@@ -68,9 +70,9 @@ The implementation is complete only when these checks exist:
 
 - headless `core` tests cover permission, idempotent registration, token replacement, pending delivery, scope cleanup, provider metadata and a payload reaching the handler as the backend passed it;
 - `internal/driver` tests cover command and event encoding, including a payload larger than one bridge frame;
-- Apple tests use a fake delegate to cover token conversion, foreground/background completion and a launch press;
+- Apple tests use a fake delegate to cover token conversion on iOS and macOS, the iOS completion handler's result with and without an engine, and a launch press;
 - Android runtime tests use a fake adapter to cover a dead-process queue, acknowledgement, duplicate message IDs and token refresh without requiring Firebase or a device; and
-- target tests cover a signed Apple app receiving a sandbox APNs payload and an Android app receiving a test-provider payload, with the provider credentials kept outside the repository.
+- target tests cover a signed iOS app and a macOS app signed with a profile receiving a sandbox APNs payload, including an iOS app launched in the background, and an Android app receiving a test-provider payload, with the provider credentials kept outside the repository.
 
 ## Open decisions
 
