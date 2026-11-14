@@ -52,7 +52,7 @@ A calendar picker is optional and must be an app choice; the system permission p
 
 Contacts and calendar data use a dedicated capability, distinct from `AccessNotifications`, `AccessNetwork` and the photo picker. The final access model must decide whether contacts and calendar are separate grants. A restricted scope receives no IDs or metadata from a denied request. The backend does not log names, notes, addresses, event titles or raw provider errors containing them.
 
-The tool adds only the declarations an app requests: Apple usage descriptions and Android permissions. Usage-description text is app-owned and localized. The service does not silently sync, cache or upload data, and it does not run in the background merely because a permission was granted.
+The tool adds the declarations an app asks for in `nsgo.yaml`: Apple usage descriptions from `apple.info` and Android permissions from `android.permissions`. On macOS it also claims `com.apple.security.personal-information.addressbook` when `apple.info` has `NSContactsUsageDescription`, and `com.apple.security.personal-information.calendars` when it has a calendar usage description, as `hardenedEntitlements` in `cmd/nsgo/sign.go` does for the microphone and the camera: the hardened runtime of a notarized build and the App Sandbox of a store build deny Contacts and EventKit without them. Usage-description text is app-owned and localized. The service does not silently sync, cache or upload data, and it does not run in the background merely because a permission was granted.
 
 ## Verification
 
@@ -61,7 +61,8 @@ The implementation is complete only when these checks exist:
 - headless `core` tests cover field masks, paging, answers after the owner is gone, time zones, all-day events, occurrences and spans, conflicts, not-found IDs, limited, write-only and denied access;
 - `internal/driver` tests cover request IDs, empty versus absent fields, bounded results and large notes or payloads;
 - Apple tests use fake contact and event stores for limited and write-only access, picker results, authorization changes, stale records and changed identifiers;
-- Android tests use fake `ContentResolver` providers for permission separation, cursors, `Instances` versus `Events` IDs, lookup keys, account changes and revision conflicts; and
+- Android tests use fake `ContentResolver` providers for permission separation, cursors, `Instances` versus `Events` IDs, lookup keys, account changes and revision conflicts;
+- `cmd/nsgo` tests check the macOS entitlements each usage description brings; and
 - target tests use fixture stores containing no real personal data and verify that a denied request produces no observable record metadata.
 
 ## Open decisions
