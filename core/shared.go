@@ -6,6 +6,8 @@ import "github.com/nsgo-dev/nsgo/internal/driver"
 // protocol, defines them; core aliases them so apps import core alone.
 
 type (
+	// DisplayInfo is one desktop display reported by Env.Displays.
+	DisplayInfo = driver.DisplayInfo
 	// AndroidEventMapper is implemented by an Android component that
 	// receives the listener callbacks of its view itself.
 	AndroidEventMapper = driver.AndroidEventMapper

@@ -428,6 +428,36 @@ func screenFrames(selector string) []apple.CGRect {
 	return frames
 }
 
+// displays returns AppKit's screens in the coordinate space used by
+// WindowFrame: the primary screen's top left, with y growing down.
+func displays() []driver.DisplayInfo {
+	screens := objc.ID(apple.Class("NSScreen")).Send(sel("screens"))
+	count := objc.Send[uint](screens, sel("count"))
+	if count == 0 {
+		return nil
+	}
+	primary := objc.ID(apple.Class("NSScreen")).Send(sel("mainScreen"))
+	primaryFrame := objc.Send[apple.CGRect](primary, sel("frame"))
+	top := primaryFrame.Origin.Y + primaryFrame.Size.Height
+	out := make([]driver.DisplayInfo, 0, count)
+	for i := uint(0); i < count; i++ {
+		screen := screens.Send(sel("objectAtIndex:"), i)
+		frame := objc.Send[apple.CGRect](screen, sel("frame"))
+		visible := objc.Send[apple.CGRect](screen, sel("visibleFrame"))
+		description := screen.Send(sel("deviceDescription"))
+		number := description.Send(sel("objectForKey:"), apple.NSString("NSScreenNumber"))
+		id := strconv.FormatUint(uint64(objc.Send[uint64](number, sel("unsignedLongLongValue"))), 10)
+		if number == 0 {
+			id = strconv.FormatUint(uint64(i), 10)
+		}
+		point := func(r apple.CGRect) driver.Bounds {
+			return driver.Bounds{Origin: driver.Point{X: driver.Points(r.Origin.X - primaryFrame.Origin.X), Y: driver.Points(top - r.Origin.Y - r.Size.Height)}, Size: driver.Size{Width: driver.Points(r.Size.Width), Height: driver.Points(r.Size.Height)}}
+		}
+		out = append(out, driver.DisplayInfo{ID: id, Frame: point(frame), VisibleFrame: point(visible), Scale: float32(objc.Send[float64](screen, sel("backingScaleFactor"))), Main: screen == primary})
+	}
+	return out
+}
+
 // usableScreens returns what the screens leave windows, past the menu bar
 // and the Dock, from the main screen's top left, y down.
 func usableScreens() []driver.Bounds {

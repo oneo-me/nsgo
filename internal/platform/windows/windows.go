@@ -128,6 +128,7 @@ const (
 	wmPaint         = 0x000F
 	wmEraseBkgnd    = 0x0014
 	wmSettingChange = 0x001A
+	wmDisplayChange = 0x007E
 	wmShowWindow    = 0x0018
 	wmActivateApp   = 0x001C
 	wmKeyDown       = 0x0100
@@ -1819,6 +1820,12 @@ func wndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	case wmSettingChange:
 		// Theme ("ImmersiveColorSet"), locale and accessibility changes.
 		w.updateEnvironment()
+	case wmDisplayChange:
+		for _, other := range windows {
+			if other.engine != nil {
+				other.updateEnvironment()
+			}
+		}
 	case wmActivateApp:
 		// Sent to each top-level window of the thread: the embedded views
 		// on it follow too.

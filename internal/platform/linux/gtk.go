@@ -201,11 +201,15 @@ var (
 
 	// GDK, in libgtk-4.
 	gdkDisplayGetDefault       func() uintptr
+	gdkDisplayGetMonitors      func(uintptr) uintptr
 	gdkDisplayGetClipboard     func(uintptr) uintptr
 	gdkClipboardSetText        func(uintptr, *byte)
 	gdkClipboardReadTextAsync  func(uintptr, uintptr, uintptr, uintptr)
 	gdkClipboardReadTextFinish func(uintptr, uintptr, uintptr) uintptr
 	gdkSurfaceGetScale         func(uintptr) float64
+	gdkMonitorGetGeometry      func(uintptr, *gdkMonitorRectangle)
+	gdkMonitorGetWorkarea      func(uintptr, *gdkMonitorRectangle)
+	gdkMonitorGetScaleFactor   func(uintptr) int32
 	gdkToplevelBeginMove       func(uintptr, uintptr, int32, float64, float64, uint32)
 	gtkGestureGetDevice        func(uintptr) uintptr
 
@@ -338,6 +342,8 @@ var (
 	cairoSetSourceSurface      func(uintptr, uintptr, float64, float64)
 	cairoSurfaceWriteToPNG     func(uintptr, *byte) int32
 )
+
+type gdkMonitorRectangle struct{ X, Y, Width, Height int32 }
 
 // newCallback returns a C function pointer for the package-level
 // callback fn. purego keeps the function for the process's life.
@@ -529,11 +535,15 @@ func bind() {
 
 	// GDK.
 	purego.RegisterLibFunc(&gdkDisplayGetDefault, gtkLib, "gdk_display_get_default")
+	purego.RegisterLibFunc(&gdkDisplayGetMonitors, gtkLib, "gdk_display_get_monitors")
 	purego.RegisterLibFunc(&gdkDisplayGetClipboard, gtkLib, "gdk_display_get_clipboard")
 	purego.RegisterLibFunc(&gdkClipboardSetText, gtkLib, "gdk_clipboard_set_text")
 	purego.RegisterLibFunc(&gdkClipboardReadTextAsync, gtkLib, "gdk_clipboard_read_text_async")
 	purego.RegisterLibFunc(&gdkClipboardReadTextFinish, gtkLib, "gdk_clipboard_read_text_finish")
 	purego.RegisterLibFunc(&gdkSurfaceGetScale, gtkLib, "gdk_surface_get_scale")
+	purego.RegisterLibFunc(&gdkMonitorGetGeometry, gtkLib, "gdk_monitor_get_geometry")
+	purego.RegisterLibFunc(&gdkMonitorGetWorkarea, gtkLib, "gdk_monitor_get_workarea")
+	purego.RegisterLibFunc(&gdkMonitorGetScaleFactor, gtkLib, "gdk_monitor_get_scale_factor")
 	purego.RegisterLibFunc(&gdkToplevelBeginMove, gtkLib, "gdk_toplevel_begin_move")
 
 	// GIO.

@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"syscall"
@@ -13,11 +14,14 @@ import (
 
 var (
 	dwmapi = syscall.NewLazyDLL("dwmapi.dll")
+	shcore = syscall.NewLazyDLL("shcore.dll")
 
 	systemParametersInfoW    = user32.NewProc("SystemParametersInfoW")
 	getUserDefaultLocaleName = kernel32.NewProc("GetUserDefaultLocaleName")
 	getLocaleInfoEx          = kernel32.NewProc("GetLocaleInfoEx")
 	dwmSetWindowAttribute    = dwmapi.NewProc("DwmSetWindowAttribute")
+	enumDisplayMonitors      = user32.NewProc("EnumDisplayMonitors")
+	getDpiForMonitor         = shcore.NewProc("GetDpiForMonitor")
 
 	isWindowVisible          = user32.NewProc("IsWindowVisible")
 	getForegroundWindow      = user32.NewProc("GetForegroundWindow")
@@ -38,6 +42,14 @@ const (
 	dwmwaUseImmersiveDarkModeOld = 19 // before Windows 10 20H1
 )
 
+type monitorInfoEx struct {
+	Size    uint32
+	Monitor rect
+	Work    rect
+	Flags   uint32
+	Device  [32]uint16
+}
+
 // environment reads what Windows says about where the app runs, with
 // what the hidden title bar's window controls cover. There is no
 // software keyboard, so its inset stays 0.
@@ -52,6 +64,7 @@ func (w *window) environment() driver.Environment {
 		PixelRatio:     float32(w.scale),
 		Locale:         locale,
 		LocaleSettings: localeSettings(),
+		Displays:       w.displays(),
 		OS:             driver.OSWindows,
 		OSVersion:      osVersion(),
 		Idiom:          driver.IdiomDesktop,
@@ -62,6 +75,53 @@ func (w *window) environment() driver.Environment {
 		WindowFrame:    w.windowFrame(),
 		Lifecycle:      w.lifecycle(),
 	}
+}
+
+// displays reads the monitors in the virtual desktop. Coordinates are
+// expressed from the primary monitor's top left, like WindowFrame.
+func (w *window) displays() []driver.DisplayInfo {
+	type found struct {
+		monitor uintptr
+		info    monitorInfoEx
+	}
+	var all []found
+	callback := syscall.NewCallback(func(monitor, _, _, data uintptr) uintptr {
+		var info monitorInfoEx
+		info.Size = uint32(unsafe.Sizeof(info))
+		if ok, _, _ := getMonitorInfoW.Call(monitor, uintptr(unsafe.Pointer(&info))); ok != 0 {
+			all = append(all, found{monitor: monitor, info: info})
+		}
+		return 1
+	})
+	enumDisplayMonitors.Call(0, 0, callback, 0)
+	if len(all) == 0 {
+		return nil
+	}
+	primary := 0
+	for i := range all {
+		if all[i].info.Flags&1 != 0 {
+			primary = i
+			break
+		}
+	}
+	base := all[primary].info.Monitor
+	out := make([]driver.DisplayInfo, 0, len(all))
+	for _, item := range all {
+		scale := float32(1)
+		var dpi, dpiY uint32
+		if r, _, _ := getDpiForMonitor.Call(item.monitor, 0, uintptr(unsafe.Pointer(&dpi)), uintptr(unsafe.Pointer(&dpiY))); r == 0 && dpi > 0 {
+			scale = float32(dpi) / 96
+		}
+		bounds := func(r rect) driver.Bounds {
+			return driver.Bounds{Origin: driver.Point{X: driver.Points(float64(r.Left-base.Left) / float64(scale)), Y: driver.Points(float64(r.Top-base.Top) / float64(scale))}, Size: driver.Size{Width: driver.Points(float64(r.Right-r.Left) / float64(scale)), Height: driver.Points(float64(r.Bottom-r.Top) / float64(scale))}}
+		}
+		id := syscall.UTF16ToString(item.info.Device[:])
+		if id == "" {
+			id = fmt.Sprintf("%x", item.monitor)
+		}
+		out = append(out, driver.DisplayInfo{ID: id, Frame: bounds(item.info.Monitor), VisibleFrame: bounds(item.info.Work), Scale: scale, Main: item.info.Flags&1 != 0})
+	}
+	return out
 }
 
 // appActive is whether the app is the active one, as the last
@@ -95,7 +155,7 @@ func (w *window) lifecycle() driver.Lifecycle {
 // a settings change, and reports it when it changed.
 func (w *window) updateEnvironment() {
 	env := w.environment()
-	if env == w.env {
+	if env.Equal(w.env) {
 		return
 	}
 	dark := w.shownDark()

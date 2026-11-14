@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,6 +25,7 @@ type Env struct {
 	// the locale Scope.SetLocale forces.
 	locale, forced *Signal[string]
 	settings       *Signal[LocaleSettings]
+	displays       *Signal[*displayList]
 	systemRTL      *Signal[bool]
 	language       *Memo[string]
 	rtl            *Memo[bool]
@@ -42,6 +44,8 @@ type Env struct {
 	// headers are the system header's heights, which only the tree reads.
 	headers [2]Points
 }
+
+type displayList struct{ values []DisplayInfo }
 
 // newEnv makes an environment owned by cx. A window's shares what the
 // app sets for all of them with the first's, app.
@@ -67,6 +71,7 @@ func newEnv(cx *Scope, app *Env) *Env {
 		locale:           NewSignal(cx, ""),
 		forced:           NewSignal(cx, ""),
 		settings:         NewSignal(cx, LocaleSettings{}),
+		displays:         NewSignal(cx, &displayList{}),
 		os:               NewSignal(cx, OS("")),
 		version:          NewSignal(cx, OSVersion{}),
 		idiom:            NewSignal(cx, IdiomPhone),
@@ -152,6 +157,7 @@ func (e *Env) set(v Environment) {
 	e.ratio.Set(v.PixelRatio)
 	e.locale.Set(v.Locale)
 	e.settings.Set(v.LocaleSettings)
+	e.displays.Set(&displayList{values: slices.Clone(v.Displays)})
 	e.os.Set(v.OS)
 	e.version.Set(v.OSVersion)
 	e.appleKeys.Set(v.OS == OSMacOS || v.OS == OSIOS || v.AppleKeyboard)
@@ -253,6 +259,12 @@ func (e *Env) Locale() string {
 // apart from the language, where the platform says: zero where it does
 // not. Package i18n's Regional fills them in from the locale's region.
 func (e *Env) LocaleSettings() LocaleSettings { return e.settings.Get() }
+
+// Displays returns the desktop displays in screen coordinates. Frame is the
+// whole display, VisibleFrame is the area available to windows, Scale is
+// device pixels per point, and Main marks the primary display. It is empty
+// where the platform has no desktop display information.
+func (e *Env) Displays() []DisplayInfo { return slices.Clone(e.displays.Get().values) }
 
 // Language returns the language the app shows: of its catalogs'
 // languages, the one that suits Locale best, as SetLanguageMatch says;

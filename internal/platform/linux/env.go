@@ -3,6 +3,7 @@
 package linux
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -66,6 +67,7 @@ func (w *window) environment() driver.Environment {
 		PixelRatio:     float32(scale),
 		Locale:         locale,
 		LocaleSettings: localeSettings(),
+		Displays:       displays(),
 		OS:             driver.OSLinux,
 		OSVersion:      osVersion(),
 		Idiom:          driver.IdiomDesktop,
@@ -75,6 +77,61 @@ func (w *window) environment() driver.Environment {
 		WindowFrame:    frame,
 		Lifecycle:      w.lifecycle(),
 	}
+}
+
+// displays reads GDK's monitors in the same logical coordinate space as
+// WindowFrame. GTK exposes no primary-monitor flag, so the first monitor is
+// the primary one, matching GTK's ordering.
+func displays() []driver.DisplayInfo {
+	display := gdkDisplayGetDefault()
+	if display == 0 {
+		return nil
+	}
+	model := gdkDisplayGetMonitors(display)
+	if model == 0 {
+		return nil
+	}
+	watchDisplays(model)
+	count := gListModelGetNItems(model)
+	out := make([]driver.DisplayInfo, 0, count)
+	for i := uint32(0); i < count; i++ {
+		monitor := gListModelGetItem(model, i)
+		if monitor == 0 {
+			continue
+		}
+		var frame, visible gdkMonitorRectangle
+		gdkMonitorGetGeometry(monitor, &frame)
+		gdkMonitorGetWorkarea(monitor, &visible)
+		scale := float32(gdkMonitorGetScaleFactor(monitor))
+		if scale <= 0 {
+			scale = 1
+		}
+		point := func(r gdkMonitorRectangle) driver.Bounds {
+			return driver.Bounds{Origin: driver.Point{X: driver.Points(float32(r.X)), Y: driver.Points(float32(r.Y))}, Size: driver.Size{Width: driver.Points(float32(r.Width)), Height: driver.Points(float32(r.Height))}}
+		}
+		out = append(out, driver.DisplayInfo{ID: fmt.Sprintf("%x", monitor), Frame: point(frame), VisibleFrame: point(visible), Scale: scale, Main: i == 0})
+		gObjectUnref(monitor)
+	}
+	return out
+}
+
+var watchedDisplays uintptr
+
+func watchDisplays(model uintptr) {
+	if watchedDisplays == model {
+		return
+	}
+	watchedDisplays = model
+	gSignalConnect(model, "items-changed", cbDisplaysChanged, 0)
+}
+
+func displaysChangedCallback(_, _, _, _ uintptr) {
+	windowHandles.Range(func(_, value any) bool {
+		if w := value.(*window); !w.closing {
+			w.updateEnvironment()
+		}
+		return true
+	})
 }
 
 // GdkToplevelState's flags that hide a window: minimized, and suspended
@@ -152,7 +209,7 @@ func activityCallback(object, pspec, data uintptr) {
 // changed.
 func (w *window) updateEnvironment() {
 	env := w.environment()
-	if env == w.env {
+	if env.Equal(w.env) {
 		return
 	}
 	w.env = env

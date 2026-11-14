@@ -159,6 +159,19 @@ The installer refuses an app whose manifest does not ask for `REQUEST_INSTALL_PA
 
 `core.App`, NSH's `appInfo()` and TSX's too, is the app's ID, name, version and build number as `nsgo.yaml` gives them, which the tool builds into `core` with `-X`, and whether it is a development build: any but `nsgo build`'s. It is the binary's, not an engine's, so every view a host embeds reads the host build's.
 
+## Displays and locale settings
+
+`Env.Displays` is the desktop's list of `DisplayInfo` values. `Frame` is a display's whole area and `VisibleFrame` the area left for windows after the menu bar, Dock or taskbar; both use the same top-left, y-down screen coordinates as `desktop.SetWindowFrame`. `Scale` is device pixels per point and `Main` marks the primary display. The list changes when the platform reports a display arrangement change; phones, the web and embedded surfaces leave it empty.
+
+| Target | Display source | Locale settings source |
+| --- | --- | --- |
+| macOS | `NSScreen.screens`, converted from AppKit's bottom-left coordinates | `NSLocale` and its calendar and date format preferences |
+| Windows | `EnumDisplayMonitors`, monitor work areas and per-monitor DPI | `GetLocaleInfoEx` for first weekday, hour cycle and measurement |
+| Linux | GDK's monitor model and work areas | the session's locale categories and GTK settings |
+| iOS, Android, Web | no desktop displays | platform or browser locale settings where available |
+
+`LocaleSettings` reports `FirstDayOfWeek`, `HourCycle` and `MeasurementSystem` independently of `Env.Locale`, so a localized app can follow the user's calendar, clock and measurement choices. A zero field means the platform did not report that choice.
+
 ## Appearance and quitting
 
 `SetAppearance` forces light or dark, and `nsgo.Appearance` starts the app in it. The core keeps the system's appearance beside the forced one and reports the one shown as `Env.Dark`, so platforms may report either. A subtree forces its own with `SetSubtreeAppearance` ([themes](themes.md#scope)).
