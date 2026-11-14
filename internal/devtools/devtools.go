@@ -39,15 +39,17 @@ type Node struct {
 	// Kind is the view's kind: View, Text, Input, Scroll, Image and the others.
 	Kind string `json:"kind"`
 	// Component is the nearest component around the view, as its Go type (ui.Button), and Site the line of the function that built it, as /path/to/file.go:line, where there is one.
-	Component string     `json:"component,omitempty"`
-	Site      string     `json:"site,omitempty"`
-	TestID    string     `json:"testID,omitempty"`
-	Role      string     `json:"role,omitempty"`
-	Label     string     `json:"label,omitempty"`
-	Text      string     `json:"text,omitempty"`
-	Selector  string     `json:"selector,omitempty"`
-	Bounds    [4]float32 `json:"bounds"`
-	Hidden    bool       `json:"hidden,omitempty"`
+	Component string `json:"component,omitempty"`
+	Site      string `json:"site,omitempty"`
+	TestID    string `json:"testID,omitempty"`
+	Role      string `json:"role,omitempty"`
+	Label     string `json:"label,omitempty"`
+	Text      string `json:"text,omitempty"`
+	// Clipped is whether Text is the first of a longer text, ending in an ellipsis.
+	Clipped  bool       `json:"clipped,omitempty"`
+	Selector string     `json:"selector,omitempty"`
+	Bounds   [4]float32 `json:"bounds"`
+	Hidden   bool       `json:"hidden,omitempty"`
 	// Classes are the view's Tailwind classes, and Box its margin, border and padding as laid out.
 	Classes  string `json:"classes,omitempty"`
 	Box      Box    `json:"box"`

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 	"weak"
 
 	"github.com/nsgo-dev/nsgo/internal/devtools"
@@ -280,12 +281,19 @@ func funcSite(f any) string {
 	return pathSite(file, line)
 }
 
-// clip shortens a value's text for DevTools.
+// clipAt is the most bytes of a text DevTools show.
+const clipAt = 200
+
+// clip shortens a value's text for DevTools, at a rune's start.
 func clip(s string) string {
-	if len(s) > 200 {
-		return s[:200] + "…"
+	if len(s) <= clipAt {
+		return s
 	}
-	return s
+	end := clipAt
+	for end > 0 && !utf8.RuneStart(s[end]) {
+		end--
+	}
+	return s[:end] + "…"
 }
 
 // devSurface is a tree as DevTools read and drive it.
@@ -436,10 +444,10 @@ func (s *devSurface) element(n *node, walk func(*node) []devtools.Node) devtools
 	e.Box = devtools.Box{Margin: fourSides(l.Margin.Top, l.Margin.Right, l.Margin.Bottom, l.Margin.Left),
 		Border: fourSides(l.Border.Top, l.Border.Right, l.Border.Bottom, l.Border.Left), Padding: fourSides(l.Padding.Top, l.Padding.Right, l.Padding.Bottom, l.Padding.Left)}
 	if n.text != nil {
-		e.Text = clip(n.text.content)
+		e.Text, e.Clipped = clip(n.text.content), len(n.text.content) > clipAt
 	}
 	if n.input != nil {
-		e.Text = clip(n.input.value)
+		e.Text, e.Clipped = clip(n.input.value), len(n.input.value) > clipAt
 	}
 	if d := t.rt.dev; d != nil {
 		for o := n.owner; o != nil; o = o.parent {
@@ -494,7 +502,8 @@ func selectorFor(n *node) string {
 	case n.props.Label != "":
 		return "label:" + n.props.Label
 	case n.text != nil && strings.TrimSpace(n.text.content) != "":
-		return "text:" + strconv.Quote(strings.TrimSpace(n.text.content))
+		// In quotes as they are, which nsgotest strips without unescaping: the text is matched whole, quotes and line breaks in it too.
+		return `text:"` + strings.TrimSpace(n.text.content) + `"`
 	}
 	return ""
 }

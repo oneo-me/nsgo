@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/internal/devtools"
@@ -305,5 +306,38 @@ func TestDevToolsShowClassesAndTheBox(t *testing.T) {
 	}
 	if card.Box.Margin != [4]float32{4, 4, 4, 4} || card.Box.Padding != [4]float32{8, 8, 8, 8} || card.Box.Border != [4]float32{1, 1, 1, 1} {
 		t.Errorf("box = %+v, want a 4 margin, 8 padding and 1 border", card.Box)
+	}
+}
+
+// The selector DevTools record for a text finds it again in nsgotest, quotes and line breaks in it too, and a text too long to show whole is marked clipped, cut where a character starts.
+func TestDevToolsSelectTextsAsTheyRead(t *testing.T) {
+	devtools.Enabled = true
+	t.Cleanup(func() { devtools.Enabled = false })
+	texts := []string{`Say "hi"`, "Line one\nLine two", strings.Repeat("é", 150)}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		var views []core.Node
+		for _, s := range texts {
+			views = append(views, core.Text{Content: s})
+		}
+		return core.View{Children: views}
+	}, nsgotest.Size(300, 300))
+	s := devtools.Surfaces()[len(devtools.Surfaces())-1]
+	t.Cleanup(func() { devtools.Unregister(s) })
+	var root devtools.Node
+	app.Post(func() { root = s.Elements() })
+	app.Settle()
+	for _, want := range texts {
+		n := find(root, func(n devtools.Node) bool {
+			return n.Kind == "Text" && strings.HasPrefix(want, strings.TrimSuffix(n.Text, "…"))
+		})
+		if n == nil {
+			t.Fatalf("no Text for %q in %+v", want, root)
+		}
+		if got := app.Find(n.Selector).Text; got != want {
+			t.Errorf("%s finds %q, want %q", n.Selector, got, want)
+		}
+		if clipped := len(want) > 200; n.Clipped != clipped || clipped && !utf8.ValidString(n.Text) {
+			t.Errorf("%q shows as %q, clipped %v", want, n.Text, n.Clipped)
+		}
 	}
 }
