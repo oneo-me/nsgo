@@ -35,6 +35,7 @@ var (
 	webkitURISchemeRequestFinish         func(uintptr, uintptr, int64, *byte)
 	webkitURISchemeRequestFinishError    func(uintptr, uintptr)
 	gErrorNewLiteral                     func(uint32, int32, *byte) uintptr
+	gObjectRef                           func(uintptr) uintptr
 	gMemoryInputStreamNewFromBytes       func(uintptr) uintptr
 	webkitWebViewGetBackgroundColor      func(uintptr, *[4]float32)
 	webkitNetworkSessionNew              func(*byte, *byte) uintptr
@@ -127,6 +128,7 @@ func bindWebKit(webkit, jsc, soup uintptr) {
 	reg(&webkitURISchemeRequestFinish, "webkit_uri_scheme_request_finish")
 	reg(&webkitURISchemeRequestFinishError, "webkit_uri_scheme_request_finish_error")
 	purego.RegisterLibFunc(&gErrorNewLiteral, glibLib, "g_error_new_literal")
+	purego.RegisterLibFunc(&gObjectRef, gobjectLib, "g_object_ref")
 	purego.RegisterLibFunc(&gMemoryInputStreamNewFromBytes, gioLib, "g_memory_input_stream_new_from_bytes")
 	reg(&webkitWebViewGetBackgroundColor, "webkit_web_view_get_background_color")
 	reg(&webkitNetworkSessionNew, "webkit_network_session_new")
@@ -243,7 +245,7 @@ func webPageOf(page uintptr) (*window, *view) {
 // webSchemes are the schemes registered on each WebKitWebContext. A context keeps a scheme for its life, so each is registered once, and its requests find their view by page (webSchemeCallback).
 var webSchemes = map[uintptr]map[string]bool{}
 
-// webDownload is a download a view saves.
+// webDownload is a download a view saves, which holds a reference to its WebKitDownload until it ends or the view closes.
 type webDownload struct {
 	window *window
 	view   *view
@@ -499,26 +501,54 @@ func webDownloadStartedCallback(_, download, _ uintptr) {
 		urlText = goString(webkitURIRequestGetURI(request))
 	}
 	dl := &webDownload{window: w, view: v, item: driver.WebDownload{State: driver.WebDownloadStarted, ID: id, URL: urlText}}
-	webDownloads[download] = dl
-	// Downloads own these temporary signal connections; attaching them to the view's hosted-signal list would leave stale object pointers after WebKit releases a completed download.
+	webDownloads[gObjectRef(download)] = dl
+	// Downloads own these temporary signal connections; attaching them to the view's hosted-signal list would leave stale object pointers after WebKit releases a completed download. The handlers find the download in webDownloads, which a closing view leaves.
 	gSignalConnect(download, "decide-destination", cbWebDownloadDestination, 0)
 	gSignalConnect(download, "received-data", cbWebDownloadReceived, 0)
 	gSignalConnect(download, "finished", cbWebDownloadFinished, 0)
 	gSignalConnect(download, "failed", cbWebDownloadFailed, 0)
 }
 
+// forgetDownload stops following download and releases the reference webDownloads held.
+func forgetDownload(download uintptr) {
+	if _, ok := webDownloads[download]; ok {
+		delete(webDownloads, download)
+		gObjectUnref(download)
+	}
+}
+
+// cancelDownload cancels download and forgets it first, so the failed signal the cancellation emits finds nothing to report.
+func cancelDownload(download uintptr) {
+	_, followed := webDownloads[download]
+	delete(webDownloads, download)
+	webkitDownloadCancel(download)
+	if followed {
+		gObjectUnref(download)
+	}
+}
+
+// cancelDownloads cancels and forgets the downloads v saves, as its page closes.
+func cancelDownloads(v *view) {
+	for download, dl := range webDownloads {
+		if dl.view == v {
+			cancelDownload(download)
+		}
+	}
+}
+
 func webDownloadDestinationCallback(download, suggested, _ uintptr) int32 {
 	dl := webDownloads[download]
-	if dl == nil {
-		return 0
+	if dl == nil || dl.view.web == nil {
+		// A download no view saves any more is cancelled, never left to WebKit's default folder.
+		cancelDownload(download)
+		return 1
 	}
 	name := webDownloadFilename(goString(suggested))
 	dir := filepath.Join(dl.view.web.config.DownloadDir, dl.item.ID)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		dl.item.State, dl.item.Message = driver.WebDownloadFailed, err.Error()
 		dl.report()
-		delete(webDownloads, download)
-		webkitDownloadCancel(download)
+		cancelDownload(download)
 		return 1
 	}
 	dl.item.Filename = name
@@ -552,7 +582,7 @@ func webDownloadFinishedCallback(download, _ uintptr) {
 		dl.item.Path = goString(dest)
 	}
 	dl.report()
-	delete(webDownloads, download)
+	forgetDownload(download)
 }
 
 func webDownloadFailedCallback(download, gerr, _ uintptr) {
@@ -565,7 +595,7 @@ func webDownloadFailedCallback(download, gerr, _ uintptr) {
 		dl.item.Message = goString((*gError)(cPointer(gerr)).message)
 	}
 	dl.report()
-	delete(webDownloads, download)
+	forgetDownload(download)
 }
 
 // webFolders are where web views of app id keep their data and cache.
@@ -640,10 +670,11 @@ func evaluate(page uintptr, script string) {
 	webkitWebViewEvaluateJavascript(page, cstr(script), -1, nil, nil, 0, 0, 0)
 }
 
-// closeWeb stops v's page and lets it go.
+// closeWeb stops v's page, cancels its downloads and lets it go.
 func (w *window) closeWeb(v *view) {
 	wv := v.web
 	v.web = nil
+	cancelDownloads(v)
 	if wv.widget != 0 {
 		delete(webPages, wv.widget)
 		webkitWebViewStopLoading(wv.widget)
