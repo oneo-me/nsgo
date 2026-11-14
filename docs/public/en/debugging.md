@@ -35,10 +35,24 @@ Before running, `go tool nsgo check` vets the app and type-checks its TSX; `-tar
 ## Updates
 
 ```sh
+go tool nsgo dev -highlight
+```
+
+`-highlight` outlines for half a second each view a commit changed, so an update that redraws more than it should shows on screen as you use the app. The outlines draw over the app's main layer, under its modals.
+
+```sh
 go tool nsgo dev -trace
 ```
 
-`-trace` prints each commit of the running app: its number, its time, and the mount items it sent, so you see which views an update created, changed or removed. A signal change that updates more than you expect shows up here first. `go tool nsgo test -trace` prints the same under each step of a test.
+`-trace` prints each commit of the running app: its number, its time, and the mount items it sent, so you see which views an update created, changed or removed. Above the items it names what the commit followed from: the lines of your code that wrote signals since the last commit, the most writing first, and how many bindings, effects and memos ran.
+
+```text
+── commit 12: 40 items, commit 1.65 ms
+   after app/market.go:473 ×4, app/market.go:487 ×4, app/market.go:384
+   ran 118 bindings, 18 effects, 5 memos
+```
+
+A line that writes many times, or many bindings run for one write, is where to batch writes (`cx.Batch`) or narrow what a binding reads. `go tool nsgo test -trace` prints the same under each step of a test.
 
 ## Speed
 

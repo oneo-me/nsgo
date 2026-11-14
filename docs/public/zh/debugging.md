@@ -35,10 +35,24 @@ go tool nsgo dev -target android            # 通过 adb 在连接的设备或�
 ## 更新
 
 ```sh
+go tool nsgo dev -highlight
+```
+
+`-highlight` 会把每次提交改动过的视图框出来半秒，使用应用时就能在屏幕上看到哪次更新重绘了超出预期的内容。这些框画在应用的主图层上，位于应用的模态视图之下。
+
+```sh
 go tool nsgo dev -trace
 ```
 
-`-trace` 打印运行中应用的每次提交：序号、耗时，以及它发出的挂载项，这样能看到一次更新创建、修改或移除了哪些视图。某个 signal 的变化更新了超出预期的内容时，首先会在这里看出来。`go tool nsgo test -trace` 会在测试的每一步下打印同样的内容。
+`-trace` 打印运行中应用的每次提交：序号、耗时，以及它发出的挂载项，这样能看到一次更新创建、修改或移除了哪些视图。挂载项上方会列出这次提交的起因：自上次提交以来写入 signal 的代码行（写得最多的排在前面），以及运行了多少个绑定、effect 和 memo。
+
+```text
+── commit 12: 40 items, commit 1.65 ms
+   after app/market.go:473 ×4, app/market.go:487 ×4, app/market.go:384
+   ran 118 bindings, 18 effects, 5 memos
+```
+
+某一行写了很多次，或者一次写入触发了大量绑定重算，就是该合并写入（`cx.Batch`）或缩小绑定读取范围的地方。`go tool nsgo test -trace` 会在测试的每一步下打印同样的内容。
 
 ## 性能
 
