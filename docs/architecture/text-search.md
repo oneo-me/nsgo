@@ -51,13 +51,14 @@ func (s *Search) SelectedMatch() (Match, bool)
 func (s *Search) Next()
 func (s *Search) Previous()
 func (s *Search) SelectedBounds() (core.Bounds, bool)
+func (s *Search) SetRevealMargin(core.Edges)
 ```
 
 A `TextView` joins the search in its `Search` field, else the one `ProvideSearch` gives every `TextView` below cx's owner, as `Provide` gives plugins. A view registers itself while it is mounted, with no key: it replaces its matches when its document or the query changes, and they go when it unmounts, so none go stale. The search orders views by tree order (`Ref.Before` on each view's root), not by when they registered, so a view mounted late, such as one in a disclosure just opened, takes its place in reading order; within a view, matches follow their texts' paths and offsets. `Next` and `Previous` wrap. When the matches change, the selected match stays selected while it exists, else the selection moves to the next match after it.
 
 `Open` and `Close` are the app's too, so a toolbar button can open the search on a phone with no keyboard. While the search is closed, views show no search parts and `Count` is zero; the query and options stay, so opening it again finds the same matches.
 
-`SelectedBounds` comes from the selected text range's boxes, not from the block frame. A transcript owns scrolling, so it calls its own reveal operation with those bounds and keeps the selected match clear of a find bar.
+`SelectedBounds` is the selected match's first box in surface points, from its text's `Ref.TextRangeBoxes` rather than the block's frame, and false while that text is not laid out. Revealing the match is the view's: selecting a match reveals it through every scroll view around its text, innermost first, so a code block's or a table's horizontal scroll reaches the match's column rather than only the block showing. `Ref.Reveal` reveals a whole element and `Ref.ScrollTo` takes an offset, so core gains a reveal of a box within an element, with a margin kept clear at the outermost scroll view's edges for the bars that cover it, which the search's owner sets with `SetRevealMargin`.
 
 ## Chat integration
 
@@ -69,7 +70,7 @@ The implementation is complete only when these checks exist:
 
 - `base/textview` tests cover a three-block document, case and whole-word options, a match at an inline span boundary, code and math TeX, a table cell, a details' summary, a closed details opening, paths into lists, tables, details and footnotes, a `CustomSpan` and a `RenderMath` attachment, UTF-16 offsets past a character outside the BMP, and the result cap;
 - `TextView` tests cover search parts, selected parts, syntax-highlight merging, stale registrations and selection remaining independent;
-- shared-search tests cover tree order with a view mounted late, replacement, removal, opening and closing, next/previous wrapping and selected bounds across three views; and
+- shared-search tests cover tree order with a view mounted late, replacement, removal, opening and closing, next/previous wrapping, selected bounds across three views and revealing a match in a code block's horizontal scroll; and
 - `ui/chat` tests type a query over three turns, show the count, navigate and reveal the selected match, then close without changing the transcript selection.
 
 ## Open decisions
@@ -80,4 +81,4 @@ These decisions need confirmation before an implementation chooses them:
 2. Should `ProvideSearch` automatically include every descendant `TextView`, or must each view opt in through its `Search` field?
 3. Is matching each text synchronously as the view builds it acceptable for large transcripts, or should the API expose an asynchronous index from the start?
 4. Should regular expressions and accent/Unicode-insensitive matching be later options, or belong to a separate search package?
-5. Does `SelectedBounds` leave scrolling to the owning transcript, or should `TextView` reveal its own match?
+5. Should `TextView` reveal its own match through core's box reveal, or should the owning transcript scroll to `SelectedBounds`?
