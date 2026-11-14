@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -67,6 +68,8 @@ func TestAndroidArchitectures(t *testing.T) {
 	}
 	if _, err := goarchForABI("armeabi-v7a"); err == nil {
 		t.Error("goarchForABI(armeabi-v7a) succeeded")
+	} else if !strings.Contains(err.Error(), "/issues/41") {
+		t.Errorf("goarchForABI(armeabi-v7a) error = %v, want issue link", err)
 	}
 }
 

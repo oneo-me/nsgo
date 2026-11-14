@@ -341,7 +341,7 @@ func goarchForABI(abi string) (string, error) {
 	case "x86_64":
 		return "amd64", nil
 	}
-	return "", fmt.Errorf("the device reports ABI %q, which NSGo does not package; use an arm64 device or an x86_64 emulator", abi)
+	return "", fmt.Errorf("the device reports ABI %q, which NSGo does not package yet; 32-bit ARM support is tracked at https://github.com/nsgo-dev/nsgo/issues/41; use an arm64 device or an x86_64 emulator", abi)
 }
 
 // androidABI maps a Go architecture to the APK's native library directory.
