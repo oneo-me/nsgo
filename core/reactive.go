@@ -131,11 +131,9 @@ type runtime struct {
 	// renderAt and userAt are the next in each queue flush runs.
 	renderAt, userAt int
 	runs             int
-	// parked counts the parked scopes, so a memo looks for one above it only while there are any.
-	parked int
-	post   func(func())
-	clock  Clock
-	report func(error)
+	post             func(func())
+	clock            Clock
+	report           func(error)
 
 	// The callbacks waiting for the next display frame, and whether the
 	// host has been asked for it.
@@ -157,6 +155,8 @@ type runtime struct {
 	storageScoped bool
 	// hostScoped says an owner was given a host (ProvideHost).
 	hostScoped bool
+	// parked counts the parked scopes, so a memo looks for one above it only while there are any.
+	parked int
 	// refusals are the capabilities a refusal was logged of.
 	refusals map[string]bool
 	// speech is the speech session running, one per engine.
