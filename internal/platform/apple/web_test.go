@@ -31,6 +31,40 @@ func TestFileURLPathAndScope(t *testing.T) {
 	}
 }
 
+func TestFileNavigationStaysInAFilePagesDirectory(t *testing.T) {
+	for raw, want := range map[string]string{
+		"file:///Users/me/app/":           "/Users/me/app",
+		"file:///Users/me/app/index.html": "/Users/me/app",
+		"file:///Users/me/app/a%20b/":     "/Users/me/app/a b",
+	} {
+		if got, ok := fileBaseDir(raw); !ok || got != want {
+			t.Errorf("fileBaseDir(%q) = %q, %v; want %q, true", raw, got, ok, want)
+		}
+	}
+	if _, ok := fileBaseDir("https://example.com/app/"); ok {
+		t.Error("fileBaseDir takes an https base URL")
+	}
+	for _, c := range []struct {
+		url, dir   string
+		restricted bool
+		want       bool
+	}{
+		// A file: page, or HTML with a file: base URL, stays in its directory.
+		{"file:///Users/me/app/", "/Users/me/app", false, true},
+		{"file:///Users/me/app/next.html", "/Users/me/app", false, true},
+		{"file:///Users/me/secret.txt", "/Users/me/app", false, false},
+		// An unrestricted view with any other source leaves file: URLs to WebKit, as before file: pages.
+		{"file:///Users/me/secret.txt", "", false, true},
+		// A restricted view goes to no file outside a file page's directory.
+		{"file:///Users/me/secret.txt", "", true, false},
+		{"https://example.com/", "/Users/me/app", true, true},
+	} {
+		if got := fileNavigable(c.url, c.dir, c.restricted); got != c.want {
+			t.Errorf("fileNavigable(%q, %q, %v) = %v, want %v", c.url, c.dir, c.restricted, got, c.want)
+		}
+	}
+}
+
 func TestWebKitHandlesItsOwnSchemes(t *testing.T) {
 	loadWebKit()
 	handles := func(name string) bool {

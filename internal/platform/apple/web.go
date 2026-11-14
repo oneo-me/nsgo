@@ -31,7 +31,7 @@ type Web struct {
 	web     objc.ID
 	handler objc.ID
 	config  driver.WebConfig
-	fileDir string
+	fileDir string // the directory a file: page, or HTML with a file: base URL, may navigate in; "" for other sources
 	made    bool
 }
 
@@ -135,10 +135,7 @@ func loadWebKit() {
 					frame := action.Send(sel("targetFrame"))
 					if frame == 0 || objc.Send[bool](frame, sel("isMainFrame")) {
 						url := GoString(action.Send(sel("request")).Send(sel("URL")).Send(sel("absoluteString")))
-						allowed := true
-						if strings.EqualFold(strings.SplitN(url, ":", 2)[0], "file") {
-							allowed = w.fileDir != "" && fileURLInDir(url, w.fileDir)
-						}
+						allowed := fileNavigable(url, w.fileDir, w.config.Restricted)
 						if allowed && w.config.Restricted {
 							allowed = w.config.Navigable(url)
 						}
@@ -353,6 +350,7 @@ func (w *Web) load() {
 		base := objc.ID(0)
 		if src.BaseURL != "" {
 			base = nsURL(src.BaseURL)
+			w.fileDir, _ = fileBaseDir(src.BaseURL)
 		}
 		w.web.Send(sel("loadHTMLString:baseURL:"), NSString(src.HTML), base)
 	case src.Src != "":
@@ -383,6 +381,26 @@ func fileURLPath(raw string) (string, bool) {
 		return "", false
 	}
 	return filepath.Clean(p), true
+}
+
+// fileBaseDir returns the directory a file: base URL names: itself when it ends in a slash, else the one holding it.
+func fileBaseDir(raw string) (string, bool) {
+	path, ok := fileURLPath(raw)
+	if !ok {
+		return "", false
+	}
+	if u, err := neturl.Parse(raw); err == nil && strings.HasSuffix(u.Path, "/") {
+		return path, true
+	}
+	return filepath.Dir(path), true
+}
+
+// fileNavigable reports whether a page may go to url as far as file: URLs go: a page from a file, or HTML with a file: base URL, only within fileDir, and a restricted view's page to no other file. Other views leave file: URLs to WebKit, which keeps web pages from them.
+func fileNavigable(url, fileDir string, restricted bool) bool {
+	if !strings.EqualFold(strings.SplitN(url, ":", 2)[0], "file") || fileDir == "" && !restricted {
+		return true
+	}
+	return fileDir != "" && fileURLInDir(url, fileDir)
 }
 
 func fileURLInDir(raw, dir string) bool {
