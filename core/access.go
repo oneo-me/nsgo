@@ -164,7 +164,7 @@ func sourceRefusal(o *Scope, permission, uri string) error {
 	case "http", "https":
 		return refusal(a, AccessRequest{Permission: permission, Resource: uri, Method: "GET"})
 	}
-	if _, ok := o.rt.webSchemes[strings.ToLower(scheme)]; ok {
+	if servesWebScheme(o, strings.ToLower(scheme)) {
 		return nil
 	}
 	return AccessDenied(permission, uri)

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// ServeScheme registers an app-owned URL scheme for web views created under cx. A web view serves the schemes registered before its native view is made; the handler runs on the platform's UI thread and returns the response body. The response's content type is inferred from the URL and bytes by the native backend. It refuses the schemes web views handle themselves, such as http, ws or javascript.
+// ServeScheme registers an app-owned URL scheme for web views created under cx: cx and what it owns, where the nearest scope serving a scheme answers it, and no other subtree or window. A web view serves the schemes registered before its native view is made; the handler runs on the platform's UI thread and returns the response body. The response's content type is inferred from the URL and bytes by the native backend. It refuses the schemes web views handle themselves, such as http, ws or javascript.
 func (cx *Scope) ServeScheme(scheme string, handler func(url string) []byte) error {
 	if cx == nil || cx.rt == nil {
 		return fmt.Errorf("core: no scope")
@@ -17,11 +17,46 @@ func (cx *Scope) ServeScheme(scheme string, handler func(url string) []byte) err
 	if handler == nil {
 		return fmt.Errorf("core: web scheme %q has no handler", name)
 	}
-	if cx.rt.webSchemes == nil {
-		cx.rt.webSchemes = make(map[string]func(string) []byte)
+	schemes, _ := cx.values[webSchemesKey{}].(map[string]func(string) []byte)
+	if schemes == nil {
+		schemes = map[string]func(string) []byte{}
+		if cx.values == nil {
+			cx.values = map[any]any{}
+		}
+		cx.values[webSchemesKey{}] = schemes
 	}
-	cx.rt.webSchemes[name] = handler
+	schemes[name] = handler
 	return nil
+}
+
+// webSchemesKey keys the schemes a scope serves in its values.
+type webSchemesKey struct{}
+
+// webSchemesOf returns the schemes the web views of owner o serve, each the nearest scope's, nil for none.
+func webSchemesOf(o *Scope) map[string]func(string) []byte {
+	var out map[string]func(string) []byte
+	for s := o; s != nil; s = s.parent {
+		schemes, _ := s.values[webSchemesKey{}].(map[string]func(string) []byte)
+		for name, handler := range schemes {
+			if _, nearer := out[name]; !nearer {
+				if out == nil {
+					out = map[string]func(string) []byte{}
+				}
+				out[name] = handler
+			}
+		}
+	}
+	return out
+}
+
+// servesWebScheme reports whether a scope at or above o serves scheme, written in lower case.
+func servesWebScheme(o *Scope, scheme string) bool {
+	for s := o; s != nil; s = s.parent {
+		if schemes, ok := s.values[webSchemesKey{}].(map[string]func(string) []byte); ok && schemes[scheme] != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func validWebScheme(raw string) (string, error) {

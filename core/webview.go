@@ -117,7 +117,7 @@ func (t *Tree) mountWebView(cx *Scope, parent *node, w WebView) {
 		config: driver.WebConfig{Source: w.Source, InjectedJavaScript: w.InjectedJavaScript,
 			InjectedJavaScriptBeforeContent: w.InjectedJavaScriptBeforeContent, UserAgent: w.UserAgent,
 			Headers: cloneWebHeaders(w.Headers), Incognito: w.Incognito,
-			SchemeHandlers: maps.Clone(cx.rt.webSchemes),
+			SchemeHandlers: webSchemesOf(cx),
 			NoScroll:       w.NoScroll, NoJavaScript: w.NoJavaScript, BackForwardGestures: w.BackForwardGestures},
 		loadStart: w.OnLoadStart, load: w.OnLoad, navigation: w.OnNavigationStateChange,
 		loadError: w.OnError, message: w.OnMessage, download: w.OnDownload,
