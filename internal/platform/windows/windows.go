@@ -403,6 +403,8 @@ type window struct {
 	trays      map[uint32]*trayIcon
 	// menuOwner is the hidden window that owns the tray icons' menus of a shown root window.
 	menuOwner uintptr
+	// ownPerf is the performance monitor of a hidden root window, which the first window it opens shows.
+	ownPerf *engine.PerfMonitor
 	// appearance is the one the app forces, or the system's; host the one
 	// an embedding host sets in place of the system's.
 	appearance, host driver.Appearance
@@ -781,7 +783,13 @@ func (w *window) startEngine(app engine.App, opts Options, size driver.Size) {
 	imageload.UseDiskCache(cache)
 	w.cacheDir = cache
 	if opts.Perf && opts.test == nil || opts.test != nil && opts.test.options.FPS {
-		eopts.Perf = w.startPerf()
+		if opts.Hidden {
+			// Shown by the first window the app opens, as on macOS.
+			w.ownPerf = engine.NewPerfMonitor()
+			eopts.Perf = w.ownPerf
+		} else {
+			eopts.Perf = w.startPerf()
+		}
 	}
 	w.engine = engine.Start(w, app, eopts)
 }
@@ -861,6 +869,10 @@ func (w *window) openSurface(cfg driver.SurfaceConfig) {
 		} else {
 			child.backdrop = backdropNone
 		}
+	}
+	if w.ownPerf != nil && cfg.Kind == driver.SurfaceWindow {
+		child.showPerf(w.ownPerf)
+		w.ownPerf = nil
 	}
 	child.env = child.environment()
 	child.appearance = opts.Appearance

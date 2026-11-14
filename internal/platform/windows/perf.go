@@ -38,7 +38,14 @@ type hud struct {
 
 // startPerf installs w's monitor and shows its panel.
 func (w *window) startPerf() *engine.PerfMonitor {
-	h := &hud{monitor: engine.NewPerfMonitor(), done: make(chan struct{}),
+	m := engine.NewPerfMonitor()
+	w.showPerf(m)
+	return m
+}
+
+// showPerf shows monitor m's panel in w.
+func (w *window) showPerf(m *engine.PerfMonitor) {
+	h := &hud{monitor: m, done: make(chan struct{}),
 		format: textFormat(driver.Font{Family: "Consolas", Size: engine.PerfFontSize, Weight: driver.FontWeightNormal})}
 	w.hud = h
 	w.startClock()
@@ -55,7 +62,6 @@ func (w *window) startPerf() *engine.PerfMonitor {
 			}
 		}
 	}()
-	return h.monitor
 }
 
 // stopPerf stops sampling as the window closes.
