@@ -44,7 +44,7 @@ func (sound *Sound) Stop() error {
 	return backend.stop()
 }
 
-// OnEnd registers the callback called when the cue finishes. A callback registered after the cue has finished is called once, at once, so a cue that ends before OnEnd is not missed. Passing nil removes the callback. Callbacks run serially on the package callback queue.
+// OnEnd registers the callback called when the cue finishes. A callback registered after the cue has finished is called once, at once, so a cue that ends before OnEnd is not missed. Passing nil removes the callback. Callbacks run serially on the package callback queue, a goroutine of its own and never the engine's, so a callback that changes views or signals hands the change to the engine with core's Scope.Post.
 func (sound *Sound) OnEnd(callback func()) error {
 	sound.mu.Lock()
 	defer sound.mu.Unlock()

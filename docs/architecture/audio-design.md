@@ -50,6 +50,8 @@ applied when the decoder can seek.
 
 Callbacks are serialized on the package's callback queue. They never run on a
 platform audio thread and never hold a platform lock while calling app code.
+The queue is not the engine's goroutine, unlike a video's `OnProgress`, so a
+callback reaches views and signals through `Scope.Post`.
 A callback that blocks delays every other player's and cue's callbacks; while
 it does, each player keeps only its latest progress report queued.
 `Close` prevents later callbacks and later calls into the backend, waits for

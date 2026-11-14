@@ -160,8 +160,7 @@ func (player *Player) Err() error {
 	return player.err
 }
 
-// OnProgress registers a callback for progress updates. Passing nil removes
-// the callback. Callbacks run serially on the package callback queue.
+// OnProgress registers a callback for progress updates. Passing nil removes the callback. Callbacks run serially on the package callback queue, a goroutine of its own and never the engine's, so a callback that changes views or signals hands the change to the engine with core's Scope.Post.
 func (player *Player) OnProgress(callback func(position, duration time.Duration)) error {
 	player.mu.Lock()
 	defer player.mu.Unlock()
@@ -172,9 +171,7 @@ func (player *Player) OnProgress(callback func(position, duration time.Duration)
 	return nil
 }
 
-// OnEnd registers the callback called when playback reaches its end. Passing
-// nil removes the callback. Callbacks run serially on the package callback
-// queue.
+// OnEnd registers the callback called when playback reaches its end. Passing nil removes the callback. Callbacks run serially on the package callback queue, a goroutine of its own and never the engine's, so a callback that changes views or signals hands the change to the engine with core's Scope.Post.
 func (player *Player) OnEnd(callback func()) error {
 	player.mu.Lock()
 	defer player.mu.Unlock()
