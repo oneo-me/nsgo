@@ -221,6 +221,9 @@ func (cx *Scope) Dispose() {
 	}
 	cx.disposeOwned()
 	cx.disposed = true
+	if cx.rt.dev != nil {
+		cx.rt.dev.forget(cx)
+	}
 	if cx == cx.rt.root {
 		cx.rt.detachHost()
 	}
@@ -744,7 +747,7 @@ type Signal[T any] struct {
 func NewSignal[T comparable](cx *Scope, v T) *Signal[T] {
 	s := &Signal[T]{rt: cx.rt, value: v, equal: func(a, b T) bool { return a == b }}
 	if cx.rt.dev != nil {
-		devSignal(cx.current(), s)
+		devSignal(cx.devOwner(), s)
 	}
 	return s
 }
@@ -754,7 +757,7 @@ func NewSignal[T comparable](cx *Scope, v T) *Signal[T] {
 func NewSignalFunc[T any](cx *Scope, v T, equal func(a, b T) bool) *Signal[T] {
 	s := &Signal[T]{rt: cx.rt, value: v, equal: equal}
 	if cx.rt.dev != nil {
-		devSignal(cx.current(), s)
+		devSignal(cx.devOwner(), s)
 	}
 	return s
 }

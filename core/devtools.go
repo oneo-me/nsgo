@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"weak"
 
 	"github.com/nsgo-dev/nsgo/internal/devtools"
 	"github.com/nsgo-dev/nsgo/internal/driver"
@@ -21,6 +22,8 @@ type devState struct {
 	byID       map[uint64]*devValue
 	comps      map[*computation]*devComp
 	next       uint64
+	// sweepAt is how many signals byID holds when devSignal next drops those no code holds any more (sweep).
+	sweepAt int
 	// commit is what ran since the last commit took it, by kind and site.
 	commit map[ranKey]*driver.Ran
 }
@@ -35,6 +38,8 @@ type devValue struct {
 	typ     string
 	get     func() string
 	readers func() int
+	// gone reports whether nothing holds the signal any more: DevTools hold it weakly, so a signal its code dropped, as a list's item deleted, goes.
+	gone func() bool
 	// set writes a value given as text; nil for a type DevTools do not edit.
 	set func(string) error
 }
@@ -49,26 +54,80 @@ type devComp struct {
 
 func newDevState() *devState {
 	return &devState{components: map[*Scope]devComponent{}, values: map[*Scope][]*devValue{}, byID: map[uint64]*devValue{}, comps: map[*computation]*devComp{},
-		commit: map[ranKey]*driver.Ran{}}
+		sweepAt: minSweep, commit: map[ranKey]*driver.Ran{}}
 }
 
-// devSignal records s, made under owner, from the caller of the signal's constructor.
+// minSweep is the fewest signals devSignal lets byID hold before it sweeps.
+const minSweep = 1024
+
+// devOwner is the owner DevTools file a signal made with cx under: the owner running now where that is cx or under it, as a computation of cx's, else cx itself, as a list's row made while the list's binding runs, so the row's signals go with the row.
+func (cx *Scope) devOwner() *Scope {
+	o := cx.current()
+	for s := o; s != nil; s = s.parent {
+		if s == cx {
+			return o
+		}
+	}
+	return cx
+}
+
+// devSignal records s, made under owner, from the caller of the signal's constructor. It holds s weakly, so recording it keeps it no longer than its code does.
 func devSignal[T any](owner *Scope, s *Signal[T]) {
 	d := s.rt.dev
 	d.next++
+	w := weak.Make(s)
 	v := &devValue{id: d.next, site: callerSite(3), typ: reflect.TypeFor[T]().String(),
-		get: func() string { return clip(fmt.Sprint(any(s.value))) }, readers: func() int { return len(s.subs.list) }}
+		get: func() string {
+			if s := w.Value(); s != nil {
+				return clip(fmt.Sprint(any(s.value)))
+			}
+			return ""
+		},
+		readers: func() int {
+			if s := w.Value(); s != nil {
+				return len(s.subs.list)
+			}
+			return 0
+		},
+		gone: func() bool { return w.Value() == nil }}
 	if parse := parserFor[T](); parse != nil {
 		v.set = func(text string) error {
 			x, err := parse(text)
-			if err == nil {
+			if err != nil {
+				return err
+			}
+			if s := w.Value(); s != nil {
 				s.Set(x)
 			}
-			return err
+			return nil
 		}
 	}
 	d.values[owner] = append(d.values[owner], v)
 	d.byID[v.id] = v
+	if len(d.byID) >= d.sweepAt {
+		d.sweep()
+	}
+}
+
+// sweep drops the signals no code holds any more. It runs once byID has doubled since the last sweep, and before Owners lists them.
+func (d *devState) sweep() {
+	for o, vs := range d.values {
+		kept := vs[:0]
+		for _, v := range vs {
+			if v.gone() {
+				delete(d.byID, v.id)
+			} else {
+				kept = append(kept, v)
+			}
+		}
+		clear(vs[len(kept):])
+		if len(kept) == 0 {
+			delete(d.values, o)
+		} else {
+			d.values[o] = kept
+		}
+	}
+	d.sweepAt = max(2*len(d.byID), minSweep)
 }
 
 // parserFor returns how to read a T from text, for strings, booleans and numbers; nil for other types.
@@ -270,7 +329,7 @@ func (s *devSurface) Set(signal uint64, value string) error {
 	d := s.t.rt.dev
 	v := d.byID[signal]
 	switch {
-	case v == nil:
+	case v == nil || v.gone():
 		return fmt.Errorf("no signal %d", signal)
 	case v.set == nil:
 		return fmt.Errorf("DevTools do not edit a %s", v.typ)
@@ -446,6 +505,7 @@ const maxOwners = 4000
 // Owners returns the graph's owners from its root, the values and computations each holds; owners holding none and none under them are left out.
 func (s *devSurface) Owners() devtools.Owner {
 	d := s.t.rt.dev
+	d.sweep()
 	count := 0
 	var walk func(o *Scope) (devtools.Owner, bool)
 	walk = func(o *Scope) (devtools.Owner, bool) {
