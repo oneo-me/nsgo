@@ -340,6 +340,9 @@ func goarchForABI(abi string) (string, error) {
 		return "arm64", nil
 	case "x86_64":
 		return "amd64", nil
+	case "armeabi-v7a", "armeabi":
+		// Go links android/arm only with cgo, which needs the NDK: NSGo builds every Android target but the x86_64 emulator's without it.
+		return "", fmt.Errorf("the device reports ABI %q, 32-bit ARM, which NSGo does not package: Go links it only with cgo and the Android NDK (https://github.com/nsgo-dev/nsgo/issues/41); use an arm64 device or an x86_64 emulator", abi)
 	}
 	return "", fmt.Errorf("the device reports ABI %q, which NSGo does not package; use an arm64 device or an x86_64 emulator", abi)
 }
