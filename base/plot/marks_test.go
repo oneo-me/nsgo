@@ -678,3 +678,95 @@ func TestMovingCornersKeepTheirRadius(t *testing.T) {
 		t.Fatal("the moving nodes draw no arcs")
 	}
 }
+
+func TestValuesMoveWithUpdate(t *testing.T) {
+	var high *core.Signal[bool]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		high = core.NewSignal(cx, false)
+		values := func() []float64 {
+			if high.Get() {
+				return []float64{20, 40}
+			}
+			return []float64{10, 20}
+		}
+		return frame(plot.Plot{
+			Count:  func() int { return 2 },
+			XScale: func() plot.Scale { return plot.BandScale(plot.Band{}) },
+			YScale: func() plot.Scale { return plot.LinearScale(0, 40) },
+			Motion: plot.Motion{Update: &core.TimingConfig{Duration: 200 * time.Millisecond}},
+			Children: []core.Node{
+				plot.Bar{TestID: "bar", Value: values, Label: strs("one", "two")},
+				plot.Line{TestID: "line", Y: values, Curve: plot.CurveLinear},
+			},
+		}, "plot")
+	})
+	height := func() float32 { return rects(canvases(app, "id:bar")[0].Ops)[1].H }
+	lineEnd := func() float32 {
+		var y float32
+		for _, op := range canvases(app, "id:line")[0].Ops {
+			if op.Kind == driver.DrawLineTo {
+				y = op.Y
+			}
+		}
+		return y
+	}
+	if height() != 50 || lineEnd() != 50 {
+		t.Fatalf("at rest: bar %v high, line ends at %v", height(), lineEnd())
+	}
+	high.Set(true)
+	app.Settle()
+	app.Advance(100 * time.Millisecond)
+	if h := height(); h <= 50 || h >= 100 {
+		t.Errorf("mid-move the bar is %v high", h)
+	}
+	if y := lineEnd(); y <= 0 || y >= 50 {
+		t.Errorf("mid-move the line ends at %v", y)
+	}
+	app.Advance(time.Second)
+	if height() != 100 || lineEnd() != 0 {
+		t.Errorf("after the move: bar %v high, line ends at %v", height(), lineEnd())
+	}
+}
+
+// A cell's new color is added to its old one, each at its share of the
+// move, so a translucent color keeps its opacity while it fades.
+func TestCellsCrossFadeTheirColors(t *testing.T) {
+	var flip *core.Signal[bool]
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		flip = core.NewSignal(cx, false)
+		return frame(plot.Plot{
+			Count:  func() int { return 1 },
+			XScale: func() plot.Scale { return plot.BandScale(plot.Band{}) },
+			YScale: func() plot.Scale { return plot.BandScale(plot.Band{}) },
+			ColorScale: func() plot.ColorScale {
+				return plot.SequentialColors(core.RGBA(0x000000, 0.1), core.RGBA(0x0000ff, 0.1)).Over(0, 1)
+			},
+			Motion: plot.Motion{Update: &core.TimingConfig{Duration: 200 * time.Millisecond}},
+			Children: []core.Node{plot.Cell{TestID: "cells", X: strs("a"), Y: strs("x"), Value: func() []float64 {
+				if flip.Get() {
+					return []float64{1}
+				}
+				return []float64{0}
+			}}},
+		}, "plot")
+	})
+	flip.Set(true)
+	app.Settle()
+	app.Advance(100 * time.Millisecond)
+	var alphas []float32
+	adds := false
+	for _, op := range canvases(app, "id:cells")[0].Ops {
+		switch {
+		case op.Kind == driver.DrawAlpha:
+			alphas = append(alphas, op.A)
+		case op.Kind == driver.DrawComposite && op.Composite == driver.CompositeLighter:
+			adds = true
+		}
+	}
+	if !adds {
+		t.Fatal("the new color is drawn over the old one, not added to it")
+	}
+	if n := len(alphas); n < 2 || math.Abs(float64(alphas[n-2]+alphas[n-1]-1)) > 1e-3 {
+		t.Errorf("the colors' shares %v do not add up to the whole", alphas)
+	}
+}

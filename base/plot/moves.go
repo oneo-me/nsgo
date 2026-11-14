@@ -1,6 +1,10 @@
 package plot
 
-import "github.com/nsgo-dev/nsgo/core"
+import (
+	"math"
+
+	"github.com/nsgo-dev/nsgo/core"
+)
 
 // pose is what a mark's moves go between: its shape as the app gives it.
 type pose[P any] interface {
@@ -118,10 +122,89 @@ func (m *moves[P]) run(from, to P, timing core.TimingConfig) {
 	})
 }
 
+// between is a place moving from from to to with the move that runs.
+func (m *moves[P]) between(from, to float32) num { return lerpNum(m.progress, from, to) }
+
 // now is what it draws.
 func (m *moves[P]) now() moveState[P] { return m.shown.Get() }
 
 // left is how much of the move that runs is left, 0 at rest.
 func (m *moves[P]) left() core.AnimatedNode {
 	return core.Sub(core.Constant(1), m.progress)
+}
+
+// valuePose is the values a mark places along its scales, a few per row in
+// the plot's units, what Motion.Update moves between, so that a new size
+// moves nothing and a new domain moves the mark with the scales. Rows are
+// matched by key where keys holds one per row (a row's x on a linear
+// scale), else by index; NaN is no value.
+type valuePose struct {
+	keys []float64
+	rows [][]float64
+}
+
+func (p valuePose) same(o valuePose) bool {
+	if len(p.rows) != len(o.rows) || len(p.keys) != len(o.keys) {
+		return false
+	}
+	eq := func(a, b float64) bool { return a == b || math.IsNaN(a) && math.IsNaN(b) }
+	for i, k := range p.keys {
+		if !eq(k, o.keys[i]) {
+			return false
+		}
+	}
+	for i, r := range p.rows {
+		if len(r) != len(o.rows[i]) {
+			return false
+		}
+		for j, v := range r {
+			if !eq(v, o.rows[i][j]) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// match is the row of p that row of to moves from, -1 for none: the row
+// of its key, or of its index where rows have no keys and as many rows.
+func (p valuePose) match(to valuePose) func(row int) int {
+	if to.keys == nil || p.keys == nil {
+		if to.keys != nil || p.keys != nil || len(p.rows) != len(to.rows) {
+			return func(int) int { return -1 }
+		}
+		return func(row int) int { return row }
+	}
+	at := make(map[float64]int, len(p.keys))
+	for i, k := range p.keys {
+		if !math.IsNaN(k) {
+			at[k] = i
+		}
+	}
+	return func(row int) int {
+		if row < len(to.keys) {
+			if i, ok := at[to.keys[row]]; ok {
+				return i
+			}
+		}
+		return -1
+	}
+}
+
+func (p valuePose) lerp(to valuePose, t float32) valuePose {
+	from := p.match(to)
+	f := float64(t)
+	out := valuePose{keys: to.keys, rows: make([][]float64, len(to.rows))}
+	for row, r := range to.rows {
+		values := append([]float64(nil), r...)
+		if i := from(row); i >= 0 && len(p.rows[i]) == len(r) {
+			for j, b := range r {
+				if a := p.rows[i][j]; isFinite(a) && isFinite(b) {
+					values[j] = a + (b-a)*f
+				}
+			}
+		}
+		out.rows[row] = values
+	}
+	return out
 }

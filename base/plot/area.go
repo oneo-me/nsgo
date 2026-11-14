@@ -91,10 +91,11 @@ func (a Area) Render(cx *core.Scope) core.Node {
 			return strokeRoom
 		}
 		height := float32(plot.size.Get().Height)
-		swing := reach(series.points.Get(), a.Curve, height)
+		e := series.drawn.Get()
+		swing := max(reach(e.top, a.Curve, height), reach(e.wasTop, a.Curve, height))
 		var past float32
-		if lows := series.lows.Get(); len(lows) > 0 {
-			past = reach(lows, a.Curve, height)
+		if len(e.bottom) > 0 {
+			past = max(reach(e.bottom, a.Curve, height), reach(e.wasBottom, a.Curve, height))
 		} else {
 			floor := base(plot)
 			past = max(-floor, floor-height)
@@ -104,26 +105,37 @@ func (a Area) Render(cx *core.Scope) core.Node {
 	// Its shape: the top edge, to the baseline or the bottom edge, and
 	// back. Both edges of a band and a baseline at a value move with the y
 	// scale's domain; the plot's edge stays.
-	shape := func(d *core.Drawing, plot *plotState, points, lows []core.Point) {
-		first, last := points[0], points[len(points)-1]
+	// While Motion.Update moves it, each point moves from where its row's
+	// was.
+	shape := func(d *core.Drawing, plot *plotState, e seriesEdges) {
+		t := series.progress(e)
+		points, was := e.top, e.wasTop
+		n := len(points)
 		d.BeginPath()
 		plot.traced(d, true, a.Scale, func() {
-			d.MoveTo(float32(first.X), float32(first.Y))
-			trace(d, points, a.Curve)
+			startMoving(d, was, points, t, false)
+			traceMoving(d, was, points, t, a.Curve, false)
 		})
-		if len(lows) > 0 {
-			end := lows[len(lows)-1]
+		if lows := e.bottom; len(lows) > 0 {
+			end := []core.Point{lows[len(lows)-1]}
 			plot.traced(d, true, a.Scale, func() {
-				d.LineTo(float32(end.X), float32(end.Y))
-				traceBack(d, lows, a.Curve)
+				startMoving(d, e.wasBottom[len(lows)-1:], end, t, true)
+				traceMoving(d, e.wasBottom, lows, t, a.Curve, true)
 			})
 		} else {
-			scale, floor := noScale, base(plot)
+			scale, floor := noScale, constNum(base(plot))
 			if a.Y0 != nil {
 				scale = a.Scale
 			}
+			x := func(i int) num {
+				if t == nil {
+					return constNum(float32(points[i].X))
+				}
+				return lerpNum(t, float32(was[i].X), float32(points[i].X))
+			}
 			plot.traced(d, true, scale, func() {
-				d.LineTo(float32(last.X), floor).LineTo(float32(first.X), floor)
+				lineTo(d, x(n-1), floor)
+				lineTo(d, x(0), floor)
 			})
 		}
 		d.ClosePath()
@@ -135,10 +147,11 @@ func (a Area) Render(cx *core.Scope) core.Node {
 		// A canvas whose view takes the app's background and shows it
 		// inside the shape only.
 		children = append(children, markCanvas(plot, bleed, background, func(d *core.Drawing, plot *plotState, b float32) {
-			var points, lows []core.Point
+			var e seriesEdges
 			if plot != nil {
-				points, lows = series.points.Get(), series.lows.Get()
+				e = series.drawn.Get()
 			}
+			points, lows := e.top, e.bottom
 			if len(points) == 0 {
 				nothing(d)
 				return
@@ -156,11 +169,15 @@ func (a Area) Render(cx *core.Scope) core.Node {
 			for _, q := range lows {
 				top, bottom = min(top, float32(q.Y)), max(bottom, float32(q.Y))
 			}
+			// Where it moves from too, so its background spans the move.
+			for _, q := range append(append([]core.Point(nil), e.wasTop...), e.wasBottom...) {
+				top, bottom = min(top, float32(q.Y)), max(bottom, float32(q.Y))
+			}
 			first, last := points[0], points[len(points)-1]
 			area := core.Bounds{Origin: core.Point{X: first.X, Y: core.Points(top)},
 				Size: core.Size{Width: last.X - first.X, Height: core.Points(bottom - top)}}
 			plot.clip(d, b)
-			shape(d, plot, points, lows)
+			shape(d, plot, e)
 			d.FillBackgroundFromView(area)
 		}))
 	}
@@ -173,18 +190,19 @@ func (a Area) Render(cx *core.Scope) core.Node {
 		if plot == nil {
 			return
 		}
-		points, lows := series.points.Get(), series.lows.Get()
-		if len(points) == 0 {
+		e := series.drawn.Get()
+		if len(e.top) == 0 {
 			return
 		}
 		plot.clip(d, b)
-		shape(d, plot, points, lows)
+		shape(d, plot, e)
 		d.Fill()
 		d.StrokeFromView(core.PaintNone).LineWidthFromView().LineDashFromView()
 		d.BeginPath()
+		t := series.progress(e)
 		plot.traced(d, true, a.Scale, func() {
-			d.MoveTo(float32(points[0].X), float32(points[0].Y))
-			trace(d, points, a.Curve)
+			startMoving(d, e.wasTop, e.top, t, false)
+			traceMoving(d, e.wasTop, e.top, t, a.Curve, false)
 		})
 		d.Stroke()
 	}))

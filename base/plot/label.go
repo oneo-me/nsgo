@@ -52,15 +52,31 @@ func (l Label) Render(cx *core.Scope) core.Node {
 	if plot == nil || l.Texts == nil {
 		return view
 	}
+	// The texts' points, which Motion.Update moves.
+	moves := newMoves(cx, plot, false, func() (valuePose, bool) {
+		all := l.Texts()
+		p := valuePose{rows: make([][]float64, len(all))}
+		for i, t := range all {
+			p.rows[i] = []float64{t.X, t.Y}
+		}
+		return p, true
+	})
+	at := func(p valuePose, i int) (float32, float32, bool) {
+		if i >= len(p.rows) {
+			return 0, 0, false
+		}
+		x, okX := plot.xMap.Get().tick(p.rows[i][0])
+		y, okY := plot.yMapOf(l.Scale).tick(p.rows[i][1])
+		return x, y, okX && okY
+	}
 	// Where text i's point is on the plot, and how it sits there.
 	place := func(i int) (float32, float32, TextAlign, bool) {
 		all := l.Texts()
-		if i >= len(all) {
+		x, y, ok := at(moves.now().to, i)
+		if i >= len(all) || !ok {
 			return 0, 0, 0, false
 		}
-		x, okX := plot.xMap.Get().tick(all[i].X)
-		y, okY := plot.yMapOf(l.Scale).tick(all[i].Y)
-		return x, y, all[i].Align, okX && okY
+		return x, y, all[i].Align, true
 	}
 	indices := func() []int {
 		out := make([]int, len(l.Texts()))
@@ -76,13 +92,31 @@ func (l Label) Render(cx *core.Scope) core.Node {
 			// While a domain glides, the text moves from where the layout
 			// puts it to where the domains shown put it, as the axes' ticks.
 			x, y := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
+			// And with Motion.Update from where its point was, by what is
+			// left of the move.
+			dx, dy := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
 			cx.Effect(func() {
 				moving := plot.xTween.moving.Get() || yTween.moving.Get()
-				if at, bt, _, ok := place(i); ok && moving {
-					x.Set(float64(at))
-					y.Set(float64(bt))
+				at0, bt0, _, ok := place(i)
+				if !ok {
+					return
 				}
+				if moving {
+					x.Set(float64(at0))
+					y.Set(float64(bt0))
+				}
+				ddx, ddy := 0.0, 0.0
+				if m := moves.now(); m.moving {
+					if j := m.from.match(m.to)(i); j >= 0 {
+						if wx, wy, ok := at(m.from, j); ok {
+							ddx, ddy = float64(wx-at0), float64(wy-bt0)
+						}
+					}
+				}
+				dx.Set(ddx)
+				dy.Set(ddy)
 			})
+			left := moves.left()
 			text := func() PlotText {
 				if all := l.Texts(); i < len(all) {
 					return all[i]
@@ -94,7 +128,8 @@ func (l Label) Render(cx *core.Scope) core.Node {
 			// gives it.
 			return core.View{
 				Style: core.Style{Position: core.Absolute, Width: pts(0), Height: pts(0), Direction: core.Row, AlignItems: core.AlignStart,
-					Animated: &core.AnimatedStyle{TranslateX: plot.xTween.moved(x), TranslateY: yTween.moved(y), Opacity: plot.appear.progress()}},
+					Animated: &core.AnimatedStyle{TranslateX: core.Add(plot.xTween.moved(x), plot.xTween.stretched(core.Mul(dx, left))),
+						TranslateY: core.Add(yTween.moved(y), yTween.stretched(core.Mul(dy, left))), Opacity: plot.appear.progress()}},
 				StyleFunc: func() core.Style {
 					at, bt, align, ok := place(i)
 					if !ok {

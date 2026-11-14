@@ -181,6 +181,10 @@ type barRect struct {
 	row                  int
 	start, thick, center float32
 	from, to, origin     float32
+	// was is its box along the value axis where Motion.Update moves it
+	// from, on the scale it goes to; a bar new to the move grows from its
+	// base.
+	was [2]float32
 }
 
 // span is its box along the value axis.
@@ -289,6 +293,22 @@ func (b Bar) Render(cx *core.Scope) core.Node {
 		return place.extent()
 	}), along)
 	addEntry(cx, plot.bars, entry)
+	// Its rows' ends and their stacks' bases, which Motion.Update moves.
+	moves := newMoves(cx, plot, false, func() (valuePose, bool) {
+		place, ok := layout.Get().of(key)
+		if !ok {
+			return valuePose{}, false
+		}
+		rows := make([][]float64, len(place.segments))
+		for row, seg := range place.segments {
+			origin := math.NaN()
+			if row < len(place.origins) {
+				origin = place.origins[row]
+			}
+			rows[row] = []float64{seg[0], seg[1], origin}
+		}
+		return valuePose{rows: rows}, true
+	})
 	warned := false
 	geometry := core.NewMemoFunc(cx, func() *barGeometry {
 		if !plot.sized() {
@@ -314,24 +334,44 @@ func (b Bar) Render(cx *core.Scope) core.Node {
 		if !ok {
 			return nil
 		}
+		m := moves.now()
+		if !m.has {
+			return nil
+		}
 		group := band.groups(l.slots)
 		g := &barGeometry{across: on == axisX, axis: on, step: band.stepSize(), rows: band.len}
-		for row, s := range place.segments {
-			if !isFinite(s[0]) || !isFinite(s[1]) || s[0] == s[1] {
-				continue
+		var from func(int) int
+		if m.moving {
+			from = m.from.match(m.to)
+		}
+		ends := func(r []float64) (float32, float32, bool) {
+			if !isFinite(r[0]) || !isFinite(r[1]) || r[0] == r[1] {
+				return 0, 0, false
 			}
+			a, ok1 := valueMap.tick(r[0])
+			b, ok2 := valueMap.tick(r[1])
+			return a, b, ok1 && ok2
+		}
+		for row, r := range m.to.rows {
 			start, ok1 := band.startOf(row)
 			slot, ok2 := group.startOf(place.slot)
 			center, ok3 := band.center(row)
-			from, ok4 := valueMap.tick(s[0])
-			to, ok5 := valueMap.tick(s[1])
-			if row >= len(place.origins) {
+			to0, to1, ok4 := ends(r)
+			origin, ok5 := valueMap.tick(r[2])
+			if !(ok1 && ok2 && ok3 && ok4 && ok5) {
 				continue
 			}
-			origin, ok6 := valueMap.tick(place.origins[row])
-			if ok1 && ok2 && ok3 && ok4 && ok5 && ok6 {
-				g.bars = append(g.bars, barRect{row, start + slot, group.width(), center, from, to, origin})
+			rect := barRect{row, start + slot, group.width(), center, to0, to1, origin, [2]float32{origin, origin}}
+			if from != nil {
+				if i := from(row); i >= 0 {
+					if a, b, ok := ends(m.from.rows[i]); ok {
+						rect.was = [2]float32{a, b}
+					}
+				}
+			} else {
+				rect.was = [2]float32{to0, to1}
 			}
+			g.bars = append(g.bars, rect)
 		}
 		return g
 	}, nil)
@@ -341,12 +381,19 @@ func (b Bar) Render(cx *core.Scope) core.Node {
 		appearing := plot.appearing.Get()
 		tween := plot.tweenOf(g.axis)
 		moving := tween.moving.Get()
+		changing := moves.now().moving && !appearing
 		for _, bar := range g.bars {
 			if alpha, ok := plot.rowOpacity(b.HoverDim, g.across, bar.center, g.step); ok {
 				setAlpha(d, alpha)
 			}
 			lo, length := bar.span()
 			at, size := constNum(lo), constNum(length)
+			if changing {
+				// From its box before the change to its new one.
+				was := barRect{from: bar.was[0], to: bar.was[1]}
+				wasLo, wasLength := was.span()
+				at, size = moves.between(wasLo, lo), moves.between(wasLength, length)
+			}
 			if appearing {
 				// Scaled about the stack's base, so a stack grows whole.
 				q := nodeNum(plot.grown(bar.row, g.rows, b.Stagger))
@@ -439,7 +486,7 @@ func (b Bar) Render(cx *core.Scope) core.Node {
 			return out
 		}, func(k labelKey) labelKey { return k }, func(cx *core.Scope, item func() labelKey, _ func() int) core.Node {
 			k := item()
-			return b.barLabel(cx, plot, geometry, k.row, k.rows, k.axis)
+			return b.barLabel(cx, plot, geometry, moves, k.row, k.rows, k.axis)
 		}))
 	}
 	return markLayer(own, b.TestID, children...)
@@ -465,7 +512,7 @@ func addEntry(cx *core.Scope, bars *core.Signal[[]*barEntry], e *barEntry) {
 // bar's value end, the text on the side away from the bar, centered across
 // it; it rides the bar's end and fades in as the bar grows. It takes no
 // pointer.
-func (b Bar) barLabel(cx *core.Scope, plot *plotState, geometry *core.Memo[*barGeometry], row, rows int, on axis) core.Node {
+func (b Bar) barLabel(cx *core.Scope, plot *plotState, geometry *core.Memo[*barGeometry], moves *moves[valuePose], row, rows int, on axis) core.Node {
 	bar := func() (barRect, bool, bool) {
 		g := geometry.Get()
 		if g != nil {
@@ -479,17 +526,21 @@ func (b Bar) barLabel(cx *core.Scope, plot *plotState, geometry *core.Memo[*barG
 	}
 	// While the bars grow, the label sits back toward the base by what is
 	// left to grow: (origin - end) * (1 - grown).
-	back, end := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
+	// While Motion.Update moves the bar, it starts back where the bar's
+	// end was by what is left of the move: (was - end) * left.
+	back, end, was := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
 	cx.Effect(func() {
 		if r, _, ok := bar(); ok {
 			back.Set(float64(r.origin - r.to))
 			end.Set(float64(r.to))
+			was.Set(float64(r.was[1] - r.to))
 		}
 	})
 	grown := plot.grown(row, rows, b.Stagger)
 	ride := core.Mul(back, core.Sub(core.Constant(1), grown))
 	// And it moves with the value axis's domain, where its bar's end goes.
 	tween := plot.tweenOf(on)
+	ride = core.Add(ride, core.Mul(was, moves.left()))
 	moved := core.Add(ride, tween.moved(core.Add(end, ride)))
 	animated := &core.AnimatedStyle{Opacity: grown, TranslateY: moved}
 	if on == axisX {

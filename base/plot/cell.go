@@ -444,14 +444,20 @@ func (c Cell) Render(cx *core.Scope) core.Node {
 				alpha = plot.indexOpacity(hoveredAt, dim, row)
 			}
 			if fades {
+				// A cross-fade: the old color at what is left of the move,
+				// the new one added at what has gone, so a cell is old*(1-t)
+				// + new*t, its opacity too: translucent colors stay as
+				// translucent as they are, where one over the other would
+				// thicken.
+				left := nodeNum(moves.left())
 				if dims {
-					setAlpha(d, alpha)
-				} else {
-					d.SetAlpha(1)
+					left = alpha.mul(left)
 				}
+				setAlpha(d, left)
 				d.FillFromView(paint(old)).BeginPath()
 				rectPath(d, rect[0], rect[1], rect[2], rect[3], c.Corners)
 				d.Fill()
+				d.SetComposite(core.CompositeLighter)
 			}
 			switch {
 			case dims && fades:
@@ -466,6 +472,9 @@ func (c Cell) Render(cx *core.Scope) core.Node {
 			d.FillFromView(paint(color)).BeginPath()
 			rectPath(d, rect[0], rect[1], rect[2], rect[3], c.Corners)
 			d.Fill()
+			if fades {
+				d.SetComposite(core.CompositeSourceOver)
+			}
 			d.Stroke()
 		}
 	})

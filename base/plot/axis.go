@@ -390,19 +390,31 @@ func (a Axis) Render(cx *core.Scope) core.Node {
 	}
 	// While the axis's domain glides, tick i moves with the marks from where
 	// the layout puts it to where the domain shown puts it, as d3's axis
-	// transitions.
+	// transitions, and fades out past the plot's ends: a tick of the new
+	// domain comes in from beyond them rather than over what is there.
 	glide := func(cx *core.Scope, i func() int) *core.AnimatedStyle {
-		place := core.NewAnimatedValue(cx, 0)
+		place, length := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 1)
 		cx.Effect(func() {
 			if t, ok := at(i()); ok && tween.moving.Get() {
 				place.Set(float64(t))
 			}
 		})
+		cx.Effect(func() {
+			size := plot.size.Get()
+			l := size.Height
+			if alongX {
+				l = size.Width
+			}
+			length.Set(float64(max(l, 1)))
+		})
 		moved := tween.moved(place)
+		const fade = 0.06
+		shown := core.Interpolate(core.Div(tween.shown(place), length),
+			core.Interpolation{Input: []float64{-fade, -0.001, 1.001, 1 + fade}, Output: []float64{0, 1, 1, 0}})
 		if alongX {
-			return &core.AnimatedStyle{TranslateX: moved}
+			return &core.AnimatedStyle{TranslateX: moved, Opacity: shown}
 		}
-		return &core.AnimatedStyle{TranslateY: moved}
+		return &core.AnimatedStyle{TranslateY: moved, Opacity: shown}
 	}
 	line := parts.Of(a.LineClass, a.LineStyle, a.LineStyleFunc)
 	tick := parts.Of(a.TickClass, a.TickStyle, a.TickStyleFunc)

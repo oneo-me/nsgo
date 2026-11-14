@@ -66,6 +66,80 @@ func trace(d *core.Drawing, points []core.Point, curve Curve) {
 	}
 }
 
+// traceMoving records the path trace or, back, traceBack records through
+// to, each point and control moving from its place along was (one for
+// each) with t; as trace and traceBack without t.
+func traceMoving(d *core.Drawing, was, to []core.Point, t core.AnimatedNode, curve Curve, back bool) {
+	if t == nil {
+		if back {
+			traceBack(d, to, curve)
+		} else {
+			trace(d, to, curve)
+		}
+		return
+	}
+	n := len(to)
+	at := func(i int) (num, num) {
+		return lerpNum(t, float32(was[i].X), float32(to[i].X)), lerpNum(t, float32(was[i].Y), float32(to[i].Y))
+	}
+	control := func(i int) (x1, y1, x2, y2 num) {
+		a1, b1, a2, b2 := controls(was, i)
+		c1, d1, c2, d2 := controls(to, i)
+		return lerpNum(t, a1, c1), lerpNum(t, b1, d1), lerpNum(t, a2, c2), lerpNum(t, b2, d2)
+	}
+	switch {
+	case curve == CurveLinear && !back:
+		for i := 1; i < n; i++ {
+			x, y := at(i)
+			lineTo(d, x, y)
+		}
+	case curve == CurveLinear:
+		for i := n - 2; i >= 0; i-- {
+			x, y := at(i)
+			lineTo(d, x, y)
+		}
+	case curve == CurveStepAfter && !back:
+		for i := 1; i < n; i++ {
+			x, y := at(i)
+			_, held := at(i - 1)
+			lineTo(d, x, held)
+			lineTo(d, x, y)
+		}
+	case curve == CurveStepAfter:
+		for i := n - 1; i > 0; i-- {
+			x, _ := at(i)
+			px, py := at(i - 1)
+			lineTo(d, x, py)
+			lineTo(d, px, py)
+		}
+	case !back:
+		for i := 0; i < n-1; i++ {
+			x1, y1, x2, y2 := control(i)
+			x, y := at(i + 1)
+			cubicTo(d, x1, y1, x2, y2, x, y)
+		}
+	default:
+		for i := n - 2; i >= 0; i-- {
+			x1, y1, x2, y2 := control(i)
+			x, y := at(i)
+			cubicTo(d, x2, y2, x1, y1, x, y)
+		}
+	}
+}
+
+// startMoving moves the path to its first point, from was's with t.
+func startMoving(d *core.Drawing, was, to []core.Point, t core.AnimatedNode, line bool) {
+	x, y := constNum(float32(to[0].X)), constNum(float32(to[0].Y))
+	if t != nil {
+		x, y = lerpNum(t, float32(was[0].X), x.v), lerpNum(t, float32(was[0].Y), y.v)
+	}
+	if line {
+		lineTo(d, x, y)
+	} else {
+		moveTo(d, x, y)
+	}
+}
+
 // traceBack records the path trace records through points, the other way:
 // from the last point, the current one, back to the first, so the bottom
 // edge of a band follows the same curve as its top edge.
@@ -162,28 +236,30 @@ func (l Line) Render(cx *core.Scope) core.Node {
 		if plot == nil {
 			return strokeRoom
 		}
-		return strokeRoom + float32(math.Ceil(float64(reach(series.points.Get(), l.Curve, float32(plot.size.Get().Height)))))
+		e, height := series.drawn.Get(), float32(plot.size.Get().Height)
+		return strokeRoom + float32(math.Ceil(float64(max(reach(e.top, l.Curve, height), reach(e.wasTop, l.Curve, height)))))
 	}
 	children := []core.Node{markCanvas(plot, bleed, part{}, func(d *core.Drawing, plot *plotState, b float32) {
 		d.StrokeFromView(paintOf(seriesColor(plot, l.Color), core.PaintCurrentColor)).LineWidthFromView().LineDashFromView()
 		if plot == nil {
 			return
 		}
-		points := series.points.Get()
-		if len(points) == 0 {
+		e := series.drawn.Get()
+		if len(e.top) == 0 {
 			return
 		}
+		t := series.progress(e)
 		plot.clip(d, b)
 		d.BeginPath()
 		plot.traced(d, true, l.Scale, func() {
-			d.MoveTo(float32(points[0].X), float32(points[0].Y))
-			trace(d, points, l.Curve)
+			startMoving(d, e.wasTop, e.top, t, false)
+			traceMoving(d, e.wasTop, e.top, t, l.Curve, false)
 		})
 		d.Stroke()
 	})}
 	if l.Dot && plot != nil {
 		children = append(children, core.Each(func() []int {
-			n := len(series.points.Get())
+			n := len(series.drawn.Get().top)
 			out := make([]int, n)
 			for i := range out {
 				out[i] = i
@@ -194,20 +270,34 @@ func (l Line) Render(cx *core.Scope) core.Node {
 			// Its point, while the scales' domains move: the dot moves with
 			// them from where the layout puts it.
 			x, y := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
+			// And with Motion.Update from where its row's point was, by
+			// what is left of the move.
+			dx, dy := core.NewAnimatedValue(cx, 0), core.NewAnimatedValue(cx, 0)
 			cx.Effect(func() {
 				moving := plot.xTween.moving.Get() || yTween.moving.Get()
-				points := series.points.Get()
-				if i := item(); moving && i < len(points) {
-					x.Set(float64(points[i].X))
-					y.Set(float64(points[i].Y))
+				e := series.drawn.Get()
+				i := item()
+				if i >= len(e.top) {
+					return
 				}
+				if moving {
+					x.Set(float64(e.top[i].X))
+					y.Set(float64(e.top[i].Y))
+				}
+				dx.Set(float64(e.wasTop[i].X - e.top[i].X))
+				dy.Set(float64(e.wasTop[i].Y - e.top[i].Y))
 			})
+			left := series.moves.left()
+			// The offset is on the new scale, so it stretches with the
+			// domain shown.
+			shiftX := core.Add(plot.xTween.moved(x), plot.xTween.stretched(core.Mul(dx, left)))
+			shiftY := core.Add(yTween.moved(y), yTween.stretched(core.Mul(dy, left)))
 			return core.View{
 				Style: core.Style{Position: core.Absolute, Width: core.Pt(0), Height: core.Pt(0),
 					AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter,
-					Animated: &core.AnimatedStyle{TranslateX: plot.xTween.moved(x), TranslateY: yTween.moved(y)}},
+					Animated: &core.AnimatedStyle{TranslateX: shiftX, TranslateY: shiftY}},
 				StyleFunc: func() core.Style {
-					points := series.points.Get()
+					points := series.drawn.Get().top
 					if i := item(); i < len(points) {
 						return core.Style{Left: core.Pt(points[i].X), Top: core.Pt(points[i].Y)}
 					}

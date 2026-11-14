@@ -46,6 +46,9 @@ type Rule struct {
 type ruleStem struct {
 	row          int
 	at, from, to float32
+	// was is its ends where Motion.Update moves it from, on the scale it
+	// goes to; a line new to the move grows from its start.
+	was [2]float32
 }
 
 // ruleGeometry is a Rule's lines, as drawn.
@@ -130,8 +133,18 @@ func (r Rule) Render(cx *core.Scope) core.Node {
 		}
 		return e
 	}), along)
+	// Its rows' ends, which Motion.Update moves.
+	moves := newMoves(cx, plot, false, func() (valuePose, bool) {
+		all := spans.Get()
+		rows := make([][]float64, len(all))
+		for row, s := range all {
+			rows[row] = []float64{s[0], s[1]}
+		}
+		return valuePose{rows: rows}, true
+	})
 	geometry := core.NewMemoFunc(cx, func() *ruleGeometry {
-		if !plot.sized() {
+		m := moves.now()
+		if !plot.sized() || !m.has {
 			return nil
 		}
 		xMap, yMap := plot.xMap.Get(), plot.yMap.Get()
@@ -160,15 +173,33 @@ func (r Rule) Render(cx *core.Scope) core.Node {
 			step = spacing(places)
 		}
 		g := &ruleGeometry{across: across, step: step, rows: n}
-		for row, s := range spans.Get() {
+		ends := func(s []float64) (float32, float32, bool) {
+			from, ok1 := valueMap.tick(s[0])
+			to, ok2 := valueMap.tick(s[1])
+			return from, to, ok1 && ok2
+		}
+		var was func(int) int
+		if m.moving {
+			was = m.from.match(m.to)
+		}
+		for row, s := range m.to.rows {
 			if row >= len(places) || math.IsNaN(float64(places[row])) {
 				continue
 			}
-			from, ok1 := valueMap.tick(s[0])
-			to, ok2 := valueMap.tick(s[1])
-			if ok1 && ok2 {
-				g.stems = append(g.stems, ruleStem{row, places[row], from, to})
+			from, to, ok := ends(s)
+			if !ok {
+				continue
 			}
+			stem := ruleStem{row, places[row], from, to, [2]float32{from, to}}
+			if was != nil {
+				stem.was = [2]float32{from, from}
+				if i := was(row); i >= 0 {
+					if a, b, ok := ends(m.from.rows[i]); ok {
+						stem.was = [2]float32{a, b}
+					}
+				}
+			}
+			g.stems = append(g.stems, stem)
 		}
 		return g
 	}, nil)
@@ -183,6 +214,7 @@ func (r Rule) Render(cx *core.Scope) core.Node {
 			return
 		}
 		appearing := plot.appearing.Get()
+		changing := moves.now().moving && !appearing
 		var colors []core.Color
 		hasColors := false
 		if r.Color != nil {
@@ -204,11 +236,14 @@ func (r Rule) Render(cx *core.Scope) core.Node {
 			}
 			// Growing from its start while the plot appears; through the
 			// moving scales' transform while a domain moves.
-			end := constNum(stem.to)
+			end, from := constNum(stem.to), constNum(stem.from)
 			if appearing {
 				end = nodeNum(plot.grown(stem.row, g.rows, r.Stagger)).mul(constNum(stem.to - stem.from)).add(constNum(stem.from))
 			}
-			at, from := constNum(stem.at), constNum(stem.from)
+			if changing {
+				from, end = moves.between(stem.was[0], stem.from), moves.between(stem.was[1], stem.to)
+			}
+			at := constNum(stem.at)
 			scale := r.Scale
 			if g.across {
 				scale = noScale

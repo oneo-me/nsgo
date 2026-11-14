@@ -57,6 +57,19 @@ type plotSeries struct {
 	ys     func() []float64
 	low    func() []float64
 	scale  ValueScale
+	// moves are its rows' values, which Motion.Update moves, and drawn
+	// what it draws of them.
+	moves *moves[valuePose]
+	drawn *core.Memo[seriesEdges]
+}
+
+// seriesEdges is a series as drawn: its points and its bottom edge's, and
+// while Motion.Update moves it, where each of them moves from, one for
+// each; a point new to the move stays where it goes.
+type seriesEdges struct {
+	top, bottom       []core.Point
+	wasTop, wasBottom []core.Point
+	moving            bool
 }
 
 // newSeries is the series of the values y (the plot's without), placed
@@ -106,11 +119,115 @@ func newSeries(cx *core.Scope, plot *plotState, x, y, low func() []float64, scal
 		}
 		return e
 	}, func(a, b edges) bool { return slices.Equal(a.top, b.top) && slices.Equal(a.bottom, b.bottom) })
+	moves := newMoves(cx, plot, false, func() (valuePose, bool) {
+		values := ys()
+		var lows []float64
+		if low != nil {
+			lows = low()
+		}
+		p := valuePose{rows: make([][]float64, len(values))}
+		// Rows placed by an x of their own, the mark's or the plot's, move
+		// to the row of the same x: a window that slides on keeps its points.
+		keyed := x
+		if keyed == nil {
+			keyed = plot.x
+		}
+		if keyed != nil {
+			own := keyed()
+			p.keys = make([]float64, len(values))
+			for i := range p.keys {
+				p.keys[i] = math.NaN()
+				if i < len(own) {
+					p.keys[i] = own[i]
+				}
+			}
+		}
+		for i, v := range values {
+			l := math.NaN()
+			if i < len(lows) {
+				l = lows[i]
+			}
+			p.rows[i] = []float64{v, l}
+		}
+		return p, true
+	})
+	// The points of a pose of its rows, and the row of each.
+	place := func(p valuePose) (top, bottom []core.Point, rows []int) {
+		var at []float32
+		if p.keys != nil {
+			at = plot.xMap.Get().ticks(len(p.keys), p.keys)
+		} else {
+			at = plot.xs.Get()
+		}
+		yMap := plot.yMapOf(scale)
+		for i, r := range p.rows {
+			if i >= len(at) || math.IsNaN(float64(at[i])) {
+				continue
+			}
+			py, ok := yMap.tick(r[0])
+			if !ok {
+				continue
+			}
+			if low != nil {
+				y0, ok := yMap.tick(r[1])
+				if !ok {
+					continue
+				}
+				bottom = append(bottom, core.Point{X: core.Points(at[i]), Y: core.Points(y0)})
+			}
+			top = append(top, core.Point{X: core.Points(at[i]), Y: core.Points(py)})
+			rows = append(rows, i)
+		}
+		return top, bottom, rows
+	}
+	drawn := core.NewMemoFunc(cx, func() seriesEdges {
+		m := moves.now()
+		if !m.has {
+			return seriesEdges{}
+		}
+		top, bottom, rows := place(m.to)
+		e := seriesEdges{top: top, bottom: bottom, wasTop: top, wasBottom: bottom}
+		if !m.moving {
+			return e
+		}
+		wasTop, wasBottom, wasRows := place(m.from)
+		of := make(map[int]int, len(wasRows))
+		for k, r := range wasRows {
+			of[r] = k
+		}
+		match := m.from.match(m.to)
+		e.wasTop, e.moving = make([]core.Point, len(top)), true
+		if low != nil {
+			e.wasBottom = make([]core.Point, len(bottom))
+		}
+		for k, r := range rows {
+			e.wasTop[k] = top[k]
+			if low != nil {
+				e.wasBottom[k] = bottom[k]
+			}
+			if k2, ok := of[match(r)]; ok && match(r) >= 0 {
+				e.wasTop[k] = wasTop[k2]
+				if low != nil {
+					e.wasBottom[k] = wasBottom[k2]
+				}
+			}
+		}
+		return e
+	}, nil)
 	return plotSeries{
 		points: core.NewMemoFunc(cx, func() []core.Point { return all.Get().top }, slices.Equal),
 		lows:   core.NewMemoFunc(cx, func() []core.Point { return all.Get().bottom }, slices.Equal),
-		ys:     ys, low: low, scale: scale,
+		ys:     ys, low: low, scale: scale, moves: moves, drawn: drawn,
 	}
+}
+
+// progress is what its points move with while Motion.Update moves them,
+// nil at rest.
+func (s plotSeries) progress(e seriesEdges) core.AnimatedNode {
+	if !e.moving {
+		return nil
+	}
+	return s.moves.progress
 }
 
 // join adds the series to plot while the mark lives: its values, its bottom
