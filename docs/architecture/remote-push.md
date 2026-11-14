@@ -69,7 +69,7 @@ The capability check uses `AccessNotifications` for the user-visible notificatio
 The implementation is complete only when these checks exist:
 
 - headless `core` tests cover permission, idempotent registration, token replacement, pending delivery, scope cleanup, provider metadata and a payload reaching the handler as the backend passed it;
-- `internal/driver` tests cover command and event encoding, including a payload larger than one bridge frame;
+- the Android protocol's tests (`internal/platform/android/protocol.go` against `Protocol.java`) and the embedding entry point's cover the push messages' encoding, including the largest payload each provider allows;
 - Apple tests use a fake delegate to cover token conversion on iOS and macOS, the iOS completion handler's result with and without an engine, and a launch press;
 - Android runtime tests use a fake adapter to cover a dead-process queue, acknowledgement, duplicate message IDs and token refresh without requiring Firebase or a device; and
 - target tests cover a signed iOS app and a macOS app signed with a profile receiving a sandbox APNs payload, including an iOS app launched in the background, and an Android app receiving a test-provider payload, with the provider credentials kept outside the repository.
