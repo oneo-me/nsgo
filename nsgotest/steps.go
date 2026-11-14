@@ -17,6 +17,18 @@ func pressable(v *View) bool {
 	return v.Events.Has(driver.EventPress) || v.Events.Has(driver.EventPressDown)
 }
 
+// focusable reports whether v is a keyboard focus stop. It follows the
+// stops moveFocus uses on macOS and the web: editable fields, pressable views
+// and views explicitly marked Focusable, except for read-only, disabled or
+// NoFocus views.
+func focusable(v *View) bool {
+	if v.disabled(nil) || v.Props.NoFocus {
+		return false
+	}
+	return v.Kind == driver.KindInput && !v.Input.Readonly ||
+		v.Kind != driver.KindInput && (pressable(v) || v.Props.Focusable)
+}
+
 // pressTarget is the view a press on selector goes to: the match, or its
 // nearest pressable ancestor (a text inside a button); a canvas node's
 // press goes to the view under its middle. at is where it lands, in
@@ -383,10 +395,54 @@ func (a *App) inputStep(selector, step string) *View {
 	return v
 }
 
-// Focus focuses the text field selector names, as a tap on it would.
+// Focus focuses the selector's keyboard focus stop. Text fields keep their
+// tap-like behavior; pressable and Focusable views are reached as a Tab
+// would be, so a following Return or Space can activate them.
 func (a *App) Focus(selector string) {
 	a.t.Helper()
-	a.inputStep(selector, "focus")
+	a.step("focus(%s)", selector)
+	v := a.pick(selector, "focusable view", func(m *View) (*View, bool) {
+		if v := m.upTo(focusable); v != nil {
+			return v, true
+		}
+		v := m.downTo(focusable)
+		return v, v != nil
+	})
+	if !v.Focused {
+		switch {
+		case a.target != nil && v.Kind == driver.KindInput:
+			a.target.press(a.target.reveal(v), 0)
+		case a.target != nil:
+			// The platform surface has no imperative focus operation. Tab is
+			// the user-visible operation that focuses a pressable view, and
+			// checking the model after each key avoids assuming the current
+			// focus or a particular platform's first stop.
+			for range len(a.views) + 1 {
+				a.target.keys(nil, "tab")
+				a.target.settle()
+				if v.Focused {
+					break
+				}
+			}
+			if !v.Focused {
+				a.t.Fatalf("nsgotest: %q could not take keyboard focus\n%s", selector, a.Dump())
+			}
+		default:
+			modality := driver.ModalityKeyboard
+			if v.Kind == driver.KindInput {
+				// Preserve Focus's existing tap-like behavior for fields.
+				modality = driver.ModalityPointer
+			}
+			a.inputBy(modality)
+			for _, o := range a.views {
+				if o != v {
+					a.setFocus(o, false)
+				}
+			}
+			a.setFocus(v, true)
+			a.Settle()
+		}
+	}
 	a.done()
 }
 
@@ -764,9 +820,7 @@ func (a *App) moveFocus(back bool) {
 	var stops []*View
 	at := -1
 	for _, v := range a.tabOrder(a.shown()) {
-		stop := v.Kind == driver.KindInput && !v.Input.Readonly ||
-			v.Kind != driver.KindInput && (pressable(v) || v.Props.Focusable) && !v.Props.NoFocus
-		if !stop || v.disabled(nil) {
+		if !focusable(v) {
 			continue
 		}
 		if v.Focused {
